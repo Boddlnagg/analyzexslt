@@ -80,9 +80,9 @@ class XSLTStylesheet(var source: Elem) {
             val test = XPathExpression(elem.attribute("test").get.text)
             ChooseElement(List((test, parseTemplate(elem.child))), None)
           }
+          // spec section 7.2 and 3.4 (whitespace stripping)
           case "text" => {
-            val escapedContent = elem.text.replace("\"", "&quot;")
-            return ValueOfElement(new XPathExpression("\"" + f"$escapedContent" + "\""))
+            LiteralTextNode(elem.text)
           }
           case _ => throw new UnsupportedOperationException(f"Unsupported XSLT element: ${elem.label}")
         }

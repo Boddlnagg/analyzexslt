@@ -1,6 +1,7 @@
 import org.scalatest.FunSuite
 
 class ParseStylesheetSuite extends FunSuite {
+  // This data and the two stylesheets are taken from https://en.wikipedia.org/wiki/XSLT
   val data =
     <persons>
       <person username="JS1">
