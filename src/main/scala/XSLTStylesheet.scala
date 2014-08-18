@@ -3,6 +3,7 @@ import scala.xml._
 class XSLTStylesheet(var source: Elem) {
   val XSLTNamespace = "http://www.w3.org/1999/XSL/Transform";
 
+  // the content of xsl:text should not be trimmed, but is currently not supported anyway
   val trimmed = xml.Utility.trim(source).asInstanceOf[Elem]
 
   assert(trimmed.namespace == XSLTNamespace, f"Root element must be 'stylesheet' with namespace $XSLTNamespace (a literal result element is not supported as root node)");
@@ -31,15 +32,55 @@ class XSLTStylesheet(var source: Elem) {
     if (node.isInstanceOf[Text]) {
       LiteralTextNode(node.asInstanceOf[Text].data)
     } else if (node.isInstanceOf[Elem]) {
-      if (node.namespace == XSLTNamespace) {
-        node.label match {
-          case "variable" => throw new UnsupportedOperationException("TODO") // TODO
-          case "apply-templates" => throw new UnsupportedOperationException("TODO") // TODO
-          case "call-template" => throw new UnsupportedOperationException("TODO") // TODO
-          case "attribute" => throw new UnsupportedOperationException("TODO") // TODO
-          case "value-of" => throw new UnsupportedOperationException("TODO") // TODO
-          case "choose" => throw new UnsupportedOperationException("TODO") // TODO
-          case "if" => throw new UnsupportedOperationException("TODO") // TODO
+      val elem = node.asInstanceOf[Elem]
+      if (elem.namespace == XSLTNamespace) {
+        elem.label match {
+          // spec section 11.2
+          case "variable" => {
+            assert(elem.child.nonEmpty, "Variable definitions are only supported when they use the 'select' attribute")
+            val select = XPathExpression(elem.attribute("select").get.text)
+            VariableDefinitionElement(elem.attribute("name").get.text, select)
+          }
+          // spec sections 5.4 and 11.6
+          case "apply-templates" => {
+            val select = elem.attribute("select").map(a => XPathExpression(a.text))
+            assert(elem.child.forall(n => n.isInstanceOf[Elem] && n.namespace == XSLTNamespace && n.label == "with-param"),
+              "children of 'apply-templates' element must only be 'with-param' ('sort' is not supported)")
+            ApplyTemplatesElement(select, parseWithParams(elem))
+          }
+          // spec section 6
+          case "call-template" => {
+            val name = elem.attribute("name").get.text
+            assert(elem.child.forall(n => n.isInstanceOf[Elem] && n.namespace == XSLTNamespace && n.label == "with-param"),
+              "children of 'call-templates' element must only be 'with-param'")
+            CallTemplateElement(name, parseWithParams(elem))
+          }
+          // spec section 7.1.3
+          case "attribute" => {
+            // NOTE: attribute value templates are not supported
+            val name = elem.attribute("name").get.text
+            assert(!elem.attribute("namespace").isDefined, "The 'namespace' attribute on xsl:attribute is not supported.")
+            SetAttributeElement(name, parseTemplate(elem.child)) // NOTE: only text nodes are allowed in the instantiation of this template
+          }
+          // spec section 7.6.1
+          case "value-of" => {
+            ValueOfElement(XPathExpression(elem.attribute("select").get.text))
+          }
+          // spec section 9.2
+          case "choose" => {
+            val xsltChildren = elem.child.filter(n => n.namespace == XSLTNamespace && n.isInstanceOf[Elem]).map(_.asInstanceOf[Elem])
+            val whenBranches = xsltChildren.filter(n => n.label == "when")
+                                           .map(n => (XPathExpression(n.attribute("test").get.text), parseTemplate(n.child)))
+            val otherwiseBranch = xsltChildren.filter(n => n.label == "otherwise")
+                                              .map(n => parseTemplate(n.child))
+                                              .headOption
+            ChooseElement(whenBranches, otherwiseBranch)
+          }
+          // spec section 9.1
+          case "if" => {
+            val test = XPathExpression(elem.attribute("test").get.text)
+            ChooseElement(List((test, parseTemplate(elem.child))), None)
+          }
         }
       } else if (node.namespace == null) {
         LiteralElement(node.label,
@@ -54,18 +95,27 @@ class XSLTStylesheet(var source: Elem) {
     }
   }
 
-  def parseParams(input: Seq[Node]) : Map[String, Seq[XSLTNode]] = {
-    // TODO: support "select" attribute on params
+  def parseParams(input: Seq[Node]) : Map[String, XPathExpression] = {
+    // TODO: support content of param element instead of "select" attribute?
     val params = input.filter(n => n.isInstanceOf[Elem] && n.namespace == XSLTNamespace && n.label == "param")
                       .map(n => n.asInstanceOf[Elem])
-                      .map(elem => (elem.attribute("name").get.text, parseTemplate(elem.child)))
+                      .map(elem => (elem.attribute("name").get.text, XPathExpression(elem.attribute("select").get.text)))
+    Map() ++ params
+  }
+
+  def parseWithParams(input: Seq[Node]) : Map[String, XPathExpression] = {
+    // TODO: support content of with-param element instead of "select" attribute?
+    // TODO: merge function with parseParams() above
+    val params = input.filter(n => n.isInstanceOf[Elem] && n.namespace == XSLTNamespace && n.label == "with-param")
+                      .map(n => n.asInstanceOf[Elem])
+                      .map(elem => (elem.attribute("name").get.text, XPathExpression(elem.attribute("select").get.text)))
     Map() ++ params
   }
 }
 
 case class TemplateElement(name: Option[String],
                            matches: Option[XPathExpression],
-                           defaultParams: Map[String, Seq[XSLTNode]],
+                           defaultParams: Map[String, XPathExpression],
                            content: Seq[XSLTNode])
 
 // TODO: parse XPath
@@ -74,10 +124,10 @@ case class XPathExpression(expression: String)
 abstract class XSLTNode
 case class LiteralElement(name: String, attributes: Map[String, String], children: Seq[XSLTNode]) extends XSLTNode
 case class LiteralTextNode(text: String) extends XSLTNode
-case class VariableDefinitionElement(name: String, content: XSLTNode) extends XSLTNode
-case class ApplyTemplatesElement(select: XPathExpression, params: Map[String, XSLTNode]) extends XSLTNode
-case class CallTemplateElement(name: String, params: Map[String, XSLTNode]) extends XSLTNode
-case class SetAttributeElement(attribute: String, value: XSLTNode)
+case class VariableDefinitionElement(name: String, select: XPathExpression) extends XSLTNode
+case class ApplyTemplatesElement(select: Option[XPathExpression], params: Map[String, XPathExpression]) extends XSLTNode
+case class CallTemplateElement(name: String, params: Map[String, XPathExpression]) extends XSLTNode
+case class SetAttributeElement(attribute: String, value: Seq[XSLTNode]) extends XSLTNode
 case class ValueOfElement(select: XPathExpression) extends XSLTNode
-case class ChooseElement(branches: Seq[(XPathExpression, XSLTNode)], otherwise: Option[XSLTNode]) extends XSLTNode
+case class ChooseElement(branches: Seq[(XPathExpression, Seq[XSLTNode])], otherwise: Option[Seq[XSLTNode]]) extends XSLTNode
 

@@ -1,7 +1,8 @@
 object Main {
 
   def main(args: Array[String]) {
-    new XSLTStylesheet(stylesheet);
+    val sheet = new XSLTStylesheet(stylesheet);
+    println(sheet.templates.toString)
   }
 
   val stylesheet =
