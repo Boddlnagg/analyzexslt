@@ -4,16 +4,16 @@ class XSLTStylesheet(var source: Elem) {
   val XSLTNamespace = "http://www.w3.org/1999/XSL/Transform";
 
   // the content of xsl:text should not be trimmed, but is currently not supported anyway
-  val trimmed = xml.Utility.trim(source).asInstanceOf[Elem]
+  val cleaned = clean(source).asInstanceOf[Elem]
 
-  assert(trimmed.namespace == XSLTNamespace, f"Root element must be 'stylesheet' with namespace $XSLTNamespace (a literal result element is not supported as root node)");
-  assert(trimmed.attribute("version").get.text == "1.0", "Stylesheet version must be 1.0");
-  assert(trimmed.child.forall(n => n.namespace == XSLTNamespace && (n.label == "template" || n.label == "variable")), "Top-level elements must either be XSLT templates or variable definitions");
+  assert(cleaned.namespace == XSLTNamespace, f"Root element must be 'stylesheet' with namespace $XSLTNamespace (a literal result element is not supported as root node)");
+  assert(cleaned.attribute("version").get.text == "1.0", "Stylesheet version must be 1.0");
+  assert(cleaned.child.forall(n => n.namespace == XSLTNamespace && (n.label == "template" || n.label == "variable")), "Top-level elements must either be XSLT templates or variable definitions");
 
   // TODO: the spec requires us to evaluate variables in an order such that variables can depend on each other (as long
   // as there are no circular dependencies, which would result in an error), see spec section 11.4
   // var topLevelVariables = ...
-  var templates = trimmed.child
+  var templates = cleaned.child
     .filter(n => n.isInstanceOf[Elem] && n.label == "template")
     .map(n => n.asInstanceOf[Elem])
     .map(elem => TemplateElement(
@@ -24,8 +24,7 @@ class XSLTStylesheet(var source: Elem) {
                  ));
 
   def parseTemplate(template: Seq[Node]) : Seq[XSLTNode] = {
-    // filter out comments first
-    template.filter(n => !n.isInstanceOf[Comment]).map(parseNode(_));
+    template.map(parseNode(_));
   }
 
   def parseNode(node: Node) : XSLTNode = {
@@ -81,6 +80,11 @@ class XSLTStylesheet(var source: Elem) {
             val test = XPathExpression(elem.attribute("test").get.text)
             ChooseElement(List((test, parseTemplate(elem.child))), None)
           }
+          case "text" => {
+            val escapedContent = elem.text.replace("\"", "&quot;")
+            return ValueOfElement(new XPathExpression("\"" + f"$escapedContent" + "\""))
+          }
+          case _ => throw new UnsupportedOperationException(f"Unsupported XSLT element: ${elem.label}")
         }
       } else if (node.namespace == null) {
         LiteralElement(node.label,
@@ -111,6 +115,25 @@ class XSLTStylesheet(var source: Elem) {
                       .map(elem => (elem.attribute("name").get.text, XPathExpression(elem.attribute("select").get.text)))
     Map() ++ params
   }
+
+  /** This is based on scala.xml.Utility.trim */
+  def clean(x: Node): Node = x match {
+    case Elem(pre, lab, md, scp, child@_*) =>
+      val children = child flatMap cleanProper
+      Elem(pre, lab, md, scp, children.isEmpty, children: _*)
+  }
+
+  def cleanProper(x: Node): Seq[Node] = x match {
+    case Elem(pre, lab, md, scp, child@_*) =>
+      // preserve whitespace inside <xsl:text>
+      val children = if (x.namespace == XSLTNamespace && x.label == "text") child else child flatMap cleanProper
+      Elem(pre, lab, md, scp, children.isEmpty, children: _*)
+    case Text(s) =>
+      new TextBuffer().append(s).toText
+    case Comment(_) => Seq.empty // strip comments completely
+    case _ =>
+      x
+  }
 }
 
 case class TemplateElement(name: Option[String],
@@ -130,4 +153,3 @@ case class CallTemplateElement(name: String, params: Map[String, XPathExpression
 case class SetAttributeElement(attribute: String, value: Seq[XSLTNode]) extends XSLTNode
 case class ValueOfElement(select: XPathExpression) extends XSLTNode
 case class ChooseElement(branches: Seq[(XPathExpression, Seq[XSLTNode])], otherwise: Option[Seq[XSLTNode]]) extends XSLTNode
-
