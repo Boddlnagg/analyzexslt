@@ -37,9 +37,7 @@ class ParseStylesheetSuite extends FunSuite {
 
   test("Parse stylesheet (Wikipedia #2 simplified)") {
     val stylesheet =
-      <xsl:stylesheet
-      version="1.0"
-      xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+      <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
         <xsl:template match="/persons">
           <html>
             <head>

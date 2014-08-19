@@ -84,7 +84,7 @@ object XPathExpr {
       case filterExpr: JFilterExpr => FilterExpr(parse(filterExpr.getExpr))
       case callExpr: JFunctionCallExpr =>
         assert(callExpr.getPrefix == null || callExpr.getPrefix.length == 0, "Prefixed functions are not supported")
-        FunctionCallExpr(callExpr.getFunctionName, callExpr.getParameters.map(p => parse(p.asInstanceOf[Expr])))
+        FunctionCallExpr(callExpr.getFunctionName, callExpr.getParameters.map(p => parse(p.asInstanceOf[Expr])).toList)
       case litExpr: JLiteralExpr => LiteralExpr(litExpr.getLiteral)
       case numExpr: JNumberExpr => NumberExpr(numExpr.getNumber)
       case varRefExpr: JVariableReferenceExpr =>
@@ -96,7 +96,7 @@ object XPathExpr {
         val locPath = parse(pathExpr.getLocationPath)
         assert(locPath.isInstanceOf[LocationPath])
         PathExpr(filter.asInstanceOf[FilterExpr], locPath.asInstanceOf[LocationPath])
-      case locPath: JLocationPath => LocationPath(locPath.getSteps.map(s => XPathStep.parse(s.asInstanceOf[Step])), locPath.isAbsolute)
+      case locPath: JLocationPath => LocationPath(locPath.getSteps.map(s => XPathStep.parse(s.asInstanceOf[Step])).toList, locPath.isAbsolute)
       case _ => throw new UnsupportedOperationException(f"XPath expression not supported: ${expr.getText}")
     }
   }
