@@ -10,7 +10,7 @@ object XSLTTemplate {
     assert(XSLT.isElem(elem, "template"))
     XSLTTemplate(
       elem.attribute("name").map(_.text),
-      elem.attribute("match").map(a => XPathExpr.parse(a.text)),
+      elem.attribute("match").map(a => XPathExpr.parsePattern(a.text)),
       parseParams(elem.child),
       parseTemplate(elem.child.filter(n => !XSLT.isElem(n, "param")))
     )

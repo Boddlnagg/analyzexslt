@@ -29,16 +29,20 @@ case object GreaterThanEqualOperator extends RelationalOperator
 
 abstract class XPathExpr
 
-abstract class BinaryExpr(lhs: XPathExpr, rhs: XPathExpr) extends XPathExpr
-case class PlusExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr(lhs, rhs)
-case class MinusExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr(lhs, rhs)
-case class MultiplyExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr(lhs, rhs)
-case class DivExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr(lhs, rhs)
-case class ModExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr(lhs, rhs)
-case class RelationalExpr(lhs: XPathExpr, rhs: XPathExpr, relOp: RelationalOperator) extends BinaryExpr(lhs, rhs)
-case class AndExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr(lhs, rhs)
-case class OrExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr(lhs, rhs)
-case class UnionExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr(lhs, rhs)
+abstract class BinaryExpr extends XPathExpr {
+  def lhs: XPathExpr
+  def rhs: XPathExpr
+}
+
+case class PlusExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
+case class MinusExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
+case class MultiplyExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
+case class DivExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
+case class ModExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
+case class RelationalExpr(lhs: XPathExpr, rhs: XPathExpr, relOp: RelationalOperator) extends BinaryExpr
+case class AndExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
+case class OrExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
+case class UnionExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
 case class NegExpr(expr: XPathExpr) extends XPathExpr
 case class FilterExpr(expr: XPathExpr) extends XPathExpr
 case class FunctionCallExpr(name: String, params: Seq[XPathExpr]) extends XPathExpr
@@ -91,8 +95,8 @@ object XPathExpr {
         assert(varRefExpr.getPrefix == null || varRefExpr.getPrefix.length == 0, "Prefixed variables are not supported")
         VariableReferenceExpr(varRefExpr.getVariableName)
       case pathExpr: JPathExpr =>
-        val filter = parse(pathExpr.getFilterExpr)
-        assert(filter.isInstanceOf[FilterExpr])
+        var filter = parse(pathExpr.getFilterExpr)
+        if (!filter.isInstanceOf[FilterExpr]) { filter = FilterExpr(filter) }
         val locPath = parse(pathExpr.getLocationPath)
         assert(locPath.isInstanceOf[LocationPath])
         PathExpr(filter.asInstanceOf[FilterExpr], locPath.asInstanceOf[LocationPath])
@@ -107,5 +111,28 @@ object XPathExpr {
     reader.setXPathHandler(handler)
     reader.parse(string)
     parse(handler.getXPathExpr.getRootExpr)
+  }
+
+  def parsePattern(string: String) : XPathExpr = {
+    val parsed = parse(string)
+    assert(isPattern(parsed), "Expected XSLT pattern")
+    parsed
+  }
+
+  def isPattern(expr: XPathExpr) : Boolean = {
+    // Patterns are a restricted subset of XPath expressions, see spec section 5.2
+    // NOTE: id() and key() patterns are not supported
+    expr match {
+      case LocationPath(steps, _) => steps.forall(s => s match {
+        // plain '//' operator is allowed and equivalent to descendant-or-self::node()/
+        case AllNodeStep(DescendantOrSelfAxis, List()) => true
+        // otherwise only child:: and attribute:: axes are allowed
+        case step : XPathStep => step.axis == AttributeAxis || step.axis == ChildAxis
+        // all other axes are forbidden
+        case _ => false
+      })
+      case UnionExpr(lhs, rhs) => isPattern(lhs) && isPattern(rhs)
+      case _ => false
+    }
   }
 }

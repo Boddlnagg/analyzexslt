@@ -6,12 +6,16 @@ import org.jaxen.expr.{AllNodeStep => JAllNodeStep,
                        TextNodeStep => JTextNodeStep,
                        NameStep => JNameStep}
 
-abstract class XPathStep(axis: XPathAxis, predicates: Seq[XPathExpr])
-case class AllNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr]) extends XPathStep(axis, predicates)
-case class CommentNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr]) extends XPathStep(axis, predicates)
-case class ProcessingInstructionNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr], name: String) extends XPathStep(axis, predicates)
-case class TextNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr]) extends XPathStep(axis, predicates)
-case class NameStep(axis: XPathAxis, predicates: Seq[XPathExpr], name: String) extends XPathStep(axis, predicates)
+abstract class XPathStep {
+  def axis: XPathAxis
+  def predicates: Seq[XPathExpr]
+}
+
+case class AllNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr]) extends XPathStep
+case class CommentNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr]) extends XPathStep
+case class ProcessingInstructionNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr], name: String) extends XPathStep
+case class TextNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr]) extends XPathStep
+case class NameStep(axis: XPathAxis, predicates: Seq[XPathExpr], name: String) extends XPathStep
 
 object XPathStep {
   def parse(step: Step): XPathStep = {
