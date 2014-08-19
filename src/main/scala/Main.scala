@@ -1,6 +1,7 @@
 object Main {
 
   def main(args: Array[String]) {
-    println("TODO")
+    val expr = XPathExpr.parse("/a/b/c[@test]")
+    println(expr)
   }
 }

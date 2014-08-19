@@ -23,6 +23,8 @@ class XSLTStylesheet(var source: Elem) {
                   parseTemplate(elem.child.filter(n => !(n.isInstanceOf[Elem] && n.namespace == XSLTNamespace && n.label == "param")))
                  ));
 
+  // TODO: implement built-in template rules (spec section 5.8)
+
   def parseTemplate(template: Seq[Node]) : Seq[XSLTNode] = {
     template.map(parseNode(_));
   }
@@ -130,7 +132,7 @@ class XSLTStylesheet(var source: Elem) {
       Elem(pre, lab, md, scp, children.isEmpty, children: _*)
     case Text(s) =>
       new TextBuffer().append(s).toText
-    case Comment(_) => Seq.empty // strip comments completely
+    case Comment(_) => Seq.empty // strip comments completely (see spec section 3)
     case _ =>
       x
   }
