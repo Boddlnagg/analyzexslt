@@ -19,7 +19,7 @@ case class NameStep(axis: XPathAxis, predicates: Seq[XPathExpr], name: String) e
 
 object XPathStep {
   def parse(step: Step): XPathStep = {
-    val axis = XPathAxis.parse(step.getAxis)
+    val axis = XPathAxis(step.getAxis)
     val predicates = step.getPredicates.map(p => XPathExpr.parse(p.asInstanceOf[Predicate].getExpr)).toList
     step match {
       // ::node()

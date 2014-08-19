@@ -53,6 +53,14 @@ case class PathExpr(filter: FilterExpr, locationPath: LocationPath) extends XPat
 case class LocationPath(steps: Seq[XPathStep], isAbsolute: Boolean) extends XPathExpr
 
 object XPathExpr {
+  def apply(string: String) : XPathExpr = {
+    val reader : XPathReader = XPathReaderFactory.createReader()
+    val handler : JaxenHandler = new JaxenHandler()
+    reader.setXPathHandler(handler)
+    reader.parse(string)
+    parse(handler.getXPathExpr.getRootExpr)
+  }
+
   def parse(expr: Expr): XPathExpr = {
     expr match {
       case addExpr: JAdditiveExpr =>
@@ -103,20 +111,6 @@ object XPathExpr {
       case locPath: JLocationPath => LocationPath(locPath.getSteps.map(s => XPathStep.parse(s.asInstanceOf[Step])).toList, locPath.isAbsolute)
       case _ => throw new UnsupportedOperationException(f"XPath expression not supported: ${expr.getText}")
     }
-  }
-
-  def parse(string: String) : XPathExpr = {
-    val reader : XPathReader = XPathReaderFactory.createReader()
-    val handler : JaxenHandler = new JaxenHandler()
-    reader.setXPathHandler(handler)
-    reader.parse(string)
-    parse(handler.getXPathExpr.getRootExpr)
-  }
-
-  def parsePattern(string: String) : XPathExpr = {
-    val parsed = parse(string)
-    assert(isPattern(parsed), "Expected XSLT pattern")
-    parsed
   }
 
   def isPattern(expr: XPathExpr) : Boolean = {

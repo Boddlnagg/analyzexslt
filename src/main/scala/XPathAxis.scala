@@ -16,7 +16,7 @@ case object AncestorOrSelfAxis extends XPathAxis
 case object AncestorAxis extends XPathAxis
 
 object XPathAxis {
-  def parse(axis: Int) : XPathAxis = axis match {
+  def apply(axis: Int) : XPathAxis = axis match {
     case Axis.CHILD => ChildAxis
     case Axis.DESCENDANT => DescendantAxis
     case Axis.PARENT => ParentAxis

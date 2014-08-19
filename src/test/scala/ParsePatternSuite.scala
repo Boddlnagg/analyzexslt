@@ -26,7 +26,7 @@ class ParsePatternSuite extends FunSuite {
     )
 
     patterns.foreach(p => {
-      val parsed = XPathExpr.parse(p)
+      val parsed = XPathExpr(p)
       assert(XPathExpr.isPattern(parsed), f"$p must be recognized as valid pattern")
     })
   }
@@ -38,7 +38,7 @@ class ParsePatternSuite extends FunSuite {
     )
 
     notPatterns.foreach(p => {
-      val parsed = XPathExpr.parse(p)
+      val parsed = XPathExpr(p)
       assert(!XPathExpr.isPattern(parsed), f"$p must not be recognized as valid pattern")
     })
   }

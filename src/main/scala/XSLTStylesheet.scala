@@ -26,7 +26,7 @@ class XSLTStylesheet(var source: Elem) {
   var templates = cleaned.child
     .filter(XSLT.isElem(_, "template"))
     .map(n => n.asInstanceOf[Elem])
-    .map(elem => XSLTTemplate.parse(elem)).toList
+    .map(elem => XSLTTemplate(elem)).toList
 
   // TODO: implement built-in template rules (spec section 5.8)
 

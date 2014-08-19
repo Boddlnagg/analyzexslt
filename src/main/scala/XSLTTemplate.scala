@@ -1,16 +1,21 @@
 import scala.xml.{Text, Node, Elem}
 
-case class XSLTTemplate(name: Option[String],
-                        matches: Option[XPathExpr],
-                        defaultParams: Map[String, XPathExpr],
-                        content: Seq[XSLTNode])
+class XSLTTemplate(val name: Option[String],
+                   val matches: Option[XPathExpr],
+                   val defaultParams: Map[String, XPathExpr],
+                   val content: Seq[XSLTNode]) {
+
+  if (matches.isDefined) assert(XPathExpr.isPattern(matches.get), "Template 'match' attribute must be a pattern.")
+
+  def priority = ??? // TODO (spec section 5.5)
+}
 
 object XSLTTemplate {
-  def parse(elem: Elem): XSLTTemplate = {
+  def apply(elem: Elem): XSLTTemplate = {
     assert(XSLT.isElem(elem, "template"))
-    XSLTTemplate(
+    new XSLTTemplate(
       elem.attribute("name").map(_.text),
-      elem.attribute("match").map(a => XPathExpr.parsePattern(a.text)),
+      elem.attribute("match").map(a => XPathExpr(a.text)),
       parseParams(elem.child),
       parseTemplate(elem.child.filter(n => !XSLT.isElem(n, "param")))
     )
@@ -27,12 +32,12 @@ object XSLTTemplate {
         // spec section 11.2
         case "variable" =>
           assert(elem.child.nonEmpty, "Variable definitions are only supported when they use the 'select' attribute")
-          val select = XPathExpr.parse(elem.attribute("select").get.text)
+          val select = XPathExpr(elem.attribute("select").get.text)
           VariableDefinitionElement(elem.attribute("name").get.text, select)
 
         // spec sections 5.4 and 11.6
         case "apply-templates" =>
-          val select = elem.attribute("select").map(a => XPathExpr.parse(a.text))
+          val select = elem.attribute("select").map(a => XPathExpr(a.text))
           assert(elem.child.forall(XSLT.isElem(_, "with-param")),
             "children of 'apply-templates' element must only be 'with-param' ('sort' is not supported)")
           ApplyTemplatesElement(select, parseWithParams(elem))
@@ -53,13 +58,13 @@ object XSLTTemplate {
 
         // spec section 7.6.1
         case "value-of" =>
-          ValueOfElement(XPathExpr.parse(elem.attribute("select").get.text))
+          ValueOfElement(XPathExpr(elem.attribute("select").get.text))
 
         // spec section 9.2
         case "choose" =>
           val xsltChildren = elem.child.filter(XSLT.isElem).map(_.asInstanceOf[Elem])
           val whenBranches = xsltChildren.filter(n => n.label == "when")
-            .map(n => (XPathExpr.parse(n.attribute("test").get.text), parseTemplate(n.child)))
+            .map(n => (XPathExpr(n.attribute("test").get.text), parseTemplate(n.child)))
           val otherwiseBranch = xsltChildren.filter(n => n.label == "otherwise")
             .map(n => parseTemplate(n.child))
             .headOption
@@ -67,7 +72,7 @@ object XSLTTemplate {
 
         // spec section 9.1
         case "if" =>
-          val test = XPathExpr.parse(elem.attribute("test").get.text)
+          val test = XPathExpr(elem.attribute("test").get.text)
           ChooseElement(List((test, parseTemplate(elem.child))), None)
 
         // spec section 7.2 and 3.4 (whitespace stripping)
@@ -91,7 +96,7 @@ object XSLTTemplate {
     // TODO: support content of param element instead of "select" attribute?
     val params = input.filter(XSLT.isElem(_, "param"))
       .map(n => n.asInstanceOf[Elem])
-      .map(elem => (elem.attribute("name").get.text, XPathExpr.parse(elem.attribute("select").get.text)))
+      .map(elem => (elem.attribute("name").get.text, XPathExpr(elem.attribute("select").get.text)))
     Map() ++ params
   }
 
@@ -100,7 +105,7 @@ object XSLTTemplate {
     // TODO: merge function with parseParams() above
     val params = input.filter(n => n.isInstanceOf[Elem] && n.namespace == XSLT.Namespace && n.label == "with-param")
       .map(n => n.asInstanceOf[Elem])
-      .map(elem => (elem.attribute("name").get.text, XPathExpr.parse(elem.attribute("select").get.text)))
+      .map(elem => (elem.attribute("name").get.text, XPathExpr(elem.attribute("select").get.text)))
     Map() ++ params
   }
 }
