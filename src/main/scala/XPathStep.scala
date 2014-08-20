@@ -13,7 +13,7 @@ abstract class XPathStep {
 
 case class AllNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr]) extends XPathStep
 case class CommentNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr]) extends XPathStep
-case class ProcessingInstructionNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr], name: String) extends XPathStep
+case class ProcessingInstructionNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr], name: Option[String]) extends XPathStep
 case class TextNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr]) extends XPathStep
 case class NameStep(axis: XPathAxis, predicates: Seq[XPathExpr], name: String) extends XPathStep
 
@@ -26,8 +26,11 @@ object XPathStep {
       case allNode: JAllNodeStep => AllNodeStep(axis, predicates)
       // ::comment()
       case commentNode: JCommentNodeStep => CommentNodeStep(axis, predicates)
-      // ::processing-instruction('name')
-      case piNode: JProcessingInstructionNodeStep => ProcessingInstructionNodeStep(axis, predicates, piNode.getName)
+      // ::processing-instruction() OR ::processing-instruction('name')
+      case piNode: JProcessingInstructionNodeStep => ProcessingInstructionNodeStep(axis, predicates, piNode.getName match {
+        case null | "" => None
+        case s => Some(s)
+      })
       // ::text()
       case textNode: JTextNodeStep => TextNodeStep(axis, predicates)
       // any name (might also be '*')

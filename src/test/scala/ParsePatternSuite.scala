@@ -42,4 +42,35 @@ class ParsePatternSuite extends FunSuite {
       assert(!XPathExpr.isPattern(parsed), f"$p must not be recognized as valid pattern")
     })
   }
+
+  test("Default priorities") {
+    // this list is taken from http://www.lenzconsulting.com/how-xslt-works/
+    val patterns = List[(Double, String)](
+      (-0.5, "*"),
+      (-0.5, "@*"),
+      (-0.5, "node()"),
+      (-0.5, "text()"),
+      (-0.5, "comment()"),
+      (-0.5, "processing-instruction()"),
+      //(-0.25, "xyz:*"), NOT SUPPORTED
+      //(-0.25, "@xyz:*"), NOT SUPPORTED
+      (0, "foo"),
+      //(0, "xyz:foo"), NOT SUPPORTED
+      (0, "@foo"),
+      //(0, "@xyz:foo"), NOT SUPPORTED
+      (0, "processing-instruction('foo')"),
+      (0.5, "/"),
+      (0.5, "/foo"),
+      (0.5, "foo/bar"),
+      (0.5, "foo[2]"),
+      (0.5, "/foo[bar='bat']")
+    )
+
+    patterns.foreach { case (prio, pat) => {
+      val parsed = XPathExpr(pat)
+      assert(XPathExpr.isPattern(parsed))
+      assert(parsed.isInstanceOf[LocationPath])
+      assert(prio == XPathExpr.getDefaultPriority(parsed.asInstanceOf[LocationPath]), f"Wrong priority for pattern $pat")
+    }}
+  }
 }

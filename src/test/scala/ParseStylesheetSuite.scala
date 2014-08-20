@@ -32,7 +32,11 @@ class ParseStylesheetSuite extends FunSuite {
         </xsl:template>
 
       </xsl:stylesheet>
-    new XSLTStylesheet(stylesheet)
+    val parsed = new XSLTStylesheet(stylesheet)
+    assert(parsed.namedTemplates.isEmpty, "There must not be any named templates")
+    assert(parsed.matchableTemplates
+      .filter {case (_, _, _, importPrecedence) => importPrecedence == XSLT.UserDefinedImportPrecedence}
+      .size == 2, "There must be 2 user defined matchable templates")
   }
 
   test("Parse stylesheet (Wikipedia #2 simplified)") {
@@ -61,6 +65,10 @@ class ParseStylesheetSuite extends FunSuite {
         </xsl:template>
 
       </xsl:stylesheet>
-    new XSLTStylesheet(stylesheet)
+    val parsed = new XSLTStylesheet(stylesheet)
+    assert(parsed.namedTemplates.isEmpty, "There must not be any named templates")
+    assert(parsed.matchableTemplates
+                 .filter {case (_, _, _, importPrecedence) => importPrecedence == XSLT.UserDefinedImportPrecedence}
+                 .size == 2, "There must be 2 user defined matchable templates")
   }
 }

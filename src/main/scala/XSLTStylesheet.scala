@@ -2,6 +2,8 @@ import scala.xml._
 
 object XSLT {
   val Namespace = "http://www.w3.org/1999/XSL/Transform"
+  val BuiltInImportPrecedence = -1
+  val UserDefinedImportPrecedence = 0
 
   def isElem(node: Node): Boolean = {
     node.isInstanceOf[Elem] && node.namespace == Namespace
@@ -13,7 +15,6 @@ object XSLT {
 }
 
 class XSLTStylesheet(var source: Elem) {
-  // the content of xsl:text should not be trimmed, but is currently not supported anyway
   val cleaned = clean(source).asInstanceOf[Elem]
 
   assert(cleaned.namespace == XSLT.Namespace, f"Root element must be 'stylesheet' with namespace ${XSLT.Namespace} (a literal result element is not supported as root node)")
@@ -23,10 +24,43 @@ class XSLTStylesheet(var source: Elem) {
   // TODO: the spec requires us to evaluate variables in an order such that variables can depend on each other (as long
   // as there are no circular dependencies, which would result in an error), see spec section 11.4
   // var topLevelVariables = ...
-  var templates = cleaned.child
+
+  val templates = cleaned.child
     .filter(XSLT.isElem(_, "template"))
     .map(n => n.asInstanceOf[Elem])
-    .map(elem => XSLTTemplate(elem)).toList
+    .map(elem => (XSLTTemplate(elem),
+                  elem.attribute("name").map(_.text),
+                  elem.attribute("match").map(a => XPathExpr(a.text)),
+                  XSLT.UserDefinedImportPrecedence
+                 ))
+    .toList // returns a list of tuples (template, name?, match?, precedence)
+
+  templates.foreach  {
+    case (_, None, None, _) => assert(false, "Templates must have either 'name' or 'match' attribute defined")
+    case (_, _, Some(pattern), _) => assert(XPathExpr.isPattern(pattern), "Template 'match' attribute must be a pattern.")
+    case _ => () // nothing to check
+  }
+
+  // Instead of having the original templates as a list, transform them to a Map[String, XSLTTemplate] for named
+  // templates and a List[(LocationPath, Double, XSLTTemplate)] ordered by priority for those with 'match' attribute.
+  // Union patterns are split so that every template is matched by exactly one location path.
+
+  val namedTemplates = Map() ++ templates.flatMap {
+    case (tmpl, Some(name), _, _) => Some((name, tmpl))
+    case _ => None
+  }
+
+  // add built-in templates (see spec section 5.8)
+  val builtinTemplates = List[(XSLTTemplate, Option[String], Option[XPathExpr], Int)](
+    (new XSLTTemplate(List(ApplyTemplatesElement())), None, Some(XPathExpr("*|/")), XSLT.BuiltInImportPrecedence),
+    (new XSLTTemplate(List(ValueOfElement(XPathExpr(".")))), None, Some(XPathExpr("text()|@*")), XSLT.BuiltInImportPrecedence),
+    (new XSLTTemplate(Nil), None, Some(XPathExpr("processing-instruction()|comment()")), XSLT.BuiltInImportPrecedence)
+  )
+
+  val matchableTemplates = (builtinTemplates ++ templates).flatMap {
+    case (tmpl, _, Some(pattern), importPrecedence) => XPathExpr.splitUnionPattern(pattern).map(pat => (pat, tmpl, XPathExpr.getDefaultPriority(pat), importPrecedence))
+    case _ => Nil
+  }.sortBy { case (_, _, priority, importPrecedence) => (importPrecedence, priority) }
 
   // TODO: implement built-in template rules (spec section 5.8)
 

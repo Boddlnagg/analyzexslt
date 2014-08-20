@@ -1,3 +1,5 @@
+import java.security.InvalidParameterException
+
 import org.jaxen.JaxenHandler
 import org.jaxen.expr.{Expr, Step}
 import org.jaxen.expr.{AdditiveExpr => JAdditiveExpr,
@@ -127,6 +129,31 @@ object XPathExpr {
       })
       case UnionExpr(lhs, rhs) => isPattern(lhs) && isPattern(rhs)
       case _ => false
+    }
+  }
+
+  def splitUnionPattern(expr: XPathExpr) : List[LocationPath] = {
+    expr match {
+      case UnionExpr(lhs, rhs) => splitUnionPattern(lhs) ++ splitUnionPattern(rhs)
+      case pattern@LocationPath(_, _) => List(pattern)
+      case _ => throw new InvalidParameterException(f"$expr is not a pattern")
+    }
+  }
+
+  def getDefaultPriority(pattern: LocationPath) : Double = {
+    // according to spec section 5.5 and the table at http://www.lenzconsulting.com/how-xslt-works/
+    // NOTE: prefixed names are not implemented (they would have a default priority of -0.25)
+    if (pattern.steps.size != 1 || pattern.isAbsolute)
+      0.5 // more complex patterns or absolute patterns (also matches just '/' which has no steps)
+    else pattern.steps.head match {
+      case NameStep(_, Nil, "*") => -0.5
+      case NameStep(_, Nil, _) => 0
+      case AllNodeStep(ChildAxis | AttributeAxis, _)
+           | CommentNodeStep(_, _)
+           | TextNodeStep(_, _)
+           | ProcessingInstructionNodeStep(_, _, None) => -0.5
+      case ProcessingInstructionNodeStep(_, _, Some(_)) => 0
+      case _ => 0.5
     }
   }
 }

@@ -1,23 +1,13 @@
 import scala.xml.{Text, Node, Elem}
 
-class XSLTTemplate(val name: Option[String],
-                   val matches: Option[XPathExpr],
-                   val defaultParams: Map[String, XPathExpr],
-                   val content: Seq[XSLTNode]) {
-
-  if (matches.isDefined) assert(XPathExpr.isPattern(matches.get), "Template 'match' attribute must be a pattern.")
-
-  def priority = ??? // TODO (spec section 5.5)
-}
+class XSLTTemplate(val content: Seq[XSLTNode], val defaultParams: Map[String, XPathExpr] = Map())
 
 object XSLTTemplate {
   def apply(elem: Elem): XSLTTemplate = {
     assert(XSLT.isElem(elem, "template"))
     new XSLTTemplate(
-      elem.attribute("name").map(_.text),
-      elem.attribute("match").map(a => XPathExpr(a.text)),
-      parseParams(elem.child),
-      parseTemplate(elem.child.filter(n => !XSLT.isElem(n, "param")))
+      parseTemplate(elem.child.filter(n => !XSLT.isElem(n, "param"))),
+      parseParams(elem.child)
     )
   }
 
