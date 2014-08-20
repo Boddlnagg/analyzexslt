@@ -62,7 +62,10 @@ class XSLTStylesheet(var source: Elem) {
     case _ => Nil
   }.sortBy { case (_, _, priority, importPrecedence) => (importPrecedence, priority) }
 
-  // TODO: implement built-in template rules (spec section 5.8)
+  def transform(source: XMLElement): XMLElement = {
+    // TODO
+    source
+  }
 
   /** This is based on scala.xml.Utility.trim */
   def clean(x: Node): Node = x match {
