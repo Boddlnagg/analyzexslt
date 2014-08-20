@@ -39,7 +39,7 @@ class XSLTReferenceSuite extends FunSuite {
   }
 
   def assertTransformMatches(xslt: Elem, data: Elem) = {
-    assertResult(transformJava(xslt, data)) (transformScala(xslt, data))
+    assertResult(transformJava(xslt, data)) { transformScala(xslt, data) }
   }
 
   def transformScala(xslt: Elem, data: Elem): XMLElement = {

@@ -70,7 +70,9 @@ class ParsePatternSuite extends FunSuite {
       val parsed = XPathExpr(pat)
       assert(XPathExpr.isPattern(parsed))
       assert(parsed.isInstanceOf[LocationPath])
-      assert(prio == XPathExpr.getDefaultPriority(parsed.asInstanceOf[LocationPath]), f"Wrong priority for pattern $pat")
+      assertResult(prio, f"Wrong priority for pattern $pat") {
+        XPathExpr.getDefaultPriority(parsed.asInstanceOf[LocationPath])
+      }
     }}
   }
 }
