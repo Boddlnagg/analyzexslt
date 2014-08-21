@@ -5,12 +5,12 @@ import javax.xml.transform.stream.{StreamResult, StreamSource}
 import scala.xml.{XML, Elem}
 
 object TransformHelper {
-  def transformScala(xslt: Elem, data: Elem): XMLElement = {
+  def transformScala(xslt: Elem, data: Elem): XMLRoot = {
     val stylesheet = new XSLTStylesheet(xslt)
-    stylesheet.transform(XMLElement(data))
+    stylesheet.transform(XMLRoot(data))
   }
 
-  def transformJava(xslt: Elem, data: Elem): XMLElement = {
+  def transformJava(xslt: Elem, data: Elem): XMLRoot = {
     // this is a wrapper around the javax.xml.transform interface
     val xmlResultResource = new StringWriter()
     val xmlTransformer = TransformerFactory.newInstance().newTransformer(
@@ -20,6 +20,6 @@ object TransformHelper {
     xmlTransformer.transform(
       new StreamSource(new StringReader(data.toString)), new StreamResult(xmlResultResource)
     )
-    XMLElement(XML.loadString(xmlResultResource.getBuffer.toString))
+    XMLRoot(XML.loadString(xmlResultResource.getBuffer.toString))
   }
 }

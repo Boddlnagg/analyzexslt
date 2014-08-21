@@ -60,11 +60,24 @@ class XSLTStylesheet(var source: Elem) {
   val matchableTemplates = (builtinTemplates ++ templates).flatMap {
     case (tmpl, _, Some(pattern), importPrecedence) => XPathExpr.splitUnionPattern(pattern).map(pat => (pat, tmpl, XPathExpr.getDefaultPriority(pat), importPrecedence))
     case _ => Nil
-  }.sortBy { case (_, _, priority, importPrecedence) => (importPrecedence, priority) }
+  }.sortBy { case (_, _, priority, importPrecedence) => (importPrecedence, priority) } // sort by precedence, then by priority
 
-  def transform(source: XMLElement): XMLElement = {
-    // TODO
-    source
+  def transform(source: XMLRoot): XMLRoot = {
+    // process according to XSLT spec section 5.1
+    transform(List(source)) match {
+      case List(elem@XMLElement(_, _, _, _)) => XMLRoot(elem)
+      case _ => throw new IllegalStateException("Transformation result must be a single XMLElement")
+    }
+  }
+
+  def transform(sources: List[XMLNode]) : List[XMLNode] = {
+    // TODO: create context, choose template, instantiate template, append results
+    sources
+  }
+
+  def chooseTemplate(elem: XMLNode) = {
+    def allMatching = matchableTemplates.filter { case (tmpl, _, _, _) => XPathMatcher.matches(elem, tmpl)}
+    allMatching.last // this one will have highest precedence and priority, because the templates are sorted
   }
 
   /** This is based on scala.xml.Utility.trim */

@@ -1,5 +1,3 @@
-import java.security.InvalidParameterException
-
 import org.jaxen.JaxenHandler
 import org.jaxen.expr.{Expr, Step}
 import org.jaxen.expr.{AdditiveExpr => JAdditiveExpr,
@@ -136,7 +134,7 @@ object XPathExpr {
     expr match {
       case UnionExpr(lhs, rhs) => splitUnionPattern(lhs) ++ splitUnionPattern(rhs)
       case pattern@LocationPath(_, _) => List(pattern)
-      case _ => throw new InvalidParameterException(f"$expr is not a pattern")
+      case _ => throw new IllegalArgumentException(f"$expr is not a pattern")
     }
   }
 
