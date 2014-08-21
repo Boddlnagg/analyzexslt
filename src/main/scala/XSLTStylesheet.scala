@@ -96,9 +96,14 @@ class XSLTStylesheet(var source: Elem) {
       val children = if (XSLT.isElem(x, "text")) child else child flatMap cleanProper
       Elem(pre, lab, md, scp, children.isEmpty, children: _*)
     case Text(s) =>
-      new TextBuffer().append(s).toText
+      if (isOnlyWhitespace(s)) Nil else List(Text(s))
     case Comment(_) => Seq.empty // strip comments completely (see spec section 3)
     case _ =>
       x
+  }
+
+  def isOnlyWhitespace(s: String) = {
+    val xmlWhitespace = List('\t', '\n', '\r', ' ') // according to XSLT spec section 3.4
+    s.forall(c => xmlWhitespace.contains(c))
   }
 }

@@ -62,6 +62,34 @@ class XSLTReferenceSuite extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("Simple transform #3 (with text)") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match='/'>
+          <p>text before<br/> text after</p>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data = <foo/>
+    assertTransformMatches(xslt, data)
+  }
+
+  test("Simple transform #4 (with attribute)") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match='/'>
+          <p>
+            <xsl:attribute name="attr">
+              attr<p>-</p>value
+            </xsl:attribute>
+            text before<br/> text after</p>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data = <foo/>
+    assertTransformMatches(xslt, data)
+  }
+
   def assertTransformMatches(xslt: Elem, data: Elem) = {
     assertResult(TransformHelper.transformJava(xslt, data)) { TransformHelper.transformScala(xslt, data) }
   }
