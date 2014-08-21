@@ -31,4 +31,13 @@ object XPathAxis {
     case Axis.ANCESTOR_OR_SELF => AncestorOrSelfAxis
     case Axis.ANCESTOR => AncestorAxis
   }
+
+  def isPrincipalNodeType(axis: XPathAxis, node: XMLNode): Boolean = {
+    // see XPath spec section 2.3
+    axis match {
+      case AttributeAxis => node.isInstanceOf[XMLAttribute]
+      case NamespaceAxis => false // namespace nodes are not supported
+      case _ => node.isInstanceOf[XMLElement]
+    }
+  }
 }

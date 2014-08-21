@@ -1,8 +1,5 @@
 import org.scalatest.FunSuite
-import java.io.{StringReader, StringWriter}
-import javax.xml.transform.{TransformerFactory, OutputKeys}
-import javax.xml.transform.stream.{StreamResult, StreamSource}
-import scala.xml.{XML, Elem}
+import scala.xml.Elem
 
 class XSLTReferenceSuite extends FunSuite {
   test("Wikipedia (Java Example)") {
@@ -26,6 +23,21 @@ class XSLTReferenceSuite extends FunSuite {
     assertTransformMatches(TestData.WikipediaStylesheet2, TestData.WikipediaData)
   }
 
+  test("Attribute match") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/root">
+          <xsl:apply-templates select="elem/@attr"/>
+        </xsl:template>
+        <xsl:template match="@attr">
+          <result><xsl:value-of select="."/></result>
+        </xsl:template>
+      </xsl:stylesheet>
+    val data = <root><elem attr="value"/></root>
+
+    assertTransformMatches(xslt, data)
+  }
+
   test("Simple transform (input = output)") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -39,24 +51,6 @@ class XSLTReferenceSuite extends FunSuite {
   }
 
   def assertTransformMatches(xslt: Elem, data: Elem) = {
-    assertResult(transformJava(xslt, data)) { transformScala(xslt, data) }
-  }
-
-  def transformScala(xslt: Elem, data: Elem): XMLElement = {
-    val stylesheet = new XSLTStylesheet(xslt)
-    stylesheet.transform(XMLElement(data))
-  }
-
-  def transformJava(xslt: Elem, data: Elem): XMLElement = {
-    // this is a wrapper around the javax.xml.transform interface
-    val xmlResultResource = new StringWriter()
-    val xmlTransformer = TransformerFactory.newInstance().newTransformer(
-      new StreamSource(new StringReader(xslt.toString))
-    )
-    xmlTransformer.setOutputProperty(OutputKeys.METHOD, "xml")
-    xmlTransformer.transform(
-      new StreamSource(new StringReader(data.toString)), new StreamResult(xmlResultResource)
-    )
-    XMLElement(XML.loadString(xmlResultResource.getBuffer.toString))
+    assertResult(TransformHelper.transformJava(xslt, data)) { TransformHelper.transformScala(xslt, data) }
   }
 }

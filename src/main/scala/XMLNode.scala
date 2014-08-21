@@ -2,13 +2,22 @@ import scala.xml._
 import scala.collection.mutable.MutableList
 
 abstract class XMLNode {
-  var parent: XMLElement
+  var parent: XMLNode
 }
-// used for elements and the root node (XPath spec sections 5.1 and 5.2)
-case class XMLElement(val name: String,
+
+// XPath spec section 5.1 (comments in the root node are not supported, processing instructions are generally not implemented)
+case class XMLRoot(elem: XMLElement) extends XMLNode {
+  elem.parent = this
+
+  var parent : XMLNode = null
+  override def toString = elem.toString
+}
+
+// XPath spec section 5.2
+case class XMLElement(name: String,
                       var attributes: MutableList[XMLAttribute],
                       var children: MutableList[XMLNode],
-                      var parent: XMLElement) extends XMLNode {
+                      var parent: XMLNode) extends XMLNode {
 
   def appendChild(child: XMLNode) = {
     assert(!child.isInstanceOf[XMLAttribute], "Children must not be attribute nodes.")
@@ -33,19 +42,19 @@ case class XMLElement(val name: String,
 }
 
 // XPath spec section 5.3
-case class XMLAttribute(val name: String, val value: String, var parent: XMLElement = null) extends XMLNode {
+case class XMLAttribute(name: String, value: String, var parent: XMLNode = null) extends XMLNode {
   override def toString = {
     name + "=" + "\"" + value + "\""
   }
 }
 // XPath spec section 5.6
-case class XMLComment(val value: String, var parent: XMLElement = null) extends XMLNode {
+case class XMLComment(value: String, var parent: XMLNode = null) extends XMLNode {
   override def toString = {
     f"<!--$value-->"
   }
 }
 // XPath spec section 5.7
-case class XMLTextNode(val value: String, var parent: XMLElement = null) extends XMLNode {
+case class XMLTextNode(value: String, var parent: XMLNode = null) extends XMLNode {
   override def toString = {
     value
   }
@@ -62,6 +71,12 @@ object XMLElement {
     attributes.foreach(attr => result.addAttribute(attr))
     children.foreach(child => result.appendChild(child))
     result
+  }
+}
+
+object XMLRoot {
+  def apply(elem: Elem): XMLRoot = {
+    XMLRoot(XMLElement(elem))
   }
 }
 
