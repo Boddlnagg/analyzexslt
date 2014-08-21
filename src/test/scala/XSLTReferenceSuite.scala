@@ -38,7 +38,7 @@ class XSLTReferenceSuite extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
-  test("Simple transform #1 (input = output)") {
+  test("Simple transform (input = output)") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match='/'>
@@ -50,7 +50,7 @@ class XSLTReferenceSuite extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
-  test("Simple transform #2") {
+  test("Literal elements") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match='/'>
@@ -62,7 +62,7 @@ class XSLTReferenceSuite extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
-  test("Simple transform #3 (with text)") {
+  test("Literal elements and text nodes") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match='/'>
@@ -74,7 +74,7 @@ class XSLTReferenceSuite extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
-  test("Simple transform #4 (with attribute)") {
+  test("<xsl:attribute>") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match='/'>
@@ -83,6 +83,36 @@ class XSLTReferenceSuite extends FunSuite {
               attr<p>-</p>value
             </xsl:attribute>
             text before<br/> text after</p>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data = <foo/>
+    assertTransformMatches(xslt, data)
+  }
+
+  test("Overwrite attribute") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match='/'>
+          <p attr="OLD">
+            <!-- This should overwrite the attribute in the literal so that the value will be 'NEW' -->
+            <xsl:attribute name="attr">NEW</xsl:attribute>
+          </p>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data = <foo/>
+    assertTransformMatches(xslt, data)
+  }
+
+  test("Set attribute after element") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match='/'>
+          <p attr="OLD">
+            <element/> <!-- This element invalidates the the following xsl:attribute, so that will be ignored -->
+            <xsl:attribute name="attr">NEW</xsl:attribute>
+          </p>
         </xsl:template>
       </xsl:stylesheet>
 
