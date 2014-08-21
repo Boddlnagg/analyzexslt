@@ -1,5 +1,3 @@
-import java.security.InvalidParameterException
-
 object XPathMatcher {
   def matches(node: XMLNode, path: LocationPath): Boolean = {
     // NOTE: only supports location path patterns (XSLT spec section 5.2) without predciates
@@ -9,10 +7,13 @@ object XPathMatcher {
       if (path.isAbsolute) node.isInstanceOf[XMLRoot] else true
     } else {
       val lastStep = path.steps.last
+      val restPath = LocationPath(path.steps.dropRight(1), path.isAbsolute)
       assert(lastStep.predicates.isEmpty, "predicates in paths are currently not supported")
       lastStep match {
         // special handling of pattern '//'
-        case AllNodeStep(DescendantOrSelfAxis, Nil) => ??? // does any ancestor match the rest of the path?
+        case AllNodeStep(DescendantOrSelfAxis, Nil) =>
+          // does any ancestor match the rest of the path?
+          node.ancestors.exists(a => matches(a, restPath))
         case _ =>  val lastStepMatches = lastStep match {
           // child::node() OR attribute::node()
           // this matches any node (regardless of axis type) according to spec section 2.3
@@ -43,7 +44,7 @@ object XPathMatcher {
           false
         } else {
           // does the parent match the rest of the path?
-          matches(node.parent, LocationPath(path.steps.dropRight(1), path.isAbsolute))
+          matches(node.parent, restPath)
         }
       }
     }

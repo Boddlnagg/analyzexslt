@@ -3,6 +3,11 @@ import scala.collection.mutable.MutableList
 
 abstract class XMLNode {
   var parent: XMLNode
+
+  def ancestors : List[XMLNode] = {
+    if (parent != null) parent :: parent.ancestors
+    else Nil
+  }
 }
 
 // XPath spec section 5.1 (comments in the root node are not supported, processing instructions are generally not implemented)
