@@ -6,37 +6,37 @@ import org.jaxen.expr.{AllNodeStep => JAllNodeStep,
                        TextNodeStep => JTextNodeStep,
                        NameStep => JNameStep}
 
-abstract class XPathStep {
-  def axis: XPathAxis
-  def predicates: Seq[XPathExpr]
-}
+case class XPathStep(axis: XPathAxis, test: NodeTest, predicates: Seq[XPathExpr])
 
-case class AllNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr]) extends XPathStep
-case class CommentNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr]) extends XPathStep
-case class ProcessingInstructionNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr], name: Option[String]) extends XPathStep
-case class TextNodeStep(axis: XPathAxis, predicates: Seq[XPathExpr]) extends XPathStep
-case class NameStep(axis: XPathAxis, predicates: Seq[XPathExpr], name: String) extends XPathStep
+abstract class NodeTest
+case object AllNodeTest extends NodeTest
+case object CommentNodeTest extends NodeTest
+case object TextNodeTest extends NodeTest
+case class NameTest(name: String) extends NodeTest
+case class ProcessingInstructionNodeTest(name: Option[String]) extends NodeTest
 
 object XPathStep {
   def parse(step: Step): XPathStep = {
     val axis = XPathAxis(step.getAxis)
     val predicates = step.getPredicates.map(p => XPathExpr.parse(p.asInstanceOf[Predicate].getExpr)).toList
-    step match {
+    val nodeTest = step match {
       // ::node()
-      case allNode: JAllNodeStep => AllNodeStep(axis, predicates)
+      case allNode: JAllNodeStep => AllNodeTest
       // ::comment()
-      case commentNode: JCommentNodeStep => CommentNodeStep(axis, predicates)
+      case commentNode: JCommentNodeStep => CommentNodeTest
       // ::processing-instruction() OR ::processing-instruction('name')
-      case piNode: JProcessingInstructionNodeStep => ProcessingInstructionNodeStep(axis, predicates, piNode.getName match {
-        case null | "" => None
-        case s => Some(s)
-      })
+      case piNode: JProcessingInstructionNodeStep =>
+        ProcessingInstructionNodeTest(piNode.getName match {
+          case null | "" => None
+          case s => Some(s)
+        })
       // ::text()
-      case textNode: JTextNodeStep => TextNodeStep(axis, predicates)
+      case textNode: JTextNodeStep => TextNodeTest
       // any name (might also be '*')
       case nameStep: JNameStep =>
         assert(nameStep.getPrefix == null || nameStep.getPrefix.length == 0, "Prefixed names are not supported")
-        NameStep(axis, predicates, nameStep.getLocalName)
+        NameTest(nameStep.getLocalName)
     }
+    XPathStep(axis, nodeTest, predicates)
   }
 }

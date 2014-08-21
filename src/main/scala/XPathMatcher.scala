@@ -11,33 +11,31 @@ object XPathMatcher {
       assert(lastStep.predicates.isEmpty, "predicates in paths are currently not supported")
       lastStep match {
         // special handling of pattern '//'
-        case AllNodeStep(DescendantOrSelfAxis, Nil) =>
+        case XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil) =>
           // does any ancestor match the rest of the path?
           node.ancestors.exists(a => matches(a, restPath))
         case _ =>  val lastStepMatches = lastStep match {
           // child::node() OR attribute::node()
           // this matches any node (regardless of axis type) according to spec section 2.3
-          case AllNodeStep(ChildAxis | AttributeAxis, Nil) => true
+          case XPathStep(ChildAxis | AttributeAxis, AllNodeTest, Nil) => true
           // child::comment()
-          case CommentNodeStep(ChildAxis, Nil) => node.isInstanceOf[XMLComment]
+          case XPathStep(ChildAxis, CommentNodeTest, Nil) => node.isInstanceOf[XMLComment]
           // child::text()
-          case TextNodeStep(ChildAxis, Nil) => node.isInstanceOf[XMLTextNode]
+          case XPathStep(ChildAxis, TextNodeTest, Nil) => node.isInstanceOf[XMLTextNode]
           // child::*
-          case NameStep(ChildAxis, Nil, "*") => node.isInstanceOf[XMLElement]
+          case XPathStep(ChildAxis, NameTest("*"), Nil) => node.isInstanceOf[XMLElement]
           // child::name
-          case NameStep(ChildAxis, Nil, name) => node.isInstanceOf[XMLElement] && node.asInstanceOf[XMLElement].name == name
+          case XPathStep(ChildAxis, NameTest(name), Nil) => node.isInstanceOf[XMLElement] && node.asInstanceOf[XMLElement].name == name
           // attribute::*
-          case NameStep(AttributeAxis, Nil, "*") => node.isInstanceOf[XMLAttribute]
+          case XPathStep(AttributeAxis, NameTest("*"), Nil) => node.isInstanceOf[XMLAttribute]
           // attribute::name
-          case NameStep(AttributeAxis, Nil, name) => node.isInstanceOf[XMLAttribute] && node.asInstanceOf[XMLAttribute].name == name
+          case XPathStep(AttributeAxis, NameTest(name), Nil) => node.isInstanceOf[XMLAttribute] && node.asInstanceOf[XMLAttribute].name == name
           // child::processing-instruction(name?)
           // can never match because processing instructions are not implemented
-          case ProcessingInstructionNodeStep(ChildAxis, Nil, _) => false
+          case XPathStep(ChildAxis, ProcessingInstructionNodeTest(_), Nil) => false
           // attribute::comment() OR attribute::processing-instruction(name?) OR attribute::text()
           // these can never match anything
-          case CommentNodeStep(AttributeAxis, _)
-               | ProcessingInstructionNodeStep(AttributeAxis, _, _)
-               | TextNodeStep(AttributeAxis, _) => false
+          case XPathStep(AttributeAxis, CommentNodeTest | ProcessingInstructionNodeTest(_) | TextNodeTest, _) => false
         }
 
         if (!lastStepMatches) {

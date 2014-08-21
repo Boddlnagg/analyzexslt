@@ -119,9 +119,9 @@ object XPathExpr {
     expr match {
       case LocationPath(steps, _) => steps.forall(s => s match {
         // plain '//' operator is allowed and equivalent to descendant-or-self::node()/
-        case AllNodeStep(DescendantOrSelfAxis, List()) => true
+        case XPathStep(DescendantOrSelfAxis, AllNodeTest, List()) => true
         // otherwise only child:: and attribute:: axes are allowed
-        case step : XPathStep => step.axis == AttributeAxis || step.axis == ChildAxis
+        case XPathStep(AttributeAxis | ChildAxis, _, _) => true
         // all other axes are forbidden
         case _ => false
       })
@@ -144,13 +144,11 @@ object XPathExpr {
     if (pattern.steps.size != 1 || pattern.isAbsolute)
       0.5 // more complex patterns or absolute patterns (also matches just '/' which has no steps)
     else pattern.steps.head match {
-      case NameStep(_, Nil, "*") => -0.5
-      case NameStep(_, Nil, _) => 0
-      case AllNodeStep(ChildAxis | AttributeAxis, _)
-           | CommentNodeStep(_, _)
-           | TextNodeStep(_, _)
-           | ProcessingInstructionNodeStep(_, _, None) => -0.5
-      case ProcessingInstructionNodeStep(_, _, Some(_)) => 0
+      case XPathStep(_, NameTest("*"), Nil) => -0.5
+      case XPathStep(_, NameTest(_), Nil) => 0
+      case XPathStep(ChildAxis | AttributeAxis, AllNodeTest, _)
+           | XPathStep(_, CommentNodeTest | TextNodeTest | ProcessingInstructionNodeTest(None), _) => -0.5
+      case XPathStep(_, ProcessingInstructionNodeTest(Some(_)), _) => 0
       case _ => 0.5
     }
   }
