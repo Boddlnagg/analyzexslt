@@ -16,6 +16,11 @@ case class XMLRoot(elem: XMLElement) extends XMLNode {
 
   var parent : XMLNode = null
   override def toString = elem.toString
+
+  override def equals(o: Any) = o match {
+    case that: XMLRoot => that.elem == this.elem
+    case _ => false
+  }
 }
 
 // XPath spec section 5.2
@@ -44,6 +49,11 @@ case class XMLElement(name: String,
       f"<$name$attr>$child</$name>"
     }
   }
+
+  override def equals(o: Any) = o match {
+    case that: XMLElement => that.name == this.name && that.attributes == this.attributes && that.children == this.children
+    case _ => false
+  }
 }
 
 // XPath spec section 5.3
@@ -51,17 +61,32 @@ case class XMLAttribute(name: String, value: String, var parent: XMLNode = null)
   override def toString = {
     name + "=" + "\"" + value + "\""
   }
+
+  override def equals(o: Any) = o match {
+    case that: XMLAttribute => that.name == this.name && that.value == this.value
+    case _ => false
+  }
 }
 // XPath spec section 5.6
 case class XMLComment(value: String, var parent: XMLNode = null) extends XMLNode {
   override def toString = {
     f"<!--$value-->"
   }
+
+  override def equals(o: Any) = o match {
+    case that: XMLComment => that.value == this.value
+    case _ => false
+  }
 }
 // XPath spec section 5.7
 case class XMLTextNode(value: String, var parent: XMLNode = null) extends XMLNode {
   override def toString = {
     value
+  }
+
+  override def equals(o: Any) = o match {
+    case that: XMLTextNode => that.value == this.value
+    case _ => false
   }
 }
 // processing instructions and namespaces are not implemented

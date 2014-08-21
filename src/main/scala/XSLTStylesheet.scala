@@ -71,13 +71,16 @@ class XSLTStylesheet(var source: Elem) {
   }
 
   def transform(sources: List[XMLNode]) : List[XMLNode] = {
-    // TODO: create context, choose template, instantiate template, append results
-    sources
+    // create context, choose template, instantiate template, append results
+    sources.zipWithIndex
+           .map { case (n,i) => (chooseTemplate(n), Context(n, sources, i + 1)) }
+           .flatMap { case (tmpl, context) => TemplateEvaluator.evaluate(tmpl, context) }
   }
 
-  def chooseTemplate(elem: XMLNode) = {
+  def chooseTemplate(elem: XMLNode) : XSLTTemplate = {
     def allMatching = matchableTemplates.filter { case (tmpl, _, _, _) => XPathMatcher.matches(elem, tmpl)}
-    allMatching.last // this one will have highest precedence and priority, because the templates are sorted
+    val (_, tmpl, _, _) = allMatching.last // this one will have highest precedence and priority, because the templates are sorted
+    tmpl
   }
 
   /** This is based on scala.xml.Utility.trim */

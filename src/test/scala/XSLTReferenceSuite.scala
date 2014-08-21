@@ -38,11 +38,23 @@ class XSLTReferenceSuite extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
-  test("Simple transform (input = output)") {
+  test("Simple transform #1 (input = output)") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match='/'>
           <foo/>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data = <foo/>
+    assertTransformMatches(xslt, data)
+  }
+
+  test("Simple transform #2") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match='/'>
+          <outer><inner attr="test"/></outer>
         </xsl:template>
       </xsl:stylesheet>
 
