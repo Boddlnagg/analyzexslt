@@ -71,7 +71,7 @@ object XPathEvaluator {
         }
       case PathExpr(filter, locationPath) => ???
       case LocationPath(steps, isAbsolute) => ???
-      case FilterExpr(expr) => ???
+      case FilterExpr(expr, predicates) => ???
     }
   }
 }

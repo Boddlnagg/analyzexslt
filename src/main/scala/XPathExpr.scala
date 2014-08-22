@@ -1,5 +1,5 @@
 import org.jaxen.JaxenHandler
-import org.jaxen.expr.{Expr, Step}
+import org.jaxen.expr.{Expr, Step, Predicate}
 import org.jaxen.expr.{AdditiveExpr => JAdditiveExpr,
                        MultiplicativeExpr => JMultiplicativeExpr,
                        EqualityExpr => JEqualityExpr,
@@ -44,7 +44,7 @@ case class AndExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
 case class OrExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
 case class UnionExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
 case class NegExpr(expr: XPathExpr) extends XPathExpr
-case class FilterExpr(expr: XPathExpr) extends XPathExpr
+case class FilterExpr(expr: XPathExpr, predicates: List[XPathExpr]) extends XPathExpr
 case class FunctionCallExpr(name: String, params: List[XPathExpr]) extends XPathExpr
 case class LiteralExpr(literal: String) extends XPathExpr
 case class NumberExpr(num: Double) extends XPathExpr
@@ -93,7 +93,10 @@ object XPathExpr {
         }
       case unionExpr: JUnionExpr => UnionExpr(parse(unionExpr.getLHS), parse(unionExpr.getRHS))
       case unaryExpr: JUnaryExpr => NegExpr(parse(unaryExpr.getExpr))
-      case filterExpr: JFilterExpr => FilterExpr(parse(filterExpr.getExpr))
+      case filterExpr: JFilterExpr => FilterExpr(
+        parse(filterExpr.getExpr),
+        filterExpr.getPredicates.map(p => parse(p.asInstanceOf[Predicate].getExpr)).toList
+      )
       case callExpr: JFunctionCallExpr =>
         assert(callExpr.getPrefix == null || callExpr.getPrefix.length == 0, "Prefixed functions are not supported")
         FunctionCallExpr(callExpr.getFunctionName, callExpr.getParameters.map(p => parse(p.asInstanceOf[Expr])).toList)
@@ -104,7 +107,7 @@ object XPathExpr {
         VariableReferenceExpr(varRefExpr.getVariableName)
       case pathExpr: JPathExpr =>
         var filter = parse(pathExpr.getFilterExpr)
-        if (!filter.isInstanceOf[FilterExpr]) { filter = FilterExpr(filter) }
+        if (!filter.isInstanceOf[FilterExpr]) { filter = FilterExpr(filter, Nil) }
         val locPath = parse(pathExpr.getLocationPath)
         assert(locPath.isInstanceOf[LocationPath])
         PathExpr(filter.asInstanceOf[FilterExpr], locPath.asInstanceOf[LocationPath])
