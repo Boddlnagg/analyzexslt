@@ -13,7 +13,6 @@ case object AllNodeTest extends NodeTest
 case object CommentNodeTest extends NodeTest
 case object TextNodeTest extends NodeTest
 case class NameTest(name: String) extends NodeTest
-case class ProcessingInstructionNodeTest(name: Option[String]) extends NodeTest
 
 object XPathStep {
   def parse(step: Step): XPathStep = {
@@ -24,18 +23,14 @@ object XPathStep {
       case allNode: JAllNodeStep => AllNodeTest
       // ::comment()
       case commentNode: JCommentNodeStep => CommentNodeTest
-      // ::processing-instruction() OR ::processing-instruction('name')
-      case piNode: JProcessingInstructionNodeStep =>
-        ProcessingInstructionNodeTest(piNode.getName match {
-          case null | "" => None
-          case s => Some(s)
-        })
       // ::text()
       case textNode: JTextNodeStep => TextNodeTest
       // any name (might also be '*')
       case nameStep: JNameStep =>
         assert(nameStep.getPrefix == null || nameStep.getPrefix.length == 0, "Prefixed names are not supported")
         NameTest(nameStep.getLocalName)
+      // ::processing-instruction() OR ::processing-instruction('name')
+      case piNode: JProcessingInstructionNodeStep => throw new UnsupportedOperationException("Processing instructions are not supported")
     }
     XPathStep(axis, nodeTest, predicates)
   }

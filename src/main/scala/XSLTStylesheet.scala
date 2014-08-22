@@ -53,9 +53,10 @@ class XSLTStylesheet(var source: Elem) {
   // add built-in templates (see spec section 5.8)
   val builtinTemplates = List[(XSLTTemplate, Option[String], Option[XPathExpr], Int)](
     (new XSLTTemplate(List(ApplyTemplatesElement())), None, Some(XPathExpr("*|/")), XSLT.BuiltInImportPrecedence),
-    // <xsl:value-of select="."> is equivalent to <xsl:copy-of select="string(.)">
+    // NOTE: <xsl:value-of select="."> is equivalent to <xsl:copy-of select="string(.)">
     (new XSLTTemplate(List(CopyOfElement(XPathExpr("string(.)")))), None, Some(XPathExpr("text()|@*")), XSLT.BuiltInImportPrecedence),
-    (new XSLTTemplate(Nil), None, Some(XPathExpr("processing-instruction()|comment()")), XSLT.BuiltInImportPrecedence)
+    // NOTE: the XPath expression here originally is "processing-instruction()|comment()", but processing instructions are not implemented
+    (new XSLTTemplate(Nil), None, Some(XPathExpr("comment()")), XSLT.BuiltInImportPrecedence)
   )
 
   val matchableTemplates = (builtinTemplates ++ templates).flatMap {

@@ -30,12 +30,9 @@ object XPathMatcher {
           case XPathStep(AttributeAxis, NameTest("*"), Nil) => node.isInstanceOf[XMLAttribute]
           // attribute::name
           case XPathStep(AttributeAxis, NameTest(name), Nil) => node.isInstanceOf[XMLAttribute] && node.asInstanceOf[XMLAttribute].name == name
-          // child::processing-instruction(name?)
-          // can never match because processing instructions are not implemented
-          case XPathStep(ChildAxis, ProcessingInstructionNodeTest(_), Nil) => false
-          // attribute::comment() OR attribute::processing-instruction(name?) OR attribute::text()
+          // attribute::comment() OR attribute::text()
           // these can never match anything
-          case XPathStep(AttributeAxis, CommentNodeTest | ProcessingInstructionNodeTest(_) | TextNodeTest, _) => false
+          case XPathStep(AttributeAxis, CommentNodeTest | TextNodeTest, _) => false
         }
 
         if (!lastStepMatches) {

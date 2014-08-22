@@ -140,15 +140,16 @@ object XPathExpr {
 
   def getDefaultPriority(pattern: LocationPath) : Double = {
     // according to spec section 5.5 and the table at http://www.lenzconsulting.com/how-xslt-works/
-    // NOTE: prefixed names are not implemented (they would have a default priority of -0.25)
+    // NOTE: prefixed names are not implemented (they would have a default priority of -0.25),
+    //       processing instruction node tests are also not implemented (they would have a default priority
+    //       of -0.5 or 0 depending on whether they match a specific name)
     if (pattern.steps.size != 1 || pattern.isAbsolute)
       0.5 // more complex patterns or absolute patterns (also matches just '/' which has no steps)
     else pattern.steps.head match {
       case XPathStep(_, NameTest("*"), Nil) => -0.5
       case XPathStep(_, NameTest(_), Nil) => 0
       case XPathStep(ChildAxis | AttributeAxis, AllNodeTest, _)
-           | XPathStep(_, CommentNodeTest | TextNodeTest | ProcessingInstructionNodeTest(None), _) => -0.5
-      case XPathStep(_, ProcessingInstructionNodeTest(Some(_)), _) => 0
+           | XPathStep(_, CommentNodeTest | TextNodeTest, _) => -0.5
       case _ => 0.5
     }
   }
