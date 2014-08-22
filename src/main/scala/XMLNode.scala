@@ -35,7 +35,7 @@ case class XMLElement(name: String,
       //merge text nodes with adjacent text nodes (at least xsl:value-of requires this (see XSLT spec section 7.6.1))
       val previousText = children.last.asInstanceOf[XMLTextNode].value
       val newText = child.asInstanceOf[XMLTextNode].value
-      children.update(children.size - 1, XMLTextNode(previousText + newText))
+      children.update(children.size - 1, XMLTextNode(previousText + newText, this))
     } else {
       children += child
       child.parent = this
