@@ -237,6 +237,7 @@ class XSLTReferenceSuite extends FunSuite {
   def assertTransformMatches(xslt: Elem, data: Elem) = {
     try {
       val referenceResult = TransformHelper.transformJava(xslt, data)
+      println(referenceResult)
       assertResult(referenceResult) { TransformHelper.transformScala(xslt, data) }
     } catch {
       case eJava: TransformerException =>
