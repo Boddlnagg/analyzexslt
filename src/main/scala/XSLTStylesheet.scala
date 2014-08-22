@@ -1,6 +1,11 @@
 import scala.xml._
 
-case class XSLTContext(node: XMLNode, nodeList: List[XMLNode], position: Int)
+case class XSLTContext(node: XMLNode, nodeList: List[XMLNode], position: Int, variables: Map[String, XPathValue]) {
+  def toXPathContext = XPathContext(node, position, nodeList.size, variables)
+  def withVariable(name: String, value: XPathValue): XSLTContext = {
+    XSLTContext(node, nodeList, position, variables + (name -> value))
+  }
+}
 
 class XSLTStylesheet(var source: Elem) {
   val cleaned = XSLT.clean(source).asInstanceOf[Elem]
@@ -59,16 +64,16 @@ class XSLTStylesheet(var source: Elem) {
 
   def transform(source: XMLRoot): XMLRoot = {
     // process according to XSLT spec section 5.1
-    transform(List(source)) match {
+    transform(List(source), Map()) match {
       case List(elem@XMLElement(_, _, _, _)) => XMLRoot(elem)
       case _ => throw new IllegalStateException("Transformation result must be a single XMLElement")
     }
   }
 
-  def transform(sources: List[XMLNode]) : List[XMLNode] = {
+  def transform(sources: List[XMLNode], variables: Map[String, XPathValue]) : List[XMLNode] = {
     // create context, choose template, instantiate template, append results
     sources.zipWithIndex
-           .map { case (n,i) => (chooseTemplate(n), XSLTContext(n, sources, i + 1)) }
+           .map { case (n,i) => (chooseTemplate(n), XSLTContext(n, sources, i + 1, variables)) }
            .flatMap { case (tmpl, context) => evaluate(tmpl, context) }
   }
 
@@ -83,36 +88,62 @@ class XSLTStylesheet(var source: Elem) {
   }
 
   def evaluate(nodes: Seq[XSLTNode], context: XSLTContext) : List[XMLNode] = {
-    nodes.flatMap(n => evaluate(n, context)).toList
+    // evaluates a sequence of nodes in the same scope and collects variable definitions
+    // so they will be visible in subsequent nodes (but never outside of the current scope)
+
+    // remember variable names that were created in this scope so we can throw an error
+    // if any of these is shadowed in the SAME scope
+    var scopeVariables = scala.collection.mutable.Set[String]()
+
+    val (result, _) = nodes.foldLeft((List[XMLNode](), context)) {
+      case ((accumulator, ctx), next) =>
+        evaluate(next, ctx) match {
+          case Left(nodes) => (accumulator ++ nodes, ctx)
+          case Right((name, value)) =>
+            if (scopeVariables.contains(name)) throw new EvaluationException(f"Variable $name is defined multiple times in the same scope")
+            scopeVariables += name
+            (accumulator, ctx.withVariable(name, value))
+        }
+    }
+    result
   }
 
-  def evaluate(node: XSLTNode, context: XSLTContext): List[XMLNode] = {
+  def evaluate(node: XSLTNode, context: XSLTContext): Either[List[XMLNode], (String, XPathValue)] = {
+    // evaluate a single node; might encounter new variable definitions which must be returned
     node match {
       case LiteralElement(name, attributes, children) =>
-        val resultNodes = children.flatMap(n => evaluate(n, context))
+        val resultNodes = evaluate(children, context)
         // attributes must come before all other result nodes, afterwards they are ignored (see spec section 7.1.3)
         val resultAttributes = attributes ++ resultNodes
           .takeWhile(n => n.isInstanceOf[XMLAttribute])
           .map(n => n.asInstanceOf[XMLAttribute])
           .map(attr => (attr.name, attr.value))
         val resultChildren = resultNodes.filter(n => !n.isInstanceOf[XMLAttribute])
-        List(XMLElement(name,
+        Left(List(XMLElement(name,
           resultAttributes.map { case (key, value) => XMLAttribute(key, value)}.toSeq,
-          resultChildren))
-      case LiteralTextNode(text) => List(XMLTextNode(text))
+          resultChildren)))
+      case LiteralTextNode(text) => Left(List(XMLTextNode(text)))
       case SetAttributeElement(attribute, value) =>
         // merge the content of all text-node children to create the attribute value
         val textResult = evaluate(value, context)
           .filter(n => n.isInstanceOf[XMLTextNode])
           .map(n => n.asInstanceOf[XMLTextNode].value)
           .mkString("")
-        List(XMLAttribute(attribute, textResult))
+        Left(List(XMLAttribute(attribute, textResult)))
       // TODO: support select attribute for apply-templates
       case ApplyTemplatesElement(None, params) =>
         context.node match {
-          case root : XMLRoot => transform(List(root.elem))
-          case elem : XMLElement => transform(elem.children.toList)
-          case _ => Nil // other node types don't have children and return an empty result
+          case root : XMLRoot => Left(transform(List(root.elem), context.variables))
+          case elem : XMLElement => Left(transform(elem.children.toList, context.variables))
+          case _ => Left(Nil) // other node types don't have children and return an empty result
+        }
+      case VariableDefinitionElement(name, expr) =>
+        Right(name, XPathEvaluator.evaluate(expr, context.toXPathContext))
+      case CopyOfElement(select) =>
+        XPathEvaluator.evaluate(select, context.toXPathContext) match {
+          // NOTE: result tree fragments are generally not supported
+          case NodeSetValue(_) => ??? // TODO
+          case value => Left(List(XMLTextNode(value.toStringValue.value)))
         }
       case _ => throw new UnsupportedOperationException(f"Evaluation of $node is not implemented.")
     }

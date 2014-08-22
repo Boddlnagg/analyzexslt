@@ -29,10 +29,17 @@ case class XMLElement(name: String,
                       var children: MutableList[XMLNode],
                       var parent: XMLNode) extends XMLNode {
 
-  def appendChild(child: XMLNode) = {
+  def appendChild(child: XMLNode): Unit = {
     assert(!child.isInstanceOf[XMLAttribute], "Children must not be attribute nodes.")
-    children += child
-    child.parent = this
+    if (child.isInstanceOf[XMLTextNode] && !children.isEmpty && children.last.isInstanceOf[XMLTextNode]) {
+      //merge text nodes with adjacent text nodes (at least xsl:value-of requires this (see XSLT spec section 7.6.1))
+      val previousText = children.last.asInstanceOf[XMLTextNode].value
+      val newText = child.asInstanceOf[XMLTextNode].value
+      children.update(children.size - 1, XMLTextNode(previousText + newText))
+    } else {
+      children += child
+      child.parent = this
+    }
   }
 
   def addAttribute(attribute: XMLAttribute) = {

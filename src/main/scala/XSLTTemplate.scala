@@ -21,8 +21,8 @@ object XSLTTemplate {
       case XSLT.Namespace => elem.label match {
         // spec section 11.2
         case "variable" =>
-          assert(elem.child.nonEmpty, "Variable definitions are only supported when they use the 'select' attribute")
-          val select = XPathExpr(elem.attribute("select").get.text)
+          assert(elem.child.isEmpty, "Variable definitions are only supported when they use the 'select' attribute")
+          val select = XPathExpr(elem.attribute("select").map(_.text).getOrElse("''")) // value is empty string '' if there is no select attribute
           VariableDefinitionElement(elem.attribute("name").get.text, select)
 
         // spec sections 5.4 and 11.6

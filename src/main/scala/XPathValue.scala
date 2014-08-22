@@ -38,6 +38,8 @@ abstract class XPathValue {
     }
   }
 }
+
+// NOTE: result tree fragments are an additional data type in the XSLT specification, but they are not supported here
 case class NodeSetValue(nodes: List[XMLNode]) extends XPathValue
 case class BooleanValue(value: Boolean) extends XPathValue
 case class NumberValue(value: Double) extends XPathValue
