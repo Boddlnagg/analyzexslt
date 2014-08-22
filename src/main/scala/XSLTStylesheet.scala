@@ -53,7 +53,8 @@ class XSLTStylesheet(var source: Elem) {
   // add built-in templates (see spec section 5.8)
   val builtinTemplates = List[(XSLTTemplate, Option[String], Option[XPathExpr], Int)](
     (new XSLTTemplate(List(ApplyTemplatesElement())), None, Some(XPathExpr("*|/")), XSLT.BuiltInImportPrecedence),
-    (new XSLTTemplate(List(ValueOfElement(XPathExpr(".")))), None, Some(XPathExpr("text()|@*")), XSLT.BuiltInImportPrecedence),
+    // <xsl:value-of select="."> is equivalent to <xsl:copy-of select="string(.)">
+    (new XSLTTemplate(List(CopyOfElement(XPathExpr("string(.)")))), None, Some(XPathExpr("text()|@*")), XSLT.BuiltInImportPrecedence),
     (new XSLTTemplate(Nil), None, Some(XPathExpr("processing-instruction()|comment()")), XSLT.BuiltInImportPrecedence)
   )
 

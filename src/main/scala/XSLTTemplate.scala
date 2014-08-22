@@ -48,7 +48,12 @@ object XSLTTemplate {
 
         // spec section 7.6.1
         case "value-of" =>
-          ValueOfElement(XPathExpr(elem.attribute("select").get.text))
+          // <xsl:value-of select="."> is equivalent to <xsl:copy-of select="string(.)">
+          CopyOfElement(XPathExpr("string(" + elem.attribute("select").get.text +")"))
+
+        // spec section 11.3
+        case "copy-of" =>
+          CopyOfElement(XPathExpr(elem.attribute("select").get.text))
 
         // spec section 9.2
         case "choose" =>
