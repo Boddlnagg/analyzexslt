@@ -1,7 +1,7 @@
 import org.scalatest.FunSuite
 
 class ParsePatternSuite extends FunSuite {
-  test("Accept valid patterns") {
+  test("Accept valid patterns #1") {
     // these patterns are taken from the spec, section 5.2
     val patterns = List(
       "para",// matches any para element
@@ -23,6 +23,32 @@ class ParsePatternSuite extends FunSuite {
       "@class", // matches any class attribute (not any element that has a class attribute)
       "@*", // matches any attribute
       "appendix//ulist/item[position()=1]" // matches if the node is an item element and the predicate is true and the parent matches appendix//ulist
+    )
+
+    patterns.foreach(p => {
+      val parsed = XPathExpr(p)
+      assert(XPathExpr.isPattern(parsed), f"$p must be recognized as valid pattern")
+    })
+  }
+
+  test("Accept valid patterns #2") {
+    // these patterns are taken from http://www.lenzconsulting.com/how-xslt-works/
+    val patterns = List(
+      "/", // the root node
+      "/doc[@format='simple']", // the root element only if its name is doc and it has a format attribute with the value simple
+      "bar", // any bar element
+      "foo/bar", // any bar element whose parent is a foo element
+      //"id('xyz')/foo", // any foo element whose parent is an element that has an ID-typed attribute with the value xyz (NOT IMPLEMENTED)
+      "section//para", // any para element that has a section element ancestor
+      "@foo", // any attribute named foo
+      "@*", // any attribute
+      "node()", // any child node (i.e., element, text, comment, or processing instruction)
+      "text()", // any text node
+      "*", // any element
+      //"xyz:*", // any element in the namespace designated by the xyz prefix (NOT IMPLEMENTED)
+      //"*[not(self::xyz:*)]", // any element that is not in the namespace designated by the xyz prefix (NOT IMPLEMENTED)
+      "para[2]", // any para element that is the second para child of its parent
+      "para[last()]" // any para element that is the last para child of its parent
     )
 
     patterns.foreach(p => {

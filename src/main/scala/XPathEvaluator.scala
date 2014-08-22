@@ -69,8 +69,8 @@ object XPathEvaluator {
           case (_, evaluatedParams) =>
             throw new EvaluationException(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
         }
+      case LocationPath(steps, isAbsolute) => ??? // TODO: evaluate steps from left to right, keep nodes in document order if possible
       case PathExpr(filter, locationPath) => ???
-      case LocationPath(steps, isAbsolute) => ???
       case FilterExpr(expr, predicates) => ???
     }
   }

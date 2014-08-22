@@ -14,6 +14,8 @@ object XSLT {
   }
 }
 
+case class XSLTContext(node: XMLNode, nodeList: List[XMLNode], position: Int)
+
 class XSLTStylesheet(var source: Elem) {
   val cleaned = clean(source).asInstanceOf[Elem]
 
@@ -81,13 +83,53 @@ class XSLTStylesheet(var source: Elem) {
     // create context, choose template, instantiate template, append results
     sources.zipWithIndex
            .map { case (n,i) => (chooseTemplate(n), XSLTContext(n, sources, i + 1)) }
-           .flatMap { case (tmpl, context) => TemplateEvaluator.evaluate(tmpl, context) }
+           .flatMap { case (tmpl, context) => evaluate(tmpl, context) }
   }
 
   def chooseTemplate(elem: XMLNode) : XSLTTemplate = {
     def allMatching = matchableTemplates.filter { case (tmpl, _, _, _) => XPathMatcher.matches(elem, tmpl)}
-    val (_, tmpl, _, _) = allMatching.last // this one will have highest precedence and priority, because the templates are sorted
-    tmpl
+    val (_, template, _, _) = allMatching.last // this one will have highest precedence and priority, because the templates are sorted
+    template
+  }
+
+  def evaluate(tmpl: XSLTTemplate, context: XSLTContext) : List[XMLNode] = {
+    evaluate(tmpl.content, context)
+  }
+
+  def evaluate(nodes: Seq[XSLTNode], context: XSLTContext) : List[XMLNode] = {
+    nodes.flatMap(n => evaluate(n, context)).toList
+  }
+
+  def evaluate(node: XSLTNode, context: XSLTContext): List[XMLNode] = {
+    node match {
+      case LiteralElement(name, attributes, children) =>
+        val resultNodes = children.flatMap(n => evaluate(n, context))
+        // attributes must come before all other result nodes, afterwards they are ignored (see spec section 7.1.3)
+        val resultAttributes = attributes ++ resultNodes
+          .takeWhile(n => n.isInstanceOf[XMLAttribute])
+          .map(n => n.asInstanceOf[XMLAttribute])
+          .map(attr => (attr.name, attr.value))
+        val resultChildren = resultNodes.filter(n => !n.isInstanceOf[XMLAttribute])
+        List(XMLElement(name,
+          resultAttributes.map { case (key, value) => XMLAttribute(key, value)}.toSeq,
+          resultChildren))
+      case LiteralTextNode(text) => List(XMLTextNode(text))
+      case SetAttributeElement(attribute, value) =>
+        // merge the content of all text-node children to create the attribute value
+        val textResult = evaluate(value, context)
+          .filter(n => n.isInstanceOf[XMLTextNode])
+          .map(n => n.asInstanceOf[XMLTextNode].value)
+          .mkString("")
+        List(XMLAttribute(attribute, textResult))
+      // TODO: support select attribute for apply-templates
+      case ApplyTemplatesElement(None, params) =>
+        context.node match {
+          case root : XMLRoot => transform(List(root.elem))
+          case elem : XMLElement => transform(elem.children.toList)
+          case _ => Nil // other node types don't have children and return an empty result
+        }
+      case _ => throw new UnsupportedOperationException(f"Evaluation of $node is not implemented.")
+    }
   }
 
   /** This is based on scala.xml.Utility.trim */

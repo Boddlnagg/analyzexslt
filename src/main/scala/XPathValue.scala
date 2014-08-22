@@ -1,4 +1,6 @@
 abstract class XPathValue {
+  // NOTE: conversion to node-sets is generally not allowed/available (see XPath spec section 3.3)
+
   def toBooleanValue: BooleanValue = {
     // this matches the boolean() function specified in the XPath spec section 4.3
     this match {
@@ -36,7 +38,7 @@ abstract class XPathValue {
     }
   }
 }
-case class NodeSetValue(nodes: Seq[XMLNode]) extends XPathValue
+case class NodeSetValue(nodes: List[XMLNode]) extends XPathValue
 case class BooleanValue(value: Boolean) extends XPathValue
 case class NumberValue(value: Double) extends XPathValue
 case class StringValue(value: String) extends XPathValue
