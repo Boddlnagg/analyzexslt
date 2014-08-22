@@ -21,9 +21,14 @@ class XSLTStylesheet(var source: Elem) {
   assert(cleaned.attribute("version").get.text == "1.0", "Stylesheet version must be 1.0")
   assert(cleaned.child.forall(n => n.namespace == XSLT.Namespace && (n.label == "template" || n.label == "variable")), "Top-level elements must either be XSLT templates or variable definitions")
 
-  // TODO: the spec requires us to evaluate variables in an order such that variables can depend on each other (as long
-  // as there are no circular dependencies, which would result in an error), see spec section 11.4
-  // var topLevelVariables = ...
+  // TODO: the spec requires us to evaluate top-level variables in an order such that variables can depend on each other
+  // (as long as there are no circular dependencies, which would result in an error), see spec section 11.4
+  // -> don't support top-level variables?
+  val variables = cleaned.child
+    .filter(XSLT.isElem(_, "variable"))
+    .map(n => n.asInstanceOf[Elem])
+
+  assert(variables.isEmpty, "Top-level variables are currently not supported.")
 
   val templates = cleaned.child
     .filter(XSLT.isElem(_, "template"))
@@ -75,7 +80,7 @@ class XSLTStylesheet(var source: Elem) {
   def transform(sources: List[XMLNode]) : List[XMLNode] = {
     // create context, choose template, instantiate template, append results
     sources.zipWithIndex
-           .map { case (n,i) => (chooseTemplate(n), Context(n, sources, i + 1)) }
+           .map { case (n,i) => (chooseTemplate(n), XSLTContext(n, sources, i + 1)) }
            .flatMap { case (tmpl, context) => TemplateEvaluator.evaluate(tmpl, context) }
   }
 

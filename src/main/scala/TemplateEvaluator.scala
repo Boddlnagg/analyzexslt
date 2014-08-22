@@ -1,15 +1,15 @@
-case class Context(node: XMLNode, nodeList: List[XMLNode], position: Int)
+case class XSLTContext(node: XMLNode, nodeList: List[XMLNode], position: Int)
 
 object TemplateEvaluator {
-  def evaluate(tmpl: XSLTTemplate, context: Context) : List[XMLNode] = {
+  def evaluate(tmpl: XSLTTemplate, context: XSLTContext) : List[XMLNode] = {
     evaluate(tmpl.content, context)
   }
 
-  def evaluate(nodes: Seq[XSLTNode], context: Context) : List[XMLNode] = {
+  def evaluate(nodes: Seq[XSLTNode], context: XSLTContext) : List[XMLNode] = {
     nodes.flatMap(n => evaluate(n, context)).toList
   }
 
-  def evaluate(node: XSLTNode, context: Context): List[XMLNode] = {
+  def evaluate(node: XSLTNode, context: XSLTContext): List[XMLNode] = {
     node match {
       case LiteralElement(name, attributes, children) =>
         val resultNodes = children.flatMap(n => evaluate(n, context))

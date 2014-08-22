@@ -45,12 +45,12 @@ case class OrExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
 case class UnionExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
 case class NegExpr(expr: XPathExpr) extends XPathExpr
 case class FilterExpr(expr: XPathExpr) extends XPathExpr
-case class FunctionCallExpr(name: String, params: Seq[XPathExpr]) extends XPathExpr
+case class FunctionCallExpr(name: String, params: List[XPathExpr]) extends XPathExpr
 case class LiteralExpr(literal: String) extends XPathExpr
-case class NumberExpr(num: Number) extends XPathExpr
+case class NumberExpr(num: Double) extends XPathExpr
 case class VariableReferenceExpr(name: String) extends XPathExpr
 case class PathExpr(filter: FilterExpr, locationPath: LocationPath) extends XPathExpr
-case class LocationPath(steps: Seq[XPathStep], isAbsolute: Boolean) extends XPathExpr
+case class LocationPath(steps: List[XPathStep], isAbsolute: Boolean) extends XPathExpr
 
 object XPathExpr {
   def apply(string: String) : XPathExpr = {
@@ -98,7 +98,7 @@ object XPathExpr {
         assert(callExpr.getPrefix == null || callExpr.getPrefix.length == 0, "Prefixed functions are not supported")
         FunctionCallExpr(callExpr.getFunctionName, callExpr.getParameters.map(p => parse(p.asInstanceOf[Expr])).toList)
       case litExpr: JLiteralExpr => LiteralExpr(litExpr.getLiteral)
-      case numExpr: JNumberExpr => NumberExpr(numExpr.getNumber)
+      case numExpr: JNumberExpr => NumberExpr(numExpr.getNumber.doubleValue())
       case varRefExpr: JVariableReferenceExpr =>
         assert(varRefExpr.getPrefix == null || varRefExpr.getPrefix.length == 0, "Prefixed variables are not supported")
         VariableReferenceExpr(varRefExpr.getVariableName)

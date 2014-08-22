@@ -11,9 +11,9 @@ class ParsePatternSuite extends FunSuite {
       "appendix//para", // matches any para element with an appendix ancestor element
       "/", // matches the root node
       "text()", // matches any text node
-      "processing-instruction()", // matches any processing instruction
+      //"processing-instruction()", // matches any processing instruction (NOT IMPLEMENTED)
       "node()", // matches any node other than an attribute node and the root node
-      //"id(\"W11\")", // matches the element with unique ID W11 (CURRENTLY NOT SUPPORTED)
+      //"id(\"W11\")", // matches the element with unique ID W11 (NOT IMPLEMENTED)
       "para[1]", // matches any para element that is the first para child element of its parent
       "*[position()=1 and self::para]", // matches any para element that is the first child element of its parent
       "para[last()=1]", // matches any para element that is the only para child element of its parent
@@ -51,14 +51,14 @@ class ParsePatternSuite extends FunSuite {
       (-0.5, "node()"),
       (-0.5, "text()"),
       (-0.5, "comment()"),
-      (-0.5, "processing-instruction()"),
+      //(-0.5, "processing-instruction()"), NOT SUPPORTED
       //(-0.25, "xyz:*"), NOT SUPPORTED
       //(-0.25, "@xyz:*"), NOT SUPPORTED
       (0, "foo"),
       //(0, "xyz:foo"), NOT SUPPORTED
       (0, "@foo"),
       //(0, "@xyz:foo"), NOT SUPPORTED
-      (0, "processing-instruction('foo')"),
+      //(0, "processing-instruction('foo')"), NOT SUPPORTED
       (0.5, "/"),
       (0.5, "/foo"),
       (0.5, "foo/bar"),
