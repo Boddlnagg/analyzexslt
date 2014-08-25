@@ -315,6 +315,10 @@ class XSLTReferenceSuite extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("Named template example") {
+    assertTransformMatches(TestData.NamedTemplateExampleStylesheet, TestData.NamedTemplateExampleData)
+  }
+
   def assertTransformMatches(xslt: Elem, data: Elem) = {
     try {
       val referenceResult = TransformHelper.transformJava(xslt, data)

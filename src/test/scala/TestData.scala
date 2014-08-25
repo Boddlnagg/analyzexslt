@@ -88,4 +88,53 @@ object TestData {
         <price>39.95</price>
       </book>
     </bookstore>
+
+  // taken from http://nwalsh.com/docs/tutorials/xsl/xsl/foil32.html and slightly modified
+  val NamedTemplateExampleStylesheet =
+    <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+
+      <xsl:template match="/">
+        <!-- this root element/template was not there in the original source -->
+        <html>
+          <xsl:apply-templates/>
+        </html>
+      </xsl:template>
+
+      <xsl:template name="admonition">
+        <xsl:param name="type" select="'Warning'"/>
+        <table border="1">
+          <tr><th><xsl:value-of select="$type"/>:</th></tr>
+          <tr><td><xsl:apply-templates/></td></tr>
+        </table>
+      </xsl:template>
+
+      <xsl:template match="warning">
+        <xsl:call-template name="admonition"/>
+      </xsl:template>
+
+      <xsl:template match="caution">
+        <xsl:call-template name="admonition">
+          <xsl:with-param name="type" select="'Caution'"/>
+        </xsl:call-template>
+      </xsl:template>
+
+      <xsl:template match="para">
+        <p><xsl:apply-templates/></p>
+      </xsl:template>
+
+      <xsl:template match="emphasis">
+        <i><xsl:apply-templates/></i>
+      </xsl:template>
+    </xsl:stylesheet>
+
+  val NamedTemplateExampleData =
+    <chapter>
+      <warning>
+        <para>Using a damaged extension cord may cause a fire.</para>
+      </warning>
+      <caution>
+        <para>Freshly brewed coffee is hot.</para>
+      </caution>
+    </chapter>
+
 }

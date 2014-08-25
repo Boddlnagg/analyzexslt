@@ -147,6 +147,9 @@ class XSLTStylesheet(var source: Elem) {
           case NodeSetValue(nodes) => Left(transform(nodes, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case value => throw new EvaluationError(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")
         }
+      case CallTemplateElement(name, params) =>
+        // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)
+        Left(evaluate(namedTemplates(name), context, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
       case VariableDefinitionElement(name, expr) =>
         Right(name, XPathEvaluator.evaluate(expr, context.toXPathContext))
       case CopyOfElement(select) =>
@@ -155,7 +158,7 @@ class XSLTStylesheet(var source: Elem) {
           case NodeSetValue(nodes) => Left(nodes.map(n => n.copy))
           case value => Left(List(XMLTextNode(value.toStringValue.value)))
         }
-      case _ => throw new NotImplementedError(f"Evaluation of $node is not implemented.")
+      case ChooseElement(branches, otherwise) => ???
     }
   }
 }
