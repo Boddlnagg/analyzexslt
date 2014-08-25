@@ -158,7 +158,18 @@ class XSLTStylesheet(var source: Elem) {
           case NodeSetValue(nodes) => Left(nodes.map(n => n.copy))
           case value => Left(List(XMLTextNode(value.toStringValue.value)))
         }
-      case ChooseElement(branches, otherwise) => ???
+      case ChooseElement(branches, otherwise) =>
+        Left(evaluate(evaluateChoose(branches, otherwise, context.toXPathContext), context))
+    }
+  }
+
+  def evaluateChoose(branches: List[(XPathExpr, Seq[XSLTNode])], otherwise: Seq[XSLTNode], context: XPathContext): Seq[XSLTNode] = {
+    branches match {
+      case Nil => otherwise
+      case (firstExpr, firstTmpl) :: rest => XPathEvaluator.evaluate(firstExpr, context).toBooleanValue.value match {
+        case true => firstTmpl
+        case false => evaluateChoose(rest, otherwise, context)
+      }
     }
   }
 }

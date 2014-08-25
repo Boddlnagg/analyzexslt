@@ -319,6 +319,39 @@ class XSLTReferenceSuite extends FunSuite {
     assertTransformMatches(TestData.NamedTemplateExampleStylesheet, TestData.NamedTemplateExampleData)
   }
 
+  test("Simple if") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <result>
+            <xsl:apply-templates/>
+          </result>
+        </xsl:template>
+        <xsl:template match='a'>
+          <xsl:if test="string(@take) = 'yes'">
+            <aa><xsl:apply-templates/></aa>
+          </xsl:if>
+        </xsl:template>
+        <xsl:template match='b'>
+          <bb><xsl:apply-templates/></bb>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root>
+        <a take="yes">
+          <b/>
+          <a take="no"/>
+          <a take="yes"><b/></a>
+        </a>
+        <a take="no">
+          <a take="yes"/>
+        </a>
+      </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
   def assertTransformMatches(xslt: Elem, data: Elem) = {
     try {
       val referenceResult = TransformHelper.transformJava(xslt, data)

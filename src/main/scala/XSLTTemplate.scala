@@ -62,13 +62,13 @@ object XSLTTemplate {
             .map(n => (XPathExpr(n.attribute("test").get.text), parseTemplate(n.child)))
           val otherwiseBranch = xsltChildren.filter(n => n.label == "otherwise")
             .map(n => parseTemplate(n.child))
-            .headOption
+            .headOption.getOrElse(Seq())
           ChooseElement(whenBranches.toList, otherwiseBranch)
 
         // spec section 9.1
         case "if" =>
           val test = XPathExpr(elem.attribute("test").get.text)
-          ChooseElement(List((test, parseTemplate(elem.child))), None)
+          ChooseElement(List((test, parseTemplate(elem.child))), Seq())
 
         // spec section 7.2 and 3.4 (whitespace stripping)
         case "text" =>

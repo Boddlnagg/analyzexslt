@@ -35,8 +35,9 @@ abstract class XPathValue {
         else if (num.isValidInt) num.toInt.toString
         else num.toString
       )
+      case NodeSetValue(Nil) => StringValue("")
       case NodeSetValue(List(node)) => StringValue(node.textValue)
-      case NodeSetValue(_) => throw new NotImplementedError("Converting node sets to strings is not implemented, except when the node-set contains a single node")
+      case NodeSetValue(_) => throw new NotImplementedError("Converting node sets to strings is not implemented for node-sets with more than one element")
     }
   }
 }
