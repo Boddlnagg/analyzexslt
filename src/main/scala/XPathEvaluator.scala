@@ -53,7 +53,9 @@ object XPathEvaluator {
       case NegExpr(subexpr) => NumberValue(- evaluate(subexpr, ctx).toNumberValue.value)
       case LiteralExpr(literal) => StringValue(literal)
       case NumberExpr(num) => NumberValue(num)
-      case VariableReferenceExpr(name) => ctx.variables(name)
+      case VariableReferenceExpr(name) => try ctx.variables(name) catch {
+        case e : java.util.NoSuchElementException => throw new EvaluationError(f"Variable $name is not defined")
+      }
       case UnionExpr(lhs, rhs) => (evaluate(lhs, ctx), evaluate(rhs, ctx)) match {
         case (NodeSetValue(left), NodeSetValue(right)) => ???
         case (left, right) => throw new EvaluationError(f"Wrong types for union expression, must be node-sets ($left | $right)")

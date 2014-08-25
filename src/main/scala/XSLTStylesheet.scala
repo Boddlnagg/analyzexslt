@@ -2,11 +2,14 @@ import scala.xml._
 
 case class XSLTContext(node: XMLNode, nodeList: List[XMLNode], position: Int, variables: Map[String, XPathValue]) {
   def toXPathContext = XPathContext(node, position, nodeList.size, variables)
-  def withVariable(name: String, value: XPathValue): XSLTContext = {
+  def addVariable(name: String, value: XPathValue): XSLTContext = {
     XSLTContext(node, nodeList, position, variables + (name -> value))
   }
-  def withVariables(newVariables: Map[String, XPathValue]): XSLTContext = {
+  def addVariables(newVariables: Map[String, XPathValue]): XSLTContext = {
     XSLTContext(node, nodeList, position, variables ++ newVariables)
+  }
+  def replaceVariables(newVariables: Map[String, XPathValue]): XSLTContext = {
+    XSLTContext(node, nodeList, position, newVariables)
   }
 }
 
@@ -20,11 +23,12 @@ class XSLTStylesheet(var source: Elem) {
   // TODO: the spec requires us to evaluate top-level variables in an order such that variables can depend on each other
   // (as long as there are no circular dependencies, which would result in an error), see spec section 11.4
   // -> don't support top-level variables?
-  val variables = cleaned.child
+  val globalVariables = cleaned.child
     .filter(XSLT.isElem(_, "variable"))
     .map(n => n.asInstanceOf[Elem])
+    .map(elem => (elem.attribute("name").get.text, XPathExpr(elem.attribute("select").map(_.text).getOrElse("''"))))
 
-  assert(variables.isEmpty, "Top-level variables are currently not supported.")
+  assert(globalVariables.isEmpty, "Top-level variables are currently not supported.")
 
   val templates = cleaned.child
     .filter(XSLT.isElem(_, "template"))
@@ -77,7 +81,7 @@ class XSLTStylesheet(var source: Elem) {
     // create context, choose template, instantiate template, append results
     sources.zipWithIndex
            .map { case (n,i) => (chooseTemplate(n), XSLTContext(n, sources, i + 1, variables)) }
-           .flatMap { case (tmpl, context) => evaluate(tmpl, context, params) }
+           .flatMap { case (tmpl, context) => evaluateTemplate(tmpl, context, params) }
   }
 
   def chooseTemplate(elem: XMLNode) : XSLTTemplate = {
@@ -86,11 +90,13 @@ class XSLTStylesheet(var source: Elem) {
     template
   }
 
-  def evaluate(tmpl: XSLTTemplate, context: XSLTContext, params: Map[String, XPathValue]) : List[XMLNode] = {
+  def evaluateTemplate(tmpl: XSLTTemplate, context: XSLTContext, params: Map[String, XPathValue]) : List[XMLNode] = {
     // only accept parameters that have a default parameter declaration in the template and ignore the rest (see spec section 11.6)
     val acceptedParams = params.filter { case (key, _) => tmpl.defaultParams.contains(key) }
     val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key)}.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))
-    evaluate(tmpl.content, context.withVariables(remainingDefaultParams ++ acceptedParams))
+    // the context for the newly instantiated template contains only global variables and parameters, no local parameters (static scoping)
+    // TODO: insert global variables here, once they are supported
+    evaluate(tmpl.content, context.replaceVariables(Map()).addVariables(remainingDefaultParams ++ acceptedParams))
   }
 
   def evaluate(nodes: Seq[XSLTNode], context: XSLTContext) : List[XMLNode] = {
@@ -108,7 +114,7 @@ class XSLTStylesheet(var source: Elem) {
           case Right((name, value)) =>
             if (scopeVariables.contains(name)) throw new EvaluationError(f"Variable $name is defined multiple times in the same scope")
             scopeVariables += name
-            (accumulator, ctx.withVariable(name, value))
+            (accumulator, ctx.addVariable(name, value))
         }
     }
     result
@@ -149,7 +155,7 @@ class XSLTStylesheet(var source: Elem) {
         }
       case CallTemplateElement(name, params) =>
         // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)
-        Left(evaluate(namedTemplates(name), context, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
+        Left(evaluateTemplate(namedTemplates(name), context, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
       case VariableDefinitionElement(name, expr) =>
         Right(name, XPathEvaluator.evaluate(expr, context.toXPathContext))
       case CopyOfElement(select) =>

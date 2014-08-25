@@ -352,6 +352,44 @@ class XSLTReferenceSuite extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("No dynamic scoping (apply-templates)") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <result>
+            <xsl:variable name="var" select="1"/>
+            <xsl:apply-templates/>
+          </result>
+        </xsl:template>
+        <xsl:template match="a">
+          <xsl:value-of select="$var"/>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data = <root><a/></root>
+
+    assertTransformMatches(xslt, data)
+  }
+
+  test("No dynamic scoping (call-template)") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <result>
+            <xsl:variable name="var" select="1"/>
+            <xsl:call-template name="callme"/>
+          </result>
+        </xsl:template>
+        <xsl:template name="callme">
+          <xsl:value-of select="$var"/>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data = <root/>
+
+    assertTransformMatches(xslt, data)
+  }
+
   def assertTransformMatches(xslt: Elem, data: Elem) = {
     try {
       val referenceResult = TransformHelper.transformJava(xslt, data)
