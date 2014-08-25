@@ -1,13 +1,26 @@
 import scala.xml._
 import scala.collection.mutable.MutableList
 
-abstract class XMLNode {
+abstract class XMLNode extends Ordered[XMLNode] {
   var parent: XMLNode
 
-  def ancestors : List[XMLNode] = {
-    if (parent != null) parent :: parent.ancestors
-    else Nil
+  def ancestors : List[XMLNode] = this match {
+    case XMLRoot(_) => Nil // root does not have ancestors
+    case _ => parent :: parent.ancestors
   }
+
+  def descendants : List[XMLNode] = this match {
+    case XMLRoot(elem) => elem :: elem.descendants
+    case XMLElement(_, _, children, _) => children.flatMap { ch => ch :: ch.descendants}.toList
+    case XMLAttribute(_, _, _) => Nil
+    case XMLTextNode(_, _) => Nil
+  }
+
+  def root: XMLRoot = parent.root // works for all nodes except XMLRoot, where it is therefore overridden
+
+  def compare(that: XMLNode) = this.root.nodesInOrder.indexWhere(_ eq this) compare that.root.nodesInOrder.indexWhere(_ eq that)
+
+  def textValue: String
 }
 
 // XPath spec section 5.1 (comments in the root node are not supported, processing instructions are generally not implemented)
@@ -21,6 +34,14 @@ case class XMLRoot(elem: XMLElement) extends XMLNode {
     case that: XMLRoot => that.elem == this.elem
     case _ => false
   }
+
+  def nodesInOrder: List[XMLNode] = {
+    XMLNode.nodesInOrder(this)
+  }
+
+  override def root = this
+
+  override def textValue = elem.textValue
 }
 
 // XPath spec section 5.2
@@ -61,6 +82,8 @@ case class XMLElement(name: String,
     case that: XMLElement => that.name == this.name && that.attributes == this.attributes && that.children == this.children
     case _ => false
   }
+
+  override def textValue = children.map(_.textValue).mkString("")
 }
 
 // XPath spec section 5.3
@@ -73,6 +96,8 @@ case class XMLAttribute(name: String, value: String, var parent: XMLNode = null)
     case that: XMLAttribute => that.name == this.name && that.value == this.value
     case _ => false
   }
+
+  override def textValue = value // NOTE: attribute-value normalization is required by the spec, but not implemented
 }
 // XPath spec section 5.6
 case class XMLComment(value: String, var parent: XMLNode = null) extends XMLNode {
@@ -84,6 +109,8 @@ case class XMLComment(value: String, var parent: XMLNode = null) extends XMLNode
     case that: XMLComment => that.value == this.value
     case _ => false
   }
+
+  override def textValue = value
 }
 // XPath spec section 5.7
 case class XMLTextNode(value: String, var parent: XMLNode = null) extends XMLNode {
@@ -95,6 +122,8 @@ case class XMLTextNode(value: String, var parent: XMLNode = null) extends XMLNod
     case that: XMLTextNode => that.value == this.value
     case _ => false
   }
+
+  override def textValue = value
 }
 // processing instructions and namespaces are not implemented
 
@@ -129,6 +158,16 @@ object XMLNode {
       case text: Text => XMLTextNode(text.data)
       case comment: Comment => XMLComment(comment.commentText)
       case _ => throw new UnsupportedOperationException(f"Unsupported XML node: ${node.getClass} ($node)")
+    }
+  }
+
+  def nodesInOrder(start: XMLNode): List[XMLNode] = {
+    // returns a list of nodes in document order, starting from a given node
+    start match {
+      case XMLRoot(elem) => List(start) ++ nodesInOrder(elem)
+      case XMLElement(_, attr, children, _) => List(start) ++ attr ++ children.flatMap(ch => nodesInOrder(ch))
+      case XMLTextNode(_, _) => List(start)
+      case XMLComment(_, _) => List(start)
     }
   }
 }

@@ -130,12 +130,17 @@ class XSLTStylesheet(var source: Elem) {
           .map(n => n.asInstanceOf[XMLTextNode].value)
           .mkString("")
         Left(List(XMLAttribute(attribute, textResult)))
-      // TODO: support select attribute for apply-templates
+      // TODO: implement support for template parameters
       case ApplyTemplatesElement(None, params) =>
         context.node match {
           case root : XMLRoot => Left(transform(List(root.elem), context.variables))
           case elem : XMLElement => Left(transform(elem.children.toList, context.variables))
           case _ => Left(Nil) // other node types don't have children and return an empty result
+        }
+      case ApplyTemplatesElement(Some(expr), params) =>
+        XPathEvaluator.evaluate(expr, context.toXPathContext) match {
+          case NodeSetValue(nodes) => Left(transform(nodes, context.variables))
+          case value => throw new EvaluationException(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")
         }
       case VariableDefinitionElement(name, expr) =>
         Right(name, XPathEvaluator.evaluate(expr, context.toXPathContext))

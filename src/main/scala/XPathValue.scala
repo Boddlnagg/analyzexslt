@@ -16,7 +16,7 @@ abstract class XPathValue {
     this match {
       case num@NumberValue(_) => num
       case BooleanValue(bool) => if (bool) NumberValue(1) else NumberValue(0)
-      case _ => throw new UnsupportedOperationException(f"Conversion of $this to number is not implemented.")
+      case _ => throw new NotImplementedError(f"Conversion of $this to number is not implemented.")
     }
   }
 
@@ -34,7 +34,8 @@ abstract class XPathValue {
         else if (num.isNegInfinity) "-Infinity"
         else num.toString
       )
-      case NodeSetValue(_) => throw new UnsupportedOperationException("Converting node sets to strings is not implemented")
+      case NodeSetValue(List(node)) => StringValue(node.textValue)
+      case NodeSetValue(_) => throw new NotImplementedError("Converting node sets to strings is not implemented, except when the node-set contains a single node")
     }
   }
 }
