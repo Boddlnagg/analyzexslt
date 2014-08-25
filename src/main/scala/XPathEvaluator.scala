@@ -57,7 +57,7 @@ object XPathEvaluator {
         case e : java.util.NoSuchElementException => throw new EvaluationError(f"Variable $name is not defined")
       }
       case UnionExpr(lhs, rhs) => (evaluate(lhs, ctx), evaluate(rhs, ctx)) match {
-        case (NodeSetValue(left), NodeSetValue(right)) => ???
+        case (NodeSetValue(left), NodeSetValue(right)) => NodeSetValue((TreeSet[XMLNode]()++ left ++ right).toList)
         case (left, right) => throw new EvaluationError(f"Wrong types for union expression, must be node-sets ($left | $right)")
       }
       case FunctionCallExpr(name, params) =>
@@ -116,16 +116,32 @@ object XPathEvaluator {
           case AncestorAxis => TreeSet[XMLNode]() ++ ctxNode.ancestors
           // the following-sibling axis contains all the following siblings of the context node
           // if the context node is an attribute node or namespace node, the following-sibling axis is empty
-          case FollowingSiblingAxis => ???
+          case FollowingSiblingAxis => ctxNode match {
+            case XMLAttribute(_, _, _) => TreeSet()
+            case _ => ctxNode.parent match {
+              case XMLRoot(_) => TreeSet() // if parent is root, there are no siblings
+              case XMLElement(_, _, children, _) => TreeSet[XMLNode]() ++ children.filter(_ > ctxNode)
+            }
+          }
           // the preceding-sibling axis contains all the preceding siblings of the context node
           // if the context node is an attribute node or namespace node, the preceding-sibling axis is empty
-          case PrecedingSiblingAxis => ???
+          case PrecedingSiblingAxis => ctxNode match {
+            case XMLAttribute(_, _, _) => TreeSet()
+            case _ => ctxNode.parent match {
+              case XMLRoot(_) => TreeSet() // if parent is root, there are no siblings
+              case XMLElement(_, _, children, _) => TreeSet[XMLNode]() ++ children.filter(_ < ctxNode)
+            }
+          }
           // the following axis contains all nodes in the same document as the context node that are after the context
           // node in document order, excluding any descendants and excluding attribute nodes and namespace nodes
-          case FollowingAxis => ???
+          case FollowingAxis =>
+            val descendants = ctxNode.descendants
+            TreeSet[XMLNode]() ++ ctxNode.root.nodesInOrder.filter(n => !n.isInstanceOf[XMLAttribute] && n > ctxNode && !descendants.contains(n))
           // the preceding axis contains all nodes in the same document as the context node that are before the context
           // node in document order, excluding any ancestors and excluding attribute nodes and namespace nodes
-          case PrecedingAxis => ???
+          case PrecedingAxis =>
+            val ancestors = ctxNode.ancestors
+            TreeSet[XMLNode]() ++ ctxNode.root.nodesInOrder.filter(n => !n.isInstanceOf[XMLAttribute] && n < ctxNode && !ancestors.contains(n))
           // the attribute axis contains the attributes of the context node; the axis will be empty
           // unless the context node is an element
           case AttributeAxis => ctxNode match {
