@@ -112,7 +112,7 @@ object XPathExpr {
         assert(locPath.isInstanceOf[LocationPath])
         PathExpr(filter.asInstanceOf[FilterExpr], locPath.asInstanceOf[LocationPath])
       case locPath: JLocationPath => LocationPath(locPath.getSteps.map(s => XPathStep.parse(s.asInstanceOf[Step])).toList, locPath.isAbsolute)
-      case _ => throw new UnsupportedOperationException(f"XPath expression not supported: ${expr.getText}")
+      case _ => throw new NotImplementedError(f"XPath expression not supported: ${expr.getText}")
     }
   }
 

@@ -100,7 +100,7 @@ class XSLTStylesheet(var source: Elem) {
         evaluate(next, ctx) match {
           case Left(nodes) => (accumulator ++ nodes, ctx)
           case Right((name, value)) =>
-            if (scopeVariables.contains(name)) throw new EvaluationException(f"Variable $name is defined multiple times in the same scope")
+            if (scopeVariables.contains(name)) throw new EvaluationError(f"Variable $name is defined multiple times in the same scope")
             scopeVariables += name
             (accumulator, ctx.withVariable(name, value))
         }
@@ -140,7 +140,7 @@ class XSLTStylesheet(var source: Elem) {
       case ApplyTemplatesElement(Some(expr), params) =>
         XPathEvaluator.evaluate(expr, context.toXPathContext) match {
           case NodeSetValue(nodes) => Left(transform(nodes, context.variables))
-          case value => throw new EvaluationException(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")
+          case value => throw new EvaluationError(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")
         }
       case VariableDefinitionElement(name, expr) =>
         Right(name, XPathEvaluator.evaluate(expr, context.toXPathContext))
@@ -150,7 +150,7 @@ class XSLTStylesheet(var source: Elem) {
           case NodeSetValue(_) => ??? // TODO
           case value => Left(List(XMLTextNode(value.toStringValue.value)))
         }
-      case _ => throw new UnsupportedOperationException(f"Evaluation of $node is not implemented.")
+      case _ => throw new NotImplementedError(f"Evaluation of $node is not implemented.")
     }
   }
 }

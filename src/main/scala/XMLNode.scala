@@ -157,7 +157,7 @@ object XMLNode {
         )
       case text: Text => XMLTextNode(text.data)
       case comment: Comment => XMLComment(comment.commentText)
-      case _ => throw new UnsupportedOperationException(f"Unsupported XML node: ${node.getClass} ($node)")
+      case _ => throw new NotImplementedError(f"Unsupported XML node: ${node.getClass} ($node)")
     }
   }
 

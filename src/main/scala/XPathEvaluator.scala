@@ -2,7 +2,7 @@ import scala.collection.immutable.TreeSet
 
 case class XPathContext(node: XMLNode, position: Int, size: Int, variables: Map[String, XPathValue])
 
-class EvaluationException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
+class EvaluationError(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
 
 object XPathEvaluator {
   def evaluate(expr: XPathExpr, ctx: XPathContext): XPathValue = {
@@ -56,7 +56,7 @@ object XPathEvaluator {
       case VariableReferenceExpr(name) => ctx.variables(name)
       case UnionExpr(lhs, rhs) => (evaluate(lhs, ctx), evaluate(rhs, ctx)) match {
         case (NodeSetValue(left), NodeSetValue(right)) => ???
-        case (left, right) => throw new EvaluationException(f"Wrong types for union expression, must be node-sets ($left | $right)")
+        case (left, right) => throw new EvaluationError(f"Wrong types for union expression, must be node-sets ($left | $right)")
       }
       case FunctionCallExpr(name, params) =>
         // See XPath spec section 3.2
@@ -72,7 +72,7 @@ object XPathEvaluator {
           case ("position", Nil) => NumberValue(ctx.position)
           case ("count", List(NodeSetValue(nodes))) => NumberValue(nodes.size)
           case (_, evaluatedParams) =>
-            throw new EvaluationException(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
+            throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
         }
       case LocationPath(steps, isAbsolute) => NodeSetValue(evaluateLocationPath(ctx.node, steps, isAbsolute, ctx.variables).toList)
       case PathExpr(filter, locationPath) => ???

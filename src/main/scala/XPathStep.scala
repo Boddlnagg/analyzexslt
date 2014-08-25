@@ -30,7 +30,7 @@ object XPathStep {
         assert(nameStep.getPrefix == null || nameStep.getPrefix.length == 0, "Prefixed names are not supported")
         NameTest(nameStep.getLocalName)
       // ::processing-instruction() OR ::processing-instruction('name')
-      case piNode: JProcessingInstructionNodeStep => throw new UnsupportedOperationException("Processing instructions are not supported")
+      case piNode: JProcessingInstructionNodeStep => throw new NotImplementedError("Processing instructions are not implemented")
     }
     XPathStep(axis, nodeTest, predicates)
   }

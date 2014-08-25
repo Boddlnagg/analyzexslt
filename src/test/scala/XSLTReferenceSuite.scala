@@ -242,7 +242,7 @@ class XSLTReferenceSuite extends FunSuite {
     } catch {
       case eJava: TransformerException =>
         // if Java throws an exception, we should do the same (because of invalid input)
-        val eScala = intercept[EvaluationException] (TransformHelper.transformScala(xslt, data))
+        val eScala = intercept[EvaluationError] (TransformHelper.transformScala(xslt, data))
         println(f"Scala error: $eScala")
         println(f"Java error: $eJava")
     }

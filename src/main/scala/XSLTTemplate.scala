@@ -74,7 +74,7 @@ object XSLTTemplate {
         case "text" =>
           LiteralTextNode(elem.text)
 
-        case _ => throw new UnsupportedOperationException(f"Unsupported XSLT element: ${elem.label}")
+        case _ => throw new NotImplementedError(f"Unsupported XSLT element: ${elem.label}")
       }
       case null | "" =>
         // element without namespace
@@ -82,9 +82,9 @@ object XSLTTemplate {
           node.attributes.asAttrMap, // TODO: use SetAttributeElement for attributes instead (to simplify representation)?
           parseTemplate(node.child)
         )
-      case _ => throw new UnsupportedOperationException("Namespaces other than the XSLT namespace are not supported.")
+      case _ => throw new NotImplementedError("Namespaces other than the XSLT namespace are not supported.")
     }
-    case _ => throw new UnsupportedOperationException(f"Unsupported XML node $node")
+    case _ => throw new NotImplementedError(f"Unsupported XML node $node")
   }
 
   def parseParams(input: Seq[Node]) : Map[String, XPathExpr] = {
