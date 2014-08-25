@@ -30,14 +30,14 @@ object XSLTTemplate {
           val select = elem.attribute("select").map(a => XPathExpr(a.text))
           assert(elem.child.forall(XSLT.isElem(_, "with-param")),
             "children of 'apply-templates' element must only be 'with-param' ('sort' is not supported)")
-          ApplyTemplatesElement(select, parseWithParams(elem))
+          ApplyTemplatesElement(select, parseWithParams(elem.child))
 
         // spec section 6
         case "call-template" =>
           val name = elem.attribute("name").get.text
           assert(elem.child.forall(XSLT.isElem(_, "with-param")),
             "children of 'call-templates' element must only be 'with-param'")
-          CallTemplateElement(name, parseWithParams(elem))
+          CallTemplateElement(name, parseWithParams(elem.child))
 
         // spec section 7.1.3
         case "attribute" =>
@@ -98,7 +98,7 @@ object XSLTTemplate {
   def parseWithParams(input: Seq[Node]) : Map[String, XPathExpr] = {
     // TODO: support content of with-param element instead of "select" attribute?
     // TODO: merge function with parseParams() above
-    val params = input.filter(n => n.isInstanceOf[Elem] && n.namespace == XSLT.Namespace && n.label == "with-param")
+    val params = input.filter(XSLT.isElem(_, "with-param"))
       .map(n => n.asInstanceOf[Elem])
       .map(elem => (elem.attribute("name").get.text, XPathExpr(elem.attribute("select").get.text)))
     Map() ++ params

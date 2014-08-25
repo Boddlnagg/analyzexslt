@@ -5,6 +5,9 @@ case class XSLTContext(node: XMLNode, nodeList: List[XMLNode], position: Int, va
   def withVariable(name: String, value: XPathValue): XSLTContext = {
     XSLTContext(node, nodeList, position, variables + (name -> value))
   }
+  def withVariables(newVariables: Map[String, XPathValue]): XSLTContext = {
+    XSLTContext(node, nodeList, position, variables ++ newVariables)
+  }
 }
 
 class XSLTStylesheet(var source: Elem) {
@@ -64,17 +67,17 @@ class XSLTStylesheet(var source: Elem) {
 
   def transform(source: XMLRoot): XMLRoot = {
     // process according to XSLT spec section 5.1
-    transform(List(source), Map()) match {
+    transform(List(source), Map(), Map()) match {
       case List(elem@XMLElement(_, _, _, _)) => XMLRoot(elem)
       case _ => throw new IllegalStateException("Transformation result must be a single XMLElement")
     }
   }
 
-  def transform(sources: List[XMLNode], variables: Map[String, XPathValue]) : List[XMLNode] = {
+  def transform(sources: List[XMLNode], variables: Map[String, XPathValue], params: Map[String, XPathValue]) : List[XMLNode] = {
     // create context, choose template, instantiate template, append results
     sources.zipWithIndex
            .map { case (n,i) => (chooseTemplate(n), XSLTContext(n, sources, i + 1, variables)) }
-           .flatMap { case (tmpl, context) => evaluate(tmpl, context) }
+           .flatMap { case (tmpl, context) => evaluate(tmpl, context, params) }
   }
 
   def chooseTemplate(elem: XMLNode) : XSLTTemplate = {
@@ -83,8 +86,11 @@ class XSLTStylesheet(var source: Elem) {
     template
   }
 
-  def evaluate(tmpl: XSLTTemplate, context: XSLTContext) : List[XMLNode] = {
-    evaluate(tmpl.content, context)
+  def evaluate(tmpl: XSLTTemplate, context: XSLTContext, params: Map[String, XPathValue]) : List[XMLNode] = {
+    // only accept parameters that have a default parameter declaration in the template and ignore the rest (see spec section 11.6)
+    val acceptedParams = params.filter { case (key, _) => tmpl.defaultParams.contains(key) }
+    val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key)}.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))
+    evaluate(tmpl.content, context.withVariables(remainingDefaultParams ++ acceptedParams))
   }
 
   def evaluate(nodes: Seq[XSLTNode], context: XSLTContext) : List[XMLNode] = {
@@ -130,16 +136,15 @@ class XSLTStylesheet(var source: Elem) {
           .map(n => n.asInstanceOf[XMLTextNode].value)
           .mkString("")
         Left(List(XMLAttribute(attribute, textResult)))
-      // TODO: implement support for template parameters
       case ApplyTemplatesElement(None, params) =>
         context.node match {
-          case root : XMLRoot => Left(transform(List(root.elem), context.variables))
-          case elem : XMLElement => Left(transform(elem.children.toList, context.variables))
+          case root : XMLRoot => Left(transform(List(root.elem), context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
+          case elem : XMLElement => Left(transform(elem.children.toList, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case _ => Left(Nil) // other node types don't have children and return an empty result
         }
       case ApplyTemplatesElement(Some(expr), params) =>
         XPathEvaluator.evaluate(expr, context.toXPathContext) match {
-          case NodeSetValue(nodes) => Left(transform(nodes, context.variables))
+          case NodeSetValue(nodes) => Left(transform(nodes, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case value => throw new EvaluationError(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")
         }
       case VariableDefinitionElement(name, expr) =>
@@ -147,7 +152,7 @@ class XSLTStylesheet(var source: Elem) {
       case CopyOfElement(select) =>
         XPathEvaluator.evaluate(select, context.toXPathContext) match {
           // NOTE: result tree fragments are generally not supported
-          case NodeSetValue(_) => ??? // TODO
+          case NodeSetValue(nodes) => Left(nodes.map(n => n.copy))
           case value => Left(List(XMLTextNode(value.toStringValue.value)))
         }
       case _ => throw new NotImplementedError(f"Evaluation of $node is not implemented.")

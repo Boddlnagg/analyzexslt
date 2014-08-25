@@ -21,6 +21,8 @@ abstract class XMLNode extends Ordered[XMLNode] {
   def compare(that: XMLNode) = this.root.nodesInOrder.indexWhere(_ eq this) compare that.root.nodesInOrder.indexWhere(_ eq that)
 
   def textValue: String
+
+  def copy: XMLNode
 }
 
 // XPath spec section 5.1 (comments in the root node are not supported, processing instructions are generally not implemented)
@@ -42,6 +44,8 @@ case class XMLRoot(elem: XMLElement) extends XMLNode {
   override def root = this
 
   override def textValue = elem.textValue
+
+  override def copy = XMLRoot(elem.copy.asInstanceOf[XMLElement])
 }
 
 // XPath spec section 5.2
@@ -84,6 +88,8 @@ case class XMLElement(name: String,
   }
 
   override def textValue = children.map(_.textValue).mkString("")
+
+  override def copy = XMLElement(name, attributes.map(a => a.copy.asInstanceOf[XMLAttribute]), children.map(c => c.copy))
 }
 
 // XPath spec section 5.3
@@ -98,6 +104,8 @@ case class XMLAttribute(name: String, value: String, var parent: XMLNode = null)
   }
 
   override def textValue = value // NOTE: attribute-value normalization is required by the spec, but not implemented
+
+  override def copy = XMLAttribute(name, value)
 }
 // XPath spec section 5.6
 case class XMLComment(value: String, var parent: XMLNode = null) extends XMLNode {
@@ -111,6 +119,8 @@ case class XMLComment(value: String, var parent: XMLNode = null) extends XMLNode
   }
 
   override def textValue = value
+
+  override def copy = XMLComment(value)
 }
 // XPath spec section 5.7
 case class XMLTextNode(value: String, var parent: XMLNode = null) extends XMLNode {
@@ -124,6 +134,8 @@ case class XMLTextNode(value: String, var parent: XMLNode = null) extends XMLNod
   }
 
   override def textValue = value
+
+  override def copy = XMLTextNode(value)
 }
 // processing instructions and namespaces are not implemented
 

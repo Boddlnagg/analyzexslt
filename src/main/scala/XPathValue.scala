@@ -32,6 +32,7 @@ abstract class XPathValue {
         if (num.isNaN) "NaN"
         else if (num.isPosInfinity) "Infinity"
         else if (num.isNegInfinity) "-Infinity"
+        else if (num.isValidInt) num.toInt.toString
         else num.toString
       )
       case NodeSetValue(List(node)) => StringValue(node.textValue)

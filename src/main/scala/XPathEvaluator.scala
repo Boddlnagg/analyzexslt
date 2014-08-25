@@ -75,8 +75,16 @@ object XPathEvaluator {
             throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
         }
       case LocationPath(steps, isAbsolute) => NodeSetValue(evaluateLocationPath(ctx.node, steps, isAbsolute, ctx.variables).toList)
-      case PathExpr(filter, locationPath) => ???
-      case FilterExpr(expr, predicates) => ???
+      case PathExpr(filter, locationPath) =>
+        evaluate(filter, ctx) match {
+          case NodeSetValue(nodes) => NodeSetValue(nodes.flatMap {
+            n => evaluateLocationPath(n, locationPath.steps, locationPath.isAbsolute, ctx.variables).toList
+          })
+          case value => throw new EvaluationError(f"Filter expression must return a node-set (returned: $value)")
+        }
+      case FilterExpr(expr, predicates) =>
+        assert(predicates.isEmpty, "Predicates are not supported")
+        evaluate(expr, ctx)
     }
   }
 
@@ -143,8 +151,7 @@ object XPathEvaluator {
           case CommentNodeTest => node.isInstanceOf[XMLComment]
           case AllNodeTest => true
         }}
-        // TODO: implement predicates (requires distinction between forward and reverse axes; proximity position; see spec section 2.4)
-        assert(first.predicates.isEmpty, "Predicates are not yet supported")
+        assert(first.predicates.isEmpty, "Predicates are not supported") // NOTE: see XPath spec section 2.4 to implement these
         testedNodes.flatMap { n => evaluateLocationPath(n, rest, false, variables)}
       case (Nil, false) => return TreeSet(ctxNode)
     }

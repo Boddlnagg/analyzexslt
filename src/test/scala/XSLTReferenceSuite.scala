@@ -234,6 +234,87 @@ class XSLTReferenceSuite extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("Copy-of node-set") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match='/root'>
+          <result>
+            <xsl:copy-of select="a/b"/>
+          </result>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root>
+        <a>
+          <b>
+          </b>
+        </a>
+        <a>
+          <b>
+          </b>
+        </a>
+      </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
+  test("Node-set Variable") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match='/root'>
+          <xsl:variable name="nodes" select="a"/>
+          <result>
+            <xsl:copy-of select="$nodes/b"/>
+          </result>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root>
+        <a>
+          <b/>
+        </a>
+        <a>
+          <b/>
+        </a>
+      </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
+  test("Template parameter") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <result>
+            <xsl:apply-templates/>
+          </result>
+        </xsl:template>
+        <xsl:template match='a'>
+          <xsl:param name="nr" select="@nr"/>
+          <aa>
+            <xsl:attribute name="nr"><xsl:value-of select="$nr"/></xsl:attribute>
+            <xsl:apply-templates>
+              <xsl:with-param name="nr" select="-1"/>
+            </xsl:apply-templates>
+          </aa>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root>
+        <a nr="1">
+          <a/>
+        </a>
+        <a nr="2">
+          <a/>
+        </a>
+      </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
   def assertTransformMatches(xslt: Elem, data: Elem) = {
     try {
       val referenceResult = TransformHelper.transformJava(xslt, data)
