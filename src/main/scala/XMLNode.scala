@@ -1,5 +1,5 @@
 import scala.xml._
-import scala.collection.mutable.MutableList
+import scala.collection.mutable
 
 abstract class XMLNode extends Ordered[XMLNode] {
   var parent: XMLNode
@@ -45,13 +45,13 @@ case class XMLRoot(elem: XMLElement) extends XMLNode {
 
   override def textValue = elem.textValue
 
-  override def copy = XMLRoot(elem.copy.asInstanceOf[XMLElement])
+  override def copy = XMLRoot(elem.copy)
 }
 
 // XPath spec section 5.2
 case class XMLElement(name: String,
-                      var attributes: MutableList[XMLAttribute],
-                      var children: MutableList[XMLNode],
+                      var attributes: mutable.MutableList[XMLAttribute],
+                      var children: mutable.MutableList[XMLNode],
                       var parent: XMLNode) extends XMLNode {
 
   def appendChild(child: XMLNode): Unit = {
@@ -89,7 +89,7 @@ case class XMLElement(name: String,
 
   override def textValue = children.map(_.textValue).mkString("")
 
-  override def copy = XMLElement(name, attributes.map(a => a.copy.asInstanceOf[XMLAttribute]), children.map(c => c.copy))
+  override def copy = XMLElement(name, attributes.map(a => a.copy), children.map(c => c.copy))
 }
 
 // XPath spec section 5.3
@@ -145,7 +145,7 @@ object XMLElement {
   }
 
   def apply(name: String, attributes: Seq[XMLAttribute] = Nil, children: Seq[XMLNode] = Nil): XMLElement = {
-    val result = new XMLElement(name, MutableList(), MutableList(), null)
+    val result = new XMLElement(name, mutable.MutableList(), mutable.MutableList(), null)
     attributes.foreach(attr => result.addAttribute(attr))
     children.foreach(child => result.appendChild(child))
     result

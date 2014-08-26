@@ -120,14 +120,14 @@ object XPathExpr {
     // Patterns are a restricted subset of XPath expressions, see spec section 5.2
     // NOTE: id() and key() patterns are not supported
     expr match {
-      case LocationPath(steps, _) => steps.forall(s => s match {
+      case LocationPath(steps, _) => steps.forall {
         // plain '//' operator is allowed and equivalent to descendant-or-self::node()/
         case XPathStep(DescendantOrSelfAxis, AllNodeTest, List()) => true
         // otherwise only child:: and attribute:: axes are allowed
         case XPathStep(AttributeAxis | ChildAxis, _, _) => true
         // all other axes are forbidden
         case _ => false
-      })
+      }
       case UnionExpr(lhs, rhs) => isPattern(lhs) && isPattern(rhs)
       case _ => false
     }

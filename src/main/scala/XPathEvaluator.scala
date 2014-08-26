@@ -84,9 +84,9 @@ object XPathEvaluator {
           })
           case value => throw new EvaluationError(f"Filter expression must return a node-set (returned: $value)")
         }
-      case FilterExpr(expr, predicates) =>
+      case FilterExpr(subexpr, predicates) =>
         assert(predicates.isEmpty, "Predicates are not supported")
-        evaluate(expr, ctx)
+        evaluate(subexpr, ctx)
     }
   }
 
@@ -171,7 +171,7 @@ object XPathEvaluator {
         }}
         assert(first.predicates.isEmpty, "Predicates are not supported") // NOTE: see XPath spec section 2.4 to implement these
         testedNodes.flatMap { n => evaluateLocationPath(n, rest, false, variables)}
-      case (Nil, false) => return TreeSet(ctxNode)
+      case (Nil, false) => TreeSet(ctxNode)
     }
   }
 }

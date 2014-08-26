@@ -108,13 +108,13 @@ class XSLTStylesheet(var source: Elem) {
     var scopeVariables = scala.collection.mutable.Set[String]()
 
     val (result, _) = nodes.foldLeft((List[XMLNode](), context)) {
-      case ((accumulator, ctx), next) =>
+      case ((resultNodes, ctx), next) =>
         evaluate(next, ctx) match {
-          case Left(nodes) => (accumulator ++ nodes, ctx)
+          case Left(moreResultNodes) => (resultNodes ++ moreResultNodes, ctx)
           case Right((name, value)) =>
             if (scopeVariables.contains(name)) throw new EvaluationError(f"Variable $name is defined multiple times in the same scope")
             scopeVariables += name
-            (accumulator, ctx.addVariable(name, value))
+            (resultNodes, ctx.addVariable(name, value))
         }
     }
     result
