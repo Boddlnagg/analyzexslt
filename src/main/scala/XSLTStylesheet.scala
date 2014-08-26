@@ -126,10 +126,12 @@ class XSLTStylesheet(var source: Elem) {
       case LiteralElement(name, attributes, children) =>
         val resultNodes = evaluate(children, context)
         // attributes must come before all other result nodes, afterwards they are ignored (see spec section 7.1.3)
+        // we also reverse their order to match the Java implementation (undefined in the spec)
         val resultAttributes = attributes ++ resultNodes
           .takeWhile(n => n.isInstanceOf[XMLAttribute])
           .map(n => n.asInstanceOf[XMLAttribute])
           .map(attr => (attr.name, attr.value))
+          .reverse
         val resultChildren = resultNodes.filter(n => !n.isInstanceOf[XMLAttribute])
         Left(List(XMLElement(name,
           resultAttributes.map { case (key, value) => XMLAttribute(key, value)}.toSeq,

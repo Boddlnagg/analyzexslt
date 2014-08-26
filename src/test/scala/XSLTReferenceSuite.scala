@@ -111,6 +111,23 @@ class XSLTReferenceSuite extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("Multiple attributes") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match='/'>
+          <result>
+            <!-- The order of these is not defined in the spec, but Java adds them in reverse order, so we should match that -->
+            <xsl:attribute name="attr1">1</xsl:attribute>
+            <xsl:attribute name="attr2">2</xsl:attribute>
+            <xsl:attribute name="attr3">3</xsl:attribute>
+          </result>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data = <foo/>
+    assertTransformMatches(xslt, data)
+  }
+
   test("Overwrite attribute") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -386,6 +403,72 @@ class XSLTReferenceSuite extends FunSuite {
       </xsl:stylesheet>
 
     val data = <root/>
+
+    assertTransformMatches(xslt, data)
+  }
+
+  test("Node positions and count") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/root">
+          <result>
+            <!-- Count the number of 'b' children -->
+            <xsl:attribute name="b-count"><xsl:value-of select="count(b)"/></xsl:attribute>
+            <unfiltered>
+              <!-- Apply templates to all children -->
+              <xsl:apply-templates/>
+            </unfiltered>
+            <filtered>
+              <!-- Apply templates to 'a' children -->
+              <xsl:apply-templates select="a"/>
+            </filtered>
+          </result>
+        </xsl:template>
+        <xsl:template match="a">
+          <aa>
+            <xsl:attribute name="pos"><xsl:value-of select="position()"/></xsl:attribute>
+            <xsl:attribute name="last"><xsl:value-of select="last()"/></xsl:attribute>
+          </aa>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root>
+        <a/>
+        <b/>
+        <b/>
+        <b/>
+        <a/>
+      </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
+  test("Node names") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/root">
+          <result>
+            <xsl:apply-templates/>
+          </result>
+        </xsl:template>
+        <xsl:template match="text()"/> <!-- Ignore text nodes -->
+        <xsl:template match="@*"> <!-- All attribute nodes -->
+          <attribute><xsl:attribute name="name"><xsl:value-of select="name(.)"/></xsl:attribute></attribute>
+        </xsl:template>
+        <xsl:template match="*"> <!-- All element nodes -->
+          <element><xsl:attribute name="name"><xsl:value-of select="name(.)"/></xsl:attribute></element>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root x="foo" y="bar">
+        <a/>
+        <b/>
+        <b/>
+        <b/>
+        <a/>
+      </root>
 
     assertTransformMatches(xslt, data)
   }
