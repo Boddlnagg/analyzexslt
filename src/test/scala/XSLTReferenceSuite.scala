@@ -369,6 +369,49 @@ class XSLTReferenceSuite extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("<xsl:choose>") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/root">
+          <result>
+            <xsl:apply-templates/>
+          </result>
+        </xsl:template>
+        <xsl:template match='*'>
+          <xsl:choose>
+            <xsl:when test="name(.) = 'a' and string(@recurse) = 'yes'">
+              <aa><xsl:apply-templates/></aa>
+            </xsl:when>
+            <xsl:when test="name(.) = 'a'">
+              <aa/>
+            </xsl:when>
+            <xsl:when test="name(.) = 'b'">
+              <bb/>
+            </xsl:when>
+            <xsl:otherwise>
+              <otherwise/>
+            </xsl:otherwise>
+          </xsl:choose>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root>
+        <a recurse="yes">
+          <b/>
+          <a recurse="no"><b/></a>
+          <a recurse="yes"><c/><b/></a>
+          <c/>
+        </a>
+        <a recurse="no">
+          <a/>
+        </a>
+        <c/>
+      </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
   test("No dynamic scoping (apply-templates)") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">

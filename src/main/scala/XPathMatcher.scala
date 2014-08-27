@@ -1,6 +1,9 @@
 object XPathMatcher {
+  /** Returns a value indicating whether a given node matches a location path pattern.
+    * NOTE: only supports location path patterns (XSLT spec section 5.2) without predicates
+    */
   def matches(node: XMLNode, path: LocationPath): Boolean = {
-    // NOTE: only supports location path patterns (XSLT spec section 5.2) without predciates
+
     // match recursively from right to left
     if (path.steps.isEmpty) {
       // an empty path is always a match, but when it is an absolute path, the current node must be the root node

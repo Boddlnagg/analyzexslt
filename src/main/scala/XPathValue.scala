@@ -1,8 +1,15 @@
+/** Base class for XPath values.
+  *
+  * An XPath value can either be a node-set, a boolean, a number or a string (see XPath spec section 1).
+  * NOTE: Result tree fragments are an additional data type in the XSLT specification, but they are not implemented here.
+  *
+  * This class also provides methods to convert between the four value types, where
+  * conversions to node-sets are generally not allowed (see XPath spec section 3.3)*/
 abstract class XPathValue {
-  // NOTE: conversion to node-sets is generally not allowed/available (see XPath spec section 3.3)
-
+  /** Converts a value to the boolean type.
+    * This matches the boolean() function specified in the XPath spec section 4.3
+    */
   def toBooleanValue: BooleanValue = {
-    // this matches the boolean() function specified in the XPath spec section 4.3
     this match {
       case bool@BooleanValue(_) => bool
       case NumberValue(num) => BooleanValue(num == 0 || num.isNaN)
@@ -11,8 +18,11 @@ abstract class XPathValue {
     }
   }
 
+  /** Converts a value to the number type.
+    * Except for unimplemented cases this matches the number() function specified in the XPath spec section 4.4
+    */
   def toNumberValue: NumberValue = {
-    // except for unimplemented cases this matches the number() function specified in the XPath spec section 4.4
+    //
     this match {
       case num@NumberValue(_) => num
       case BooleanValue(bool) => if (bool) NumberValue(1) else NumberValue(0)
@@ -20,8 +30,10 @@ abstract class XPathValue {
     }
   }
 
+  /** Converts a value to the string type.
+    * Except node-sets with more than one element, this matches the string() function specified in the XPath spec section 4.2
+    */
   def toStringValue: StringValue = {
-    // except for unimplemented cases this matches the string() function specified in the XPath spec section 4.2
     this match {
       case str@StringValue(_) => str
       case BooleanValue(bool) => StringValue(
@@ -36,13 +48,12 @@ abstract class XPathValue {
         else num.toString
       )
       case NodeSetValue(Nil) => StringValue("")
-      case NodeSetValue(List(node)) => StringValue(node.textValue)
+      case NodeSetValue(List(node)) => StringValue(node.stringValue)
       case NodeSetValue(_) => throw new NotImplementedError("Converting node sets to strings is not implemented for node-sets with more than one element")
     }
   }
 }
 
-// NOTE: result tree fragments are an additional data type in the XSLT specification, but they are not supported here
 case class NodeSetValue(nodes: List[XMLNode]) extends XPathValue
 case class BooleanValue(value: Boolean) extends XPathValue
 case class NumberValue(value: Double) extends XPathValue

@@ -1,10 +1,17 @@
 import scala.collection.immutable.TreeSet
 
+/** The context used for evaluating XPath expressions (see XPath spec section 1)
+  *
+  * @param node the context node
+  * @param position the context position
+  * @param size the context size
+  * @param variables a set of variable bindings
+  */
 case class XPathContext(node: XMLNode, position: Int, size: Int, variables: Map[String, XPathValue])
 
-class EvaluationError(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
-
+/** Object to evaluate XPath expressons */
 object XPathEvaluator {
+  /** Evaluates a given XPath expression using a specified context and returns the result of the evaluation. */
   def evaluate(expr: XPathExpr, ctx: XPathContext): XPathValue = {
     expr match {
       case PlusExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value + evaluate(rhs, ctx).toNumberValue.value)
@@ -73,7 +80,7 @@ object XPathEvaluator {
           case ("last", Nil) => NumberValue(ctx.size)
           case ("position", Nil) => NumberValue(ctx.position)
           case ("count", List(NodeSetValue(nodes))) => NumberValue(nodes.size)
-          case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.map(n => StringValue(n.textValue).toNumberValue.value).sum)
+          case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
           case ("name"|"local-name", List(NodeSetValue(List(node)))) => node match {
             case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
             case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
@@ -96,6 +103,14 @@ object XPathEvaluator {
     }
   }
 
+  /** Evaluates the steps of a location path.
+    *
+    * @param ctxNode the context node
+    * @param steps the list of remaining steps to evaluate
+    * @param isAbsolute a value indicating whether the location path is absolute (or relative)
+    * @param variables the set of currently defined variables
+    * @return an ordered set of nodes resulting from the location path, ordered in document order
+    */
   private def evaluateLocationPath(ctxNode: XMLNode, steps: List[XPathStep], isAbsolute: Boolean, variables: Map[String, XPathValue]): TreeSet[XMLNode] = {
     // evaluate steps from left to right, keep nodes in document order (not required by XPath, but by XSLT)
     (steps, isAbsolute) match {

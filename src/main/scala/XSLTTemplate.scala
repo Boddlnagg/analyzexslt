@@ -1,8 +1,15 @@
 import scala.xml.{Text, Node, Elem}
 
+/** An XSLT template
+  *
+  * @param content the content of the template, represented as a sequence of XSLT instructions
+  * @param defaultParams the parameters of this template along with expressions to compute the default values (these must be evaluated lazily)
+  */
 class XSLTTemplate(val content: Seq[XSLTNode], val defaultParams: Map[String, XPathExpr] = Map())
 
+/** Factory for [[XSLTTemplate]] instances */
 object XSLTTemplate {
+  /** Creates a new XSLT template from a [[scala.xml.Elem]] (must be an &lt;xsl:template&gt; element) */
   def apply(elem: Elem): XSLTTemplate = {
     assert(XSLT.isElem(elem, "template"))
     new XSLTTemplate(
@@ -11,10 +18,12 @@ object XSLTTemplate {
     )
   }
 
+  /** Parses a sequence of [[scala.xml.Node]]s as XSLT instructions */
   def parseTemplate(template: Seq[Node]) : Seq[XSLTNode] = {
     template.map(parseNode).toList
   }
 
+  /** Parses a single [[scala.xml.Node]] as an XSLT instruction */
   def parseNode(node: Node) : XSLTNode = node match {
     case text : Text => LiteralTextNode(text.data)
     case elem : Elem => elem.namespace match {
@@ -22,7 +31,8 @@ object XSLTTemplate {
         // spec section 11.2
         case "variable" =>
           assert(elem.child.isEmpty, "Variable definitions are only supported when they use the 'select' attribute")
-          val select = XPathExpr(elem.attribute("select").map(_.text).getOrElse("''")) // value is empty string '' if there is no select attribute
+          // value is empty string '' if there is no select attribute (see XSLT spec section 11.2)
+          val select = XPathExpr(elem.attribute("select").map(_.text).getOrElse("''"))
           VariableDefinitionElement(elem.attribute("name").get.text, select)
 
         // spec sections 5.4 and 11.6
@@ -87,6 +97,7 @@ object XSLTTemplate {
     case _ => throw new NotImplementedError(f"Unsupported XML node $node")
   }
 
+  /** Parses &lt;xsl:param&gt; nodes */
   def parseParams(input: Seq[Node]) : Map[String, XPathExpr] = {
     // TODO: support content of param element instead of "select" attribute?
     val params = input.filter(XSLT.isElem(_, "param"))
@@ -95,6 +106,7 @@ object XSLTTemplate {
     Map() ++ params
   }
 
+  /** Parses &lt;xsl:with-param&gt; nodes */
   def parseWithParams(input: Seq[Node]) : Map[String, XPathExpr] = {
     // TODO: support content of with-param element instead of "select" attribute?
     // TODO: merge function with parseParams() above

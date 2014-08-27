@@ -19,6 +19,7 @@ import org.jaxen.saxpath.helpers.XPathReaderFactory
 
 import scala.collection.JavaConversions._
 
+/** Base class for relational operators in XPath (=, !=, <, >, <=, >=) */
 abstract class RelationalOperator
 case object EqualsOperator extends RelationalOperator
 case object NotEqualsOperator extends RelationalOperator
@@ -27,8 +28,10 @@ case object GreaterThanOperator extends RelationalOperator
 case object LessThanEqualOperator extends RelationalOperator
 case object GreaterThanEqualOperator extends RelationalOperator
 
+/** Base class for XPath expressions */
 abstract class XPathExpr
 
+/** Base class for binary XPath expressions */
 abstract class BinaryExpr extends XPathExpr {
   def lhs: XPathExpr
   def rhs: XPathExpr
@@ -52,7 +55,9 @@ case class VariableReferenceExpr(name: String) extends XPathExpr
 case class PathExpr(filter: FilterExpr, locationPath: LocationPath) extends XPathExpr
 case class LocationPath(steps: List[XPathStep], isAbsolute: Boolean) extends XPathExpr
 
+/** Factory for [[XPathExpr]] instances */
 object XPathExpr {
+  /** Creates an XPath expression by parsing a string */
   def apply(string: String) : XPathExpr = {
     val reader : XPathReader = XPathReaderFactory.createReader()
     val handler : JaxenHandler = new JaxenHandler()
@@ -61,6 +66,7 @@ object XPathExpr {
     parse(handler.getXPathExpr.getRootExpr)
   }
 
+  /** Parses a Jaxen XPath expression and returns an equivalent [[XPathExpr]]*/
   def parse(expr: Expr): XPathExpr = {
     expr match {
       case addExpr: JAdditiveExpr =>
@@ -116,9 +122,11 @@ object XPathExpr {
     }
   }
 
+  /** Returns a value indicating whether the given XPath expression is a pattern.
+    * Patters are a restricted subset of XPath expressions, see XSLT spec section 5.2.
+    * NOTE: id() and key() patterns are not implemented
+    */
   def isPattern(expr: XPathExpr) : Boolean = {
-    // Patterns are a restricted subset of XPath expressions, see spec section 5.2
-    // NOTE: id() and key() patterns are not supported
     expr match {
       case LocationPath(steps, _) => steps.forall {
         // plain '//' operator is allowed and equivalent to descendant-or-self::node()/
@@ -133,6 +141,9 @@ object XPathExpr {
     }
   }
 
+  /** Splits an XPath expression that is a pattern into its parts.
+    * The resulting list contains every sub-expression originally separated by the union operator.
+    */
   def splitUnionPattern(expr: XPathExpr) : List[LocationPath] = {
     expr match {
       case UnionExpr(lhs, rhs) => splitUnionPattern(lhs) ++ splitUnionPattern(rhs)
@@ -141,11 +152,14 @@ object XPathExpr {
     }
   }
 
+  /** Returns the default priority of a location path pattern according to the XSLT spec section 5.5
+    * and the table at http://www.lenzconsulting.com/how-xslt-works/
+    *
+    * NOTE: prefixed names are not implemented (they would have a default priority of -0.25),
+    *       processing instruction node tests are also not implemented (they would have a default priority
+    *       of -0.5 or 0 depending on whether they match a specific name)
+    */
   def getDefaultPriority(pattern: LocationPath) : Double = {
-    // according to spec section 5.5 and the table at http://www.lenzconsulting.com/how-xslt-works/
-    // NOTE: prefixed names are not implemented (they would have a default priority of -0.25),
-    //       processing instruction node tests are also not implemented (they would have a default priority
-    //       of -0.5 or 0 depending on whether they match a specific name)
     if (pattern.steps.size != 1 || pattern.isAbsolute)
       0.5 // more complex patterns or absolute patterns (also matches just '/' which has no steps)
     else pattern.steps.head match {

@@ -1,18 +1,33 @@
 import scala.xml._
 
+/** A context for evaluating an XSLT template (see XSLT spec section 1)
+  *
+  * @param node the current node
+  * @param nodeList the current node list
+  * @param position the current node's position in the current node list
+  * @param variables a set of variable bindings
+  */
 case class XSLTContext(node: XMLNode, nodeList: List[XMLNode], position: Int, variables: Map[String, XPathValue]) {
+  /** Creates an equivalent XPath context from this XSLT context */
   def toXPathContext = XPathContext(node, position, nodeList.size, variables)
+
+  /** Returns a new context where a variable binding was added to the set of variables */
   def addVariable(name: String, value: XPathValue): XSLTContext = {
     XSLTContext(node, nodeList, position, variables + (name -> value))
   }
+
+  /** Returns a new context where a number of variable bindings were added to the set of variables */
   def addVariables(newVariables: Map[String, XPathValue]): XSLTContext = {
     XSLTContext(node, nodeList, position, variables ++ newVariables)
   }
+
+  /** Returns a new context where the variable bindings were replaced by the given new set of variable */
   def replaceVariables(newVariables: Map[String, XPathValue]): XSLTContext = {
     XSLTContext(node, nodeList, position, newVariables)
   }
 }
 
+/** An XSLT stylesheet */
 class XSLTStylesheet(var source: Elem) {
   val cleaned = XSLT.clean(source).asInstanceOf[Elem]
 
@@ -69,6 +84,7 @@ class XSLTStylesheet(var source: Elem) {
     case _ => Nil
   }.sortBy { case (_, _, priority, importPrecedence) => (importPrecedence, priority) } // sort by precedence, then by priority
 
+  /** Transforms a source document (represented by it's root node) into a new document using this stylesheet*/
   def transform(source: XMLRoot): XMLRoot = {
     // process according to XSLT spec section 5.1
     transform(List(source), Map(), Map()) match {
@@ -77,6 +93,7 @@ class XSLTStylesheet(var source: Elem) {
     }
   }
 
+  /** Transforms a list of source nodes to a new list of nodes using given variable and parameter bindings */
   def transform(sources: List[XMLNode], variables: Map[String, XPathValue], params: Map[String, XPathValue]) : List[XMLNode] = {
     // create context, choose template, instantiate template, append results
     sources.zipWithIndex
@@ -84,14 +101,22 @@ class XSLTStylesheet(var source: Elem) {
            .flatMap { case (tmpl, context) => evaluateTemplate(tmpl, context, params) }
   }
 
+  /** Chooses a template that matches the given element best */
   def chooseTemplate(elem: XMLNode) : XSLTTemplate = {
     def allMatching = matchableTemplates.filter { case (tmpl, _, _, _) => XPathMatcher.matches(elem, tmpl)}
     val (_, template, _, _) = allMatching.last // this one will have highest precedence and priority, because the templates are sorted
     template
   }
 
+  /** Evaluates an XSLT template in a given XSLT context with parameters and returns a list of resulting nodes.
+    *
+    * @param tmpl the template to evaluate
+    * @param context the context to evaluate the template in
+    * @param params the parameters to use for evaluating the template (they will be ignored if they don't have
+    *               a corresponding default parameter in the template, see XSLT spec section 11.6)
+    * @return a list of resulting XML nodes
+    */
   def evaluateTemplate(tmpl: XSLTTemplate, context: XSLTContext, params: Map[String, XPathValue]) : List[XMLNode] = {
-    // only accept parameters that have a default parameter declaration in the template and ignore the rest (see spec section 11.6)
     val acceptedParams = params.filter { case (key, _) => tmpl.defaultParams.contains(key) }
     val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key)}.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))
     // the context for the newly instantiated template contains only global variables and parameters, no local parameters (static scoping)
@@ -99,10 +124,14 @@ class XSLTStylesheet(var source: Elem) {
     evaluate(tmpl.content, context.replaceVariables(Map()).addVariables(remainingDefaultParams ++ acceptedParams))
   }
 
+  /** Evaluates a sequence of XSLT instructions using a new scope (variable definitions are collected
+    * so they will be visible in subsequent nodes, but never outside of the scope)
+    *
+    * @param nodes the instructions to evaluate
+    * @param context the context to evaluate the first instruction in (subsequent instructions might have additional variable bindings)
+    * @return a list of resulting XML nodes
+    */
   def evaluate(nodes: Seq[XSLTNode], context: XSLTContext) : List[XMLNode] = {
-    // evaluates a sequence of nodes in the same scope and collects variable definitions
-    // so they will be visible in subsequent nodes (but never outside of the current scope)
-
     // remember variable names that were created in this scope so we can throw an error
     // if any of these is shadowed in the SAME scope
     var scopeVariables = scala.collection.mutable.Set[String]()
@@ -120,8 +149,10 @@ class XSLTStylesheet(var source: Elem) {
     result
   }
 
+  /** Evaluates a single XSLT instruction in a given XSLT node, resulting in either a list of result nodes
+    * or an additional variable binding (if the instruction was a variable definition).
+    */
   def evaluate(node: XSLTNode, context: XSLTContext): Either[List[XMLNode], (String, XPathValue)] = {
-    // evaluate a single node; might encounter new variable definitions which must be returned
     node match {
       case LiteralElement(name, attributes, children) =>
         val resultNodes = evaluate(children, context)
@@ -171,6 +202,13 @@ class XSLTStylesheet(var source: Elem) {
     }
   }
 
+  /** Evaluates the branches of a choose instruction.
+    *
+    * @param branches the remaining branches to test
+    * @param otherwise the otherwise branch that will be evaluated when there is no other branch left
+    * @param context the context to evaluate the instructions in
+    * @return a list of resulting XML nodes
+    */
   def evaluateChoose(branches: List[(XPathExpr, Seq[XSLTNode])], otherwise: Seq[XSLTNode], context: XPathContext): Seq[XSLTNode] = {
     branches match {
       case Nil => otherwise
