@@ -115,11 +115,11 @@ class XSLTReferenceSuite extends FunSuite {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match='/'>
-          <result>
+          <result literal1="foo" literal2="bar">
             <!-- The order of these is not defined in the spec, but Java adds them in reverse order, so we should match that -->
-            <xsl:attribute name="attr1">1</xsl:attribute>
-            <xsl:attribute name="attr2">2</xsl:attribute>
-            <xsl:attribute name="attr3">3</xsl:attribute>
+            <xsl:attribute name="dynamic1">1</xsl:attribute>
+            <xsl:attribute name="dynamic2">2</xsl:attribute>
+            <xsl:attribute name="dynamic3">3</xsl:attribute>
           </result>
         </xsl:template>
       </xsl:stylesheet>
