@@ -72,9 +72,9 @@ class XSLTStylesheet(var source: Elem) {
 
   // add built-in templates (see spec section 5.8)
   val builtinTemplates = List[(XSLTTemplate, Option[String], Option[XPathExpr], Int)](
-    (new XSLTTemplate(List(ApplyTemplatesElement())), None, Some(XPathExpr("*|/")), XSLT.BuiltInImportPrecedence),
+    (new XSLTTemplate(List(ApplyTemplatesInstruction())), None, Some(XPathExpr("*|/")), XSLT.BuiltInImportPrecedence),
     // NOTE: <xsl:value-of select="."> is equivalent to <xsl:copy-of select="string(.)">
-    (new XSLTTemplate(List(CopyOfElement(XPathExpr("string(.)")))), None, Some(XPathExpr("text()|@*")), XSLT.BuiltInImportPrecedence),
+    (new XSLTTemplate(List(CopyInstruction(XPathExpr("string(.)")))), None, Some(XPathExpr("text()|@*")), XSLT.BuiltInImportPrecedence),
     // NOTE: the XPath expression here originally is "processing-instruction()|comment()", but processing instructions are not implemented
     (new XSLTTemplate(Nil), None, Some(XPathExpr("comment()")), XSLT.BuiltInImportPrecedence)
   )
@@ -131,7 +131,7 @@ class XSLTStylesheet(var source: Elem) {
     * @param context the context to evaluate the first instruction in (subsequent instructions might have additional variable bindings)
     * @return a list of resulting XML nodes
     */
-  def evaluate(nodes: Seq[XSLTNode], context: XSLTContext) : List[XMLNode] = {
+  def evaluate(nodes: Seq[XSLTInstruction], context: XSLTContext) : List[XMLNode] = {
     // remember variable names that were created in this scope so we can throw an error
     // if any of these is shadowed in the SAME scope
     var scopeVariables = scala.collection.mutable.Set[String]()
@@ -152,7 +152,7 @@ class XSLTStylesheet(var source: Elem) {
   /** Evaluates a single XSLT instruction in a given XSLT node, resulting in either a list of result nodes
     * or an additional variable binding (if the instruction was a variable definition).
     */
-  def evaluate(node: XSLTNode, context: XSLTContext): Either[List[XMLNode], (String, XPathValue)] = {
+  def evaluate(node: XSLTInstruction, context: XSLTContext): Either[List[XMLNode], (String, XPathValue)] = {
     node match {
       case LiteralElement(name, attributes, children) =>
         val resultNodes = evaluate(children, context)
@@ -168,36 +168,36 @@ class XSLTStylesheet(var source: Elem) {
           resultAttributes.map { case (key, value) => XMLAttribute(key, value)}.toSeq,
           resultChildren)))
       case LiteralTextNode(text) => Left(List(XMLTextNode(text)))
-      case SetAttributeElement(attribute, value) =>
+      case SetAttributeInstruction(attribute, value) =>
         // merge the content of all text-node children to create the attribute value
         val textResult = evaluate(value, context)
           .filter(n => n.isInstanceOf[XMLTextNode])
           .map(n => n.asInstanceOf[XMLTextNode].value)
           .mkString("")
         Left(List(XMLAttribute(attribute, textResult)))
-      case ApplyTemplatesElement(None, params) =>
+      case ApplyTemplatesInstruction(None, params) =>
         context.node match {
           case root : XMLRoot => Left(transform(List(root.elem), context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case elem : XMLElement => Left(transform(elem.children.toList, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case _ => Left(Nil) // other node types don't have children and return an empty result
         }
-      case ApplyTemplatesElement(Some(expr), params) =>
+      case ApplyTemplatesInstruction(Some(expr), params) =>
         XPathEvaluator.evaluate(expr, context.toXPathContext) match {
           case NodeSetValue(nodes) => Left(transform(nodes, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case value => throw new EvaluationError(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")
         }
-      case CallTemplateElement(name, params) =>
+      case CallTemplatesInstruction(name, params) =>
         // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)
         Left(evaluateTemplate(namedTemplates(name), context, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
-      case VariableDefinitionElement(name, expr) =>
+      case VariableDefinitionInstruction(name, expr) =>
         Right(name, XPathEvaluator.evaluate(expr, context.toXPathContext))
-      case CopyOfElement(select) =>
+      case CopyInstruction(select) =>
         XPathEvaluator.evaluate(select, context.toXPathContext) match {
           // NOTE: result tree fragments are generally not supported
           case NodeSetValue(nodes) => Left(nodes.map(n => n.copy))
           case value => Left(List(XMLTextNode(value.toStringValue.value)))
         }
-      case ChooseElement(branches, otherwise) =>
+      case ChooseInstruction(branches, otherwise) =>
         Left(evaluate(evaluateChoose(branches, otherwise, context.toXPathContext), context))
     }
   }
@@ -209,7 +209,7 @@ class XSLTStylesheet(var source: Elem) {
     * @param context the context to evaluate the instructions in
     * @return a list of resulting XML nodes
     */
-  def evaluateChoose(branches: List[(XPathExpr, Seq[XSLTNode])], otherwise: Seq[XSLTNode], context: XPathContext): Seq[XSLTNode] = {
+  def evaluateChoose(branches: List[(XPathExpr, Seq[XSLTInstruction])], otherwise: Seq[XSLTInstruction], context: XPathContext): Seq[XSLTInstruction] = {
     branches match {
       case Nil => otherwise
       case (firstExpr, firstTmpl) :: rest => XPathEvaluator.evaluate(firstExpr, context).toBooleanValue.value match {
