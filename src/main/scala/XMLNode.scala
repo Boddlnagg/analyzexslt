@@ -188,7 +188,7 @@ object XMLNode {
   def apply(node: Node) : XMLNode = {
     node match {
       case elem: Elem =>
-        assert(elem.namespace == null || elem.namespace == "", "Prefixed names are not supported")
+        if (elem.namespace != null && elem.namespace != "") throw new NotImplementedError("Prefixed names are not implemented")
         XMLElement(elem.label,
           elem.attributes.asAttrMap.map { case (name, value) => XMLAttribute(name, value) }.toList,
           elem.child.map(n => apply(n)).toList

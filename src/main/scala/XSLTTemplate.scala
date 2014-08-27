@@ -30,7 +30,7 @@ object XSLTTemplate {
       case XSLT.Namespace => elem.label match {
         // spec section 11.2
         case "variable" =>
-          assert(elem.child.isEmpty, "Variable definitions are only supported when they use the 'select' attribute")
+          if (!elem.child.isEmpty) throw new NotImplementedError("Variable definitions are only supported when they use the 'select' attribute")
           // value is empty string '' if there is no select attribute (see XSLT spec section 11.2)
           val select = XPathExpr(elem.attribute("select").map(_.text).getOrElse("''"))
           VariableDefinitionInstruction(elem.attribute("name").get.text, select)
@@ -38,22 +38,22 @@ object XSLTTemplate {
         // spec sections 5.4 and 11.6
         case "apply-templates" =>
           val select = elem.attribute("select").map(a => XPathExpr(a.text))
-          assert(elem.child.forall(XSLT.isElem(_, "with-param")),
-            "children of 'apply-templates' element must only be 'with-param' ('sort' is not supported)")
+          if (!elem.child.forall(XSLT.isElem(_, "with-param")))
+            throw new NotImplementedError("children of 'apply-templates' element must only be 'with-param' ('sort' is not supported)")
           ApplyTemplatesInstruction(select, parseWithParams(elem.child))
 
         // spec section 6
         case "call-template" =>
           val name = elem.attribute("name").get.text
-          assert(elem.child.forall(XSLT.isElem(_, "with-param")),
-            "children of 'call-templates' element must only be 'with-param'")
+          if (!elem.child.forall(XSLT.isElem(_, "with-param")))
+            throw new NotImplementedError("children of 'call-templates' element must only be 'with-param'")
           CallTemplatesInstruction(name, parseWithParams(elem.child))
 
         // spec section 7.1.3
         case "attribute" =>
           // NOTE: attribute value templates are not supported
           val name = elem.attribute("name").get.text
-          assert(!elem.attribute("namespace").isDefined, "The 'namespace' attribute on xsl:attribute is not supported.")
+          if (elem.attribute("namespace").isDefined) throw new NotImplementedError("The 'namespace' attribute on xsl:attribute is not supported.")
           SetAttributeInstruction(name, parseTemplate(elem.child)) // NOTE: only text nodes are allowed in the instantiation of this template
 
         // spec section 7.6.1

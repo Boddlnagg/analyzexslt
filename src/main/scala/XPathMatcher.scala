@@ -11,7 +11,7 @@ object XPathMatcher {
     } else {
       val lastStep = path.steps.last
       val restPath = LocationPath(path.steps.dropRight(1), path.isAbsolute)
-      assert(lastStep.predicates.isEmpty, "predicates in paths are currently not supported")
+      if (!lastStep.predicates.isEmpty) throw new NotImplementedError("predicates in paths are not implemented")
       lastStep match {
         // special handling of pattern '//'
         case XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil) =>

@@ -31,8 +31,8 @@ case class XSLTContext(node: XMLNode, nodeList: List[XMLNode], position: Int, va
 class XSLTStylesheet(var source: Elem) {
   val cleaned = XSLT.clean(source).asInstanceOf[Elem]
 
-  assert(cleaned.namespace == XSLT.Namespace, f"Root element must be 'stylesheet' with namespace ${XSLT.Namespace} (a literal result element is not supported as root node)")
-  assert(cleaned.attribute("version").get.text == "1.0", "Stylesheet version must be 1.0")
+  if (cleaned.namespace != XSLT.Namespace) throw new NotImplementedError(f"Root element must be 'stylesheet' with namespace ${XSLT.Namespace} (a literal result element is not supported as root node)")
+  if (cleaned.attribute("version").get.text != "1.0") throw new NotImplementedError("Stylesheet versions other than 1.0 are not supported")
   assert(cleaned.child.forall(n => n.namespace == XSLT.Namespace && (n.label == "template" || n.label == "variable")), "Top-level elements must either be XSLT templates or variable definitions")
 
   // TODO: the spec requires us to evaluate top-level variables in an order such that variables can depend on each other
@@ -43,7 +43,7 @@ class XSLTStylesheet(var source: Elem) {
     .map(n => n.asInstanceOf[Elem])
     .map(elem => (elem.attribute("name").get.text, XPathExpr(elem.attribute("select").map(_.text).getOrElse("''"))))
 
-  assert(globalVariables.isEmpty, "Top-level variables are currently not supported.")
+  if (!globalVariables.isEmpty) throw new NotImplementedError("Top-level variables are not implemented.")
 
   val templates = cleaned.child
     .filter(XSLT.isElem(_, "template"))

@@ -37,7 +37,7 @@ abstract class XPathValue {
     this match {
       case str@StringValue(_) => str
       case BooleanValue(bool) => StringValue(
-        if(bool) "true"
+        if (bool) "true"
         else "false"
       )
       case NumberValue(num) => StringValue(

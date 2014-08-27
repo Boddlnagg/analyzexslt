@@ -104,12 +104,12 @@ object XPathExpr {
         filterExpr.getPredicates.map(p => parse(p.asInstanceOf[Predicate].getExpr)).toList
       )
       case callExpr: JFunctionCallExpr =>
-        assert(callExpr.getPrefix == null || callExpr.getPrefix.length == 0, "Prefixed functions are not supported")
+        if (callExpr.getPrefix != null && callExpr.getPrefix.length > 0) throw new NotImplementedError("Prefixed functions are not supported")
         FunctionCallExpr(callExpr.getFunctionName, callExpr.getParameters.map(p => parse(p.asInstanceOf[Expr])).toList)
       case litExpr: JLiteralExpr => LiteralExpr(litExpr.getLiteral)
       case numExpr: JNumberExpr => NumberExpr(numExpr.getNumber.doubleValue())
       case varRefExpr: JVariableReferenceExpr =>
-        assert(varRefExpr.getPrefix == null || varRefExpr.getPrefix.length == 0, "Prefixed variables are not supported")
+        if (varRefExpr.getPrefix != null && varRefExpr.getPrefix.length > 0) throw new NotImplementedError("Prefixed variables are not supported")
         VariableReferenceExpr(varRefExpr.getVariableName)
       case pathExpr: JPathExpr =>
         var filter = parse(pathExpr.getFilterExpr)

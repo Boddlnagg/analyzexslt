@@ -24,7 +24,7 @@ object XPathEvaluator {
         val lhsVal = evaluate(lhs, ctx)
         val rhsVal = evaluate(rhs, ctx)
         // comparing node sets is especially tricky and therefore skipped in this implementation
-        assert(!lhsVal.isInstanceOf[NodeSetValue] && !rhsVal.isInstanceOf[NodeSetValue], "Comparing node sets is not implemented")
+        if (lhsVal.isInstanceOf[NodeSetValue] || rhsVal.isInstanceOf[NodeSetValue]) throw new NotImplementedError("Comparing node sets is not implemented")
         val result = relOp match {
 
           case EqualsOperator | NotEqualsOperator =>
@@ -98,7 +98,7 @@ object XPathEvaluator {
           case value => throw new EvaluationError(f"Filter expression must return a node-set (returned: $value)")
         }
       case FilterExpr(subexpr, predicates) =>
-        assert(predicates.isEmpty, "Predicates are not supported")
+        if (!predicates.isEmpty) throw new NotImplementedError("Predicates are not supported")
         evaluate(subexpr, ctx)
     }
   }
@@ -190,7 +190,7 @@ object XPathEvaluator {
           case CommentNodeTest => node.isInstanceOf[XMLComment]
           case AllNodeTest => true
         }}
-        assert(first.predicates.isEmpty, "Predicates are not supported") // NOTE: see XPath spec section 2.4 to implement these
+        if (!first.predicates.isEmpty) throw new NotImplementedError("Predicates are not supported") // NOTE: see XPath spec section 2.4 to implement these
         testedNodes.flatMap { n => evaluateLocationPath(n, rest, false, variables)}
       case (Nil, false) => TreeSet(ctxNode)
     }
