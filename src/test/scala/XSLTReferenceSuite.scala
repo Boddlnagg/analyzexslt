@@ -516,6 +516,26 @@ class XSLTReferenceSuite extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("Copy root node") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <result>
+            <xsl:copy-of select="/"/>
+          </result>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root>
+        <a/>
+        <b/>
+        <c/>
+      </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
   def assertTransformMatches(xslt: Elem, data: Elem) = {
     try {
       val referenceResult = TransformHelper.transformJava(xslt, data)

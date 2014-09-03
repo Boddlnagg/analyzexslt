@@ -194,7 +194,10 @@ class XSLTStylesheet(var source: Elem) {
       case CopyInstruction(select) =>
         XPathEvaluator.evaluate(select, context.toXPathContext) match {
           // NOTE: result tree fragments are generally not supported
-          case NodeSetValue(nodes) => Left(nodes.map(n => n.copy))
+          case NodeSetValue(nodes) => Left(nodes.map {
+            case XMLRoot(elem) => elem.copy // "a root node is copied by copying its children" according to spec
+            case node => node.copy
+          })
           case value => Left(List(XMLTextNode(value.toStringValue.value)))
         }
       case ChooseInstruction(branches, otherwise) =>
