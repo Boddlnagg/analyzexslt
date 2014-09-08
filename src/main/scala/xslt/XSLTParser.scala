@@ -1,7 +1,8 @@
 package xslt
 
-import scala.xml.{Comment, Text, Elem, Node}
 import xpath._
+
+import scala.xml.{Comment, Elem, Node, Text}
 
 object XSLTParser {
   /** The XSLT namespace */

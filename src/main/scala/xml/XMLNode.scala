@@ -1,7 +1,5 @@
 package xml
 
-import scala.collection.mutable
-
 /** Abstract base class for XML nodes. The XML data model is defined in the XPath spec section 5.
   * NOTE: Processing instructions and namespaces are not implemented.
   */

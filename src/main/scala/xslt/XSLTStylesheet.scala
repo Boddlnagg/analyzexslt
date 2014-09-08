@@ -1,8 +1,8 @@
 package xslt
 
-import xpath._
-import xml._
 import util.EvaluationError
+import xml._
+import xpath._
 
 /** An XSLT stylesheet */
 class XSLTStylesheet(templates: List[(XSLTTemplate, Option[String], Option[XPathExpr], ImportPrecedence)]) {

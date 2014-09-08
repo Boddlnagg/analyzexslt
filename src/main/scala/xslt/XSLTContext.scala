@@ -1,7 +1,7 @@
 package xslt
 
 import xml.XMLNode
-import xpath.{XPathContext,XPathValue}
+import xpath.{XPathContext, XPathValue}
 
 /** A context for evaluating an XSLT template (see XSLT spec section 1)
   *
