@@ -1,7 +1,10 @@
 import org.scalatest.FunSuite
 
+import xml._
+import xpath._
+
 class MatchPatternSuite extends FunSuite {
-  val root = XMLRoot(<a><b x="y"><c/></b><b/></a>)
+  val root = XMLParser.parseDocument(<a><b x="y"><c/></b><b/></a>)
 
   val a = root.elem
   val b1 = a.children(0).asInstanceOf[XMLElement]
@@ -10,20 +13,20 @@ class MatchPatternSuite extends FunSuite {
   val x = b1.attributes(0)
 
   test("/") {
-    val pattern = XPathExpr("/").asInstanceOf[LocationPath]
+    val pattern = XPathParser.parse("/").asInstanceOf[LocationPath]
     assertResult(true) { XPathMatcher.matches(root, pattern) }
     assertResult(false) { XPathMatcher.matches(a, pattern) }
   }
 
   test("/a") {
-    val pattern = XPathExpr("/a").asInstanceOf[LocationPath]
+    val pattern = XPathParser.parse("/a").asInstanceOf[LocationPath]
     assertResult(false) { XPathMatcher.matches(root, pattern) }
     assertResult(true) { XPathMatcher.matches(a, pattern) }
     assertResult(false) { XPathMatcher.matches(b1, pattern) }
   }
 
   test("/a/b") {
-    val pattern = XPathExpr("/a/b").asInstanceOf[LocationPath]
+    val pattern = XPathParser.parse("/a/b").asInstanceOf[LocationPath]
     assertResult(false) { XPathMatcher.matches(root, pattern) }
     assertResult(false) { XPathMatcher.matches(a, pattern) }
     assertResult(true) { XPathMatcher.matches(b1, pattern) }
@@ -31,7 +34,7 @@ class MatchPatternSuite extends FunSuite {
   }
 
   test("//b") {
-    val pattern = XPathExpr("//b").asInstanceOf[LocationPath]
+    val pattern = XPathParser.parse("//b").asInstanceOf[LocationPath]
     assertResult(false) { XPathMatcher.matches(root, pattern) }
     assertResult(false) { XPathMatcher.matches(a, pattern) }
     assertResult(true) { XPathMatcher.matches(b1, pattern) }
@@ -39,7 +42,7 @@ class MatchPatternSuite extends FunSuite {
   }
 
   test("a//c") {
-    val pattern = XPathExpr("a//c").asInstanceOf[LocationPath]
+    val pattern = XPathParser.parse("a//c").asInstanceOf[LocationPath]
     assertResult(false) { XPathMatcher.matches(root, pattern) }
     assertResult(false) { XPathMatcher.matches(a, pattern) }
     assertResult(false) { XPathMatcher.matches(b1, pattern) }
@@ -47,7 +50,7 @@ class MatchPatternSuite extends FunSuite {
   }
 
   test("c") {
-    val pattern = XPathExpr("c").asInstanceOf[LocationPath]
+    val pattern = XPathParser.parse("c").asInstanceOf[LocationPath]
     assertResult(false) { XPathMatcher.matches(root, pattern) }
     assertResult(false) { XPathMatcher.matches(a, pattern) }
     assertResult(false) { XPathMatcher.matches(b1, pattern) }
@@ -55,7 +58,7 @@ class MatchPatternSuite extends FunSuite {
   }
 
   test("//c") {
-    val pattern = XPathExpr("//c").asInstanceOf[LocationPath]
+    val pattern = XPathParser.parse("//c").asInstanceOf[LocationPath]
     assertResult(false) { XPathMatcher.matches(root, pattern) }
     assertResult(false) { XPathMatcher.matches(a, pattern) }
     assertResult(false) { XPathMatcher.matches(b1, pattern) }
@@ -63,7 +66,7 @@ class MatchPatternSuite extends FunSuite {
   }
 
   test("@x") {
-    val pattern = XPathExpr("@x").asInstanceOf[LocationPath]
+    val pattern = XPathParser.parse("@x").asInstanceOf[LocationPath]
     assertResult(false) { XPathMatcher.matches(root, pattern) }
     assertResult(false) { XPathMatcher.matches(a, pattern) }
     assertResult(false) { XPathMatcher.matches(b1, pattern) }
@@ -72,7 +75,7 @@ class MatchPatternSuite extends FunSuite {
   }
 
   test("b/@x") {
-    val pattern = XPathExpr("b/@x").asInstanceOf[LocationPath]
+    val pattern = XPathParser.parse("b/@x").asInstanceOf[LocationPath]
     assertResult(false) { XPathMatcher.matches(root, pattern) }
     assertResult(false) { XPathMatcher.matches(a, pattern) }
     assertResult(false) { XPathMatcher.matches(b1, pattern) }
@@ -81,7 +84,7 @@ class MatchPatternSuite extends FunSuite {
   }
 
   test("/a/b/@x") {
-    val pattern = XPathExpr("/a/b/@x").asInstanceOf[LocationPath]
+    val pattern = XPathParser.parse("/a/b/@x").asInstanceOf[LocationPath]
     assertResult(false) { XPathMatcher.matches(root, pattern) }
     assertResult(false) { XPathMatcher.matches(a, pattern) }
     assertResult(false) { XPathMatcher.matches(b1, pattern) }
@@ -90,7 +93,7 @@ class MatchPatternSuite extends FunSuite {
   }
 
   test("@x/c") {
-    val pattern = XPathExpr("@x/c").asInstanceOf[LocationPath]
+    val pattern = XPathParser.parse("@x/c").asInstanceOf[LocationPath]
     assertResult(false) { XPathMatcher.matches(root, pattern) }
     assertResult(false) { XPathMatcher.matches(a, pattern) }
     assertResult(false) { XPathMatcher.matches(b1, pattern) }

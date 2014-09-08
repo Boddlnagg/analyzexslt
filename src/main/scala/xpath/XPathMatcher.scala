@@ -1,3 +1,7 @@
+package xpath
+
+import xml._
+
 object XPathMatcher {
   /** Returns a value indicating whether a given node matches a location path pattern.
     * NOTE: only supports location path patterns (XSLT spec section 5.2) without predicates

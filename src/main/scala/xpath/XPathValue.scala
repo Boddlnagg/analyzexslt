@@ -1,3 +1,7 @@
+package xpath
+
+import xml.XMLNode
+
 /** Base class for XPath values.
   *
   * An XPath value can either be a node-set, a boolean, a number or a string (see XPath spec section 1).

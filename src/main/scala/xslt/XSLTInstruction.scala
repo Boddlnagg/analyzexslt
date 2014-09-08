@@ -1,3 +1,7 @@
+package xslt
+
+import xpath.XPathExpr
+
 /** Base class for XSLT instructions */
 abstract class XSLTInstruction
 

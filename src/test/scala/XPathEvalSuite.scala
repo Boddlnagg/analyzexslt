@@ -1,9 +1,11 @@
 import org.scalatest.FunSuite
 
+import xpath._
+
 class XPathEvalSuite extends FunSuite {
   def eval(expr: String): XPathValue = {
     // evaluate with an empty context
-    XPathEvaluator.evaluate(XPathExpr(expr), XPathContext(null, 0, 0, Map()))
+    XPathEvaluator.evaluate(XPathParser.parse(expr), XPathContext(null, 0, 0, Map()))
   }
 
   test("Numbers") {

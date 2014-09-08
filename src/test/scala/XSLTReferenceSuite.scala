@@ -3,6 +3,8 @@ import javax.xml.transform.TransformerException
 import org.scalatest.FunSuite
 import scala.xml.Elem
 
+import util.EvaluationError
+
 class XSLTReferenceSuite extends FunSuite {
   test("Wikipedia (Java Example)") {
     // taken from http://en.wikipedia.org/wiki/Java_API_for_XML_Processing#Example

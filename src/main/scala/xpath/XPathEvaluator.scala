@@ -1,3 +1,8 @@
+package xpath
+
+import util.EvaluationError
+import xml._
+
 import scala.collection.immutable.TreeSet
 
 /** The context used for evaluating XPath expressions (see XPath spec section 1)

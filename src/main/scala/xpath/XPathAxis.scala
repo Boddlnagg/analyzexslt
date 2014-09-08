@@ -1,4 +1,6 @@
-import org.jaxen.saxpath.Axis
+package xpath
+
+import xml._
 
 /** Base class for XPath axes (see XPath spec section 2.2) */
 abstract class XPathAxis
@@ -16,25 +18,8 @@ case object DescendantOrSelfAxis extends XPathAxis
 case object AncestorOrSelfAxis extends XPathAxis
 case object AncestorAxis extends XPathAxis
 
-/** Factory for [[XPathAxis]] instances */
+/** Helper functions for XPath axes. */
 object XPathAxis {
-  /** Creates an axis object from a Jaxen axis identifier */
-  def apply(axis: Int) : XPathAxis = axis match {
-    case Axis.CHILD => ChildAxis
-    case Axis.DESCENDANT => DescendantAxis
-    case Axis.PARENT => ParentAxis
-    case Axis.FOLLOWING_SIBLING => FollowingSiblingAxis
-    case Axis.PRECEDING_SIBLING => PrecedingSiblingAxis
-    case Axis.FOLLOWING => FollowingAxis
-    case Axis.PRECEDING => PrecedingAxis
-    case Axis.ATTRIBUTE => AttributeAxis
-    case Axis.NAMESPACE => NamespaceAxis
-    case Axis.SELF => SelfAxis
-    case Axis.DESCENDANT_OR_SELF => DescendantOrSelfAxis
-    case Axis.ANCESTOR_OR_SELF => AncestorOrSelfAxis
-    case Axis.ANCESTOR => AncestorAxis
-  }
-
   /** Returns a value indicating whether a node is of the principal node type of a given axis (see XPath spec section 2.3) */
   def isPrincipalNodeType(axis: XPathAxis, node: XMLNode): Boolean = {
     axis match {

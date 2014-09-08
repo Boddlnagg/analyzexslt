@@ -1,60 +1,11 @@
-import scala.xml._
+package xslt
 
-/** A context for evaluating an XSLT template (see XSLT spec section 1)
-  *
-  * @param node the current node
-  * @param nodeList the current node list
-  * @param position the current node's position in the current node list
-  * @param variables a set of variable bindings
-  */
-case class XSLTContext(node: XMLNode, nodeList: List[XMLNode], position: Int, variables: Map[String, XPathValue]) {
-  /** Creates an equivalent XPath context from this XSLT context */
-  def toXPathContext = XPathContext(node, position, nodeList.size, variables)
-
-  /** Returns a new context where a variable binding was added to the set of variables */
-  def addVariable(name: String, value: XPathValue): XSLTContext = {
-    XSLTContext(node, nodeList, position, variables + (name -> value))
-  }
-
-  /** Returns a new context where a number of variable bindings were added to the set of variables */
-  def addVariables(newVariables: Map[String, XPathValue]): XSLTContext = {
-    XSLTContext(node, nodeList, position, variables ++ newVariables)
-  }
-
-  /** Returns a new context where the variable bindings were replaced by the given new set of variable */
-  def replaceVariables(newVariables: Map[String, XPathValue]): XSLTContext = {
-    XSLTContext(node, nodeList, position, newVariables)
-  }
-}
+import xpath._
+import xml._
+import util.EvaluationError
 
 /** An XSLT stylesheet */
-class XSLTStylesheet(var source: Elem) {
-  val cleaned = XSLT.clean(source).asInstanceOf[Elem]
-
-  if (cleaned.namespace != XSLT.Namespace) throw new NotImplementedError(f"Root element must be 'stylesheet' with namespace ${XSLT.Namespace} (a literal result element is not supported as root node)")
-  if (cleaned.attribute("version").get.text != "1.0") throw new NotImplementedError("Stylesheet versions other than 1.0 are not supported")
-  assert(cleaned.child.forall(n => n.namespace == XSLT.Namespace && (n.label == "template" || n.label == "variable")), "Top-level elements must either be XSLT templates or variable definitions")
-
-  // TODO: the spec requires us to evaluate top-level variables in an order such that variables can depend on each other
-  // (as long as there are no circular dependencies, which would result in an error), see spec section 11.4
-  // -> don't support top-level variables?
-  val globalVariables = cleaned.child
-    .filter(XSLT.isElem(_, "variable"))
-    .map(n => n.asInstanceOf[Elem])
-    .map(elem => (elem.attribute("name").get.text, XPathExpr(elem.attribute("select").map(_.text).getOrElse("''"))))
-
-  if (!globalVariables.isEmpty) throw new NotImplementedError("Top-level variables are not implemented.")
-
-  val templates = cleaned.child
-    .filter(XSLT.isElem(_, "template"))
-    .map(n => n.asInstanceOf[Elem])
-    .map(elem => (XSLTTemplate(elem),
-                  elem.attribute("name").map(_.text),
-                  elem.attribute("match").map(a => XPathExpr(a.text)),
-                  XSLT.UserDefinedImportPrecedence
-                 ))
-    .toList // returns a list of tuples (template, name?, match?, precedence)
-
+class XSLTStylesheet(templates: List[(XSLTTemplate, Option[String], Option[XPathExpr], ImportPrecedence)]) {
   templates.foreach  {
     case (_, None, None, _) => assert(false, "Templates must have either 'name' or 'match' attribute defined")
     case (_, _, Some(pattern), _) => assert(XPathExpr.isPattern(pattern), "Template 'match' attribute must be a pattern.")
@@ -65,21 +16,21 @@ class XSLTStylesheet(var source: Elem) {
   // templates and a List[(LocationPath, Double, XSLTTemplate)] ordered by priority for those with 'match' attribute.
   // Union patterns are split so that every template is matched by exactly one location path.
 
-  val namedTemplates = Map() ++ templates.flatMap {
+  val namedTemplates: Map[String, XSLTTemplate] = Map() ++ templates.flatMap {
     case (tmpl, Some(name), _, _) => Some((name, tmpl))
     case _ => None
   }
 
   // add built-in templates (see spec section 5.8)
-  val builtinTemplates = List[(XSLTTemplate, Option[String], Option[XPathExpr], Int)](
-    (new XSLTTemplate(List(ApplyTemplatesInstruction())), None, Some(XPathExpr("*|/")), XSLT.BuiltInImportPrecedence),
+  val builtinTemplates = List[(XSLTTemplate, Option[String], Option[XPathExpr], ImportPrecedence)](
+    (new XSLTTemplate(List(ApplyTemplatesInstruction())), None, Some(XPathParser.parse("*|/")), BuiltInImportPrecedence),
     // NOTE: <xsl:value-of select="."> is equivalent to <xsl:copy-of select="string(.)">
-    (new XSLTTemplate(List(CopyInstruction(XPathExpr("string(.)")))), None, Some(XPathExpr("text()|@*")), XSLT.BuiltInImportPrecedence),
+    (new XSLTTemplate(List(CopyInstruction(XPathParser.parse("string(.)")))), None, Some(XPathParser.parse("text()|@*")), BuiltInImportPrecedence),
     // NOTE: the XPath expression here originally is "processing-instruction()|comment()", but processing instructions are not implemented
-    (new XSLTTemplate(Nil), None, Some(XPathExpr("comment()")), XSLT.BuiltInImportPrecedence)
+    (new XSLTTemplate(Nil), None, Some(XPathParser.parse("comment()")), BuiltInImportPrecedence)
   )
 
-  val matchableTemplates = (builtinTemplates ++ templates).flatMap {
+  val matchableTemplates: List[(LocationPath, XSLTTemplate, Double, Int)] = (builtinTemplates ++ templates).flatMap {
     case (tmpl, _, Some(pattern), importPrecedence) => XPathExpr.splitUnionPattern(pattern).map(pat => (pat, tmpl, XPathExpr.getDefaultPriority(pat), importPrecedence))
     case _ => Nil
   }.sortBy { case (_, _, priority, importPrecedence) => (importPrecedence, priority) } // sort by precedence, then by priority

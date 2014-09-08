@@ -1,7 +1,8 @@
-object Main {
+import xpath.XPathParser
 
+object Main {
   def main(args: Array[String]) {
-    val expr = XPathExpr("/a/b/c[@test][1]")
+    val expr = XPathParser.parse("/a/b/c[@test][1]")
     println(expr)
   }
 }

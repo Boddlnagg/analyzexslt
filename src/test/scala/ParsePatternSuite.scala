@@ -1,5 +1,7 @@
 import org.scalatest.FunSuite
 
+import xpath._
+
 class ParsePatternSuite extends FunSuite {
   test("Accept valid patterns #1") {
     // these patterns are taken from the spec, section 5.2
@@ -26,7 +28,7 @@ class ParsePatternSuite extends FunSuite {
     )
 
     patterns.foreach(p => {
-      val parsed = XPathExpr(p)
+      val parsed = XPathParser.parse(p)
       assert(XPathExpr.isPattern(parsed), f"$p must be recognized as valid pattern")
     })
   }
@@ -52,7 +54,7 @@ class ParsePatternSuite extends FunSuite {
     )
 
     patterns.foreach(p => {
-      val parsed = XPathExpr(p)
+      val parsed = XPathParser.parse(p)
       assert(XPathExpr.isPattern(parsed), f"$p must be recognized as valid pattern")
     })
   }
@@ -64,7 +66,7 @@ class ParsePatternSuite extends FunSuite {
     )
 
     notPatterns.foreach(p => {
-      val parsed = XPathExpr(p)
+      val parsed = XPathParser.parse(p)
       assert(!XPathExpr.isPattern(parsed), f"$p must not be recognized as valid pattern")
     })
   }
@@ -93,7 +95,7 @@ class ParsePatternSuite extends FunSuite {
     )
 
     patterns.foreach { case (prio, pat) => {
-      val parsed = XPathExpr(pat)
+      val parsed = XPathParser.parse(pat)
       assert(XPathExpr.isPattern(parsed))
       assert(parsed.isInstanceOf[LocationPath])
       assertResult(prio, f"Wrong priority for pattern $pat") {

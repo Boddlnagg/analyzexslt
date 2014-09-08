@@ -1,5 +1,6 @@
 import org.scalatest.FunSuite
 import scala.collection.immutable.TreeSet
+import xml._
 
 class ParseDataSuite extends FunSuite {
   test("Minimal example with comments") {
@@ -9,19 +10,19 @@ class ParseDataSuite extends FunSuite {
         <!-- This is a comment -->
       </persons>
 
-    XMLRoot(data)
+    XMLParser.parseDocument(data)
   }
 
   test("Wikipedia example") {
-    XMLRoot(TestData.WikipediaData)
+    XMLParser.parseDocument(TestData.WikipediaData)
   }
 
   test("W3Schools example") {
-    XMLRoot(TestData.W3SchoolsData)
+    XMLParser.parseDocument(TestData.W3SchoolsData)
   }
 
   test("Node ordering") {
-    val xml = XMLRoot(<root><a><b></b></a><a><b></b></a><c attr="x"></c></root>)
+    val xml = XMLParser.parseDocument(<root><a><b></b></a><a><b></b></a><c attr="x"></c></root>)
     val root = xml.elem
     val a1 = root.children(0).asInstanceOf[XMLElement]
     val a2 = root.children(1).asInstanceOf[XMLElement]
