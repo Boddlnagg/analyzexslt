@@ -5,7 +5,7 @@ import scala.xml._
 /** Parser that creates nodes from the scala.xml document model */
 object XMLParser {
   /** Creates a node from a [[scala.xml.Node]] */
-  def parse(node: Node) : XMLNode = {
+  def parse(node: Node): XMLNode = {
     node match {
       case elem: Elem =>
         if (elem.namespace != null && elem.namespace != "") throw new NotImplementedError("Prefixed names are not implemented")
@@ -20,7 +20,7 @@ object XMLParser {
   }
 
   /** Creates an element from a [[scala.xml.Elem]] node */
-  def parseElement(elem: Elem) : XMLElement = {
+  def parseElement(elem: Elem): XMLElement = {
     parse(elem).asInstanceOf[XMLElement]
   }
 

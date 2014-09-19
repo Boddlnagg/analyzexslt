@@ -66,7 +66,7 @@ object XPathEvaluator {
       case LiteralExpr(literal) => StringValue(literal)
       case NumberExpr(num) => NumberValue(num)
       case VariableReferenceExpr(name) => try ctx.variables(name) catch {
-        case e : java.util.NoSuchElementException => throw new EvaluationError(f"Variable $name is not defined")
+        case e: java.util.NoSuchElementException => throw new EvaluationError(f"Variable $name is not defined")
       }
       case UnionExpr(lhs, rhs) => (evaluate(lhs, ctx), evaluate(rhs, ctx)) match {
         case (NodeSetValue(left), NodeSetValue(right)) => NodeSetValue((TreeSet[XMLNode]()++ left ++ right).toList)

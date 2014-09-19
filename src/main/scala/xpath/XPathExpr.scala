@@ -43,7 +43,7 @@ object XPathExpr {
     * Patters are a restricted subset of XPath expressions, see XSLT spec section 5.2.
     * NOTE: id() and key() patterns are not implemented
     */
-  def isPattern(expr: XPathExpr) : Boolean = {
+  def isPattern(expr: XPathExpr): Boolean = {
     expr match {
       case LocationPath(steps, _) => steps.forall {
         // plain '//' operator is allowed and equivalent to descendant-or-self::node()/
@@ -61,7 +61,7 @@ object XPathExpr {
   /** Splits an XPath expression that is a pattern into its parts.
     * The resulting list contains every sub-expression originally separated by the union operator.
     */
-  def splitUnionPattern(expr: XPathExpr) : List[LocationPath] = {
+  def splitUnionPattern(expr: XPathExpr): List[LocationPath] = {
     expr match {
       case UnionExpr(lhs, rhs) => splitUnionPattern(lhs) ++ splitUnionPattern(rhs)
       case pattern@LocationPath(_, _) => List(pattern)
@@ -76,7 +76,7 @@ object XPathExpr {
     *       processing instruction node tests are also not implemented (they would have a default priority
     *       of -0.5 or 0 depending on whether they match a specific name)
     */
-  def getDefaultPriority(pattern: LocationPath) : Double = {
+  def getDefaultPriority(pattern: LocationPath): Double = {
     if (pattern.steps.size != 1 || pattern.isAbsolute)
       0.5 // more complex patterns or absolute patterns (also matches just '/' which has no steps)
     else pattern.steps.head match {

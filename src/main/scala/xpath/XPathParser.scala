@@ -29,9 +29,9 @@ import scala.collection.JavaConversions._
 
 object XPathParser {
   /** Creates an XPath expression by parsing a string */
-  def parse(string: String) : XPathExpr = {
-    val reader : XPathReader = XPathReaderFactory.createReader()
-    val handler : JaxenHandler = new JaxenHandler()
+  def parse(string: String): XPathExpr = {
+    val reader: XPathReader = XPathReaderFactory.createReader()
+    val handler: JaxenHandler = new JaxenHandler()
     reader.setXPathHandler(handler)
     reader.parse(string)
     parse(handler.getXPathExpr.getRootExpr)
@@ -115,7 +115,7 @@ object XPathParser {
   }
 
   /** Creates an axis object from a Jaxen axis identifier */
-  def parseAxis(axis: Int) : XPathAxis = axis match {
+  def parseAxis(axis: Int): XPathAxis = axis match {
     case Axis.CHILD => ChildAxis
     case Axis.DESCENDANT => DescendantAxis
     case Axis.PARENT => ParentAxis

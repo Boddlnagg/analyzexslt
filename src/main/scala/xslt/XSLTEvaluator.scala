@@ -16,7 +16,7 @@ object XSLTEvaluator {
   }
 
   /** Transforms a list of source nodes to a new list of nodes using given variable and parameter bindings */
-  def transform(sheet: XSLTStylesheet, sources: List[XMLNode], variables: Map[String, XPathValue], params: Map[String, XPathValue]) : List[XMLNode] = {
+  def transform(sheet: XSLTStylesheet, sources: List[XMLNode], variables: Map[String, XPathValue], params: Map[String, XPathValue]): List[XMLNode] = {
     // create context, choose template, instantiate template, append results
     sources.zipWithIndex
       .map { case (n,i) => (chooseTemplate(sheet, n), XSLTContext(n, sources, i + 1, variables)) }
@@ -24,7 +24,7 @@ object XSLTEvaluator {
   }
 
   /** Chooses a template that matches the given element best */
-  def chooseTemplate(sheet: XSLTStylesheet, elem: XMLNode) : XSLTTemplate = {
+  def chooseTemplate(sheet: XSLTStylesheet, elem: XMLNode): XSLTTemplate = {
     def allMatching = sheet.matchableTemplates.filter { case (tmpl, _, _, _) => XPathMatcher.matches(elem, tmpl)}
     val (_, template, _, _) = allMatching.last // this one will have highest precedence and priority, because the templates are sorted
     template
@@ -38,7 +38,7 @@ object XSLTEvaluator {
     *               a corresponding default parameter in the template, see XSLT spec section 11.6)
     * @return a list of resulting XML nodes
     */
-  def evaluateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: XSLTContext, params: Map[String, XPathValue]) : List[XMLNode] = {
+  def evaluateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: XSLTContext, params: Map[String, XPathValue]): List[XMLNode] = {
     val acceptedParams = params.filter { case (key, _) => tmpl.defaultParams.contains(key) }
     val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key)}.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))
     // the context for the newly instantiated template contains only global variables and parameters, no local parameters (static scoping)
@@ -53,7 +53,7 @@ object XSLTEvaluator {
     * @param context the context to evaluate the first instruction in (subsequent instructions might have additional variable bindings)
     * @return a list of resulting XML nodes
     */
-  def evaluate(sheet: XSLTStylesheet, nodes: Seq[XSLTInstruction], context: XSLTContext) : List[XMLNode] = {
+  def evaluate(sheet: XSLTStylesheet, nodes: Seq[XSLTInstruction], context: XSLTContext): List[XMLNode] = {
     // remember variable names that were created in this scope so we can throw an error
     // if any of these is shadowed in the SAME scope
     var scopeVariables = scala.collection.mutable.Set[String]()
@@ -93,14 +93,13 @@ object XSLTEvaluator {
       case SetAttributeInstruction(attribute, value) =>
         // merge the content of all text-node children to create the attribute value
         val textResult = evaluate(sheet, value, context)
-          .filter(n => n.isInstanceOf[XMLTextNode])
-          .map(n => n.asInstanceOf[XMLTextNode].value)
+          .collect { case n: XMLTextNode => n.value }
           .mkString("")
         Left(List(XMLAttribute(attribute, textResult)))
       case ApplyTemplatesInstruction(None, params) =>
         context.node match {
-          case root : XMLRoot => Left(transform(sheet, List(root.elem), context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
-          case elem : XMLElement => Left(transform(sheet, elem.children.toList, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
+          case root: XMLRoot => Left(transform(sheet, List(root.elem), context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
+          case elem: XMLElement => Left(transform(sheet, elem.children.toList, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case _ => Left(Nil) // other node types don't have children and return an empty result
         }
       case ApplyTemplatesInstruction(Some(expr), params) =>

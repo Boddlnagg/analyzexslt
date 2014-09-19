@@ -84,14 +84,14 @@ object XSLTParser {
   }
 
   /** Parses a sequence of [[scala.xml.Node]]s as XSLT instructions */
-  def parseTemplate(template: Seq[Node]) : Seq[XSLTInstruction] = {
+  def parseTemplate(template: Seq[Node]): Seq[XSLTInstruction] = {
     template.map(parseInstruction).toList
   }
 
   /** Parses a single [[scala.xml.Node]] as an XSLT instruction */
-  def parseInstruction(node: Node) : XSLTInstruction = node match {
-    case text : Text => LiteralTextNode(text.data)
-    case elem : Elem => elem.namespace match {
+  def parseInstruction(node: Node): XSLTInstruction = node match {
+    case text: Text => LiteralTextNode(text.data)
+    case elem: Elem => elem.namespace match {
       case Namespace => elem.label match {
         // spec section 11.2
         case "variable" =>
@@ -163,7 +163,7 @@ object XSLTParser {
   }
 
   /** Parses &lt;xsl:param&gt; nodes */
-  def parseParams(input: Seq[Node]) : Map[String, XPathExpr] = {
+  def parseParams(input: Seq[Node]): Map[String, XPathExpr] = {
     // TODO: support content of param element instead of "select" attribute?
     val params = input.filter(isElem(_, "param"))
       .map(n => n.asInstanceOf[Elem])
@@ -172,7 +172,7 @@ object XSLTParser {
   }
 
   /** Parses &lt;xsl:with-param&gt; nodes */
-  def parseWithParams(input: Seq[Node]) : Map[String, XPathExpr] = {
+  def parseWithParams(input: Seq[Node]): Map[String, XPathExpr] = {
     // TODO: support content of with-param element instead of "select" attribute?
     // TODO: merge function with parseParams() above
     val params = input.filter(isElem(_, "with-param"))
