@@ -5,13 +5,13 @@ import javax.xml.transform.stream.{StreamResult, StreamSource}
 import scala.xml.Elem
 
 import xml.{XMLRoot, XMLParser}
-import xslt.XSLTParser
+import xslt.{XSLTEvaluator, XSLTParser}
 
 
 object TransformHelper {
   def transformScala(xslt: Elem, data: Elem): XMLRoot = {
     val stylesheet = XSLTParser.parseStylesheet(xslt)
-    stylesheet.transform(XMLParser.parseDocument(data))
+    XSLTEvaluator.transform(stylesheet, XMLParser.parseDocument(data))
   }
 
   def transformJava(xslt: Elem, data: Elem): XMLRoot = {
