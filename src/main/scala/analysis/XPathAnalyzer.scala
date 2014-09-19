@@ -1,63 +1,38 @@
-package xpath
+package analysis
 
+import analysis.domain.{XPathDomain, XMLDomain}
 import util.EvaluationError
 import xml._
+import xpath._
 
 import scala.collection.immutable.TreeSet
 
-/** Object to evaluate XPath expressons */
-object XPathEvaluator {
-  /** Evaluates a given XPath expression using a specified context and returns the result of the evaluation. */
-  def evaluate(expr: XPathExpr, ctx: XPathContext): XPathValue = {
-    expr match {
-      case PlusExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value + evaluate(rhs, ctx).toNumberValue.value)
-      case MinusExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value - evaluate(rhs, ctx).toNumberValue.value)
-      case MultiplyExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value * evaluate(rhs, ctx).toNumberValue.value)
-      case DivExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value / evaluate(rhs, ctx).toNumberValue.value)
-      case ModExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value % evaluate(rhs, ctx).toNumberValue.value)
-      case RelationalExpr(lhs, rhs, relOp) =>
-        // evaluation is specified in the XPath spec section 3.4
-        val lhsVal = evaluate(lhs, ctx)
-        val rhsVal = evaluate(rhs, ctx)
-        BooleanValue(lhsVal.compare(rhsVal, relOp))
-      // XPath spec section 3.4, shortcut evaluation!
-      case AndExpr(lhs, rhs) => BooleanValue(evaluate(lhs, ctx).toBooleanValue.value && evaluate(rhs, ctx).toBooleanValue.value)
-      // XPath spec section 3.4, shortcut evaluation!
-      case OrExpr(lhs, rhs) => BooleanValue(evaluate(lhs, ctx).toBooleanValue.value || evaluate(rhs, ctx).toBooleanValue.value)
+trait XPathAnalyzer[N, D1 <: XMLDomain[N], T, D2 <: XPathDomain[T]] {
+  val dom1: D1
+  val dom2: D2
 
-      case NegExpr(subexpr) => NumberValue(- evaluate(subexpr, ctx).toNumberValue.value)
-      case LiteralExpr(literal) => StringValue(literal)
-      case NumberExpr(num) => NumberValue(num)
+  /** Evaluates a given XPath expression using a specified context and returns the result of the evaluation. */
+  def evaluate(expr: XPathExpr, ctx: AbstractXPathContext[N, D1, T, D2]): T = {
+    expr match {
+      case PlusExpr(lhs, rhs) => dom2.add(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case MinusExpr(lhs, rhs) => dom2.subtract(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case MultiplyExpr(lhs, rhs) => dom2.multiply(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case DivExpr(lhs, rhs) => dom2.divide(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case ModExpr(lhs, rhs) => dom2.modulo(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case RelationalExpr(lhs, rhs, relOp) => dom2.compare(evaluate(lhs, ctx), evaluate(rhs, ctx), relOp)
+      case AndExpr(lhs, rhs) => dom2.logicalAnd(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case OrExpr(lhs, rhs) => dom2.logicalOr(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case NegExpr(subexpr) => dom2.negate(evaluate(subexpr, ctx))
+      case LiteralExpr(literal) => dom2.liftLiteral(literal)
+      case NumberExpr(num) => dom2.liftNumber(num)
       case VariableReferenceExpr(name) => try ctx.variables(name) catch {
+        // because of static scoping this is an error in the program (no matter what evaluation strategy is used)
         case e: java.util.NoSuchElementException => throw new EvaluationError(f"Variable $name is not defined")
       }
-      case UnionExpr(lhs, rhs) => (evaluate(lhs, ctx), evaluate(rhs, ctx)) match {
-        case (NodeSetValue(left), NodeSetValue(right)) => NodeSetValue((TreeSet[XMLNode]()++ left ++ right).toList)
-        case (left, right) => throw new EvaluationError(f"Wrong types for union expression, must be node-sets ($left | $right)")
-      }
-      case FunctionCallExpr(name, params) =>
-        // See XPath spec section 3.2
-        (name, params.map(p => evaluate(p, ctx))) match {
-          // arguments are casted to string, number, boolean as required, but if a function expects a node-set, it must be a node-set
-          case ("true", Nil) => BooleanValue(true)
-          case ("false", Nil) => BooleanValue(false)
-          case ("not", List(arg)) => BooleanValue(!arg.toBooleanValue.value)
-          case ("string", List(arg)) => arg.toStringValue
-          case ("boolean", List(arg)) => arg.toBooleanValue
-          case ("number", List(arg)) => arg.toNumberValue
-          case ("last", Nil) => NumberValue(ctx.size)
-          case ("position", Nil) => NumberValue(ctx.position)
-          case ("count", List(NodeSetValue(nodes))) => NumberValue(nodes.size)
-          case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
-          case ("name"|"local-name", List(NodeSetValue(List(node)))) => node match {
-            case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
-            case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
-            case _ => StringValue("")
-          }
-          case (_, evaluatedParams) =>
-            throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
-        }
-      case LocationPath(steps, isAbsolute) => NodeSetValue(evaluateLocationPath(ctx.node, steps, isAbsolute, ctx.variables).toList)
+      case UnionExpr(lhs, rhs) => dom2.nodeSetUnion(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case FunctionCallExpr(name, params) => dom2.evalFunction[N, D1](name, params.map(p => evaluate(p, ctx)), ctx)
+      case _ => ??? // TODO
+      /*case LocationPath(steps, isAbsolute) => NodeSetValue(evaluateLocationPath(ctx.node, steps, isAbsolute, ctx.variables).toList)
       case PathExpr(filter, locationPath) =>
         evaluate(filter, ctx) match {
           case NodeSetValue(nodes) => NodeSetValue(nodes.flatMap {
@@ -68,6 +43,7 @@ object XPathEvaluator {
       case FilterExpr(subexpr, predicates) =>
         if (!predicates.isEmpty) throw new NotImplementedError("Predicates are not supported")
         evaluate(subexpr, ctx)
+      */
     }
   }
 

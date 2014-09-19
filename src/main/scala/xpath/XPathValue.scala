@@ -56,6 +56,37 @@ abstract class XPathValue {
       case NodeSetValue(_) => throw new NotImplementedError("Converting node sets to strings is not implemented for node-sets with more than one element")
     }
   }
+
+  /** Compare two XPath values as specified in the XPath spec section 3.4 */
+  def compare(other: XPathValue, relOp: RelationalOperator): Boolean = {
+    // comparing node sets is especially tricky and therefore skipped in this implementation
+    if (this.isInstanceOf[NodeSetValue] || other.isInstanceOf[NodeSetValue]) throw new NotImplementedError("Comparing node sets is not implemented")
+    relOp match {
+      case EqualsOperator | NotEqualsOperator =>
+        // result depends on types of values
+        (this, other) match {
+          // at least one operand is a boolean value -> compare both as booleans
+          case (_, BooleanValue(_)) | (BooleanValue(_), _) => relOp match {
+            case EqualsOperator => this.toBooleanValue.value == other.toBooleanValue.value
+            case NotEqualsOperator => this.toBooleanValue.value != other.toBooleanValue.value
+          }
+          // at least one operand is a number -> compare both as numbers
+          case (_, NumberValue(_)) | (NumberValue(_), _) => relOp match {
+            case EqualsOperator => this.toNumberValue.value == other.toNumberValue.value
+            case NotEqualsOperator => this.toNumberValue.value != other.toNumberValue.value
+          }
+          // otherwise compare both as strings
+          case _ => relOp match {
+            case EqualsOperator => this.toStringValue.value == other.toStringValue.value
+            case NotEqualsOperator => this.toStringValue.value != other.toStringValue.value
+          }
+        }
+      case LessThanOperator => this.toNumberValue.value < other.toNumberValue.value
+      case GreaterThanOperator => this.toNumberValue.value > other.toNumberValue.value
+      case LessThanEqualOperator => this.toNumberValue.value <= other.toNumberValue.value
+      case GreaterThanEqualOperator => this.toNumberValue.value >= other.toNumberValue.value
+    }
+  }
 }
 
 case class NodeSetValue(nodes: List[XMLNode]) extends XPathValue
