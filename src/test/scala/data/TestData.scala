@@ -1,3 +1,5 @@
+package data
+
 object TestData {
   // taken from https://en.wikipedia.org/wiki/XSLT
   val WikipediaData =

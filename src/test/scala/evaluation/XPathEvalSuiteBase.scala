@@ -1,12 +1,10 @@
-import org.scalatest.FunSuite
+package evaluation
 
+import org.scalatest.FunSuite
 import xpath._
 
-class XPathEvalSuite extends FunSuite {
-  def eval(expr: String): XPathValue = {
-    // evaluate with an empty context
-    XPathEvaluator.evaluate(XPathParser.parse(expr), XPathContext(null, 0, 0, Map()))
-  }
+abstract class XPathEvalSuiteBase extends FunSuite {
+  def eval(expr: String): XPathValue
 
   test("Numbers") {
     assertResult(NumberValue(0)) { eval("0") }

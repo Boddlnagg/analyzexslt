@@ -1,5 +1,7 @@
-import org.scalatest.FunSuite
+package parsing
 
+import data.TestData
+import org.scalatest.FunSuite
 import xslt.XSLTParser
 
 class ParseStylesheetSuite extends FunSuite {

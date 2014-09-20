@@ -1,6 +1,10 @@
+package parsing
+
+import data.TestData
 import org.scalatest.FunSuite
-import scala.collection.immutable.TreeSet
 import xml._
+
+import scala.collection.immutable.TreeSet
 
 class ParseDataSuite extends FunSuite {
   test("Minimal example with comments") {

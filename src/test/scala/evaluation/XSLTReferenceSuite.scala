@@ -1,9 +1,12 @@
+package evaluation
+
 import javax.xml.transform.TransformerException
 
+import data.TestData
 import org.scalatest.FunSuite
-import scala.xml.Elem
-
 import util.EvaluationError
+
+import scala.xml.Elem
 
 class XSLTReferenceSuite extends FunSuite {
   test("Wikipedia (Java Example)") {

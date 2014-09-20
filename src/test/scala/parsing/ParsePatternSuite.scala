@@ -1,5 +1,6 @@
-import org.scalatest.FunSuite
+package parsing
 
+import org.scalatest.FunSuite
 import xpath._
 
 class ParsePatternSuite extends FunSuite {

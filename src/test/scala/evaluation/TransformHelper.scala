@@ -1,11 +1,13 @@
+package evaluation
+
 import java.io.{StringReader, StringWriter}
-import javax.xml.transform.{OutputKeys, TransformerFactory}
 import javax.xml.transform.stream.{StreamResult, StreamSource}
+import javax.xml.transform.{OutputKeys, TransformerFactory}
+
+import xml.{XMLParser, XMLRoot}
+import xslt.{XSLTEvaluator, XSLTParser}
 
 import scala.xml.Elem
-
-import xml.{XMLRoot, XMLParser}
-import xslt.{XSLTEvaluator, XSLTParser}
 
 
 object TransformHelper {

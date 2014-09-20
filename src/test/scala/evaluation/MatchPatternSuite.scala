@@ -1,5 +1,6 @@
-import org.scalatest.FunSuite
+package evaluation
 
+import org.scalatest.FunSuite
 import xml._
 import xpath._
 
