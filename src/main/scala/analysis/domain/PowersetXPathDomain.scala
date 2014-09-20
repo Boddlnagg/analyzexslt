@@ -15,11 +15,20 @@ object PowersetXPathDomain {
     override def top: T = Some(Set())
     override def bottom: T = None
 
+    // booleans are a finite domain so we don't need to represent an unknown boolean as None
+    val anyBoolean: T = Some(Set(BooleanValue(true), BooleanValue(false)))
+
     def liftBinaryOp(left: T, right: T, pf: PartialFunction[(XPathValue, XPathValue), XPathValue]): T = (left, right) match {
       case (None, _) => None
       case (_, None) => None
       case (Some(s1), Some(s2)) => Some(s1.cross(s2).collect(pf).toSet)
     }
+
+    def liftBinaryLogicalOp(left: T, right: T, pf: PartialFunction[(XPathValue, XPathValue), XPathValue]): T =
+      liftBinaryOp(left, right, pf) match {
+        case None => anyBoolean
+        case Some(s) => Some(s)
+      }
 
     def liftBinaryNumOp(left: T, right: T, pf: PartialFunction[(Double, Double), Double]): T = (left, right) match {
       case (None, _) => None
@@ -47,14 +56,14 @@ object PowersetXPathDomain {
     override def modulo(left: T, right: T): T = liftBinaryNumOp(left, right, {
       case (v1, v2) if v2 != 0 => v1 % v2
     })
-    override def compare(left: T, right: T, relOp: RelationalOperator): T = liftBinaryOp(left, right, {
+    override def compare(left: T, right: T, relOp: RelationalOperator): T = liftBinaryLogicalOp(left, right, {
       case (v1, v2) => BooleanValue(v1.compare(v2, relOp))
     })
-    override def logicalAnd(left: T, right: T): T = liftBinaryOp(left, right, {
+    override def logicalAnd(left: T, right: T): T = liftBinaryLogicalOp(left, right, {
       // TODO: does shortcut evaluation matter in XPath? (it should use shortcut evaluation according to the spec)
       case (v1, v2) => BooleanValue(v1.toBooleanValue.value && v2.toBooleanValue.value)
     })
-    override def logicalOr(left: T, right: T): T = liftBinaryOp(left, right, {
+    override def logicalOr(left: T, right: T): T = liftBinaryLogicalOp(left, right, {
       // TODO: does shortcut evaluation matter in XPath? (it should use shortcut evaluation according to the spec)
       case (v1, v2) => BooleanValue(v1.toBooleanValue.value || v2.toBooleanValue.value)
     })
@@ -70,7 +79,10 @@ object PowersetXPathDomain {
       // TODO: some of these functions are the same for each domain (given a generic lift operator)
       case ("true", Nil) => Some(Set(BooleanValue(true)))
       case ("false", Nil) => Some(Set(BooleanValue(false)))
-      case ("not", List(arg)) => arg.map(_.map(b => BooleanValue(!b.toBooleanValue.value)))
+      case ("not", List(arg)) => arg match {
+        case None => anyBoolean
+        case Some(s) => Some(s.map(b => BooleanValue(!b.toBooleanValue.value)))
+      }
       case ("string", List(arg)) => arg.map(_.map(_.toStringValue))
       case ("boolean", List(arg)) => arg.map(_.map(_.toBooleanValue))
       case ("number", List(arg)) => arg.map(_.map(_.toNumberValue))
