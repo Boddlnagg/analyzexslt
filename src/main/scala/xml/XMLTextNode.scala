@@ -12,6 +12,8 @@ case class XMLTextNode(value: String, var parent: XMLNode = null) extends XMLNod
     case _ => false
   }
 
+  override def hashCode = value.hashCode * 41 * 41
+
   override def stringValue = value
 
   override def copy = XMLTextNode(value)

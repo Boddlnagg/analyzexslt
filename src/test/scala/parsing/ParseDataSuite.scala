@@ -53,4 +53,17 @@ class ParseDataSuite extends FunSuite {
 
     assertResult(xml.nodesInOrder) {TreeSet[XMLNode](a2, attr, b1, c, xml, b2, a1, root).toList}
   }
+
+  test("Equality and hash codes") {
+    val n1 = XMLParser.parseDocument(TestData.WikipediaData)
+    val n2 = XMLParser.parseDocument(TestData.WikipediaData)
+    val n3 = XMLParser.parseDocument(<a><b attr="foo"/>bar</a>)
+    assert(n1 == n2)
+    assert(!(n1 eq n2)) // no pointer equality
+    assert(n1 != n3)
+    assert(n1.hashCode == n2.hashCode)
+    assert(n1.hashCode != n3.hashCode)
+    assert(n1.elem.hashCode == n2.elem.hashCode)
+    assert(n1.elem.hashCode != n1.hashCode)
+  }
 }

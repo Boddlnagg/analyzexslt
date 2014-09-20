@@ -12,6 +12,8 @@ case class XMLComment(value: String, var parent: XMLNode = null) extends XMLNode
     case _ => false
   }
 
+  override def hashCode = value.hashCode * 41
+
   override def stringValue = value
 
   override def copy = XMLComment(value)

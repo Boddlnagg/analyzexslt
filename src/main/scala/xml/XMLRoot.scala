@@ -16,6 +16,8 @@ case class XMLRoot(elem: XMLElement) extends XMLNode {
     case _ => false
   }
 
+  override def hashCode = elem.hashCode * 41 * 41
+
   /** Returns a list of all nodes (self and descendants) in document order */
   def nodesInOrder: List[XMLNode] = {
     XMLNode.nodesInOrder(this)

@@ -12,6 +12,8 @@ case class XMLAttribute(name: String, value: String, var parent: XMLNode = null)
     case _ => false
   }
 
+  override def hashCode = name.hashCode + value.hashCode * 41
+
   override def stringValue = value // NOTE: attribute-value normalization is required by the spec, but not implemented
 
   override def copy = XMLAttribute(name, value)
