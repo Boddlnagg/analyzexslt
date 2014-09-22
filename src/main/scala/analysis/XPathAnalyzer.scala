@@ -2,10 +2,7 @@ package analysis
 
 import analysis.domain.{XPathDomain, XMLDomain}
 import util.EvaluationError
-import xml._
 import xpath._
-
-import scala.collection.immutable.TreeSet
 
 trait XPathAnalyzer[N, D1 <: XMLDomain[N], T, D2 <: XPathDomain[T, N, D1]] {
   val dom1: D1
