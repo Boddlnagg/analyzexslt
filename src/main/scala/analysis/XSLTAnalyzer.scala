@@ -5,7 +5,7 @@ import util.EvaluationError
 import analysis.domain.{XMLDomain, XPathDomain}
 
 /** Trait to analyze XSLT stylesheets using abstract interpretation */
-trait XSLTAnalyzer[N, D1 <: XMLDomain[N], T, D2 <: XPathDomain[T]] {
+trait XSLTAnalyzer[N, D1 <: XMLDomain[N], T, D2 <: XPathDomain[T, N, D1]] {
 
   val dom1: D1
   val dom2: D2

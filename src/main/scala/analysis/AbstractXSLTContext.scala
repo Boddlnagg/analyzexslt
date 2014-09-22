@@ -2,7 +2,7 @@ package analysis
 
 import analysis.domain.{XPathDomain, XMLDomain}
 
-case class AbstractXSLTContext[N, D1 <: XMLDomain[N], T, D2 <: XPathDomain[T]](node: N, nodeListSize: Option[Int], position: Option[Int], variables: Map[String, T]) {
+case class AbstractXSLTContext[N, D1 <: XMLDomain[N], T, D2 <: XPathDomain[T, N, D1]](node: N, nodeListSize: Option[Int], position: Option[Int], variables: Map[String, T]) {
   /** Creates an equivalent XPath context from this XSLT context */
   def toXPathContext = AbstractXPathContext(node, position, nodeListSize, variables)
 

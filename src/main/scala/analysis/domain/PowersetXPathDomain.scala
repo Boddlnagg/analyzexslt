@@ -2,16 +2,15 @@ package analysis.domain
 
 import analysis.AbstractXPathContext
 import util.EvaluationError
-import xml.XMLNode
+import xml._
 import xpath._
 
 import scala.collection.immutable.TreeSet
 
-object PowersetXPathDomain {
+trait PowersetXPathDomain[N, D1 <: XMLDomain[N]] {
   type T = Option[Set[XPathValue]] // None represents the infinite set, Some represents finite sets
 
-  object D extends XPathDomain[T] {
-
+  object D extends XPathDomain[T, N, D1] {
     override def top: T = Some(Set())
     override def bottom: T = None
 
@@ -70,12 +69,15 @@ object PowersetXPathDomain {
     override def negate(v: T): T = v.map(_.map(num => NumberValue(- num.toNumberValue.value)))
     override def liftLiteral(lit: String): T = Some(Set(StringValue(lit)))
     override def liftNumber(num: Double): T = Some(Set(NumberValue(num)))
+
+    override def liftNodeSet(set: Set[N]): T = ??? // TODO
+    
     override def nodeSetUnion(left: T, right: T): T = liftBinaryOp(left, right, {
       case (NodeSetValue(lVal), NodeSetValue(rVal)) => NodeSetValue((TreeSet[XMLNode]()++ lVal ++ rVal).toList)
       // NOTE: ignore values that are not node-sets by not including them in the result (essentially evaluating them to bottom)
     })
 
-    def evalFunction[N, D1 <: XMLDomain[N]](name: String, params: List[T], ctx: AbstractXPathContext[N,D1,T,PowersetXPathDomain.D.type]): T = (name, params) match {
+    def evalFunction(name: String, params: List[T], ctx: AbstractXPathContext[N,D1,T,PowersetXPathDomain.this.D.type]): T = (name, params) match {
       // TODO: some of these functions are the same for each domain (given a generic lift operator)
       case ("true", Nil) => Some(Set(BooleanValue(true)))
       case ("false", Nil) => Some(Set(BooleanValue(false)))

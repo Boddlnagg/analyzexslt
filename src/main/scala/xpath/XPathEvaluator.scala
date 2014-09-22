@@ -57,11 +57,11 @@ object XPathEvaluator {
           case (_, evaluatedParams) =>
             throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
         }
-      case LocationPath(steps, isAbsolute) => NodeSetValue(evaluateLocationPath(ctx.node, steps, isAbsolute, ctx.variables).toList)
+      case LocationPath(steps, isAbsolute) => NodeSetValue(evaluateLocationPath(ctx.node, steps, isAbsolute).toList)
       case PathExpr(filter, locationPath) =>
         evaluate(filter, ctx) match {
           case NodeSetValue(nodes) => NodeSetValue(nodes.flatMap {
-            n => evaluateLocationPath(n, locationPath.steps, locationPath.isAbsolute, ctx.variables).toList
+            n => evaluateLocationPath(n, locationPath.steps, locationPath.isAbsolute).toList
           })
           case value => throw new EvaluationError(f"Filter expression must return a node-set (returned: $value)")
         }
@@ -76,14 +76,13 @@ object XPathEvaluator {
     * @param ctxNode the context node
     * @param steps the list of remaining steps to evaluate
     * @param isAbsolute a value indicating whether the location path is absolute (or relative)
-    * @param variables the set of currently defined variables
     * @return an ordered set of nodes resulting from the location path, ordered in document order
     */
-  private def evaluateLocationPath(ctxNode: XMLNode, steps: List[XPathStep], isAbsolute: Boolean, variables: Map[String, XPathValue]): TreeSet[XMLNode] = {
+  private def evaluateLocationPath(ctxNode: XMLNode, steps: List[XPathStep], isAbsolute: Boolean): TreeSet[XMLNode] = {
     // evaluate steps from left to right, keep nodes in document order (not required by XPath, but by XSLT)
     (steps, isAbsolute) match {
       case (Nil, true) => TreeSet(ctxNode.root)
-      case (steps, true) => evaluateLocationPath(ctxNode.root, steps, false, variables)
+      case (steps, true) => evaluateLocationPath(ctxNode.root, steps, false)
       case (first :: rest, false) =>
         val nodes: TreeSet[XMLNode] = first.axis match {
           // the child axis contains the children of the context node
@@ -159,7 +158,7 @@ object XPathEvaluator {
           case AllNodeTest => true
         }}
         if (!first.predicates.isEmpty) throw new NotImplementedError("Predicates are not supported") // NOTE: see XPath spec section 2.4 to implement these
-        testedNodes.flatMap { n => evaluateLocationPath(n, rest, false, variables)}
+        testedNodes.flatMap { n => evaluateLocationPath(n, rest, false)}
       case (Nil, false) => TreeSet(ctxNode)
     }
   }

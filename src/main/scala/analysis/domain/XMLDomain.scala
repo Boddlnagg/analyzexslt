@@ -14,4 +14,6 @@ trait XMLDomain[N] {
   def meet(n1: N, n2: N): N
 
   def lift(n: XMLNode): N
+
+  def getRoot(node: N): N
 }
