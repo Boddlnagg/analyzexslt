@@ -1,17 +1,23 @@
-package analysis.domain
+package analysis.domain.powerset
 
 import analysis.AbstractXPathContext
+import analysis.domain.{XMLDomain, XPathDomain}
 import util.EvaluationError
 import xml._
 import xpath._
 
 import scala.collection.immutable.TreeSet
 
-trait PowersetXPathDomain[N, D1 <: XMLDomain[N]] {
-  type T = Option[Set[XPathValue]] // None represents the infinite set, Some represents finite sets
+object PowersetXPathDomain {
+  type T = Option[Set[XPathValue]]
 
-  object D extends XPathDomain[T, N, D1] {
+  implicit class Crossable[X](xs: Traversable[X]) {
+    def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
+  }
+
+  trait D[N, XD <: XMLDomain[N]] extends XPathDomain[T, N, XD] {
     override def top: T = Some(Set())
+
     override def bottom: T = None
 
     // booleans are a finite domain so we don't need to represent an unknown boolean as None
@@ -33,7 +39,7 @@ trait PowersetXPathDomain[N, D1 <: XMLDomain[N]] {
       case (None, _) => None
       case (_, None) => None
       case (Some(s1), Some(s2)) => Some(s1.cross(s2)
-        .map { case (v1, v2) => (v1.toNumberValue.value, v2.toNumberValue.value) }
+        .map { case (v1, v2) => (v1.toNumberValue.value, v2.toNumberValue.value)}
         .collect(pf)
         .map(NumberValue(_))
         .toSet
@@ -43,41 +49,49 @@ trait PowersetXPathDomain[N, D1 <: XMLDomain[N]] {
     override def add(left: T, right: T): T = liftBinaryNumOp(left, right, {
       case (v1, v2) => v1 + v2
     })
+
     override def subtract(left: T, right: T): T = liftBinaryNumOp(left, right, {
       case (v1, v2) => v1 - v2
     })
+
     override def multiply(left: T, right: T): T = liftBinaryNumOp(left, right, {
       case (v1, v2) => v1 * v2
     })
+
     override def divide(left: T, right: T): T = liftBinaryNumOp(left, right, {
       case (v1, v2) if v2 != 0 => v1 / v2
     })
+
     override def modulo(left: T, right: T): T = liftBinaryNumOp(left, right, {
       case (v1, v2) if v2 != 0 => v1 % v2
     })
+
     override def compare(left: T, right: T, relOp: RelationalOperator): T = liftBinaryLogicalOp(left, right, {
       case (v1, v2) => BooleanValue(v1.compare(v2, relOp))
     })
+
     override def logicalAnd(left: T, right: T): T = liftBinaryLogicalOp(left, right, {
       // TODO: does shortcut evaluation matter in XPath? (it should use shortcut evaluation according to the spec)
       case (v1, v2) => BooleanValue(v1.toBooleanValue.value && v2.toBooleanValue.value)
     })
+
     override def logicalOr(left: T, right: T): T = liftBinaryLogicalOp(left, right, {
       // TODO: does shortcut evaluation matter in XPath? (it should use shortcut evaluation according to the spec)
       case (v1, v2) => BooleanValue(v1.toBooleanValue.value || v2.toBooleanValue.value)
     })
-    override def negate(v: T): T = v.map(_.map(num => NumberValue(- num.toNumberValue.value)))
+
+    override def negate(v: T): T = v.map(_.map(num => NumberValue(-num.toNumberValue.value)))
+
     override def liftLiteral(lit: String): T = Some(Set(StringValue(lit)))
+
     override def liftNumber(num: Double): T = Some(Set(NumberValue(num)))
 
-    override def liftNodeSet(set: Set[N]): T = ??? // TODO
-    
     override def nodeSetUnion(left: T, right: T): T = liftBinaryOp(left, right, {
-      case (NodeSetValue(lVal), NodeSetValue(rVal)) => NodeSetValue((TreeSet[XMLNode]()++ lVal ++ rVal).toList)
+      case (NodeSetValue(lVal), NodeSetValue(rVal)) => NodeSetValue((TreeSet[XMLNode]() ++ lVal ++ rVal).toList)
       // NOTE: ignore values that are not node-sets by not including them in the result (essentially evaluating them to bottom)
     })
 
-    def evalFunction(name: String, params: List[T], ctx: AbstractXPathContext[N,D1,T,PowersetXPathDomain.this.D.type]): T = (name, params) match {
+    def evaluateFunction(name: String, params: List[T], ctx: AbstractXPathContext[N, XD, T, D.this.type]): T = (name, params) match {
       // TODO: some of these functions are the same for each domain (given a generic lift operator)
       case ("true", Nil) => Some(Set(BooleanValue(true)))
       case ("false", Nil) => Some(Set(BooleanValue(false)))
@@ -92,12 +106,12 @@ trait PowersetXPathDomain[N, D1 <: XMLDomain[N]] {
       case ("position", Nil) => ctx.position.map(p => Set(NumberValue(p)))
       // TODO: implement these functions?
       /*case ("count", List(NodeSetValue(nodes))) => NumberValue(nodes.size)
-      case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
-      case ("name"|"local-name", List(NodeSetValue(List(node)))) => node match {
-        case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
-        case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
-        case _ => StringValue("")
-      }*/
+    case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
+    case ("name"|"local-name", List(NodeSetValue(List(node)))) => node match {
+      case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
+      case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
+      case _ => StringValue("")
+    }*/
       case (_, evaluatedParams) =>
         throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
     }

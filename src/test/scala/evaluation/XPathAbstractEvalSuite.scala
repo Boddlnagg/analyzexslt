@@ -1,16 +1,13 @@
 package evaluation
 
-import analysis.domain.{PowersetXMLDomain, PowersetXPathDomain}
+import analysis.domain.powerset.{PowersetXPathXMLDomain, PowersetXPathDomain, PowersetXMLDomain}
 import analysis.{AbstractXPathContext, XPathAnalyzer}
 import xpath._
 
 class XPathAbstractEvalSuite extends XPathEvalSuiteBase {
-
-  object PowersetXPathXMLDomain extends PowersetXPathDomain[PowersetXMLDomain.N, PowersetXMLDomain.D.type]
-
-  object XPathTestAnalyzer extends XPathAnalyzer[PowersetXMLDomain.N, PowersetXMLDomain.D.type, PowersetXPathXMLDomain.T, PowersetXPathXMLDomain.D.type] {
+  object XPathTestAnalyzer extends XPathAnalyzer[PowersetXMLDomain.N, PowersetXMLDomain.D.type, PowersetXPathDomain.T, PowersetXPathXMLDomain.type] {
     val dom1 = PowersetXMLDomain.D
-    val dom2 = PowersetXPathXMLDomain.D
+    val dom2 = PowersetXPathXMLDomain
   }
 
   def eval(expr: String): XPathValue = {

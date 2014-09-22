@@ -1,7 +1,8 @@
 package analysis.domain
 
 import analysis.AbstractXPathContext
-import xpath._
+import analysis.domain.powerset.PowersetXMLDomain
+import xpath.{RelationalOperator, XPathStep}
 
 trait XPathDomain[T, N, D1 <: XMLDomain[N]] {
   def top: T
@@ -20,7 +21,8 @@ trait XPathDomain[T, N, D1 <: XMLDomain[N]] {
   def liftNumber(num: Double): T
   def liftNodeSet(set: Set[N]): T
   def nodeSetUnion(left: T, right: T): T
-  def evalFunction(name: String, params: List[T], ctx: AbstractXPathContext[N,D1,T,this.type]): T
+  def evaluateFunction(name: String, params: List[T], ctx: AbstractXPathContext[N,D1,T,this.type]): T
+  def evaluateLocationPath(ctxNode: N, steps: List[XPathStep], isAbsolute: Boolean): T
 
   def join(v1: T, v2: T): T
   def meet(v1: T, v2: T): T
