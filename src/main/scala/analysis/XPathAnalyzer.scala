@@ -31,14 +31,8 @@ trait XPathAnalyzer[N, D1 <: XMLDomain[N], T, D2 <: XPathDomain[T, N, D1]] {
       }
       case UnionExpr(lhs, rhs) => dom2.nodeSetUnion(evaluate(lhs, ctx), evaluate(rhs, ctx))
       case FunctionCallExpr(name, params) => dom2.evaluateFunction(name, params.map(p => evaluate(p, ctx)), ctx)
-      case LocationPath(steps, isAbsolute) => dom2.evaluateLocationPath(ctx.node, steps, isAbsolute)
-      /*case PathExpr(filter, locationPath) =>
-        evaluate(filter, ctx) match {
-          case NodeSetValue(nodes) => NodeSetValue(nodes.flatMap {
-            n => evaluateLocationPath(n, locationPath.steps, locationPath.isAbsolute).toList
-          })
-          case value => throw new EvaluationError(f"Filter expression must return a node-set (returned: $value)")
-        }*/
+      case LocationPath(steps, isAbsolute) => dom2.evaluateLocationPath(dom2.liftNodeSet(Set(ctx.node)), steps, isAbsolute)
+      case PathExpr(filter, locationPath) => dom2.evaluateLocationPath(evaluate(filter, ctx), locationPath.steps, locationPath.isAbsolute)
       case FilterExpr(subexpr, predicates) =>
         if (!predicates.isEmpty) throw new NotImplementedError("Predicates are not supported")
         evaluate(subexpr, ctx)

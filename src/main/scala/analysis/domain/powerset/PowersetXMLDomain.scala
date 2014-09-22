@@ -1,11 +1,9 @@
 package analysis.domain.powerset
 
-import analysis.domain.{XPathDomain, XMLDomain}
+import analysis.domain.XMLDomain
 import xml._
 import xpath._
 import xslt.{XSLTStylesheet, XSLTTemplate}
-
-import scala.collection.immutable.TreeSet
 
 object PowersetXMLDomain {
   type N = Option[Set[XMLNode]] // None represents the infinite set, Some represents finite sets

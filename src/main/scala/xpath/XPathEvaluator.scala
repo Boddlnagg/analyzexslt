@@ -57,12 +57,10 @@ object XPathEvaluator {
           case (_, evaluatedParams) =>
             throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
         }
-      case LocationPath(steps, isAbsolute) => NodeSetValue(evaluateLocationPath(ctx.node, steps, isAbsolute).toList)
+      case LocationPath(steps, isAbsolute) => evaluateLocationPath(NodeSetValue(List(ctx.node)), steps, isAbsolute)
       case PathExpr(filter, locationPath) =>
         evaluate(filter, ctx) match {
-          case NodeSetValue(nodes) => NodeSetValue(nodes.flatMap {
-            n => evaluateLocationPath(n, locationPath.steps, locationPath.isAbsolute).toList
-          })
+          case nodes@NodeSetValue(_) => evaluateLocationPath(nodes, locationPath.steps, locationPath.isAbsolute)
           case value => throw new EvaluationError(f"Filter expression must return a node-set (returned: $value)")
         }
       case FilterExpr(subexpr, predicates) =>
@@ -71,18 +69,30 @@ object XPathEvaluator {
     }
   }
 
-  /** Evaluates the steps of a location path.
+  /** Evaluates the steps of a location path for a set of starting nodes.
+    *
+    * @param startNodeSet the set of nodes to start with
+    * @param steps the list of remaining steps to evaluate
+    * @param isAbsolute a value indicating whether the location path is absolute (or relative)
+    * @return an ordered set of nodes resulting from the location path, ordered in document order
+    */
+  def evaluateLocationPath(startNodeSet: NodeSetValue, steps: List[XPathStep], isAbsolute: Boolean): NodeSetValue =
+    NodeSetValue(startNodeSet.nodes.flatMap {
+      n => evaluateLocationPathSingle(n, steps, isAbsolute).toList
+    })
+
+  /** Evaluates the steps of a location path for a single starting node.
     *
     * @param ctxNode the context node
     * @param steps the list of remaining steps to evaluate
     * @param isAbsolute a value indicating whether the location path is absolute (or relative)
     * @return an ordered set of nodes resulting from the location path, ordered in document order
     */
-  def evaluateLocationPath(ctxNode: XMLNode, steps: List[XPathStep], isAbsolute: Boolean): TreeSet[XMLNode] = {
+  private def evaluateLocationPathSingle(ctxNode: XMLNode, steps: List[XPathStep], isAbsolute: Boolean): TreeSet[XMLNode] = {
     // evaluate steps from left to right, keep nodes in document order (not required by XPath, but by XSLT)
     (steps, isAbsolute) match {
       case (Nil, true) => TreeSet(ctxNode.root)
-      case (steps, true) => evaluateLocationPath(ctxNode.root, steps, false)
+      case (steps, true) => evaluateLocationPathSingle(ctxNode.root, steps, false)
       case (first :: rest, false) =>
         val nodes: TreeSet[XMLNode] = first.axis match {
           // the child axis contains the children of the context node
@@ -158,7 +168,7 @@ object XPathEvaluator {
           case AllNodeTest => true
         }}
         if (!first.predicates.isEmpty) throw new NotImplementedError("Predicates are not supported") // NOTE: see XPath spec section 2.4 to implement these
-        testedNodes.flatMap { n => evaluateLocationPath(n, rest, false)}
+        testedNodes.flatMap { n => evaluateLocationPathSingle(n, rest, false)}
       case (Nil, false) => TreeSet(ctxNode)
     }
   }

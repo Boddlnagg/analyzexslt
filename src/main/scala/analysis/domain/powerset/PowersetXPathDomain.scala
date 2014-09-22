@@ -9,16 +9,15 @@ import xpath._
 import scala.collection.immutable.TreeSet
 
 object PowersetXPathDomain {
-  type T = Option[Set[XPathValue]]
+  type T = Option[Set[XPathValue]] // None represents the infinite set, Some represents finite sets
 
   implicit class Crossable[X](xs: Traversable[X]) {
     def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
   }
 
   trait D[N, XD <: XMLDomain[N]] extends XPathDomain[T, N, XD] {
-    override def top: T = Some(Set())
-
-    override def bottom: T = None
+    override def top: T = None
+    override def bottom: T = Some(Set())
 
     // booleans are a finite domain so we don't need to represent an unknown boolean as None
     val anyBoolean: T = Some(Set(BooleanValue(true), BooleanValue(false)))

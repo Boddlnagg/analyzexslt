@@ -1,7 +1,7 @@
 package analysis.domain.powerset
 
 import analysis.domain.powerset.PowersetXPathDomain.T
-import xpath.{XPathStep, NodeSetValue, XPathEvaluator}
+import xpath.{XPathValue, XPathStep, NodeSetValue, XPathEvaluator}
 import xml.XMLNode
 
 import scala.collection.immutable.TreeSet
@@ -21,8 +21,12 @@ object PowersetXPathXMLDomain extends PowersetXPathDomain.D[PowersetXMLDomain.N,
       Some(getProduct(set.map(_.get.toList).toList).map(nodes => NodeSetValue((TreeSet[XMLNode]() ++ nodes).toList)).toSet)
   }
 
-  override def evaluateLocationPath(ctxNode: PowersetXMLDomain.N, steps: List[XPathStep], isAbsolute: Boolean): T = ctxNode match {
+  override def evaluateLocationPath(startNodeSet: T, steps: List[XPathStep], isAbsolute: Boolean): T = startNodeSet match {
     case None => None
-    case Some(s) => Some(s.map(n => NodeSetValue(XPathEvaluator.evaluateLocationPath(n, steps, isAbsolute).toList)))
+    // TODO: implement this using join instead of flatMap
+    case Some(values) => Some(values.flatMap {
+      case nodes@NodeSetValue(_) => Set[XPathValue](XPathEvaluator.evaluateLocationPath(nodes, steps, isAbsolute))
+      case _ => Set[XPathValue]() // bottom
+    })
   }
 }

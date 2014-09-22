@@ -22,7 +22,9 @@ trait XPathDomain[T, N, D1 <: XMLDomain[N]] {
   def liftNodeSet(set: Set[N]): T
   def nodeSetUnion(left: T, right: T): T
   def evaluateFunction(name: String, params: List[T], ctx: AbstractXPathContext[N,D1,T,this.type]): T
-  def evaluateLocationPath(ctxNode: N, steps: List[XPathStep], isAbsolute: Boolean): T
+
+  // TODO: implement this in an abstract way in the analyzer instead (not in each domain)
+  def evaluateLocationPath(startNodeSet: T, steps: List[XPathStep], isAbsolute: Boolean): T
 
   def join(v1: T, v2: T): T
   def meet(v1: T, v2: T): T
