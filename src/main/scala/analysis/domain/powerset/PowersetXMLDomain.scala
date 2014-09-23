@@ -16,10 +16,10 @@ object PowersetXMLDomain {
     override def listTop: L = None
     override def listBottom: L = Some(Set())
 
-    override def map(list: L, f: N => N ): L = ??? // TODO
+    override def map(list: L, f: N => N): L = ??? // TODO
     override def flatMap(list: L, f: N => L): L = ??? // TODO
 
-    override def join(n1: N, n2: N): N = (n1, n2) match {
+    /*override def join(n1: N, n2: N): N = (n1, n2) match {
       case (None, _) => None
       case (_, None) => None
       case (Some(s1), Some(s2)) => Some(s1.union(s2))
@@ -31,15 +31,15 @@ object PowersetXMLDomain {
       case (Some(s1), Some(s2)) => Some(s1.intersect(s2))
     }
 
-    override def lift(n: XMLNode): N = Some(Set(n))
-
-    override def liftToList(n: N): L = n.map(_.map(n => List(n)))
-
     override def compare(morePrecise: N, lessPrecise: N): Boolean = (morePrecise, lessPrecise) match {
       case (_, None) => true
       case (None, _) => false
       case (Some(s1), Some(s2)) => s1.subsetOf(s2)
-    }
+    }*/
+
+    override def lift(n: XMLNode): N = Some(Set(n))
+
+    override def liftToList(n: N): L = n.map(_.map(n => List(n)))
 
     override def chooseTemplates(sheet: XSLTStylesheet, n: N): Set[XSLTTemplate] = n match {
       // don't know anything -> return set of all matchable templates

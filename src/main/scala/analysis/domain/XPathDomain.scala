@@ -6,6 +6,9 @@ trait XPathDomain[T, N, L, D1 <: XMLDomain[N, L]] {
   def top: T
   def bottom: T
 
+  //def join(v1: T, v2: T): T
+  //def meet(v1: T, v2: T): T
+
   def add(left: T, right: T): T
   def subtract(left: T, right: T): T
   def multiply(left: T, right: T): T
@@ -29,7 +32,4 @@ trait XPathDomain[T, N, L, D1 <: XMLDomain[N, L]] {
   def evaluateLocationPath(startNodeSet: T, steps: List[XPathStep], isAbsolute: Boolean): T
 
   def getStringValue(node: N): T
-
-  def join(v1: T, v2: T): T
-  def meet(v1: T, v2: T): T
  }

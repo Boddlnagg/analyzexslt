@@ -1,8 +1,6 @@
 package analysis.domain.powerset
 
-import analysis.AbstractXPathContext
 import analysis.domain.{XMLDomain, XPathDomain}
-import util.EvaluationError
 import xml._
 import xpath._
 
@@ -17,6 +15,18 @@ object PowersetXPathDomain {
 
     // booleans are a finite domain so we don't need to represent an unknown boolean as None
     val anyBoolean: T = Some(Set(BooleanValue(true), BooleanValue(false)))
+
+    /*override def join(v1: T, v2: T): T = (v1, v2) match {
+      case (None, _) => None
+      case (_, None) => None
+      case (Some(s1), Some(s2)) => Some(s1.union(s2))
+    }
+
+    override def meet(v1: T, v2: T): T = (v1, v2) match {
+      case (None, _) => None
+      case (_, None) => None
+      case (Some(s1), Some(s2)) => Some(s1.intersect(s2))
+    }*/
 
     def liftBinaryOp(left: T, right: T, pf: PartialFunction[(XPathValue, XPathValue), XPathValue]): T = (left, right) match {
       case (None, _) => None
@@ -96,17 +106,5 @@ object PowersetXPathDomain {
       case (NodeSetValue(lVal), NodeSetValue(rVal)) => NodeSetValue((TreeSet[XMLNode]() ++ lVal ++ rVal).toList)
       // NOTE: ignore values that are not node-sets by not including them in the result (essentially evaluating them to bottom)
     })
-
-    override def join(v1: T, v2: T): T = (v1, v2) match {
-      case (None, _) => None
-      case (_, None) => None
-      case (Some(s1), Some(s2)) => Some(s1.union(s2))
-    }
-
-    override def meet(v1: T, v2: T): T = (v1, v2) match {
-      case (None, _) => None
-      case (_, None) => None
-      case (Some(s1), Some(s2)) => Some(s1.intersect(s2))
-    }
   }
 }
