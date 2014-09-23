@@ -90,7 +90,7 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
         Left(List(XMLElement(name,
           resultAttributes.map { case (key, value) => XMLAttribute(key, value)}.toSeq,
           resultChildren)))*/
-      case LiteralTextNode(text) => Left(xmlDom.liftToList(xmlDom.lift(XMLTextNode(text))))
+      case LiteralTextNode(text) => Left(xmlDom.liftList(List(xmlDom.lift(XMLTextNode(text)))))
       /*case SetAttributeInstruction(attribute, value) =>
         // merge the content of all text-node children to create the attribute value
         val textResult = evaluate(sheet, value, context)

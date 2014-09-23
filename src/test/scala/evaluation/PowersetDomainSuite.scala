@@ -35,11 +35,11 @@ class PowersetDomainSuite extends FunSuite {
 
   test("Lift to list") {
     val child = XMLParser.parse(<child/>).asInstanceOf[XMLElement]
-    assertResult(Some(Set(List(child)))) { xmlDom.liftToList(xmlDom.lift(child)) }
+    assertResult(Some(Set(List(child)))) { xmlDom.liftList(List(xmlDom.lift(child))) }
   }
 
   test("Append children") {
-    val child = xmlDom.liftToList(xmlDom.lift(XMLParser.parse(<child/>)))
+    val child = xmlDom.liftList(List(xmlDom.lift(XMLParser.parse(<child/>))))
     assertResult(Some(Set(XMLParser.parse(<e1><child/></e1>)))) {
       xmlDom.appendChildren(Some(Set(e1)), child)
     }
@@ -49,7 +49,7 @@ class PowersetDomainSuite extends FunSuite {
   }
 
   test("Add attributes") {
-    val attr = xmlDom.liftToList(xmlDom.lift(XMLAttribute("name", "value")))
+    val attr = xmlDom.liftList(List(xmlDom.lift(XMLAttribute("name", "value"))))
     assertResult(Some(Set(XMLParser.parse(<e1 name="value"/>)))) {
       xmlDom.addAttributes(Some(Set(e1)), attr)
     }
@@ -78,9 +78,9 @@ class PowersetDomainSuite extends FunSuite {
     val attr2 = XMLAttribute("attr2", "2")
     val attr3 = XMLAttribute("attr3", "3")
 
-    val l1a = xmlDom.liftToList(xmlDom.lift(attr1a))
-    val l2 = xmlDom.liftToList(xmlDom.lift(attr2))
-    val l3 = xmlDom.liftToList(xmlDom.lift(attr3))
+    val l1a = xmlDom.liftList(List(xmlDom.lift(attr1a)))
+    val l2 = xmlDom.liftList(List(xmlDom.lift(attr2)))
+    val l3 = xmlDom.liftList(List(xmlDom.lift(attr3)))
 
     val l1ab: L = Some(Set(List(attr1a), List(attr1b)))
     val l12: L = Some(Set(List(attr1a), List(attr1a, attr2)))

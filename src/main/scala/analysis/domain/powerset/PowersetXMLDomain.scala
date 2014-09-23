@@ -39,7 +39,18 @@ object PowersetXMLDomain {
 
     override def lift(n: XMLNode): N = Some(Set(n))
 
-    override def liftToList(n: N): L = n.map(_.map(n => List(n)))
+    override def liftList(nodes: List[N]): L = {
+      def getProduct(input:List[List[XMLNode]]): List[List[XMLNode]] = input match{
+        case Nil => Nil // just in case you input an empty list
+        case head::Nil => head.map(_::Nil)
+        case head::tail => for(elem<- head; sub <- getProduct(tail)) yield elem::sub
+      }
+
+      if (nodes.exists(n => !n.isDefined))
+        None
+      else
+        Some(getProduct(nodes.map(_.get.toList).toList).toSet)
+    }
 
     override def chooseTemplates(sheet: XSLTStylesheet, n: N): Set[XSLTTemplate] = n match {
       // don't know anything -> return set of all matchable templates

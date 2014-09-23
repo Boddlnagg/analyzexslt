@@ -21,7 +21,7 @@ trait XMLDomain[N, L] {
 
   def lift(n: XMLNode): N
 
-  def liftToList(n: N): L
+  def liftList(nodes: List[N]): L
 
   def getRoot(node: N): N
 
