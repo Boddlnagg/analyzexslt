@@ -6,7 +6,7 @@ import xpath._
 import xml.XMLNode
 
 class XPathAbstractEvalSuite extends XPathEvalSuiteBase {
-  object XPathTestAnalyzer extends XPathAnalyzer[PowersetXMLDomain.N, PowersetXMLDomain.D.type, PowersetXPathDomain.T, PowersetXPathXMLDomain.type] {
+  object XPathTestAnalyzer extends XPathAnalyzer[PowersetXMLDomain.N, PowersetXMLDomain.L, PowersetXMLDomain.D.type, PowersetXPathDomain.T, PowersetXPathXMLDomain.type] {
     val dom1 = PowersetXMLDomain.D
     val dom2 = PowersetXPathXMLDomain
   }

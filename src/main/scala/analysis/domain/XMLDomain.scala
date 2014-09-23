@@ -3,9 +3,13 @@ package analysis.domain
 import xml._
 import xslt._
 
-trait XMLDomain[N] {
+trait XMLDomain[N, L] {
   def top: N
   def bottom: N
+
+  def listTop: L
+  def listBottom: L
+
   def compare(morePrecise: N, lessPrecise: N): Boolean
 
   def chooseTemplates(sheet: XSLTStylesheet, n: N): Set[XSLTTemplate]
@@ -14,6 +18,8 @@ trait XMLDomain[N] {
   def meet(n1: N, n2: N): N
 
   def lift(n: XMLNode): N
+
+  def liftToList(n: N): L
 
   def getRoot(node: N): N
 }

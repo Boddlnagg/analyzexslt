@@ -5,7 +5,7 @@ import util.EvaluationError
 import analysis.domain.{XMLDomain, XPathDomain}
 
 /** Trait to analyze XSLT stylesheets using abstract interpretation */
-trait XSLTAnalyzer[N, D1 <: XMLDomain[N], T, D2 <: XPathDomain[T, N, D1]] {
+trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1]] {
 
   val dom1: D1
   val dom2: D2
@@ -17,15 +17,16 @@ trait XSLTAnalyzer[N, D1 <: XMLDomain[N], T, D2 <: XPathDomain[T, N, D1]] {
       case List(elem@XMLElement(_, _, _, _)) => XMLRoot(elem)
       case _ => throw new IllegalStateException("Transformation result must be a single XMLElement")
     }
-  }
+  }*/
 
   /** Transforms a list of source nodes to a new list of nodes using given variable and parameter bindings */
-  def transform(sheet: XSLTStylesheet, sources: List[N], variables: Map[String, T], params: Map[String, T]): List[N] = {
+  def transform(sheet: XSLTStylesheet, sources: L, variables: Map[String, T], params: Map[String, T]): L = {
     // TODO: sources probably can't be List[N], because we don't always have a list (needs to be more abstract)
     // create context, choose template, instantiate template, append results
-    sources.zipWithIndex
-      .map { case (n,i) => (dom1.chooseTemplates(sheet, n), AbstractXSLTContext(n, sources, i + 1, variables)) }
-      .flatMap { case (tmpl, context) => evaluateTemplate(sheet, tmpl, context, params) }
+    val x = sources.zipWithIndex
+      .map { case (n,i) => (dom1.chooseTemplates(sheet, n), AbstractXSLTContext(n, Some(sources.size), Some(i + 1), variables)) }
+      //.flatMap { case (tmpl, context) => evaluateTemplate(sheet, tmpl, context, params) }
+    null
   }
 
   /** Evaluates an XSLT template in a given XSLT context with parameters and returns a list of resulting nodes.
@@ -36,7 +37,7 @@ trait XSLTAnalyzer[N, D1 <: XMLDomain[N], T, D2 <: XPathDomain[T, N, D1]] {
     *               a corresponding default parameter in the template, see XSLT spec section 11.6)
     * @return a list of resulting XML nodes
     */
-  def evaluateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: XSLTContext, params: Map[String, T]): List[N] = {
+  /*def evaluateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: XSLTContext, params: Map[String, T]): List[N] = {
     val acceptedParams = params.filter { case (key, _) => tmpl.defaultParams.contains(key) }
     val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key)}.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))
     // the context for the newly instantiated template contains only global variables and parameters, no local parameters (static scoping)

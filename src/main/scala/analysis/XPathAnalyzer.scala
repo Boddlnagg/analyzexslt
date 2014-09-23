@@ -4,12 +4,12 @@ import analysis.domain.{XPathDomain, XMLDomain}
 import util.EvaluationError
 import xpath._
 
-trait XPathAnalyzer[N, D1 <: XMLDomain[N], T, D2 <: XPathDomain[T, N, D1]] {
+trait XPathAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1]] {
   val dom1: D1
   val dom2: D2
 
   /** Evaluates a given XPath expression using a specified context and returns the result of the evaluation. */
-  def evaluate(expr: XPathExpr, ctx: AbstractXPathContext[N, D1, T, D2]): T = {
+  def evaluate(expr: XPathExpr, ctx: AbstractXPathContext[N, L, D1, T, D2]): T = {
     expr match {
       case PlusExpr(lhs, rhs) => dom2.add(evaluate(lhs, ctx), evaluate(rhs, ctx))
       case MinusExpr(lhs, rhs) => dom2.subtract(evaluate(lhs, ctx), evaluate(rhs, ctx))

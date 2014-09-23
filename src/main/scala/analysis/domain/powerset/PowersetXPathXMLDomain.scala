@@ -6,7 +6,7 @@ import xml.XMLNode
 
 import scala.collection.immutable.TreeSet
 
-object PowersetXPathXMLDomain extends PowersetXPathDomain.D[PowersetXMLDomain.N, PowersetXMLDomain.D.type] {
+object PowersetXPathXMLDomain extends PowersetXPathDomain.D[PowersetXMLDomain.N, PowersetXMLDomain.L, PowersetXMLDomain.D.type] {
   // TODO: is this needed? can this be abstracted over the XML domain type?
   override def liftNodeSet(set: Set[PowersetXMLDomain.N]): T = {
     def getProduct(input:List[List[XMLNode]]): List[List[XMLNode]] = input match{

@@ -15,7 +15,7 @@ object PowersetXPathDomain {
     def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
   }
 
-  trait D[N, XD <: XMLDomain[N]] extends XPathDomain[T, N, XD] {
+  trait D[N, L, XD <: XMLDomain[N, L]] extends XPathDomain[T, N, L, XD] {
     override def top: T = None
     override def bottom: T = Some(Set())
 
@@ -90,7 +90,7 @@ object PowersetXPathDomain {
       // NOTE: ignore values that are not node-sets by not including them in the result (essentially evaluating them to bottom)
     })
 
-    def evaluateFunction(name: String, params: List[T], ctx: AbstractXPathContext[N, XD, T, D.this.type]): T = (name, params) match {
+    def evaluateFunction(name: String, params: List[T], ctx: AbstractXPathContext[N, L, XD, T, D.this.type]): T = (name, params) match {
       // TODO: some of these functions are the same for each domain (given a generic lift operator)
       case ("true", Nil) => Some(Set(BooleanValue(true)))
       case ("false", Nil) => Some(Set(BooleanValue(false)))

@@ -7,12 +7,18 @@ import xslt.{XSLTStylesheet, XSLTTemplate}
 
 object PowersetXMLDomain {
   type N = Option[Set[XMLNode]] // None represents the infinite set, Some represents finite sets
+  type L = Option[Set[List[N]]]
 
-  object D extends XMLDomain[N] {
+  object D extends XMLDomain[N, L] {
     override def top: N = None
     override def bottom: N = Some(Set())
 
+    override def listTop: L = None
+    override def listBottom: L = Some(Set())
+
     override def lift(n: XMLNode): N = Some(Set(n))
+
+    override def liftToList(n: N): L = Some(Set(List(n)))
 
     override def compare(morePrecise: N, lessPrecise: N): Boolean = (morePrecise, lessPrecise) match {
       case (_, None) => true
