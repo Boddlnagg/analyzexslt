@@ -15,12 +15,16 @@ trait XPathDomain[T, N, L, D1 <: XMLDomain[N, L]] {
   def compare(left: T, right: T, relOp: RelationalOperator): T
   def logicalAnd(left: T, right: T): T
   def logicalOr(left: T, right: T): T
-  def negate(v: T): T
+  def negateNum(v: T): T
+  def negateBool(v: T): T
   def liftLiteral(lit: String): T
   def liftNumber(num: Double): T
+  def liftBoolean(bool: Boolean): T
   def liftNodeSet(set: Set[N]): T
   def nodeSetUnion(left: T, right: T): T
-  def evaluateFunction(name: String, params: List[T], ctx: AbstractXPathContext[N, L,D1,T,this.type]): T
+  def toStringValue(v: T): T
+  def toNumberValue(v: T): T
+  def toBooleanValue(v: T): T
 
   // TODO: implement this in an abstract way in the analyzer instead (not in each domain)
   def evaluateLocationPath(startNodeSet: T, steps: List[XPathStep], isAbsolute: Boolean): T

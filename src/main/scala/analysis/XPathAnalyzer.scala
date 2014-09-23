@@ -19,7 +19,7 @@ trait XPathAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D
       case RelationalExpr(lhs, rhs, relOp) => dom2.compare(evaluate(lhs, ctx), evaluate(rhs, ctx), relOp)
       case AndExpr(lhs, rhs) => dom2.logicalAnd(evaluate(lhs, ctx), evaluate(rhs, ctx))
       case OrExpr(lhs, rhs) => dom2.logicalOr(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case NegExpr(subexpr) => dom2.negate(evaluate(subexpr, ctx))
+      case NegExpr(subexpr) => dom2.negateNum(evaluate(subexpr, ctx))
       case LiteralExpr(literal) => dom2.liftLiteral(literal)
       case NumberExpr(num) => dom2.liftNumber(num)
       case VariableReferenceExpr(name) => try ctx.variables(name) catch {
@@ -27,7 +27,26 @@ trait XPathAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D
         case e: java.util.NoSuchElementException => throw new EvaluationError(f"Variable $name is not defined")
       }
       case UnionExpr(lhs, rhs) => dom2.nodeSetUnion(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case FunctionCallExpr(name, params) => dom2.evaluateFunction(name, params.map(p => evaluate(p, ctx)), ctx)
+      case FunctionCallExpr(name, params) => (name, params.map(p => evaluate(p, ctx))) match {
+        case ("true", Nil) => dom2.liftBoolean(true)
+        case ("false", Nil) => dom2.liftBoolean(false)
+        case ("not", List(arg)) => dom2.negateBool(arg)
+        case ("string", List(arg)) => dom2.toStringValue(arg)
+        case ("boolean", List(arg)) => dom2.toBooleanValue(arg)
+        case ("number", List(arg)) => dom2.toNumberValue(arg)
+        case ("last", Nil) => ctx.size
+        case ("position", Nil) => ctx.position
+        // TODO: implement these functions?
+        /*case ("count", List(NodeSetValue(nodes))) => NumberValue(nodes.size)
+      case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
+      case ("name"|"local-name", List(NodeSetValue(List(node)))) => node match {
+        case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
+        case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
+        case _ => StringValue("")
+      }*/
+        case (_, evaluatedParams) =>
+          throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
+      }
       case LocationPath(steps, isAbsolute) => dom2.evaluateLocationPath(dom2.liftNodeSet(Set(ctx.node)), steps, isAbsolute)
       case PathExpr(filter, locationPath) => dom2.evaluateLocationPath(evaluate(filter, ctx), locationPath.steps, locationPath.isAbsolute)
       case FilterExpr(subexpr, predicates) =>

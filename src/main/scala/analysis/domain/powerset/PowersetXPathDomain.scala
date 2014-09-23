@@ -36,7 +36,7 @@ object PowersetXPathDomain {
       case (Some(s1), Some(s2)) => Some(s1.cross(s2)
         .map { case (v1, v2) => (v1.toNumberValue.value, v2.toNumberValue.value)}
         .collect(pf)
-        .map(NumberValue(_))
+        .map(NumberValue)
         .toSet
       )
     }
@@ -75,41 +75,27 @@ object PowersetXPathDomain {
       case (v1, v2) => BooleanValue(v1.toBooleanValue.value || v2.toBooleanValue.value)
     })
 
-    override def negate(v: T): T = v.map(_.map(num => NumberValue(-num.toNumberValue.value)))
+    override def negateNum(v: T): T = v.map(_.map(num => NumberValue(-num.toNumberValue.value)))
+
+    override def negateBool(v: T): T = v match {
+      case None => anyBoolean
+      case Some(s) => Some(s.map(b => BooleanValue(!b.toBooleanValue.value)))
+    }
+
+    override def toStringValue(v: T): T = v.map(_.map(_.toStringValue))
+    override def toNumberValue(v: T): T = v.map(_.map(_.toNumberValue))
+    override def toBooleanValue(v: T): T = v.map(_.map(_.toBooleanValue))
 
     override def liftLiteral(lit: String): T = Some(Set(StringValue(lit)))
 
     override def liftNumber(num: Double): T = Some(Set(NumberValue(num)))
 
+    override def liftBoolean(bool: Boolean): T = Some(Set(BooleanValue(bool)))
+
     override def nodeSetUnion(left: T, right: T): T = liftBinaryOp(left, right, {
       case (NodeSetValue(lVal), NodeSetValue(rVal)) => NodeSetValue((TreeSet[XMLNode]() ++ lVal ++ rVal).toList)
       // NOTE: ignore values that are not node-sets by not including them in the result (essentially evaluating them to bottom)
     })
-
-    def evaluateFunction(name: String, params: List[T], ctx: AbstractXPathContext[N, L, XD, T, D.this.type]): T = (name, params) match {
-      // TODO: some of these functions are the same for each domain (given a generic lift operator)
-      case ("true", Nil) => Some(Set(BooleanValue(true)))
-      case ("false", Nil) => Some(Set(BooleanValue(false)))
-      case ("not", List(arg)) => arg match {
-        case None => anyBoolean
-        case Some(s) => Some(s.map(b => BooleanValue(!b.toBooleanValue.value)))
-      }
-      case ("string", List(arg)) => arg.map(_.map(_.toStringValue))
-      case ("boolean", List(arg)) => arg.map(_.map(_.toBooleanValue))
-      case ("number", List(arg)) => arg.map(_.map(_.toNumberValue))
-      case ("last", Nil) => ctx.size.map(s => Set(NumberValue(s)))
-      case ("position", Nil) => ctx.position.map(p => Set(NumberValue(p)))
-      // TODO: implement these functions?
-      /*case ("count", List(NodeSetValue(nodes))) => NumberValue(nodes.size)
-    case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
-    case ("name"|"local-name", List(NodeSetValue(List(node)))) => node match {
-      case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
-      case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
-      case _ => StringValue("")
-    }*/
-      case (_, evaluatedParams) =>
-        throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
-    }
 
     override def join(v1: T, v2: T): T = (v1, v2) match {
       case (None, _) => None

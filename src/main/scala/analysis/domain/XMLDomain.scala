@@ -10,6 +10,8 @@ trait XMLDomain[N, L] {
   def listTop: L
   def listBottom: L
 
+  // TODO: provide a map operation for L (taking a function N -> N)
+
   def compare(morePrecise: N, lessPrecise: N): Boolean
 
   def chooseTemplates(sheet: XSLTStylesheet, n: N): Set[XSLTTemplate]
