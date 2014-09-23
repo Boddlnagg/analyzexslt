@@ -11,10 +11,6 @@ import scala.collection.immutable.TreeSet
 object PowersetXPathDomain {
   type T = Option[Set[XPathValue]] // None represents the infinite set, Some represents finite sets
 
-  implicit class Crossable[X](xs: Traversable[X]) {
-    def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
-  }
-
   trait D[N, L, XD <: XMLDomain[N, L]] extends XPathDomain[T, N, L, XD] {
     override def top: T = None
     override def bottom: T = Some(Set())

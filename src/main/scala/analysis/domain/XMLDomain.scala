@@ -22,4 +22,12 @@ trait XMLDomain[N, L] {
   def liftToList(n: N): L
 
   def getRoot(node: N): N
+
+  def getChildren(node: N): L
+
+  def listConcat(list1: L, list2: L): L
+
+  def appendChildren(node: N, list: L): N
+
+  def addAttributes(node: N, list: L): N
 }

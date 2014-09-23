@@ -17,7 +17,7 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
       case List(elem@XMLElement(_, _, _, _)) => XMLRoot(elem)
       case _ => throw new IllegalStateException("Transformation result must be a single XMLElement")
     }
-  }*/
+  }
 
   /** Transforms a list of source nodes to a new list of nodes using given variable and parameter bindings */
   def transform(sheet: XSLTStylesheet, sources: L, variables: Map[String, T], params: Map[String, T]): L = {
@@ -37,7 +37,7 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
     *               a corresponding default parameter in the template, see XSLT spec section 11.6)
     * @return a list of resulting XML nodes
     */
-  /*def evaluateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: XSLTContext, params: Map[String, T]): List[N] = {
+  def evaluateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: XSLTContext, params: Map[String, T]): List[N] = {
     val acceptedParams = params.filter { case (key, _) => tmpl.defaultParams.contains(key) }
     val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key)}.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))
     // the context for the newly instantiated template contains only global variables and parameters, no local parameters (static scoping)
