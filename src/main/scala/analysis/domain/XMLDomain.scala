@@ -10,7 +10,8 @@ trait XMLDomain[N, L] {
   def listTop: L
   def listBottom: L
 
-  // TODO: provide a map operation for L (taking a function N -> N)
+  def map(list: L, f: N => N ): L
+  def flatMap(list: L, f: N => L): L
 
   def compare(morePrecise: N, lessPrecise: N): Boolean
 

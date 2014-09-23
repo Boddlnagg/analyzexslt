@@ -1,6 +1,5 @@
 package analysis.domain
 
-import analysis.AbstractXPathContext
 import xpath.{RelationalOperator, XPathStep}
 
 trait XPathDomain[T, N, L, D1 <: XMLDomain[N, L]] {

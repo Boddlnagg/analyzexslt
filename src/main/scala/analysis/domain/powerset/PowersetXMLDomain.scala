@@ -16,6 +16,9 @@ object PowersetXMLDomain {
     override def listTop: L = None
     override def listBottom: L = Some(Set())
 
+    override def map(list: L, f: N => N ): L = ??? // TODO
+    override def flatMap(list: L, f: N => L): L = ??? // TODO
+
     override def join(n1: N, n2: N): N = (n1, n2) match {
       case (None, _) => None
       case (_, None) => None

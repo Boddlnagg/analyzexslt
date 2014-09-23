@@ -55,7 +55,7 @@ trait XPathAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D
     }
   }
 
-  // TODO: make this more abstract so that it will work again (use T with NodeSetValues instead of TreeSet[XMLNode])?
+  // TODO: make this more abstract so that it will work again (use L instead of TreeSet[XMLNode])?
   // currently this does not type check
   /*def evaluateLocationPathAbstract(ctxNode: N, steps: List[XPathStep], isAbsolute: Boolean): Option[Set[TreeSet[XMLNode]]] = {
     // evaluate steps from left to right, keep nodes in document order (not required by XPath, but by XSLT)
