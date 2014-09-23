@@ -25,6 +25,8 @@ trait XPathDomain[T, N, L, D1 <: XMLDomain[N, L]] {
   // TODO: implement this in an abstract way in the analyzer instead (not in each domain)
   def evaluateLocationPath(startNodeSet: T, steps: List[XPathStep], isAbsolute: Boolean): T
 
+  def getStringValue(node: N): T
+
   def join(v1: T, v2: T): T
   def meet(v1: T, v2: T): T
  }

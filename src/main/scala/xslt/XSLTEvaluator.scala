@@ -71,7 +71,7 @@ object XSLTEvaluator {
     result
   }
 
-  /** Evaluates a single XSLT instruction in a given XSLT node, resulting in either a list of result nodes
+  /** Evaluates a single XSLT instruction in a given XSLT context, resulting in either a list of result nodes
     * or an additional variable binding (if the instruction was a variable definition).
     */
   def evaluate(sheet: XSLTStylesheet, node: XSLTInstruction, context: XSLTContext): Either[List[XMLNode], (String, XPathValue)] = {
