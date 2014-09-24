@@ -4,7 +4,7 @@ import analysis.domain.powerset.PowersetXMLDomain.N
 import analysis.domain.powerset.PowersetXMLDomain.L
 import analysis.domain.powerset.PowersetXPathDomain.T
 import xpath._
-import xml.XMLNode
+import xml.{XMLAttribute, XMLTextNode, XMLNode}
 
 import scala.collection.immutable.TreeSet
 
@@ -46,6 +46,18 @@ object PowersetXPathXMLDomain extends PowersetXPathDomain.D[N, L, PowersetXMLDom
     })
   }
 
-  // TODO: this could be generalized over XPath domains using `liftNumber` and `join`
+  // TODO: this could be generalized over XPath domains using `liftNumber` and `join` (but we don't have the T parameter in XMLDomain)
   override def getNodeListSize(list: L): T = list.map(_.map(l => NumberValue(l.size)))
+
+  override def getConcatenatedTextNodeValues(list: L): T =
+    list.map(_.map(l => StringValue(l.collect { case n: XMLTextNode => n.value }.mkString(""))))
+
+  override def liftAttribute(name: String, value: T): N = value match {
+    case None => None
+    case Some(s) => Some(s.collect {
+      case StringValue(str) => XMLAttribute(name, str)
+      // NOTE: other XPath values are evaluated to bottom implicitly
+    })
+  }
+
 }

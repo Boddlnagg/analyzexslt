@@ -34,4 +34,6 @@ trait XPathDomain[T, N, L, D1 <: XMLDomain[N, L]] {
   def getStringValue(node: N): T
   def flatMapWithIndex(list: L, f: (N, T) => L): L
   def getNodeListSize(list: L): T
+  def getConcatenatedTextNodeValues(list: L): T
+  def liftAttribute(name: String, value: T): N
  }

@@ -90,13 +90,11 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
         result = xmlDom.appendChildren(result, resultChildren)
         Left(xmlDom.liftList(List(result)))
       case LiteralTextNode(text) => Left(xmlDom.liftList(List(xmlDom.lift(XMLTextNode(text)))))
-      /*case SetAttributeInstruction(attribute, value) =>
+      case SetAttributeInstruction(attribute, value) =>
         // merge the content of all text-node children to create the attribute value
-        val textResult = evaluate(sheet, value, context)
-          .collect { case n: XMLTextNode => n.value }
-          .mkString("")
-        Left(List(XMLAttribute(attribute, textResult)))
-      case ApplyTemplatesInstruction(None, params) =>
+        val textResult = xpathDom.getConcatenatedTextNodeValues(evaluate(sheet, value, context))
+        Left(xmlDom.liftList(List(xpathDom.liftAttribute(attribute, textResult))))
+      /*case ApplyTemplatesInstruction(None, params) =>
         context.node match {
           case root: XMLRoot => Left(transform(sheet, List(root.elem), context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case elem: XMLElement => Left(transform(sheet, elem.children.toList, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
