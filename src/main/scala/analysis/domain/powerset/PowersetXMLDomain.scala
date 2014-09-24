@@ -134,5 +134,15 @@ object PowersetXMLDomain {
         // TODO: what happens if it's not an XMLElement?
       }.toSet)
     }
+
+    def partitionAttributes(list: L): (L, L) = list match {
+      case None => (None, None) // don't know anything about attributes or other nodes
+      case Some(s) => val (attr, children) = s.map { l =>
+        val resultAttributes = l.takeWhile(n => n.isInstanceOf[XMLAttribute])
+        val resultChildren = l.filter(n => !n.isInstanceOf[XMLAttribute])
+        (resultAttributes, resultChildren)
+      }.unzip
+      (Some(attr), Some(children))
+    }
   }
 }

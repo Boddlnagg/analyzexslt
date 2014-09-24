@@ -80,20 +80,14 @@ object XSLTEvaluator {
     node match {
       case LiteralElement(name, attributes, children) =>
         val resultNodes = evaluate(sheet, children, context)
+        val literalAttributes = attributes.map { case (key, value) => XMLAttribute(key, value)}.toList
         // attributes must come before all other result nodes, afterwards they are ignored (see spec section 7.1.3)
-        // we also reverse their order to match the Java implementation (undefined in the spec)
-        val resultAttributes = attributes ++ resultNodes
-          .takeWhile(n => n.isInstanceOf[XMLAttribute])
-          .map(n => n.asInstanceOf[XMLAttribute])
-          .map(attr => (attr.name, attr.value))
-          .reverse
+        val resultAttributes = literalAttributes ++ resultNodes.takeWhile(n => n.isInstanceOf[XMLAttribute]).map(n => n.asInstanceOf[XMLAttribute])
         val resultChildren = resultNodes.filter(n => !n.isInstanceOf[XMLAttribute])
-        Left(List(XMLElement(name,
-          resultAttributes.map { case (key, value) => XMLAttribute(key, value)}.toSeq,
-          resultChildren)))
+        Left(List(XMLElement(name, resultAttributes, resultChildren)))
       case LiteralTextNode(text) => Left(List(XMLTextNode(text)))
       case SetAttributeInstruction(attribute, value) =>
-        // merge the content of all text-node children to create the attribute value
+        // merge the content of all text-node children to create the attribute value (non-text-node children are wrong and can be ignored according to spec)
         val textResult = evaluate(sheet, value, context)
           .collect { case n: XMLTextNode => n.value }
           .mkString("")

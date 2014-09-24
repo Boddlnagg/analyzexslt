@@ -25,7 +25,11 @@ case class XMLElement(name: String,
 
   /** Adds an attribute to this element */
   def addAttribute(attribute: XMLAttribute) = {
-    attributes += attribute
+    attributes.indexWhere(attr => attr.name == attribute.name) match {
+      case -1 => attributes += attribute // add it if it doesn't exist
+      case idx => attributes.update(idx, attribute) // replace old one with same name
+    }
+
     attribute.parent = this
   }
 
@@ -41,7 +45,8 @@ case class XMLElement(name: String,
 
   override def equals(o: Any) = o match {
     // override equals because we need to ignore the parent to prevent endless recursion
-    case that: XMLElement => that.name == this.name && that.attributes == this.attributes && that.children == this.children
+    // also we need to ignore the order of attributes (by comparing them as sets)
+    case that: XMLElement => that.name == this.name && that.attributes.toSet == this.attributes.toSet && that.children == this.children
     case _ => false
   }
 

@@ -1,6 +1,6 @@
 package analysis
 
-import xml.{XMLElement, XMLTextNode}
+import xml.{XMLAttribute, XMLElement, XMLTextNode}
 import xpath.NumberValue
 import xslt._
 import util.EvaluationError
@@ -82,19 +82,13 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
   def evaluate(sheet: XSLTStylesheet, node: XSLTInstruction, context: AbstractXSLTContext[N, L, D1, T, D2]): Either[L, (String, T)] = {
     node match {
       case LiteralElement(name, attributes, children) =>
-        /*val resultNodes = evaluate(sheet, children, context)
-        // attributes must come before all other result nodes, afterwards they are ignored (see spec section 7.1.3)
-        // we also reverse their order to match the Java implementation (undefined in the spec)
-        val resultAttributes = attributes ++ resultNodes
-          .takeWhile(n => n.isInstanceOf[XMLAttribute])
-          .map(n => n.asInstanceOf[XMLAttribute])
-          .map(attr => (attr.name, attr.value))
-          .reverse
-        val resultChildren = resultNodes.filter(n => !n.isInstanceOf[XMLAttribute])
-        Left(List(XMLElement(name,
-          resultAttributes.map { case (key, value) => XMLAttribute(key, value)}.toSeq,
-          resultChildren)))*/
-        Left(xmlDom.liftList(List(xmlDom.lift(XMLElement(name))))) // TODO: evaluate child instructions
+        val innerNodes = evaluate(sheet, children, context)
+        val (resultAttributes, resultChildren) = xmlDom.partitionAttributes(innerNodes)
+        val literalAttributes = xmlDom.liftList(attributes.map { case (name, value) => xmlDom.lift(XMLAttribute(name, value)) }.toList)
+        var result = xmlDom.lift(XMLElement(name))
+        result = xmlDom.addAttributes(result, xmlDom.listConcat(literalAttributes, resultAttributes))
+        result = xmlDom.appendChildren(result, resultChildren)
+        Left(xmlDom.liftList(List(result)))
       case LiteralTextNode(text) => Left(xmlDom.liftList(List(xmlDom.lift(XMLTextNode(text)))))
       /*case SetAttributeInstruction(attribute, value) =>
         // merge the content of all text-node children to create the attribute value

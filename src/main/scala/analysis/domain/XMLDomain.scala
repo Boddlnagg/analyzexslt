@@ -34,4 +34,6 @@ trait XMLDomain[N, L] {
   def appendChildren(node: N, list: L): N
 
   def addAttributes(node: N, list: L): N
+
+  def partitionAttributes(list: L): (L, L)
 }
