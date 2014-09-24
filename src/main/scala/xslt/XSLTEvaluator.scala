@@ -18,9 +18,11 @@ object XSLTEvaluator {
   /** Transforms a list of source nodes to a new list of nodes using given variable and parameter bindings */
   def transform(sheet: XSLTStylesheet, sources: List[XMLNode], variables: Map[String, XPathValue], params: Map[String, XPathValue]): List[XMLNode] = {
     // create context, choose template, instantiate template, append results
-    sources.zipWithIndex
-      .map { case (n,i) => (chooseTemplate(sheet, n), XSLTContext(n, sources, i + 1, variables)) }
-      .flatMap { case (tmpl, context) => evaluateTemplate(sheet, tmpl, context, params) }
+    sources.zipWithIndex.flatMap { case (n,i) =>
+      val tmpl = chooseTemplate(sheet, n)
+      val context = XSLTContext(n, sources, i + 1, variables)
+      evaluateTemplate(sheet, tmpl, context, params)
+    }
   }
 
   /** Chooses a template that matches the given element best */

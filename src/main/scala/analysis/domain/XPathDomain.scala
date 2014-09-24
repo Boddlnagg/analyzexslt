@@ -32,4 +32,6 @@ trait XPathDomain[T, N, L, D1 <: XMLDomain[N, L]] {
   def evaluateLocationPath(startNodeSet: T, steps: List[XPathStep], isAbsolute: Boolean): T
 
   def getStringValue(node: N): T
+  def flatMapWithIndex(list: L, f: (N, T) => L): L
+  def getNodeListSize(list: L): T
  }

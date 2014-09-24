@@ -16,16 +16,15 @@ object PowersetXMLDomain {
     override def listTop: L = None
     override def listBottom: L = Some(Set())
 
-    override def map(list: L, f: N => N): L = ??? // TODO
-    override def flatMap(list: L, f: N => L): L = ??? // TODO
+    override def map(list: L, f: N => N): L = ??? // TODO if needed
 
-    /*override def join(n1: N, n2: N): N = (n1, n2) match {
+    override def join(n1: N, n2: N): N = (n1, n2) match {
       case (None, _) => None
       case (_, None) => None
       case (Some(s1), Some(s2)) => Some(s1.union(s2))
     }
 
-    override def meet(n1: N, n2: N): N = (n1, n2) match {
+    /*override def meet(n1: N, n2: N): N = (n1, n2) match {
       case (None, _) => None
       case (_, None) => None
       case (Some(s1), Some(s2)) => Some(s1.intersect(s2))
@@ -37,6 +36,12 @@ object PowersetXMLDomain {
       case (Some(s1), Some(s2)) => s1.subsetOf(s2)
     }*/
 
+    override def listJoin(l1: L, l2: L): L = (l1, l2) match {
+      case (None, _) => None
+      case (_, None) => None
+      case (Some(s1), Some(s2)) => Some(s1.union(s2))
+    }
+
     override def lift(n: XMLNode): N = Some(Set(n))
 
     override def liftList(nodes: List[N]): L = {
@@ -46,19 +51,28 @@ object PowersetXMLDomain {
         case head::tail => for(elem<- head; sub <- getProduct(tail)) yield elem::sub
       }
 
-      if (nodes.exists(n => !n.isDefined))
+      if (nodes.isEmpty)
+        Some(Set(Nil))
+      else if (nodes.exists(n => !n.isDefined))
         None
       else
         Some(getProduct(nodes.map(_.get.toList).toList).toSet)
     }
 
-    override def chooseTemplates(sheet: XSLTStylesheet, n: N): Set[XSLTTemplate] = n match {
+    override def chooseTemplates(sheet: XSLTStylesheet, n: N): Map[XSLTTemplate, N] = n match {
       // don't know anything -> return set of all matchable templates
-      case None => sheet.matchableTemplates.map { case (_, tmpl, _, _) => tmpl}.toSet
-      case Some(s) => s.map { node =>
-        def allMatching = sheet.matchableTemplates.filter { case (tmpl, _, _, _) => XPathMatcher.matches(node, tmpl)}
-        val (_, template, _, _) = allMatching.last // this one will have highest precedence and priority, because the templates are sorted
-        template
+      case None => sheet.matchableTemplates.map { case (_, tmpl, _, _) => (tmpl, n)}.toMap
+      case Some(s) => {
+        val result = scala.collection.mutable.Map[XSLTTemplate, N]()
+        s.foreach { node =>
+          def allMatching = sheet.matchableTemplates.filter { case (tmpl, _, _, _) => XPathMatcher.matches(node, tmpl)}
+          val (_, template, _, _) = allMatching.last // this one will have highest precedence and priority, because the templates are sorted
+          result.get(template) match {
+            case None => result.put(template, lift(node))
+            case Some(previous) => result.update(template, join(previous, lift(node)))
+          }
+        }
+        result.toMap
       }
     }
 

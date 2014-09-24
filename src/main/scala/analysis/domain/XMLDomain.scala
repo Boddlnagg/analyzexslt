@@ -11,13 +11,15 @@ trait XMLDomain[N, L] {
   def listBottom: L
 
   def map(list: L, f: N => N): L
-  def flatMap(list: L, f: N => L): L
 
-  //def compare(morePrecise: N, lessPrecise: N): Boolean
-  //def join(n1: N, n2: N): N
+  def join(n1: N, n2: N): N
   //def meet(n1: N, n2: N): N
+  //def compare(morePrecise: N, lessPrecise: N): Boolean
 
-  def chooseTemplates(sheet: XSLTStylesheet, n: N): Set[XSLTTemplate]
+  def listJoin(l1: L, l2: L): L
+  def listJoin(lists: Traversable[L]): L = lists.reduceLeft(listJoin)
+
+  def chooseTemplates(sheet: XSLTStylesheet, n: N): Map[XSLTTemplate, N]
 
   def lift(n: XMLNode): N
 

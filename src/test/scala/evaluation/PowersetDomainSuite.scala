@@ -3,11 +3,12 @@ package evaluation
 import org.scalatest.FunSuite
 import xml._
 import analysis.domain.powerset._
-import xpath.NodeSetValue
+import xpath.{NumberValue, NodeSetValue}
 
 class PowersetDomainSuite extends FunSuite {
   type N = PowersetXMLDomain.N
   type L = PowersetXMLDomain.L
+  type T = PowersetXPathDomain.T
   val xmlDom = PowersetXMLDomain.D
   val xpathDom = PowersetXPathXMLDomain
 
@@ -33,9 +34,18 @@ class PowersetDomainSuite extends FunSuite {
     assertResult(Some(Set(root, root2))) { xmlDom.getRoot(Some(Set(a, b, c, d, a2, b2, c2, d2))) }
   }
 
-  test("Lift to list") {
-    val child = XMLParser.parse(<child/>).asInstanceOf[XMLElement]
-    assertResult(Some(Set(List(child)))) { xmlDom.liftList(List(xmlDom.lift(child))) }
+  test("Lift list") {
+    val out1 = XMLParser.parse(<out1/>).asInstanceOf[XMLElement]
+    val out2 = XMLParser.parse(<out2/>).asInstanceOf[XMLElement]
+    val out3 = XMLParser.parse(<out3/>).asInstanceOf[XMLElement]
+
+    assertResult(Some(Set(List(out1)))) { xmlDom.liftList(List(xmlDom.lift(out1))) }
+    assertResult(None) { xmlDom.liftList(List(xmlDom.lift(out1), None))} // this is true for this domain
+    assertResult(Some(Set(List(out1, out3), List(out2, out3)))) { xmlDom.liftList(List(Some(Set(out1, out2)), Some(Set(out3)))) }
+    // this is true for all domains (if one of the elements is bottom, the resulting list must be bottom)
+    assertResult(xmlDom.listBottom) { xmlDom.liftList(List(Some(Set(out1, out2)), xmlDom.bottom)) }
+    // the empty list must be lifted to the empty list
+    assertResult(Some(Set(Nil))) { xmlDom.liftList(Nil) }
   }
 
   test("Append children") {
@@ -95,6 +105,9 @@ class PowersetDomainSuite extends FunSuite {
 
     // check associativity of concatenation
     assert(xmlDom.listConcat(xmlDom.listConcat(l1a, l2), l3) == xmlDom.listConcat(l1a, xmlDom.listConcat(l2, l3)))
+
+    // check that empty list concatenation is identity transformation
+    assert(xmlDom.listConcat(l12, xmlDom.liftList(Nil)) == l12)
   }
 
   test("Lift node set (single)") {
@@ -125,6 +138,32 @@ class PowersetDomainSuite extends FunSuite {
 
     assertResult(expected) {
       xpathDom.liftNodeSet(input)
+    }
+  }
+
+  test("flatMapWithIndex") {
+    val out1 = XMLParser.parse(<out1/>).asInstanceOf[XMLElement]
+    val out2 = XMLParser.parse(<out2/>).asInstanceOf[XMLElement]
+    val out3 = XMLParser.parse(<out3/>).asInstanceOf[XMLElement]
+    val out4 = XMLParser.parse(<out4/>).asInstanceOf[XMLElement]
+
+    val input: L = Some(Set(List(a, b, c), List(c, b), List(a)))
+    def transform(node: N, index: T): L = {
+      if (node == Some(Set(a))) {
+        assert(index == Some(Set(NumberValue(0))))
+        Some(Set(List(out1, out2), List(out3)))
+      } else if (node == Some(Set(b))) {
+        assert(index == Some(Set(NumberValue(1))))
+        Some(Set(List(out4)))
+      } else if (node == Some(Set(c))) {
+        Some(Set(List()))
+      } else {
+        throw new AssertionError(f"node must be a, b, or c but was $node")
+      }
+    }
+
+    assertResult(Some(Set(List(out3, out4), List(out1, out2), List(out1, out2, out4), List(out4), List(out3)))) {
+      xpathDom.flatMapWithIndex(input, transform)
     }
   }
 }

@@ -9,6 +9,8 @@ import xml.XMLNode
 import scala.collection.immutable.TreeSet
 
 object PowersetXPathXMLDomain extends PowersetXPathDomain.D[N, L, PowersetXMLDomain.D.type] {
+  val xmlDom = PowersetXMLDomain.D
+
   // TODO: replace this with toNodeSet(L), because we already have liftList(List[N])
   // but maybe this is not even needed
   override def liftNodeSet(set: Set[N]): T = {
@@ -34,4 +36,16 @@ object PowersetXPathXMLDomain extends PowersetXPathDomain.D[N, L, PowersetXMLDom
   }
 
   override def getStringValue(node: N): T = node.map(_.map(n => StringValue(n.stringValue)))
+
+  override def flatMapWithIndex(list: L, f: (N, T) => L): L = list match {
+    case None => None
+    case Some(s) => xmlDom.listJoin(s.map { l =>
+      val mapped = l.zipWithIndex.map { case (n, i) => f(Some(Set(n)), Some(Set(NumberValue(i)))) }
+      val flattened = mapped.reduceLeft((acc, next) => xmlDom.listConcat(acc, next))
+      flattened
+    })
+  }
+
+  // TODO: this could be generalized over XPath domains using `liftNumber` and `join`
+  override def getNodeListSize(list: L): T = list.map(_.map(l => NumberValue(l.size)))
 }
