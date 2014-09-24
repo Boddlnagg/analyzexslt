@@ -94,13 +94,14 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
         // merge the content of all text-node children to create the attribute value
         val textResult = xpathDom.getConcatenatedTextNodeValues(evaluate(sheet, value, context))
         Left(xmlDom.liftList(List(xpathDom.liftAttribute(attribute, textResult))))
-      /*case ApplyTemplatesInstruction(None, params) =>
-        context.node match {
+      case ApplyTemplatesInstruction(None, params) =>
+        Left(transform(sheet, xmlDom.getChildren(context.node), context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
+        /*context.node match {
           case root: XMLRoot => Left(transform(sheet, List(root.elem), context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case elem: XMLElement => Left(transform(sheet, elem.children.toList, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case _ => Left(Nil) // other node types don't have children and return an empty result
-        }
-      case ApplyTemplatesInstruction(Some(expr), params) =>
+        }*/
+      /*case ApplyTemplatesInstruction(Some(expr), params) =>
         XPathEvaluator.evaluate(expr, context.toXPathContext) match {
           case NodeSetValue(nodes) => Left(transform(sheet, nodes, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case value => throw new EvaluationError(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")

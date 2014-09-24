@@ -41,7 +41,7 @@ object PowersetXPathXMLDomain extends PowersetXPathDomain.D[N, L, PowersetXMLDom
     case None => None
     case Some(s) => xmlDom.listJoin(s.map { l =>
       val mapped = l.zipWithIndex.map { case (n, i) => f(Some(Set(n)), Some(Set(NumberValue(i)))) }
-      val flattened = mapped.reduceLeft((acc, next) => xmlDom.listConcat(acc, next))
+      val flattened = mapped.foldLeft(xmlDom.liftList(Nil))((acc, next) => xmlDom.listConcat(acc, next))
       flattened
     })
   }
