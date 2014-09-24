@@ -1,6 +1,6 @@
 package analysis
 
-import xml.XMLTextNode
+import xml.{XMLElement, XMLTextNode}
 import xpath.NumberValue
 import xslt._
 import util.EvaluationError
@@ -24,7 +24,6 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
 
   /** Transforms a list of source nodes to a new list of nodes using given variable and parameter bindings */
   def transform(sheet: XSLTStylesheet, sources: L, variables: Map[String, T], params: Map[String, T]): L = {
-    // TODO: sources probably can't be List[N], because we don't always have a list (needs to be more abstract)
     // create context, choose template, instantiate template, append results
     xpathDom.flatMapWithIndex(sources, (node, index) => {
       val templates = xmlDom.chooseTemplates(sheet, node)
@@ -82,8 +81,8 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
     */
   def evaluate(sheet: XSLTStylesheet, node: XSLTInstruction, context: AbstractXSLTContext[N, L, D1, T, D2]): Either[L, (String, T)] = {
     node match {
-      /*case LiteralElement(name, attributes, children) =>
-        val resultNodes = evaluate(sheet, children, context)
+      case LiteralElement(name, attributes, children) =>
+        /*val resultNodes = evaluate(sheet, children, context)
         // attributes must come before all other result nodes, afterwards they are ignored (see spec section 7.1.3)
         // we also reverse their order to match the Java implementation (undefined in the spec)
         val resultAttributes = attributes ++ resultNodes
@@ -95,14 +94,15 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
         Left(List(XMLElement(name,
           resultAttributes.map { case (key, value) => XMLAttribute(key, value)}.toSeq,
           resultChildren)))*/
+        Left(xmlDom.liftList(List(xmlDom.lift(XMLElement(name))))) // TODO: evaluate child instructions
       case LiteralTextNode(text) => Left(xmlDom.liftList(List(xmlDom.lift(XMLTextNode(text)))))
       /*case SetAttributeInstruction(attribute, value) =>
         // merge the content of all text-node children to create the attribute value
         val textResult = evaluate(sheet, value, context)
           .collect { case n: XMLTextNode => n.value }
           .mkString("")
-        Left(List(XMLAttribute(attribute, textResult)))*/
-      /*case ApplyTemplatesInstruction(None, params) =>
+        Left(List(XMLAttribute(attribute, textResult)))
+      case ApplyTemplatesInstruction(None, params) =>
         context.node match {
           case root: XMLRoot => Left(transform(sheet, List(root.elem), context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case elem: XMLElement => Left(transform(sheet, elem.children.toList, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
@@ -113,10 +113,11 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
           case NodeSetValue(nodes) => Left(transform(sheet, nodes, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case value => throw new EvaluationError(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")
         }
+      */
       case CallTemplatesInstruction(name, params) =>
         // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)
-        Left(evaluateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
-      */
+        Left(evaluateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
+
       case VariableDefinitionInstruction(name, expr) =>
         Right(name, xpathAnalyzer.evaluate(expr, xsltToXPathContext(context)))
       /*case CopyInstruction(select) =>

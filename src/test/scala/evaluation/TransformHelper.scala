@@ -6,7 +6,7 @@ import javax.xml.transform.{OutputKeys, TransformerFactory}
 
 import analysis.domain.powerset.{PowersetXPathXMLDomain, PowersetXPathDomain, PowersetXMLDomain}
 import analysis.{XPathAnalyzer, XSLTAnalyzer}
-import xml.{XMLParser, XMLRoot}
+import xml.{XMLElement, XMLParser, XMLRoot}
 import xslt.{XSLTEvaluator, XSLTParser}
 
 import scala.xml.Elem
@@ -47,8 +47,8 @@ object TransformHelper {
     val xmlDom = PowersetXSLTAnalyzer.xmlDom
     val results = PowersetXSLTAnalyzer.transform(stylesheet, xmlDom.liftList(List(xmlDom.lift(XMLParser.parseDocument(data)))), Map(), Map()).get.toList
     results match {
-      case List(List(r: XMLRoot)) => r
-      case _ => throw new AssertionError(f"Expected single XMLRoot element, got $results")
+      case List(List(r: XMLElement)) => XMLRoot(r)
+      case _ => throw new AssertionError(f"Expected single result element, got $results")
     }
   }
 }
