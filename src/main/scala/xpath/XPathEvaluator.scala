@@ -57,10 +57,10 @@ object XPathEvaluator {
           case (_, evaluatedParams) =>
             throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
         }
-      case LocationPath(steps, isAbsolute) => evaluateLocationPath(NodeSetValue(List(ctx.node)), steps, isAbsolute)
+      case LocationPath(steps, isAbsolute) => NodeSetValue(evaluateLocationPathSingle(ctx.node, steps, isAbsolute).toList)
       case PathExpr(filter, locationPath) =>
         evaluate(filter, ctx) match {
-          case nodes@NodeSetValue(_) => evaluateLocationPath(nodes, locationPath.steps, locationPath.isAbsolute)
+          case nodes@NodeSetValue(_) => NodeSetValue(evaluateLocationPath(TreeSet[XMLNode]() ++ nodes.nodes, locationPath.steps, locationPath.isAbsolute).toList)
           case value => throw new EvaluationError(f"Filter expression must return a node-set (returned: $value)")
         }
       case FilterExpr(subexpr, predicates) =>
@@ -76,10 +76,10 @@ object XPathEvaluator {
     * @param isAbsolute a value indicating whether the location path is absolute (or relative)
     * @return an ordered set of nodes resulting from the location path, ordered in document order
     */
-  def evaluateLocationPath(startNodeSet: NodeSetValue, steps: List[XPathStep], isAbsolute: Boolean): NodeSetValue =
-    NodeSetValue(startNodeSet.nodes.flatMap {
-      n => evaluateLocationPathSingle(n, steps, isAbsolute).toList
-    })
+  def evaluateLocationPath(startNodeSet: TreeSet[XMLNode], steps: List[XPathStep], isAbsolute: Boolean): TreeSet[XMLNode] =
+    startNodeSet.flatMap {
+      n => evaluateLocationPathSingle(n, steps, isAbsolute)
+    }
 
   /** Evaluates the steps of a location path for a single starting node.
     *

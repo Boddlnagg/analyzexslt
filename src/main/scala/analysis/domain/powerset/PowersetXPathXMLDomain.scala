@@ -28,7 +28,7 @@ object PowersetXPathXMLDomain extends PowersetXPathDomain.D[N, L, PowersetXMLDom
     case None => None
     // TODO: implement this using join instead of flatMap
     case Some(values) => Some(values.flatMap {
-      case nodes@NodeSetValue(_) => Set[XPathValue](XPathEvaluator.evaluateLocationPath(nodes, steps, isAbsolute))
+      case nodes@NodeSetValue(_) => Set[XPathValue](NodeSetValue(XPathEvaluator.evaluateLocationPath(TreeSet[XMLNode]() ++ nodes.nodes, steps, isAbsolute).toList))
       case _ => Set[XPathValue]() // bottom
     })
   }
