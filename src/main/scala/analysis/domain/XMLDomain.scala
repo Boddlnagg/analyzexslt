@@ -3,7 +3,7 @@ package analysis.domain
 import xml._
 import xslt._
 
-trait XMLDomain[N, L] {
+trait XMLDomain[N, L, V] {
   def top: N
   def bottom: N
 
@@ -44,4 +44,10 @@ trait XMLDomain[N, L] {
   def wrapInRoot(list: L): N
 
   def copyToOutput(list: L): L // TODO: maybe use map() and copy() for single nodes instead
+
+  def flatMapWithIndex(list: L, f: (N, V) => L): L
+
+  def getNodeListSize(list: L): V
+
+  def getStringValue(node: N): V
 }

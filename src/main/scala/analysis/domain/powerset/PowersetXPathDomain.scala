@@ -1,6 +1,6 @@
 package analysis.domain.powerset
 
-import analysis.domain.{XMLDomain, XPathDomain}
+import analysis.domain.XPathDomain
 import xml._
 import xpath._
 
@@ -9,20 +9,20 @@ import scala.collection.immutable.TreeSet
 object PowersetXPathDomain {
   type V = Option[Set[XPathValue]] // None represents the infinite set, Some represents finite sets
 
-  trait D[N, L, XD <: XMLDomain[N, L]] extends XPathDomain[V, N, L] {
+  trait D[N, L] extends XPathDomain[V, N, L] {
     override def top: V = None
     override def bottom: V = Some(Set())
 
     // booleans are a finite domain so we don't need to represent an unknown boolean as None
     val anyBoolean: V = Some(Set(BooleanValue(true), BooleanValue(false)))
 
-    /*override def join(v1: V, v2: V): V = (v1, v2) match {
+    override def join(v1: V, v2: V): V = (v1, v2) match {
       case (None, _) => None
       case (_, None) => None
       case (Some(s1), Some(s2)) => Some(s1.union(s2))
     }
 
-    override def meet(v1: V, v2: V): V = (v1, v2) match {
+    /*override def meet(v1: V, v2: V): V = (v1, v2) match {
       case (None, _) => None
       case (_, None) => None
       case (Some(s1), Some(s2)) => Some(s1.intersect(s2))

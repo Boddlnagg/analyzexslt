@@ -9,8 +9,8 @@ class PowersetDomainSuite extends FunSuite {
   type N = PowersetXMLDomain.N
   type L = PowersetXMLDomain.L
   type T = PowersetXPathDomain.V
-  val xmlDom = PowersetXMLDomain.D
-  val xpathDom = PowersetXPathXMLDomain
+  val xmlDom = PowersetDomain.xmlDom
+  val xpathDom = PowersetDomain.xpathDom
 
   val root = XMLParser.parseDocument(<root><a/><b/><c/><d/></root>)
   val a = root.elem.children(0).asInstanceOf[XMLElement]
@@ -163,7 +163,7 @@ class PowersetDomainSuite extends FunSuite {
     }
 
     assertResult(Some(Set(List(out3, out4), List(out1, out2), List(out1, out2, out4), List(out4), List(out3)))) {
-      xpathDom.flatMapWithIndex(input, transform)
+      xmlDom.flatMapWithIndex(input, transform)
     }
   }
 }

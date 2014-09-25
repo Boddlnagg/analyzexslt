@@ -1,12 +1,12 @@
 package analysis
 
-import analysis.domain.{XPathDomain, XMLDomain}
+import analysis.domain.{Domain, XPathDomain, XMLDomain}
 import util.EvaluationError
 import xpath._
 
-trait XPathAnalyzer[N, L, V, D1 <: XMLDomain[N, L], D2 <: XPathDomain[V, N, L]] {
-  val xmlDom: D1
-  val xpathDom: D2
+class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
+  val xmlDom = dom.xmlDom
+  val xpathDom = dom.xpathDom
 
   /** Evaluates a given XPath expression using a specified context and returns the result of the evaluation. */
   def evaluate(expr: XPathExpr, ctx: AbstractXPathContext[N, L, V]): V = {
@@ -39,7 +39,7 @@ trait XPathAnalyzer[N, L, V, D1 <: XMLDomain[N, L], D2 <: XPathDomain[V, N, L]] 
         // TODO: implement these functions correctly instead of returning TOP (?)
         case ("count", List(arg)) =>
           val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
-          xpathDom.getNodeListSize(nodeSets)
+          xmlDom.getNodeListSize(nodeSets)
         case ("sum", List(arg)) => xpathDom.top // should return bottom if arg is not a node-set
           //NumberValue(nodes.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
         case ("name"|"local-name", List(arg)) => xpathDom.top // should return bottom if arg is not a node-set with only a single node

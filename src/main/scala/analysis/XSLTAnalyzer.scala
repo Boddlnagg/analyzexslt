@@ -3,14 +3,14 @@ package analysis
 import xml.{XMLElement, XMLTextNode}
 import xslt._
 import util.EvaluationError
-import analysis.domain.{XMLDomain, XPathDomain}
+import analysis.domain.{Domain, XMLDomain, XPathDomain}
 
 /** Trait to analyze XSLT stylesheets using abstract interpretation */
-trait XSLTAnalyzer[N, L, V, D1 <: XMLDomain[N, L], D2 <: XPathDomain[V, N, L]] {
+class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
 
-  val xmlDom: D1
-  val xpathDom: D2
-  val xpathAnalyzer: XPathAnalyzer[N, L, V, D1, D2]
+  val xmlDom = dom.xmlDom
+  val xpathDom = dom.xpathDom
+  val xpathAnalyzer = new XPathAnalyzer[N, L, V](dom)
 
   /** Transforms a source document (represented by it's root node) into a new document using an XSLT stylesheet*/
   def transform(sheet: XSLTStylesheet, source: N): N = {
@@ -20,7 +20,7 @@ trait XSLTAnalyzer[N, L, V, D1 <: XMLDomain[N, L], D2 <: XPathDomain[V, N, L]] {
   /** Transforms a list of source nodes to a new list of nodes using given variable and parameter bindings */
   def transform(sheet: XSLTStylesheet, sources: L, variables: Map[String, V], params: Map[String, V]): L = {
     // create context, choose template, instantiate template, append results
-    xpathDom.flatMapWithIndex(sources, (node, index) => {
+    xmlDom.flatMapWithIndex(sources, (node, index) => {
       val templates = xmlDom.chooseTemplates(sheet, node)
 
       xmlDom.listJoin(templates.map { case (tmpl, specificNode) =>
@@ -131,5 +131,5 @@ trait XSLTAnalyzer[N, L, V, D1 <: XMLDomain[N, L], D2 <: XPathDomain[V, N, L]] {
   }*/
 
   def xsltToXPathContext(ctx: AbstractXSLTContext[N, L, V]): AbstractXPathContext[N, L, V] =
-    AbstractXPathContext[N, L, V](ctx.node, ctx.position, xpathDom.getNodeListSize(ctx.nodeList), ctx.variables)
+    AbstractXPathContext[N, L, V](ctx.node, ctx.position, xmlDom.getNodeListSize(ctx.nodeList), ctx.variables)
 }

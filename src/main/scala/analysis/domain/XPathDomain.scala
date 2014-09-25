@@ -6,8 +6,14 @@ trait XPathDomain[V, N, L] {
   def top: V
   def bottom: V
 
-  //def join(v1: V, v2: V): V
+  def join(v1: V, v2: V): V
   //def meet(v1: V, v2: V): V
+
+  def join(values: List[V]): V = values match {
+    case Nil => bottom
+    case List(v) => v
+    case _ => values.reduceLeft(join)
+  }
 
   def add(left: V, right: V): V
   def subtract(left: V, right: V): V
@@ -31,9 +37,6 @@ trait XPathDomain[V, N, L] {
   // TODO: implement this in an abstract way in the analyzer instead (not in each domain)
   def evaluateLocationPath(startNodeSet: V, steps: List[XPathStep], isAbsolute: Boolean): V
 
-  def getStringValue(node: N): V
-  def flatMapWithIndex(list: L, f: (N, V) => L): L
-  def getNodeListSize(list: L): V
   def getConcatenatedTextNodeValues(list: L): V
   def liftAttribute(name: String, value: V): N
   def liftTextNode(value: V): N

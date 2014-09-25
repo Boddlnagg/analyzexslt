@@ -1,6 +1,6 @@
 package analysis.domain.powerset
 
-import analysis.domain.XMLDomain
+import analysis.domain.{XPathDomain, XMLDomain}
 import xml._
 import xpath._
 import xslt.{XSLTStylesheet, XSLTTemplate}
@@ -9,7 +9,9 @@ object PowersetXMLDomain {
   type N = Option[Set[XMLNode]] // None represents the infinite set, Some represents finite sets
   type L = Option[Set[List[XMLNode]]]
 
-  object D extends XMLDomain[N, L] {
+  trait D[V] extends XMLDomain[N, L, V] {
+    val xpathDom: XPathDomain[V, N, L]
+
     override def top: N = None
     override def bottom: N = Some(Set())
 
@@ -157,5 +159,15 @@ object PowersetXMLDomain {
       case XMLRoot(elem) => elem.copy // "a root node is copied by copying its children" according to spec
       case node => node.copy
     }))
+
+    override def getNodeListSize(list: L): V = list match {
+      case None => xpathDom.top // we could return some "topNumber" or "topInt" here, but we would need to extend our domain to do that
+      case Some(s) => xpathDom.join(s.map(l => xpathDom.liftNumber(l.size)).toList)
+    }
+
+    override def getStringValue(node: N): V = node match {
+      case None => xpathDom.top // we could return some "topString" here, but we would need to extend our domain to do that
+      case Some(s) => xpathDom.join(s.map(n => xpathDom.liftLiteral(n.stringValue)).toList)
+    }
   }
 }

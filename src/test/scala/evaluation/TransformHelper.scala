@@ -4,9 +4,9 @@ import java.io.{StringReader, StringWriter}
 import javax.xml.transform.stream.{StreamResult, StreamSource}
 import javax.xml.transform.{OutputKeys, TransformerFactory}
 
-import analysis.domain.powerset.{PowersetXPathXMLDomain, PowersetXPathDomain, PowersetXMLDomain}
+import analysis.domain.powerset.{PowersetDomain, PowersetXPathDomain, PowersetXMLDomain}
 import analysis.{XPathAnalyzer, XSLTAnalyzer}
-import xml.{XMLElement, XMLParser, XMLRoot}
+import xml.{XMLParser, XMLRoot}
 import xslt.{XSLTEvaluator, XSLTParser}
 
 import scala.xml.Elem
@@ -31,21 +31,11 @@ object TransformHelper {
     XMLParser.parseDocument(xmlResultResource.getBuffer.toString)
   }
 
-  object PowersetXPathAnalyzer extends XPathAnalyzer[PowersetXMLDomain.N, PowersetXMLDomain.L, PowersetXPathDomain.V, PowersetXMLDomain.D.type, PowersetXPathXMLDomain.type] {
-    val xmlDom = PowersetXMLDomain.D
-    val xpathDom = PowersetXPathXMLDomain
-  }
-
-  object PowersetXSLTAnalyzer extends XSLTAnalyzer[PowersetXMLDomain.N, PowersetXMLDomain.L, PowersetXPathDomain.V, PowersetXMLDomain.D.type, PowersetXPathXMLDomain.type] {
-    override val xmlDom = PowersetXMLDomain.D
-    override val xpathDom = PowersetXPathXMLDomain
-    override val xpathAnalyzer = PowersetXPathAnalyzer
-  }
-
   def transformAbstractPowerset(xslt: Elem, data: Elem): XMLRoot = {
     val stylesheet = XSLTParser.parseStylesheet(xslt)
-    val xmlDom = PowersetXSLTAnalyzer.xmlDom
-    val result = PowersetXSLTAnalyzer.transform(stylesheet, xmlDom.lift(XMLParser.parseDocument(data))).map(_.toList)
+    val analyzer = new XSLTAnalyzer(PowersetDomain)
+    val xmlDom = analyzer.xmlDom
+    val result = analyzer.transform(stylesheet, analyzer.xmlDom.lift(XMLParser.parseDocument(data))).map(_.toList)
     result match {
       case None => throw new AssertionError(f"Expected single result root element, but got infinite result (TOP)")
       case Some(List(r: XMLRoot)) => r
