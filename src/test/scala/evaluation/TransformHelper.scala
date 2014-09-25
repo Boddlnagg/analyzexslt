@@ -4,8 +4,8 @@ import java.io.{StringReader, StringWriter}
 import javax.xml.transform.stream.{StreamResult, StreamSource}
 import javax.xml.transform.{OutputKeys, TransformerFactory}
 
-import analysis.domain.powerset.{PowersetDomain, PowersetXPathDomain, PowersetXMLDomain}
-import analysis.{XPathAnalyzer, XSLTAnalyzer}
+import analysis.domain.powerset.PowersetDomain
+import analysis.XSLTAnalyzer
 import xml.{XMLParser, XMLRoot}
 import xslt.{XSLTEvaluator, XSLTParser}
 

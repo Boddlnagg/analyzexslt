@@ -1,6 +1,6 @@
 package analysis
 
-import analysis.domain.{Domain, XPathDomain, XMLDomain}
+import analysis.domain.Domain
 import util.EvaluationError
 import xpath._
 

@@ -44,7 +44,7 @@ object XSLTParser {
     s.forall(c => xmlWhitespace.contains(c))
   }
 
-  def parseStylesheet(source: Elem): XSLTStylesheet = {
+  def parseStylesheet(source: Elem, disableBuiltinTemplates: Boolean = false): XSLTStylesheet = {
     val cleaned = clean(source).asInstanceOf[Elem]
 
     if (cleaned.namespace != Namespace) throw new NotImplementedError(f"Root element must be 'stylesheet' with namespace $Namespace (a literal result element is not supported as root node)")
@@ -71,7 +71,7 @@ object XSLTParser {
       ))
       .toList // returns a list of tuples (template, name?, match?, precedence)
 
-    new XSLTStylesheet(templates)
+    new XSLTStylesheet(templates, disableBuiltinTemplates)
   }
 
   /** Creates a new XSLT template from a [[scala.xml.Elem]] (must be an &lt;xsl:template&gt; element) */

@@ -3,7 +3,7 @@ package analysis
 import xml.{XMLElement, XMLTextNode}
 import xslt._
 import util.EvaluationError
-import analysis.domain.{Domain, XMLDomain, XPathDomain}
+import analysis.domain.Domain
 
 /** Trait to analyze XSLT stylesheets using abstract interpretation */
 class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
