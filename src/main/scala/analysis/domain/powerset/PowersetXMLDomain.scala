@@ -152,5 +152,10 @@ object PowersetXMLDomain {
         // NOTE: Lists with more than one node or a non-element node are evaluated to bottom implicitly
       })
     }
+
+    override def copyToOutput(list: L): L = list.map(_.map(_.map {
+      case XMLRoot(elem) => elem.copy // "a root node is copied by copying its children" according to spec
+      case node => node.copy
+    }))
   }
 }

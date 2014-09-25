@@ -94,23 +94,21 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
         Left(transform(sheet, xmlDom.getChildren(context.node), context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case ApplyTemplatesInstruction(Some(expr), params) =>
         val result = xpathAnalyzer.evaluate(expr, xsltToXPathContext(context))
-        val extracted = xpathDom.extractNodeSetContents(result)
+        val (extracted, _) = xpathDom.matchNodeSetValues(result)
         Left(transform(sheet, extracted, context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case CallTemplatesInstruction(name, params) =>
         // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)
         Left(evaluateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case VariableDefinitionInstruction(name, expr) =>
         Right(name, xpathAnalyzer.evaluate(expr, xsltToXPathContext(context)))
-      /*case CopyInstruction(select) =>
-        XPathEvaluator.evaluate(select, context.toXPathContext) match {
-          // NOTE: result tree fragments are generally not supported
-          case NodeSetValue(nodes) => Left(nodes.map {
-            case XMLRoot(elem) => elem.copy // "a root node is copied by copying its children" according to spec
-            case node => node.copy
-          })
-          case value => Left(List(XMLTextNode(value.toStringValue.value)))
-        }
-      case ChooseInstruction(branches, otherwise) =>
+      case CopyInstruction(select) =>
+        val evaluated = xpathAnalyzer.evaluate(select, xsltToXPathContext(context))
+        val (nodeSets, rest) = xpathDom.matchNodeSetValues(evaluated)
+        // TODO: don't ignore nodeSets, but merge with rest
+        val nodeSetsOutput = xmlDom.copyToOutput(nodeSets)
+        val restOutput = xmlDom.liftList(List(xpathDom.liftTextNode(xpathDom.toStringValue(rest))))
+        Left(xmlDom.listJoin(nodeSetsOutput, restOutput))
+      /*case ChooseInstruction(branches, otherwise) =>
         Left(evaluate(sheet, evaluateChoose(branches, otherwise, context.toXPathContext), context))
       */
     }

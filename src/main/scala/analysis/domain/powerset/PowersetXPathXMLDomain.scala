@@ -60,11 +60,23 @@ object PowersetXPathXMLDomain extends PowersetXPathDomain.D[N, L, PowersetXMLDom
     })
   }
 
-  override def extractNodeSetContents(value: T): L = value match {
-    case None => None
-    case Some(s) => Some(s.collect {
-      case NodeSetValue(nodes) => nodes
-    })
+  override def matchNodeSetValues(value: T): (L, T) = value match {
+    case None => (None, None)
+    case Some(s) =>
+      val nodeSetContents = Some(s.collect {
+        case NodeSetValue(nodes) => nodes
+      })
+      val rest = Some(s.collect {
+        case v@(NumberValue(_) | StringValue(_) | BooleanValue(_)) => v
+      })
+      (nodeSetContents, rest)
   }
 
+  override def liftTextNode(value: T): N = value match {
+    case None => None
+    case Some(s) => Some(s.collect {
+      case StringValue(str) => XMLTextNode(str)
+      // NOTE: other value types are implicitly evaluated to bottom
+    })
+  }
 }

@@ -42,4 +42,6 @@ trait XMLDomain[N, L] {
   def partitionAttributes(list: L): (L, L)
 
   def wrapInRoot(list: L): N
+
+  def copyToOutput(list: L): L // TODO: maybe use map() and copy() for single nodes instead
 }
