@@ -27,7 +27,7 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
       xmlDom.listJoin(templates.map { case (tmpl, specificNode) =>
         val context = AbstractXSLTContext[N, L, D1, T, D2](specificNode, sources, xpathDom.add(index, xpathDom.liftNumber(1)), variables)
         evaluateTemplate(sheet, tmpl, context, params)
-      })
+      }.toList)
     })
   }
 
@@ -77,12 +77,11 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
     */
   def evaluate(sheet: XSLTStylesheet, node: XSLTInstruction, context: AbstractXSLTContext[N, L, D1, T, D2]): Either[L, (String, T)] = {
     node match {
-      case LiteralElement(name, attributes, children) =>
+      case LiteralElement(name, children) =>
         val innerNodes = evaluate(sheet, children, context)
         val (resultAttributes, resultChildren) = xmlDom.partitionAttributes(innerNodes)
-        val literalAttributes = xmlDom.liftList(attributes.map { case (name, value) => xmlDom.lift(XMLAttribute(name, value)) }.toList)
         var result = xmlDom.lift(XMLElement(name))
-        result = xmlDom.addAttributes(result, xmlDom.listConcat(literalAttributes, resultAttributes))
+        result = xmlDom.addAttributes(result, resultAttributes)
         result = xmlDom.appendChildren(result, resultChildren)
         Left(xmlDom.liftList(List(result)))
       case LiteralTextNode(text) => Left(xmlDom.liftList(List(xmlDom.lift(XMLTextNode(text)))))
@@ -93,11 +92,10 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
       case ApplyTemplatesInstruction(None, params) =>
         // TODO: what happens when template is applied on attribute or text node?
         Left(transform(sheet, xmlDom.getChildren(context.node), context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
-      /*case ApplyTemplatesInstruction(Some(expr), params) =>
-        XPathEvaluator.evaluate(expr, context.toXPathContext) match {
-          case NodeSetValue(nodes) => Left(transform(sheet, nodes, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
-          case value => throw new EvaluationError(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")
-        }*/
+      case ApplyTemplatesInstruction(Some(expr), params) =>
+        val result = xpathAnalyzer.evaluate(expr, xsltToXPathContext(context))
+        val extracted = xpathDom.extractNodeSetContents(result)
+        Left(transform(sheet, extracted, context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case CallTemplatesInstruction(name, params) =>
         // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)
         Left(evaluateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))

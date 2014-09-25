@@ -78,11 +78,10 @@ object XSLTEvaluator {
     */
   def evaluate(sheet: XSLTStylesheet, node: XSLTInstruction, context: XSLTContext): Either[List[XMLNode], (String, XPathValue)] = {
     node match {
-      case LiteralElement(name, attributes, children) =>
+      case LiteralElement(name, children) =>
         val resultNodes = evaluate(sheet, children, context)
-        val literalAttributes = attributes.map { case (key, value) => XMLAttribute(key, value)}.toList
         // attributes must come before all other result nodes, afterwards they are ignored (see spec section 7.1.3)
-        val resultAttributes = literalAttributes ++ resultNodes.takeWhile(n => n.isInstanceOf[XMLAttribute]).map(n => n.asInstanceOf[XMLAttribute])
+        val resultAttributes = resultNodes.takeWhile(n => n.isInstanceOf[XMLAttribute]).map(n => n.asInstanceOf[XMLAttribute])
         val resultChildren = resultNodes.filter(n => !n.isInstanceOf[XMLAttribute])
         Left(List(XMLElement(name, resultAttributes, resultChildren)))
       case LiteralTextNode(text) => Left(List(XMLTextNode(text)))

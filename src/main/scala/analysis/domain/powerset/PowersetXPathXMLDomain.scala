@@ -43,7 +43,7 @@ object PowersetXPathXMLDomain extends PowersetXPathDomain.D[N, L, PowersetXMLDom
       val mapped = l.zipWithIndex.map { case (n, i) => f(Some(Set(n)), Some(Set(NumberValue(i)))) }
       val flattened = mapped.foldLeft(xmlDom.liftList(Nil))((acc, next) => xmlDom.listConcat(acc, next))
       flattened
-    })
+    }.toList)
   }
 
   // TODO: this could be generalized over XPath domains using `liftNumber` and `join` (but we don't have the T parameter in XMLDomain)
@@ -57,6 +57,13 @@ object PowersetXPathXMLDomain extends PowersetXPathDomain.D[N, L, PowersetXMLDom
     case Some(s) => Some(s.collect {
       case StringValue(str) => XMLAttribute(name, str)
       // NOTE: other XPath values are evaluated to bottom implicitly
+    })
+  }
+
+  override def extractNodeSetContents(value: T): L = value match {
+    case None => None
+    case Some(s) => Some(s.collect {
+      case NodeSetValue(nodes) => nodes
     })
   }
 

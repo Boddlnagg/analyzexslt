@@ -153,10 +153,8 @@ object XSLTParser {
       }
       case null | "" =>
         // element without namespace
-        LiteralElement(node.label,
-          node.attributes.asAttrMap, // TODO: use SetAttributeElement for attributes instead (to simplify representation)?
-          parseTemplate(node.child)
-        )
+        val literalAttributes: Seq[XSLTInstruction] = node.attributes.asAttrMap.map{ case (name, value) => SetAttributeInstruction(name, Seq(LiteralTextNode(value))) }.toSeq
+        LiteralElement(node.label, literalAttributes ++ parseTemplate(node.child))
       case _ => throw new NotImplementedError("Namespaces other than the XSLT namespace are not supported.")
     }
     case _ => throw new NotImplementedError(f"Unsupported XML node $node")

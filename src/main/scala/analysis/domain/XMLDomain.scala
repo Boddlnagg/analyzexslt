@@ -17,7 +17,11 @@ trait XMLDomain[N, L] {
   //def compare(morePrecise: N, lessPrecise: N): Boolean
 
   def listJoin(l1: L, l2: L): L
-  def listJoin(lists: Traversable[L]): L = lists.reduceLeft(listJoin)
+  def listJoin(lists: List[L]): L = lists match {
+    case Nil => listBottom
+    case List(list) => list
+    case _ => lists.reduceLeft(listJoin)
+  }
 
   def chooseTemplates(sheet: XSLTStylesheet, n: N): Map[XSLTTemplate, N]
 

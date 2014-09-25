@@ -522,27 +522,6 @@ abstract class XSLTReferenceSuiteBase extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
-  test("Apply templates to attributes") {
-    val xslt =
-      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-        <xsl:template match="/root">
-          <result>
-            <xsl:apply-templates select="@*"/>
-          </result>
-        </xsl:template>
-        <xsl:template match="@*"> <!-- All attribute nodes -->
-          <attribute>
-            <xsl:apply-templates/> <!-- Will do nothing because attributes don't have children -->
-          </attribute>
-        </xsl:template>
-      </xsl:stylesheet>
-
-    val data =
-      <root x="foo" y="bar"/>
-
-    assertTransformMatches(xslt, data)
-  }
-
   test("Copy root node") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">

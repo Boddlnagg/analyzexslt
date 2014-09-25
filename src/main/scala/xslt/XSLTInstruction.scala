@@ -8,10 +8,9 @@ abstract class XSLTInstruction
 /** Literal result elements (see XSLT spec section 7.1.1)
   *
   * @param name the name of the element (namespaces are not implemented)
-  * @param attributes the set of attributes for the element (TODO: maybe use set attribute instruction children instead?)
   * @param children the instructions used to generate the children of the element
   */
-case class LiteralElement(name: String, attributes: Map[String, String], children: Seq[XSLTInstruction]) extends XSLTInstruction
+case class LiteralElement(name: String, children: Seq[XSLTInstruction]) extends XSLTInstruction
 
 /** Literal text nodes (see XSLT spec section 7.2)
   *

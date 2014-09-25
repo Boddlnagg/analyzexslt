@@ -84,7 +84,7 @@ object PowersetXMLDomain {
     override def getChildren(node: PowersetXMLDomain.N): L = node.map(_.collect {
       case XMLRoot(elem) => List(elem)
       case XMLElement(_, _, children, _) => children.toList
-      // NOTE: other node types evaluate to bottom
+      case _ => Nil // NOTE: other node types have no children
     })
 
     override def listConcat(list1: L, list2: L): L = (list1, list2) match {
