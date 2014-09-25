@@ -563,6 +563,42 @@ abstract class XSLTReferenceSuiteBase extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("Replicate n times") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/copy">
+          <result>
+            <xsl:apply-templates>
+              <xsl:with-param name="n" select="number(@n)"/>
+            </xsl:apply-templates>
+          </result>
+        </xsl:template>
+        <xsl:template match="*">
+          <xsl:param name="n" select="0"/>
+          <xsl:call-template name="copy">
+            <xsl:with-param name="n" select="$n"/>
+          </xsl:call-template>
+        </xsl:template>
+        <xsl:template name="copy">
+          <xsl:param name="n" select="0"/>
+          <xsl:if test="$n > 0">
+            <xsl:copy-of select="."/>
+            <xsl:call-template name="copy">
+              <xsl:with-param name="n" select="$n - 1"/>
+            </xsl:call-template>
+          </xsl:if>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <copy n="5">
+        <one foo="bar"><foo/></one>
+        <two/>
+      </copy>
+
+    assertTransformMatches(xslt, data)
+  }
+
   def transform(xslt: Elem, data: Elem): XMLRoot
 
   def assertTransformMatches(xslt: Elem, data: Elem) = {

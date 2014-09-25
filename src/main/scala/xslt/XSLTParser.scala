@@ -79,7 +79,7 @@ object XSLTParser {
     assert(isElem(elem, "template"))
     new XSLTTemplate(
       parseTemplate(elem.child.filter(n => !isElem(n, "param"))),
-      parseParams(elem.child)
+      parseParams(elem.child, "param")
     )
   }
 
@@ -105,14 +105,14 @@ object XSLTParser {
           val select = elem.attribute("select").map(a => XPathParser.parse(a.text))
           if (!elem.child.forall(isElem(_, "with-param")))
             throw new NotImplementedError("children of 'apply-templates' element must only be 'with-param' ('sort' is not supported)")
-          ApplyTemplatesInstruction(select, parseWithParams(elem.child))
+          ApplyTemplatesInstruction(select, parseParams(elem.child, "with-param"))
 
         // spec section 6
         case "call-template" =>
           val name = elem.attribute("name").get.text
           if (!elem.child.forall(isElem(_, "with-param")))
             throw new NotImplementedError("children of 'call-templates' element must only be 'with-param'")
-          CallTemplatesInstruction(name, parseWithParams(elem.child))
+          CallTemplatesInstruction(name, parseParams(elem.child, "with-param"))
 
         // spec section 7.1.3
         case "attribute" =>
@@ -160,20 +160,10 @@ object XSLTParser {
     case _ => throw new NotImplementedError(f"Unsupported XML node $node")
   }
 
-  /** Parses &lt;xsl:param&gt; nodes */
-  def parseParams(input: Seq[Node]): Map[String, XPathExpr] = {
-    // TODO: support content of param element instead of "select" attribute?
-    val params = input.filter(isElem(_, "param"))
-      .map(n => n.asInstanceOf[Elem])
-      .map(elem => (elem.attribute("name").get.text, XPathParser.parse(elem.attribute("select").get.text)))
-    Map() ++ params
-  }
-
-  /** Parses &lt;xsl:with-param&gt; nodes */
-  def parseWithParams(input: Seq[Node]): Map[String, XPathExpr] = {
-    // TODO: support content of with-param element instead of "select" attribute?
-    // TODO: merge function with parseParams() above
-    val params = input.filter(isElem(_, "with-param"))
+  /** Parses &lt;xsl:param&gt; and &lt;xsl:with-param&gt; nodes */
+  def parseParams(input: Seq[Node], elemName: String): Map[String, XPathExpr] = {
+    // TODO: support content of element instead of "select" attribute?
+    val params = input.filter(isElem(_, elemName))
       .map(n => n.asInstanceOf[Elem])
       .map(elem => (elem.attribute("name").get.text, XPathParser.parse(elem.attribute("select").get.text)))
     Map() ++ params
