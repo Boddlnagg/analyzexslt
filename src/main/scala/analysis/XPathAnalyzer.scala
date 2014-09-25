@@ -37,7 +37,9 @@ trait XPathAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D
         case ("last", Nil) => ctx.size
         case ("position", Nil) => ctx.position
         // TODO: implement these functions correctly instead of returning TOP (?)
-        case ("count", List(arg)) => dom2.top
+        case ("count", List(arg)) =>
+          val (nodeSets, _) = dom2.matchNodeSetValues(arg)
+          dom2.getNodeListSize(nodeSets)
         case ("sum", List(arg)) => dom2.top // should return bottom if arg is not a node-set
           //NumberValue(nodes.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
         case ("name"|"local-name", List(arg)) => dom2.top // should return bottom if arg is not a node-set with only a single node
