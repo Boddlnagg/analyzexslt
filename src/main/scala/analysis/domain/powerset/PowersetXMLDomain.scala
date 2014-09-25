@@ -68,10 +68,12 @@ object PowersetXMLDomain {
         val result = scala.collection.mutable.Map[XSLTTemplate, N]()
         s.foreach { node =>
           def allMatching = sheet.matchableTemplates.filter { case (path, _, _, _) => XPathMatcher.matches(node, path)}
-          val (_, template, _, _) = allMatching.last // this one will have highest precedence and priority, because the templates are sorted
-          result.get(template) match {
-            case None => result.put(template, lift(node))
-            case Some(previous) => result.update(template, join(previous, lift(node)))
+          if (!allMatching.isEmpty) { // could be empty when builtin templates are disabled
+            val (_, template, _, _) = allMatching.last // this one will have highest precedence and priority, because the templates are sorted
+            result.get(template) match {
+              case None => result.put(template, lift(node))
+              case Some(previous) => result.update(template, join(previous, lift(node)))
+            }
           }
         }
         result.toMap

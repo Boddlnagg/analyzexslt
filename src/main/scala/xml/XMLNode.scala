@@ -44,4 +44,20 @@ object XMLNode {
       case XMLComment(_, _) => List(start)
     }
   }
+
+  /** Formats the path where a node can be reached (pseudo XPath syntax) */
+  def formatPath(node: XMLNode): String = {
+    def internal(n: XMLNode) = n match {
+      case XMLRoot(elem) => "/"
+      case XMLElement(name, _, _, parent) => formatPath(parent) + "name/"
+      case XMLTextNode(_, parent) => formatPath(parent) + "<text>"
+      case XMLComment(_, parent) => formatPath(parent) + "<comment>"
+      case XMLAttribute(name, _, parent) => formatPath(parent) + "@" + name
+      case null => ""
+    }
+
+    val result = internal(node)
+    // strip last "/" if any (and not just "/")
+    if (result.length > 1 && result.endsWith("/")) result.substring(0, result.length - 1) else result
+  }
 }

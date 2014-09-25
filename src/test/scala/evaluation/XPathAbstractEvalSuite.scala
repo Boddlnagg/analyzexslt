@@ -1,6 +1,6 @@
 package evaluation
 
-import analysis.domain.powerset.{PowersetDomain, PowersetXPathDomain, PowersetXMLDomain}
+import analysis.domain.powerset.PowersetDomain
 import analysis.{AbstractXPathContext, XPathAnalyzer}
 import xpath._
 import xml.XMLNode

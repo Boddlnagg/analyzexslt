@@ -4,6 +4,7 @@ import java.io.{StringReader, StringWriter}
 import javax.xml.transform.stream.{StreamResult, StreamSource}
 import javax.xml.transform.{OutputKeys, TransformerFactory}
 
+import analysis.domain.Domain
 import analysis.domain.powerset.PowersetDomain
 import analysis.XSLTAnalyzer
 import xml.{XMLParser, XMLRoot}
@@ -41,5 +42,11 @@ object TransformHelper {
       case Some(List(r: XMLRoot)) => r
       case _ => throw new AssertionError(f"Expected single result root element, got $result")
     }
+  }
+
+  def transformAbstract[N, L, V](xslt: Elem, data: N, domain: Domain[N, L, V]): N = {
+    val stylesheet = XSLTParser.parseStylesheet(xslt)
+    val analyzer = new XSLTAnalyzer(domain)
+    analyzer.transform(stylesheet, data)
   }
 }
