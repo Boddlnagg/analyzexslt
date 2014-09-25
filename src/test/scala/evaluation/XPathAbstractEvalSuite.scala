@@ -6,9 +6,9 @@ import xpath._
 import xml.XMLNode
 
 class XPathAbstractEvalSuite extends XPathEvalSuiteBase {
-  object XPathTestAnalyzer extends XPathAnalyzer[PowersetXMLDomain.N, PowersetXMLDomain.L, PowersetXMLDomain.D.type, PowersetXPathDomain.T, PowersetXPathXMLDomain.type] {
-    val dom1 = PowersetXMLDomain.D
-    val dom2 = PowersetXPathXMLDomain
+  object XPathTestAnalyzer extends XPathAnalyzer[PowersetXMLDomain.N, PowersetXMLDomain.L, PowersetXPathDomain.V, PowersetXMLDomain.D.type, PowersetXPathXMLDomain.type] {
+    val xmlDom = PowersetXMLDomain.D
+    val xpathDom = PowersetXPathXMLDomain
   }
 
   def eval(expr: String, ctxNode: XMLNode): XPathValue = {

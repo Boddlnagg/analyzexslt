@@ -31,12 +31,12 @@ object TransformHelper {
     XMLParser.parseDocument(xmlResultResource.getBuffer.toString)
   }
 
-  object PowersetXPathAnalyzer extends XPathAnalyzer[PowersetXMLDomain.N, PowersetXMLDomain.L, PowersetXMLDomain.D.type, PowersetXPathDomain.T, PowersetXPathXMLDomain.type] {
-    val dom1 = PowersetXMLDomain.D
-    val dom2 = PowersetXPathXMLDomain
+  object PowersetXPathAnalyzer extends XPathAnalyzer[PowersetXMLDomain.N, PowersetXMLDomain.L, PowersetXPathDomain.V, PowersetXMLDomain.D.type, PowersetXPathXMLDomain.type] {
+    val xmlDom = PowersetXMLDomain.D
+    val xpathDom = PowersetXPathXMLDomain
   }
 
-  object PowersetXSLTAnalyzer extends XSLTAnalyzer[PowersetXMLDomain.N, PowersetXMLDomain.L, PowersetXMLDomain.D.type, PowersetXPathDomain.T, PowersetXPathXMLDomain.type] {
+  object PowersetXSLTAnalyzer extends XSLTAnalyzer[PowersetXMLDomain.N, PowersetXMLDomain.L, PowersetXPathDomain.V, PowersetXMLDomain.D.type, PowersetXPathXMLDomain.type] {
     override val xmlDom = PowersetXMLDomain.D
     override val xpathDom = PowersetXPathXMLDomain
     override val xpathAnalyzer = PowersetXPathAnalyzer

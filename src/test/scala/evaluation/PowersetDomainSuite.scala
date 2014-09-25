@@ -8,7 +8,7 @@ import xpath.{NumberValue, NodeSetValue}
 class PowersetDomainSuite extends FunSuite {
   type N = PowersetXMLDomain.N
   type L = PowersetXMLDomain.L
-  type T = PowersetXPathDomain.T
+  type T = PowersetXPathDomain.V
   val xmlDom = PowersetXMLDomain.D
   val xpathDom = PowersetXPathXMLDomain
 

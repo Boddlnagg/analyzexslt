@@ -1,8 +1,8 @@
 package analysis
 
-case class AbstractXPathContext[N, L, T](
+case class AbstractXPathContext[N, L, V](
   node: N,
-  position: T,
-  size: T,
-  variables: Map[String, T]
+  position: V,
+  size: V,
+  variables: Map[String, V]
 )

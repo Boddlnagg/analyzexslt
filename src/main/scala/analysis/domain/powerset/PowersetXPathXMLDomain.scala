@@ -2,7 +2,7 @@ package analysis.domain.powerset
 
 import analysis.domain.powerset.PowersetXMLDomain.N
 import analysis.domain.powerset.PowersetXMLDomain.L
-import analysis.domain.powerset.PowersetXPathDomain.T
+import analysis.domain.powerset.PowersetXPathDomain.V
 import xpath._
 import xml.{XMLAttribute, XMLTextNode, XMLNode}
 
@@ -13,7 +13,7 @@ object PowersetXPathXMLDomain extends PowersetXPathDomain.D[N, L, PowersetXMLDom
 
   // TODO: replace this with toNodeSet(L), because we already have liftList(List[N])
   // but maybe this is not even needed
-  override def liftNodeSet(set: Set[N]): T = {
+  override def liftNodeSet(set: Set[N]): V = {
     def getProduct(input:List[List[XMLNode]]): List[List[XMLNode]] = input match{
       case Nil => Nil // just in case you input an empty list
       case head::Nil => head.map(_::Nil)
@@ -26,7 +26,7 @@ object PowersetXPathXMLDomain extends PowersetXPathDomain.D[N, L, PowersetXMLDom
       Some(getProduct(set.map(_.get.toList).toList).map(nodes => NodeSetValue((TreeSet[XMLNode]() ++ nodes).toList)).toSet)
   }
 
-  override def evaluateLocationPath(startNodeSet: T, steps: List[XPathStep], isAbsolute: Boolean): T = startNodeSet match {
+  override def evaluateLocationPath(startNodeSet: V, steps: List[XPathStep], isAbsolute: Boolean): V = startNodeSet match {
     case None => None
     // TODO: implement this using join instead of flatMap
     case Some(values) => Some(values.flatMap {
@@ -35,9 +35,9 @@ object PowersetXPathXMLDomain extends PowersetXPathDomain.D[N, L, PowersetXMLDom
     })
   }
 
-  override def getStringValue(node: N): T = node.map(_.map(n => StringValue(n.stringValue)))
+  override def getStringValue(node: N): V = node.map(_.map(n => StringValue(n.stringValue)))
 
-  override def flatMapWithIndex(list: L, f: (N, T) => L): L = list match {
+  override def flatMapWithIndex(list: L, f: (N, V) => L): L = list match {
     case None => None
     case Some(s) => xmlDom.listJoin(s.map { l =>
       val mapped = l.zipWithIndex.map { case (n, i) => f(Some(Set(n)), Some(Set(NumberValue(i)))) }
@@ -47,12 +47,12 @@ object PowersetXPathXMLDomain extends PowersetXPathDomain.D[N, L, PowersetXMLDom
   }
 
   // TODO: this could be generalized over XPath domains using `liftNumber` and `join` (but we don't have the T parameter in XMLDomain)
-  override def getNodeListSize(list: L): T = list.map(_.map(l => NumberValue(l.size)))
+  override def getNodeListSize(list: L): V = list.map(_.map(l => NumberValue(l.size)))
 
-  override def getConcatenatedTextNodeValues(list: L): T =
+  override def getConcatenatedTextNodeValues(list: L): V =
     list.map(_.map(l => StringValue(l.collect { case n: XMLTextNode => n.value }.mkString(""))))
 
-  override def liftAttribute(name: String, value: T): N = value match {
+  override def liftAttribute(name: String, value: V): N = value match {
     case None => None
     case Some(s) => Some(s.collect {
       case StringValue(str) => XMLAttribute(name, str)
@@ -60,7 +60,7 @@ object PowersetXPathXMLDomain extends PowersetXPathDomain.D[N, L, PowersetXMLDom
     })
   }
 
-  override def matchNodeSetValues(value: T): (L, T) = value match {
+  override def matchNodeSetValues(value: V): (L, V) = value match {
     case None => (None, None)
     case Some(s) =>
       val nodeSetContents = Some(s.collect {
@@ -72,7 +72,7 @@ object PowersetXPathXMLDomain extends PowersetXPathDomain.D[N, L, PowersetXMLDom
       (nodeSetContents, rest)
   }
 
-  override def liftTextNode(value: T): N = value match {
+  override def liftTextNode(value: V): N = value match {
     case None => None
     case Some(s) => Some(s.collect {
       case StringValue(str) => XMLTextNode(str)

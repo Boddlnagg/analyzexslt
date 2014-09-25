@@ -1,17 +1,16 @@
 package analysis
 
-import xml.{XMLAttribute, XMLElement, XMLTextNode}
-import xpath.NumberValue
+import xml.{XMLElement, XMLTextNode}
 import xslt._
 import util.EvaluationError
 import analysis.domain.{XMLDomain, XPathDomain}
 
 /** Trait to analyze XSLT stylesheets using abstract interpretation */
-trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1]] {
+trait XSLTAnalyzer[N, L, V, D1 <: XMLDomain[N, L], D2 <: XPathDomain[V, N, L]] {
 
   val xmlDom: D1
   val xpathDom: D2
-  val xpathAnalyzer: XPathAnalyzer[N, L, D1, T, D2]
+  val xpathAnalyzer: XPathAnalyzer[N, L, V, D1, D2]
 
   /** Transforms a source document (represented by it's root node) into a new document using an XSLT stylesheet*/
   def transform(sheet: XSLTStylesheet, source: N): N = {
@@ -19,13 +18,13 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
   }
 
   /** Transforms a list of source nodes to a new list of nodes using given variable and parameter bindings */
-  def transform(sheet: XSLTStylesheet, sources: L, variables: Map[String, T], params: Map[String, T]): L = {
+  def transform(sheet: XSLTStylesheet, sources: L, variables: Map[String, V], params: Map[String, V]): L = {
     // create context, choose template, instantiate template, append results
     xpathDom.flatMapWithIndex(sources, (node, index) => {
       val templates = xmlDom.chooseTemplates(sheet, node)
 
       xmlDom.listJoin(templates.map { case (tmpl, specificNode) =>
-        val context = AbstractXSLTContext[N, L, T](specificNode, sources, xpathDom.add(index, xpathDom.liftNumber(1)), variables)
+        val context = AbstractXSLTContext[N, L, V](specificNode, sources, xpathDom.add(index, xpathDom.liftNumber(1)), variables)
         evaluateTemplate(sheet, tmpl, context, params)
       }.toList)
     })
@@ -39,7 +38,7 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
     *               a corresponding default parameter in the template, see XSLT spec section 11.6)
     * @return a list of resulting XML nodes
     */
-  def evaluateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: AbstractXSLTContext[N, L, T], params: Map[String, T]): L = {
+  def evaluateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: AbstractXSLTContext[N, L, V], params: Map[String, V]): L = {
     val acceptedParams = params.filter { case (key, _) => tmpl.defaultParams.contains(key) }
     val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key)}.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))
     // the context for the newly instantiated template contains only global variables and parameters, no local parameters (static scoping)
@@ -54,7 +53,7 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
     * @param context the context to evaluate the first instruction in (subsequent instructions might have additional variable bindings)
     * @return a list of resulting XML nodes
     */
-  def evaluate(sheet: XSLTStylesheet, nodes: Seq[XSLTInstruction], context: AbstractXSLTContext[N, L, T]): L = {
+  def evaluate(sheet: XSLTStylesheet, nodes: Seq[XSLTInstruction], context: AbstractXSLTContext[N, L, V]): L = {
     // remember variable names that were created in this scope so we can throw an error
     // if any of these is shadowed in the SAME scope
     var scopeVariables = scala.collection.mutable.Set[String]()
@@ -75,7 +74,7 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
   /** Evaluates a single XSLT instruction in a given XSLT context, resulting in either a list of result nodes
     * or an additional variable binding (if the instruction was a variable definition).
     */
-  def evaluate(sheet: XSLTStylesheet, node: XSLTInstruction, context: AbstractXSLTContext[N, L, T]): Either[L, (String, T)] = {
+  def evaluate(sheet: XSLTStylesheet, node: XSLTInstruction, context: AbstractXSLTContext[N, L, V]): Either[L, (String, V)] = {
     node match {
       case LiteralElement(name, children) =>
         val innerNodes = evaluate(sheet, children, context)
@@ -131,6 +130,6 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
     }
   }*/
 
-  def xsltToXPathContext(ctx: AbstractXSLTContext[N, L, T]): AbstractXPathContext[N, L, T] =
-    AbstractXPathContext[N, L, T](ctx.node, ctx.position, xpathDom.getNodeListSize(ctx.nodeList), ctx.variables)
+  def xsltToXPathContext(ctx: AbstractXSLTContext[N, L, V]): AbstractXPathContext[N, L, V] =
+    AbstractXPathContext[N, L, V](ctx.node, ctx.position, xpathDom.getNodeListSize(ctx.nodeList), ctx.variables)
 }

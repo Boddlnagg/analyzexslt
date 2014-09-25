@@ -4,45 +4,45 @@ import analysis.domain.{XPathDomain, XMLDomain}
 import util.EvaluationError
 import xpath._
 
-trait XPathAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1]] {
-  val dom1: D1
-  val dom2: D2
+trait XPathAnalyzer[N, L, V, D1 <: XMLDomain[N, L], D2 <: XPathDomain[V, N, L]] {
+  val xmlDom: D1
+  val xpathDom: D2
 
   /** Evaluates a given XPath expression using a specified context and returns the result of the evaluation. */
-  def evaluate(expr: XPathExpr, ctx: AbstractXPathContext[N, L, T]): T = {
+  def evaluate(expr: XPathExpr, ctx: AbstractXPathContext[N, L, V]): V = {
     expr match {
-      case PlusExpr(lhs, rhs) => dom2.add(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case MinusExpr(lhs, rhs) => dom2.subtract(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case MultiplyExpr(lhs, rhs) => dom2.multiply(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case DivExpr(lhs, rhs) => dom2.divide(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case ModExpr(lhs, rhs) => dom2.modulo(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case RelationalExpr(lhs, rhs, relOp) => dom2.compare(evaluate(lhs, ctx), evaluate(rhs, ctx), relOp)
-      case AndExpr(lhs, rhs) => dom2.logicalAnd(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case OrExpr(lhs, rhs) => dom2.logicalOr(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case NegExpr(subexpr) => dom2.negateNum(evaluate(subexpr, ctx))
-      case LiteralExpr(literal) => dom2.liftLiteral(literal)
-      case NumberExpr(num) => dom2.liftNumber(num)
+      case PlusExpr(lhs, rhs) => xpathDom.add(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case MinusExpr(lhs, rhs) => xpathDom.subtract(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case MultiplyExpr(lhs, rhs) => xpathDom.multiply(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case DivExpr(lhs, rhs) => xpathDom.divide(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case ModExpr(lhs, rhs) => xpathDom.modulo(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case RelationalExpr(lhs, rhs, relOp) => xpathDom.compare(evaluate(lhs, ctx), evaluate(rhs, ctx), relOp)
+      case AndExpr(lhs, rhs) => xpathDom.logicalAnd(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case OrExpr(lhs, rhs) => xpathDom.logicalOr(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case NegExpr(subexpr) => xpathDom.negateNum(evaluate(subexpr, ctx))
+      case LiteralExpr(literal) => xpathDom.liftLiteral(literal)
+      case NumberExpr(num) => xpathDom.liftNumber(num)
       case VariableReferenceExpr(name) => try ctx.variables(name) catch {
         // because of static scoping this is an error in the program (no matter what evaluation strategy is used)
         case e: java.util.NoSuchElementException => throw new EvaluationError(f"Variable $name is not defined")
       }
-      case UnionExpr(lhs, rhs) => dom2.nodeSetUnion(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case UnionExpr(lhs, rhs) => xpathDom.nodeSetUnion(evaluate(lhs, ctx), evaluate(rhs, ctx))
       case FunctionCallExpr(name, params) => (name, params.map(p => evaluate(p, ctx))) match {
-        case ("true", Nil) => dom2.liftBoolean(true)
-        case ("false", Nil) => dom2.liftBoolean(false)
-        case ("not", List(arg)) => dom2.negateBool(arg)
-        case ("string", List(arg)) => dom2.toStringValue(arg)
-        case ("boolean", List(arg)) => dom2.toBooleanValue(arg)
-        case ("number", List(arg)) => dom2.toNumberValue(arg)
+        case ("true", Nil) => xpathDom.liftBoolean(true)
+        case ("false", Nil) => xpathDom.liftBoolean(false)
+        case ("not", List(arg)) => xpathDom.negateBool(arg)
+        case ("string", List(arg)) => xpathDom.toStringValue(arg)
+        case ("boolean", List(arg)) => xpathDom.toBooleanValue(arg)
+        case ("number", List(arg)) => xpathDom.toNumberValue(arg)
         case ("last", Nil) => ctx.size
         case ("position", Nil) => ctx.position
         // TODO: implement these functions correctly instead of returning TOP (?)
         case ("count", List(arg)) =>
-          val (nodeSets, _) = dom2.matchNodeSetValues(arg)
-          dom2.getNodeListSize(nodeSets)
-        case ("sum", List(arg)) => dom2.top // should return bottom if arg is not a node-set
+          val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
+          xpathDom.getNodeListSize(nodeSets)
+        case ("sum", List(arg)) => xpathDom.top // should return bottom if arg is not a node-set
           //NumberValue(nodes.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
-        case ("name"|"local-name", List(arg)) => dom2.top // should return bottom if arg is not a node-set with only a single node
+        case ("name"|"local-name", List(arg)) => xpathDom.top // should return bottom if arg is not a node-set with only a single node
           /*node match {
             case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
             case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
@@ -51,8 +51,8 @@ trait XPathAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D
         case (_, evaluatedParams) =>
           throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
       }
-      case LocationPath(steps, isAbsolute) => dom2.evaluateLocationPath(dom2.liftNodeSet(Set(ctx.node)), steps, isAbsolute)
-      case PathExpr(filter, locationPath) => dom2.evaluateLocationPath(evaluate(filter, ctx), locationPath.steps, locationPath.isAbsolute)
+      case LocationPath(steps, isAbsolute) => xpathDom.evaluateLocationPath(xpathDom.liftNodeSet(Set(ctx.node)), steps, isAbsolute)
+      case PathExpr(filter, locationPath) => xpathDom.evaluateLocationPath(evaluate(filter, ctx), locationPath.steps, locationPath.isAbsolute)
       case FilterExpr(subexpr, predicates) =>
         if (!predicates.isEmpty) throw new NotImplementedError("Predicates are not supported")
         evaluate(subexpr, ctx)
