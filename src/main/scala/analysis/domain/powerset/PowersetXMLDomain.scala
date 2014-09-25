@@ -135,7 +135,7 @@ object PowersetXMLDomain {
       }.toSet)
     }
 
-    def partitionAttributes(list: L): (L, L) = list match {
+    override def partitionAttributes(list: L): (L, L) = list match {
       case None => (None, None) // don't know anything about attributes or other nodes
       case Some(s) => val (attr, children) = s.map { l =>
         val resultAttributes = l.takeWhile(n => n.isInstanceOf[XMLAttribute])
@@ -143,6 +143,14 @@ object PowersetXMLDomain {
         (resultAttributes, resultChildren)
       }.unzip
       (Some(attr), Some(children))
+    }
+
+    override def wrapInRoot(list: L): N = list match {
+      case None => None
+      case Some(s) => Some(s.collect {
+        case List(e: XMLElement) => XMLRoot(e)
+        // NOTE: Lists with more than one node or a non-element node are evaluated to bottom implicitly
+      })
     }
   }
 }

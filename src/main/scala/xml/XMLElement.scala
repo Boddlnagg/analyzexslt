@@ -50,7 +50,7 @@ case class XMLElement(name: String,
     case _ => false
   }
 
-  override def hashCode = name.hashCode + attributes.hashCode * 41 + children.hashCode * 41 * 41
+  override def hashCode = name.hashCode + attributes.toSet.hashCode * 41 + children.hashCode * 41 * 41
 
   override def stringValue = children.map(_.stringValue).mkString("")
 

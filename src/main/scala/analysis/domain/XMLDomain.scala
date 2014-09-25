@@ -36,4 +36,6 @@ trait XMLDomain[N, L] {
   def addAttributes(node: N, list: L): N
 
   def partitionAttributes(list: L): (L, L)
+
+  def wrapInRoot(list: L): N
 }

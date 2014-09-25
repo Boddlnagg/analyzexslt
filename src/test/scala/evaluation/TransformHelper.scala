@@ -45,10 +45,10 @@ object TransformHelper {
   def transformAbstractPowerset(xslt: Elem, data: Elem): XMLRoot = {
     val stylesheet = XSLTParser.parseStylesheet(xslt)
     val xmlDom = PowersetXSLTAnalyzer.xmlDom
-    val results = PowersetXSLTAnalyzer.transform(stylesheet, xmlDom.liftList(List(xmlDom.lift(XMLParser.parseDocument(data)))), Map(), Map()).get.toList
-    results match {
-      case List(List(r: XMLElement)) => XMLRoot(r)
-      case _ => throw new AssertionError(f"Expected single result element, got $results")
+    val result = PowersetXSLTAnalyzer.transform(stylesheet, xmlDom.lift(XMLParser.parseDocument(data))).get.toList
+    result match {
+      case List(r: XMLRoot) => r
+      case _ => throw new AssertionError(f"Expected single result root element, got $result")
     }
   }
 }
