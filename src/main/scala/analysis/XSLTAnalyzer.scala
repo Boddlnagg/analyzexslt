@@ -104,24 +104,24 @@ trait XSLTAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D1
       case CopyInstruction(select) =>
         val evaluated = xpathAnalyzer.evaluate(select, xsltToXPathContext(context))
         val (nodeSets, rest) = xpathDom.matchNodeSetValues(evaluated)
-        // TODO: don't ignore nodeSets, but merge with rest
         val nodeSetsOutput = xmlDom.copyToOutput(nodeSets)
         val restOutput = xmlDom.liftList(List(xpathDom.liftTextNode(xpathDom.toStringValue(rest))))
         Left(xmlDom.listJoin(nodeSetsOutput, restOutput))
-      /*case ChooseInstruction(branches, otherwise) =>
-        Left(evaluate(sheet, evaluateChoose(branches, otherwise, context.toXPathContext), context))
-      */
+      case ChooseInstruction(branches, otherwise) =>
+        throw new NotImplementedError("Analyzing choose instructions is not implemented yet.")
+        //Left(evaluate(sheet, chooseBranch(branches, otherwise, context.toXPathContext), context))
+
     }
   }
 
-  /** Evaluates the branches of a choose instruction.
+  /** Chooses the correct branch of a choose instruction.
     *
     * @param branches the remaining branches to test
     * @param otherwise the otherwise branch that will be evaluated when there is no other branch left
     * @param context the context to evaluate the instructions in
     * @return a list of resulting XML nodes
     */
-  /*def evaluateChoose(branches: List[(XPathExpr, Seq[XSLTInstruction])], otherwise: Seq[XSLTInstruction], context: XPathContext): Seq[XSLTInstruction] = {
+  /*def chooseBranch(branches: List[(XPathExpr, Seq[XSLTInstruction])], otherwise: Seq[XSLTInstruction], context: XPathContext): Seq[XSLTInstruction] = {
     branches match {
       case Nil => otherwise
       case (firstExpr, firstTmpl) :: rest => XPathEvaluator.evaluate(firstExpr, context).toBooleanValue.value match {

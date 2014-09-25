@@ -36,14 +36,16 @@ trait XPathAnalyzer[N, L, D1 <: XMLDomain[N, L], T, D2 <: XPathDomain[T, N, L, D
         case ("number", List(arg)) => dom2.toNumberValue(arg)
         case ("last", Nil) => ctx.size
         case ("position", Nil) => ctx.position
-        // TODO: implement these functions?
-        /*case ("count", List(NodeSetValue(nodes))) => NumberValue(nodes.size)
-      case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
-      case ("name"|"local-name", List(NodeSetValue(List(node)))) => node match {
-        case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
-        case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
-        case _ => StringValue("")
-      }*/
+        // TODO: implement these functions correctly instead of returning TOP (?)
+        case ("count", List(arg)) => dom2.top
+        case ("sum", List(arg)) => dom2.top // should return bottom if arg is not a node-set
+          //NumberValue(nodes.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
+        case ("name"|"local-name", List(arg)) => dom2.top // should return bottom if arg is not a node-set with only a single node
+          /*node match {
+            case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
+            case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
+            case _ => StringValue("")
+          }*/
         case (_, evaluatedParams) =>
           throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
       }

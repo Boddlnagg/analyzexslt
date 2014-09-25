@@ -117,7 +117,7 @@ object XSLTEvaluator {
           case value => Left(List(XMLTextNode(value.toStringValue.value)))
         }
       case ChooseInstruction(branches, otherwise) =>
-        Left(evaluate(sheet, evaluateChoose(branches, otherwise, context.toXPathContext), context))
+        Left(evaluate(sheet, chooseBranch(branches, otherwise, context.toXPathContext), context))
     }
   }
 
@@ -128,12 +128,12 @@ object XSLTEvaluator {
     * @param context the context to evaluate the instructions in
     * @return a list of resulting XML nodes
     */
-  def evaluateChoose(branches: List[(XPathExpr, Seq[XSLTInstruction])], otherwise: Seq[XSLTInstruction], context: XPathContext): Seq[XSLTInstruction] = {
+  def chooseBranch(branches: List[(XPathExpr, Seq[XSLTInstruction])], otherwise: Seq[XSLTInstruction], context: XPathContext): Seq[XSLTInstruction] = {
     branches match {
       case Nil => otherwise
       case (firstExpr, firstTmpl) :: rest => XPathEvaluator.evaluate(firstExpr, context).toBooleanValue.value match {
         case true => firstTmpl
-        case false => evaluateChoose(rest, otherwise, context)
+        case false => chooseBranch(rest, otherwise, context)
       }
     }
   }

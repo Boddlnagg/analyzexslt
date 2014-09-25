@@ -456,13 +456,11 @@ abstract class XSLTReferenceSuiteBase extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
-  test("Node positions and count") {
+  test("position() and last()") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match="/root">
           <result>
-            <!-- Count the number of 'b' children -->
-            <xsl:attribute name="b-count"><xsl:value-of select="count(b)"/></xsl:attribute>
             <unfiltered>
               <!-- Apply templates to all children -->
               <xsl:apply-templates/>
@@ -478,6 +476,29 @@ abstract class XSLTReferenceSuiteBase extends FunSuite {
             <xsl:attribute name="pos"><xsl:value-of select="position()"/></xsl:attribute>
             <xsl:attribute name="last"><xsl:value-of select="last()"/></xsl:attribute>
           </aa>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root>
+        <a/>
+        <b/>
+        <b/>
+        <b/>
+        <a/>
+      </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
+  test("count()") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/root">
+          <result>
+            <!-- Count the number of 'b' children -->
+            <xsl:attribute name="b-count"><xsl:value-of select="count(b)"/></xsl:attribute>
+          </result>
         </xsl:template>
       </xsl:stylesheet>
 
