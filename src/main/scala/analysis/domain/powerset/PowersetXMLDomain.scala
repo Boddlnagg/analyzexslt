@@ -5,10 +5,12 @@ import xml._
 import xpath._
 import xslt.{XSLTStylesheet, XSLTTemplate}
 
+/** Just a wrapper for the type aliases */
 object PowersetXMLDomain {
   type N = Option[Set[XMLNode]] // None represents the infinite set, Some represents finite sets
   type L = Option[Set[List[XMLNode]]]
 
+  /** This is the actual (partial) domain implementation */
   trait D[V] extends XMLDomain[N, L, V] {
     val xpathDom: XPathDomain[V, N, L]
 
@@ -44,7 +46,56 @@ object PowersetXMLDomain {
       case (Some(s1), Some(s2)) => Some(s1.union(s2))
     }
 
-    override def lift(n: XMLNode): N = Some(Set(n))
+    override def liftDocument(root: XMLRoot): N = Some(Set(root))
+
+    def liftElement(name: String, attributes: L, children: L): N = {
+      // TODO: simplify (remove helper functions that are able to do more than necessary)
+
+      // appendChildren (taking a list of nodes) probably is better than appendChild applied multiple times (because of
+      // combinatorial possibilities). We can still lift a single node to a list to append a single child
+      def appendChildren(node: N, list: L): N = (node, list) match {
+        case (None, _) => None
+        case (_, None) => None
+        case (Some(n), Some(l)) => Some(n.cross(l).map {
+          case (e: XMLElement, ll) => {
+            // TODO: do we need to copy the nodes here? (each element of the set must refer to its own copy)
+            // TODO: check if there is ever a case where the parent is already set (make sure we always build up result trees from bottom to top)
+            assert(e.parent == null)
+            val copy = e.copy.asInstanceOf[XMLElement]
+            ll.foreach(newChild => {
+              assert(newChild.parent == null)
+              copy.appendChild(newChild.copy)
+            })
+            copy
+          }
+          // TODO: what happens if it's not an XMLElement?
+        }.toSet)
+      }
+
+      def addAttributes(node: N, list: L): N = (node, list) match {
+        case (None, _) => None
+        case (_, None) => None
+        case (Some(n), Some(l)) => Some(n.cross(l).map {
+          case (e: XMLElement, ll) => {
+            // TODO: do we need to copy the nodes here? (each element of the set must refer to its own copy)
+            // TODO: check if there is ever a case where the parent is already set (make sure we always build up result trees from bottom to top)
+            assert(e.parent == null)
+            val copy = e.copy.asInstanceOf[XMLElement]
+            ll.foreach(newChild => {
+              assert(newChild.parent == null)
+              copy.addAttribute(newChild.copy.asInstanceOf[XMLAttribute])
+            })
+            copy
+          }
+          // TODO: what happens if it's not an XMLElement?
+        }.toSet)
+      }
+
+      var result: N = Some(Set(XMLElement(name)))
+      result = addAttributes(result, attributes)
+      result = appendChildren(result, children)
+      result
+    }
 
     override def liftList(nodes: List[N]): L = {
       def getProduct(input:List[List[XMLNode]]): List[List[XMLNode]] = input match{
@@ -71,8 +122,8 @@ object PowersetXMLDomain {
           if (!allMatching.isEmpty) { // could be empty when builtin templates are disabled
             val (_, template, _, _) = allMatching.last // this one will have highest precedence and priority, because the templates are sorted
             result.get(template) match {
-              case None => result.put(template, lift(node))
-              case Some(previous) => result.update(template, join(previous, lift(node)))
+              case None => result.put(template, Some(Set(node)))
+              case Some(previous) => result.update(template, join(previous, Some(Set(node))))
             }
           }
         }
@@ -96,46 +147,6 @@ object PowersetXMLDomain {
       case (_, None) => None
       case (Some(l1), Some(l2)) => Some(l1.cross(l2).map {
         case (ll1, ll2) => ll1 ++ ll2
-      }.toSet)
-    }
-
-    // appendChildren (taking a list of nodes) probably is better than appendChild applied multiple times (because of
-    // combinatorial possibilities). We can still lift a single node to a list to append a single child
-    override def appendChildren(node: N, list: L): N = (node, list) match {
-      case (None, _) => None
-      case (_, None) => None
-      case (Some(n), Some(l)) => Some(n.cross(l).map {
-        case (e: XMLElement, ll) => {
-          // TODO: do we need to copy the nodes here? (each element of the set must refer to its own copy)
-          // TODO: check if there is ever a case where the parent is already set (make sure we always build up result trees from bottom to top)
-          assert(e.parent == null)
-          val copy = e.copy.asInstanceOf[XMLElement]
-          ll.foreach(newChild => {
-            assert(newChild.parent == null)
-            copy.appendChild(newChild.copy)
-          })
-          copy
-        }
-        // TODO: what happens if it's not an XMLElement?
-      }.toSet)
-    }
-
-    override def addAttributes(node: N, list: L): N = (node, list) match {
-      case (None, _) => None
-      case (_, None) => None
-      case (Some(n), Some(l)) => Some(n.cross(l).map {
-        case (e: XMLElement, ll) => {
-          // TODO: do we need to copy the nodes here? (each element of the set must refer to its own copy)
-          // TODO: check if there is ever a case where the parent is already set (make sure we always build up result trees from bottom to top)
-          assert(e.parent == null)
-          val copy = e.copy.asInstanceOf[XMLElement]
-          ll.foreach(newChild => {
-            assert(newChild.parent == null)
-            copy.addAttribute(newChild.copy.asInstanceOf[XMLAttribute])
-          })
-          copy
-        }
-        // TODO: what happens if it's not an XMLElement?
       }.toSet)
     }
 

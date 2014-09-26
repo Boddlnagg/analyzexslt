@@ -39,8 +39,8 @@ class PowersetDomainSuite extends FunSuite {
     val out2 = XMLParser.parse(<out2/>).asInstanceOf[XMLElement]
     val out3 = XMLParser.parse(<out3/>).asInstanceOf[XMLElement]
 
-    assertResult(Some(Set(List(out1)))) { xmlDom.liftList(List(xmlDom.lift(out1))) }
-    assertResult(None) { xmlDom.liftList(List(xmlDom.lift(out1), None))} // this is true for this domain
+    assertResult(Some(Set(List(out1)))) { xmlDom.liftList(List(xmlDom.liftElement("out1"))) }
+    assertResult(None) { xmlDom.liftList(List(xmlDom.liftElement("out1"), None))} // this is true for this domain
     assertResult(Some(Set(List(out1, out3), List(out2, out3)))) { xmlDom.liftList(List(Some(Set(out1, out2)), Some(Set(out3)))) }
     // this is true for all domains (if one of the elements is bottom, the resulting list must be bottom)
     assertResult(xmlDom.listBottom) { xmlDom.liftList(List(Some(Set(out1, out2)), xmlDom.bottom)) }
@@ -48,37 +48,39 @@ class PowersetDomainSuite extends FunSuite {
     assertResult(Some(Set(Nil))) { xmlDom.liftList(Nil) }
   }
 
-  test("Append children") {
-    val child = xmlDom.liftList(List(xmlDom.lift(XMLParser.parse(<child/>))))
+  test("Lift element with children") {
+    val child = xmlDom.liftList(List(xmlDom.liftElement("child")))
     assertResult(Some(Set(XMLParser.parse(<e1><child/></e1>)))) {
-      xmlDom.appendChildren(Some(Set(e1)), child)
+      xmlDom.liftElement("e1", xmlDom.liftList(Nil), child)
     }
-    assertResult(Some(Set(XMLParser.parse(<e1><child/></e1>), XMLParser.parse(<e2><child/></e2>)))) {
-      xmlDom.appendChildren(Some(Set(e1, e2)), child)
+
+    val children = xmlDom.listJoin(xmlDom.liftList(List(xmlDom.liftElement("child1"), xmlDom.liftElement("child2"))), child)
+    assertResult(Some(Set(XMLParser.parse(<e1><child/></e1>), XMLParser.parse(<e1><child1/><child2/></e1>)))) {
+      xmlDom.liftElement("e1", xmlDom.liftList(Nil), children)
     }
   }
 
-  test("Add attributes") {
-    val attr = xmlDom.liftList(List(xmlDom.lift(XMLAttribute("name", "value"))))
+  test("Lift element with attributes") {
+    val attr = xmlDom.liftList(List(xmlDom.liftAttribute("name", xpathDom.liftLiteral("value"))))
     assertResult(Some(Set(XMLParser.parse(<e1 name="value"/>)))) {
-      xmlDom.addAttributes(Some(Set(e1)), attr)
+      xmlDom.liftElement("e1", attr, xmlDom.liftList(Nil))
     }
-    assertResult(Some(Set(XMLParser.parse(<e1 name="value"/>), XMLParser.parse(<e2 name="value"/>)))) {
+    /*assertResult(Some(Set(XMLParser.parse(<e1 name="value"/>), XMLParser.parse(<e2 name="value"/>)))) {
       xmlDom.addAttributes(Some(Set(e1, e2)), attr)
-    }
+    }*/
 
     val attr2: L = Some(Set(
       List(XMLAttribute("attr1", "1"), XMLAttribute("attr2", "2")), // first alternative
-      List(XMLAttribute("attr1", "-1"), XMLAttribute("attr2", "-2")) // second alternative
+      List(XMLAttribute("attr1", "-1"), XMLAttribute("attr2", "-2")), // second alternative
+      Nil // third alternative
     ))
 
-    assertResult(Some(Set( // 2 x 2 = 4 possible results
+    assertResult(Some(Set(
       XMLParser.parse(<e1 attr1="1" attr2="2"/>),
       XMLParser.parse(<e1 attr1="-1" attr2="-2"/>),
-      XMLParser.parse(<e2 attr1="1" attr2="2"/>),
-      XMLParser.parse(<e2 attr1="-1" attr2="-2"/>)
+      XMLParser.parse(<e1/>)
     ))) {
-      xmlDom.addAttributes(Some(Set(e1, e2)), attr2)
+      xmlDom.liftElement("e1", attr2, xmlDom.liftList(Nil))
     }
   }
 
@@ -88,9 +90,9 @@ class PowersetDomainSuite extends FunSuite {
     val attr2 = XMLAttribute("attr2", "2")
     val attr3 = XMLAttribute("attr3", "3")
 
-    val l1a = xmlDom.liftList(List(xmlDom.lift(attr1a)))
-    val l2 = xmlDom.liftList(List(xmlDom.lift(attr2)))
-    val l3 = xmlDom.liftList(List(xmlDom.lift(attr3)))
+    val l1a = xmlDom.liftList(List(xmlDom.liftAttribute("attr1", xpathDom.liftLiteral("1"))))
+    val l2 = xmlDom.liftList(List(xmlDom.liftAttribute("attr2", xpathDom.liftLiteral("2"))))
+    val l3 = xmlDom.liftList(List(xmlDom.liftAttribute("attr3", xpathDom.liftLiteral("3"))))
 
     val l1ab: L = Some(Set(List(attr1a), List(attr1b)))
     val l12: L = Some(Set(List(attr1a), List(attr1a, attr2)))

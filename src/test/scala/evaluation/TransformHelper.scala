@@ -36,7 +36,7 @@ object TransformHelper {
     val stylesheet = XSLTParser.parseStylesheet(xslt)
     val analyzer = new XSLTAnalyzer(PowersetDomain)
     val xmlDom = analyzer.xmlDom
-    val result = analyzer.transform(stylesheet, analyzer.xmlDom.lift(XMLParser.parseDocument(data))).map(_.toList)
+    val result = analyzer.transform(stylesheet, analyzer.xmlDom.liftDocument(XMLParser.parseDocument(data))).map(_.toList)
     result match {
       case None => throw new AssertionError(f"Expected single result root element, but got infinite result (TOP)")
       case Some(List(r: XMLRoot)) => r

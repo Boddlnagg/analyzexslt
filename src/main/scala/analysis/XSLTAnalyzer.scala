@@ -79,15 +79,13 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case LiteralElement(name, children) =>
         val innerNodes = evaluate(sheet, children, context)
         val (resultAttributes, resultChildren) = xmlDom.partitionAttributes(innerNodes)
-        var result = xmlDom.lift(XMLElement(name))
-        result = xmlDom.addAttributes(result, resultAttributes)
-        result = xmlDom.appendChildren(result, resultChildren)
+        val result = xmlDom.liftElement(name, resultAttributes, resultChildren)
         Left(xmlDom.liftList(List(result)))
-      case LiteralTextNode(text) => Left(xmlDom.liftList(List(xmlDom.lift(XMLTextNode(text)))))
+      case LiteralTextNode(text) => Left(xmlDom.liftList(List(xmlDom.liftTextNode(xpathDom.liftLiteral(text)))))
       case SetAttributeInstruction(attribute, value) =>
         // merge the content of all text-node children to create the attribute value
         val textResult = xpathDom.getConcatenatedTextNodeValues(evaluate(sheet, value, context))
-        Left(xmlDom.liftList(List(xpathDom.liftAttribute(attribute, textResult))))
+        Left(xmlDom.liftList(List(xmlDom.liftAttribute(attribute, textResult))))
       case ApplyTemplatesInstruction(None, params) =>
         // TODO: what happens when template is applied on attribute or text node?
         Left(transform(sheet, xmlDom.getChildren(context.node), context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
@@ -104,7 +102,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val evaluated = xpathAnalyzer.evaluate(select, xsltToXPathContext(context))
         val (nodeSets, rest) = xpathDom.matchNodeSetValues(evaluated)
         val nodeSetsOutput = xmlDom.copyToOutput(nodeSets)
-        val restOutput = xmlDom.liftList(List(xpathDom.liftTextNode(xpathDom.toStringValue(rest))))
+        val restOutput = xmlDom.liftList(List(xmlDom.liftTextNode(xpathDom.toStringValue(rest))))
         Left(xmlDom.listJoin(nodeSetsOutput, restOutput))
       case ChooseInstruction(branches, otherwise) =>
         throw new NotImplementedError("Analyzing choose instructions is not implemented yet.")

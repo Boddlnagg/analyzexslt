@@ -6,9 +6,11 @@ import xpath._
 
 import scala.collection.immutable.TreeSet
 
+/** Just a wrapper for the type alias */
 object PowersetXPathDomain {
   type V = Option[Set[XPathValue]] // None represents the infinite set, Some represents finite sets
 
+  /** This is the actual (partial) domain implementation */
   trait D[N, L] extends XPathDomain[V, N, L] {
     override def top: V = None
     override def bottom: V = Some(Set())

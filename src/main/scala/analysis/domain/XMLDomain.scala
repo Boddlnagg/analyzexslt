@@ -25,7 +25,16 @@ trait XMLDomain[N, L, V] {
 
   def chooseTemplates(sheet: XSLTStylesheet, n: N): Map[XSLTTemplate, N]
 
-  def lift(n: XMLNode): N
+  def liftDocument(root: XMLRoot): N
+
+  // TODO: in order to support <xsl:element> this would need to take the name as V
+  def liftElement(name: String, attributes: L, children: L): N
+
+  def liftElement(name: String): N = liftElement(name, liftList(Nil), liftList(Nil))
+
+  def liftAttribute(name: String, value: V): N
+
+  def liftTextNode(value: V): N
 
   def liftList(nodes: List[N]): L
 
@@ -34,10 +43,6 @@ trait XMLDomain[N, L, V] {
   def getChildren(node: N): L
 
   def listConcat(list1: L, list2: L): L
-
-  def appendChildren(node: N, list: L): N
-
-  def addAttributes(node: N, list: L): N
 
   def partitionAttributes(list: L): (L, L)
 
