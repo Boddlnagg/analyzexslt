@@ -142,6 +142,11 @@ object PowersetXMLDomain {
       case _ => Nil // NOTE: other node types have no children
     })
 
+    def getParent(node: N): N = node match {
+      case None => None
+      case Some(s) => Some(s.map(n => n.parent))
+    }
+
     override def listConcat(list1: L, list2: L): L = (list1, list2) match {
       case (None, _) => None
       case (_, None) => None
@@ -182,5 +187,62 @@ object PowersetXMLDomain {
       case None => xpathDom.top // we could return some "topString" here, but we would need to extend our domain to do that
       case Some(s) => xpathDom.join(s.map(n => xpathDom.liftLiteral(n.stringValue)).toList)
     }
+
+    override def isRoot(node: N): (N, N) = node match {
+      case None => (None, None)
+      case Some(s) =>
+        val (yes, no) = s.partition(_.isInstanceOf[XMLRoot])
+        (Some(yes), Some(no))
+    }
+
+    override def isElement(node: N): (N, N) = node match {
+      case None => (None, None)
+      case Some(s) =>
+        val (yes, no) = s.partition(_.isInstanceOf[XMLElement])
+        (Some(yes), Some(no))
+    }
+
+    override def isTextNode(node: N): (N, N) = node match {
+      case None => (None, None)
+      case Some(s) =>
+        val (yes, no) = s.partition(_.isInstanceOf[XMLTextNode])
+        (Some(yes), Some(no))
+    }
+
+    override def isComment(node: N): (N, N) = node match {
+      case None => (None, None)
+      case Some(s) =>
+        val (yes, no) = s.partition(_.isInstanceOf[XMLComment])
+        (Some(yes), Some(no))
+    }
+
+    override def isAttribute(node: N): (N, N) = node match {
+      case None => (None, None)
+      case Some(s) =>
+        val (yes, no) = s.partition(_.isInstanceOf[XMLAttribute])
+        (Some(yes), Some(no))
+    }
+
+    override def nameMatches(node: N, name: String): (N, N) = node match {
+      case None => (None, None)
+      case Some(s) =>
+        // nodes that can't have a name are evaluated to bottom implicitly, i.e. they won't appear in the output at all
+        // TODO: is that the right strategy?
+        val yes = s.filter {
+          case XMLElement(elementName, _, _, _) => elementName == name
+          case XMLAttribute(attributeName, _, _) => attributeName == name
+          case _ => false
+        }
+        val no = s.filter {
+        case XMLElement(elementName, _, _, _) => elementName != name
+        case XMLAttribute(attributeName, _, _) => attributeName != name
+        case _ => false
+        }
+        (Some(yes), Some(no))
+    }
+
+    //override def partitionByParent(node: N, goodParent: N, badParent: N): (N, N) = ???
+
+    //override def parentMatches(node: N, f: N => (N, N)): (N, N) = ???
   }
 }

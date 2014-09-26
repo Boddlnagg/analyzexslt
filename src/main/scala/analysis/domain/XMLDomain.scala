@@ -42,6 +42,8 @@ trait XMLDomain[N, L, V] {
 
   def getChildren(node: N): L
 
+  def getParent(node: N): N // TODO: remove if unnecessary
+
   def listConcat(list1: L, list2: L): L
 
   def partitionAttributes(list: L): (L, L)
@@ -55,4 +57,16 @@ trait XMLDomain[N, L, V] {
   def getNodeListSize(list: L): V
 
   def getStringValue(node: N): V
+
+  def isRoot(node: N): (N, N)
+
+  def isElement(node: N): (N, N)
+
+  def isTextNode(node: N): (N, N)
+
+  def isComment(node: N): (N, N)
+
+  def isAttribute(node: N): (N, N)
+
+  def nameMatches(node: N, name: String): (N, N)
 }

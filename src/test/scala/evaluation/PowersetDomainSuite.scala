@@ -1,14 +1,15 @@
 package evaluation
 
+import analysis.AbstractXPathMatcher
 import org.scalatest.FunSuite
 import xml._
 import analysis.domain.powerset._
-import xpath.{NumberValue, NodeSetValue}
+import xpath.{XPathParser, NumberValue, NodeSetValue, LocationPath}
+import PowersetXMLDomain.N
+import PowersetXMLDomain.L
+import PowersetXPathDomain.V
 
 class PowersetDomainSuite extends FunSuite {
-  type N = PowersetXMLDomain.N
-  type L = PowersetXMLDomain.L
-  type T = PowersetXPathDomain.V
   val xmlDom = PowersetDomain.xmlDom
   val xpathDom = PowersetDomain.xpathDom
 
@@ -150,7 +151,7 @@ class PowersetDomainSuite extends FunSuite {
     val out4 = XMLParser.parse(<out4/>).asInstanceOf[XMLElement]
 
     val input: L = Some(Set(List(a, b, c), List(c, b), List(a)))
-    def transform(node: N, index: T): L = {
+    def transform(node: N, index: V): L = {
       if (node == Some(Set(a))) {
         assert(index == Some(Set(NumberValue(0))))
         Some(Set(List(out1, out2), List(out3)))
@@ -167,5 +168,30 @@ class PowersetDomainSuite extends FunSuite {
     assertResult(Some(Set(List(out3, out4), List(out1, out2), List(out1, out2, out4), List(out4), List(out3)))) {
       xmlDom.flatMapWithIndex(input, transform)
     }
+  }
+
+  test("Match patterns") {
+    // TODO: move to separate test suite
+
+    val doc = XMLParser.parseDocument(<root attr="1" otherattr="foobar"><a/><b><a/><a/></b><b attr="2"/></root>)
+    val root = doc.elem
+    val attr1 = root.attributes.filter(_.name == "attr")(0)
+    val otherattr = root.attributes.filter(_.name == "otherattr")(0)
+    val a1 = root.children(0).asInstanceOf[XMLElement]
+    val b1 = root.children(1).asInstanceOf[XMLElement]
+    val a2 = b1.children(0).asInstanceOf[XMLElement]
+    val a3 = b1.children(1).asInstanceOf[XMLElement]
+    val b2 = root.children(2).asInstanceOf[XMLElement]
+    val attr2 = b2.attributes(0)
+
+    def pattern(str: String) = XPathParser.parse(str).asInstanceOf[LocationPath]
+
+    val matcher = new AbstractXPathMatcher[N, L, V](PowersetDomain)
+
+    val all: N = Some(Set(doc, root, attr1, otherattr, a1, b1, a2, a3, b2, attr2))
+
+    assertResult((Some(Set(doc)), Some(Set(root, attr1, otherattr, a1, b1, a2, a3, b2, attr2)))) { matcher.matches(all, pattern("/")) }
+    //assertResult((Some(Set()), all)) { matcher.matches(all, pattern("/a")) }
+    assertResult((Some(Set(a1, a2, a3)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2)))) { matcher.matches(all, pattern("/root/a")) }
   }
 }
