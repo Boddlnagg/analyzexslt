@@ -44,6 +44,8 @@ trait XMLDomain[N, L, V] {
 
   def getParent(node: N): N // TODO: remove if unnecessary
 
+  def parentMatches(node: N, parent: N): (N, N)
+
   def listConcat(list1: L, list2: L): L
 
   def partitionAttributes(list: L): (L, L)

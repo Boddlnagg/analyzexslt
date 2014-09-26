@@ -171,9 +171,10 @@ class PowersetDomainSuite extends FunSuite {
   }
 
   test("Match patterns") {
-    // TODO: move to separate test suite
+    // TODO: move to separate test suite and write more tests
 
-    val doc = XMLParser.parseDocument(<root attr="1" otherattr="foobar"><a/><b><a/><a/></b><b attr="2"/></root>)
+    // TODO: we need the id attributes here, because the <a> nodes would be (illegally) considered equal otherwise -> can this be fixed in a more general way?
+    val doc = XMLParser.parseDocument(<root attr="1" otherattr="foobar"><a id="1"/><b><a id="2"/><a id="3"/></b><b attr="2"/></root>)
     val root = doc.elem
     val attr1 = root.attributes.filter(_.name == "attr")(0)
     val otherattr = root.attributes.filter(_.name == "otherattr")(0)
@@ -191,7 +192,9 @@ class PowersetDomainSuite extends FunSuite {
     val all: N = Some(Set(doc, root, attr1, otherattr, a1, b1, a2, a3, b2, attr2))
 
     assertResult((Some(Set(doc)), Some(Set(root, attr1, otherattr, a1, b1, a2, a3, b2, attr2)))) { matcher.matches(all, pattern("/")) }
-    //assertResult((Some(Set()), all)) { matcher.matches(all, pattern("/a")) }
+    assertResult((Some(Set()), all)) { matcher.matches(all, pattern("/a")) }
+    // FIXME: these tests are currently failing
     assertResult((Some(Set(a1, a2, a3)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2)))) { matcher.matches(all, pattern("/root/a")) }
+    assertResult((Some(Set(a1, a2, a3)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2)))) { matcher.matches(all, pattern("/*/a")) }
   }
 }

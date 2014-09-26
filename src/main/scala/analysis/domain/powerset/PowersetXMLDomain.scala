@@ -223,6 +223,8 @@ object PowersetXMLDomain {
         (Some(yes), Some(no))
     }
 
+    // first result is a node of which we KNOW that it matches
+    // second result is a node of which we KNOW that it won't match
     override def nameMatches(node: N, name: String): (N, N) = node match {
       case None => (None, None)
       case Some(s) =>
@@ -239,6 +241,19 @@ object PowersetXMLDomain {
         case _ => false
         }
         (Some(yes), Some(no))
+    }
+
+    // first result is a node of which we KNOW that it matches
+    // second result is a node of which we KNOW that it won't match
+    def parentMatches(node: N, parent: N): (N, N) = (node, parent) match {
+      case (None, _) => (None, None) // don't know anything about the node
+      case (Some(_), None) => (node, node) // don't know anything about the parent
+      case ((Some(nodes), Some(parents))) => {
+        // TODO: I have the feeling that this is not entirely correct ...
+        val yes = nodes.filter(n => parents.contains(n.parent))
+        val no = nodes.filter(n => !parents.contains(n.parent))
+        (Some(yes), Some(no))
+      }
     }
 
     //override def partitionByParent(node: N, goodParent: N, badParent: N): (N, N) = ???

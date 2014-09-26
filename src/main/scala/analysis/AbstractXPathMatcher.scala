@@ -12,6 +12,8 @@ class AbstractXPathMatcher[N, L, V](dom: Domain[N, L, V]) {
     * NOTE: only supports location path patterns (XSLT spec section 5.2) without predicates
     */
   def matches(node: N, path: LocationPath): (N, N) = {
+    // first result: nodes for which the path WILL definitely match. When this is BOTTOM it means that the path can't match the given input.
+    // second result: nodes for which the path WILL definitely NOT match. When this is BOTTOM it means that the path will always match the given input.
 
     // match recursively from right to left
     if (path.steps.isEmpty) {
@@ -57,11 +59,11 @@ class AbstractXPathMatcher[N, L, V](dom: Domain[N, L, V]) {
           if (lastStepMatches == xmlDom.bottom) {
             (xmlDom.bottom, notLastStepMatches)
           } else {
-            // this node COULD match, but does the parent match the rest of the path?
-            // we have to check this for each part of N individually
-            // TODO: this is currently wrong, because it returns the parent that matches instead of the node of which the parent matches ...
-            val (restMatches, notRestMatches) = matches(xmlDom.getParent(lastStepMatches), restPath)
-            (restMatches, xmlDom.join(notLastStepMatches, notRestMatches))
+            // this node could match, but does the parent match the rest of the path?
+            val parent = xmlDom.getParent(lastStepMatches)
+            val (restMatches, notRestMatches) = matches(parent, restPath)
+            val (parentMatches, notParentMatches) = xmlDom.parentMatches(lastStepMatches, restMatches)
+            (parentMatches, xmlDom.join(notParentMatches, xmlDom.join(notLastStepMatches, notRestMatches)))
           }
       }
     }
