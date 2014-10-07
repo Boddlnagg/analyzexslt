@@ -23,8 +23,6 @@ trait XMLDomain[N, L, V] {
     case _ => lists.reduceLeft(listJoin)
   }
 
-  def chooseTemplates(sheet: XSLTStylesheet, n: N): Map[XSLTTemplate, N]
-
   def liftDocument(root: XMLRoot): N
 
   // TODO: in order to support <xsl:element> this would need to take the name as V

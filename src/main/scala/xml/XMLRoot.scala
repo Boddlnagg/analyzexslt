@@ -8,7 +8,7 @@ case class XMLRoot(elem: XMLElement) extends XMLNode {
 
   var parent: XMLNode = null // the root node is the only node that never has a parent
 
-  override def toString = elem.toString
+  override def toString = f"[${elem.toString}]" // wrap content in "[]" so we can distinguish the content from the root-node
 
   override def equals(o: Any) = o match {
     // override equals because we need to ignore the parent to prevent endless recursion

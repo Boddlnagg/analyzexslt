@@ -112,25 +112,6 @@ object PowersetXMLDomain {
         Some(getProduct(nodes.map(_.get.toList).toList).toSet)
     }
 
-    override def chooseTemplates(sheet: XSLTStylesheet, n: N): Map[XSLTTemplate, N] = n match {
-      // don't know anything -> return set of all matchable templates
-      case None => sheet.matchableTemplates.map { case (_, tmpl, _, _) => (tmpl, n)}.toMap
-      case Some(s) => {
-        val result = scala.collection.mutable.Map[XSLTTemplate, N]()
-        s.foreach { node =>
-          def allMatching = sheet.matchableTemplates.filter { case (path, _, _, _) => XPathMatcher.matches(node, path)}
-          if (!allMatching.isEmpty) { // could be empty when builtin templates are disabled
-            val (_, template, _, _) = allMatching.last // this one will have highest precedence and priority, because the templates are sorted
-            result.get(template) match {
-              case None => result.put(template, Some(Set(node)))
-              case Some(previous) => result.update(template, join(previous, Some(Set(node))))
-            }
-          }
-        }
-        result.toMap
-      }
-    }
-
     override def getRoot(node: N): N = node match {
       case None => None // infinite set of all possible roots (in this domain we can't express that it must be a root node)
       case Some(s) => Some(s.map(n => n.root))
@@ -167,10 +148,15 @@ object PowersetXMLDomain {
 
     override def wrapInRoot(list: L): N = list match {
       case None => None
-      case Some(s) => Some(s.collect {
-        case List(e: XMLElement) => XMLRoot(e)
-        // NOTE: Lists with more than one node or a non-element node are evaluated to bottom implicitly
-      })
+      case Some(s) => Some(
+        s.filter {
+          case List(e: XMLElement) => true
+          case l => println(f"[WARNING] Failed to wrap nodes in root: $l"); false
+          // NOTE: Lists with more than one node or a non-element node are evaluated to bottom implicitly
+        }.map {
+          case List(e: XMLElement) => XMLRoot(e)
+        }
+      )
     }
 
     override def copyToOutput(list: L): L = list.map(_.map(_.map {

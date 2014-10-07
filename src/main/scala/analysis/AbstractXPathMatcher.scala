@@ -42,7 +42,7 @@ class AbstractXPathMatcher[N, L, V](dom: Domain[N, L, V]) {
         case XPathStep(AttributeAxis, NameTest("*"), Nil) => xmlDom.isAttribute(node)
         // attribute::name
         case XPathStep(AttributeAxis, NameTest(name), Nil) =>
-          val (attr, notAttr) = xmlDom.isElement(node)
+          val (attr, notAttr) = xmlDom.isAttribute(node)
           val (hasName, notHasName) = xmlDom.nameMatches(attr, name)
           (hasName, xmlDom.join(notAttr, notHasName))
         // attribute::comment() OR attribute::text()

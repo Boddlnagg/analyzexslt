@@ -1,9 +1,9 @@
 package analysis
 
-import xml.{XMLElement, XMLTextNode}
 import xslt._
 import util.EvaluationError
 import analysis.domain.Domain
+import scala.util.control.Breaks._
 
 /** Trait to analyze XSLT stylesheets using abstract interpretation */
 class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
@@ -11,6 +11,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   val xmlDom = dom.xmlDom
   val xpathDom = dom.xpathDom
   val xpathAnalyzer = new XPathAnalyzer[N, L, V](dom)
+  val xpathMatcher = new AbstractXPathMatcher[N, L, V](dom)
 
   /** Transforms a source document (represented by it's root node) into a new document using an XSLT stylesheet*/
   def transform(sheet: XSLTStylesheet, source: N): N = {
@@ -21,7 +22,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   def transform(sheet: XSLTStylesheet, sources: L, variables: Map[String, V], params: Map[String, V]): L = {
     // create context, choose template, instantiate template, append results
     xmlDom.flatMapWithIndex(sources, (node, index) => {
-      val templates = xmlDom.chooseTemplates(sheet, node)
+      val templates = chooseTemplates(sheet, node)
 
       xmlDom.listJoin(templates.map { case (tmpl, specificNode) =>
         val context = AbstractXSLTContext[N, L, V](specificNode, sources, xpathDom.add(index, xpathDom.liftNumber(1)), variables)
@@ -44,6 +45,24 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     // the context for the newly instantiated template contains only global variables and parameters, no local parameters (static scoping)
     // TODO: insert global variables here, once they are supported
     evaluate(sheet, tmpl.content, context.replaceVariables(Map()).addVariables(remainingDefaultParams ++ acceptedParams))
+  }
+
+  def chooseTemplates(sheet: XSLTStylesheet, node: N): Map[XSLTTemplate, N] = {
+    // don't know anything -> return set of all matchable templates
+    //case None => sheet.matchableTemplates.map { case (_, tmpl, _, _) => (tmpl, n)}.toMap
+    val result = scala.collection.mutable.Map[XSLTTemplate, N]()
+    var currentNode = node
+    breakable {
+      sheet.matchableTemplates.reverse.foreach { case (path, tpl, _, _) =>
+        val (matches, notMatches) = xpathMatcher.matches(currentNode, path)
+        if (matches != xmlDom.bottom)
+          result.put(tpl, matches)
+        if (notMatches == xmlDom.bottom)
+          break()
+        currentNode = notMatches
+      }
+    }
+    result.toMap
   }
 
   /** Evaluates a sequence of XSLT instructions using a new scope (variable definitions are collected
