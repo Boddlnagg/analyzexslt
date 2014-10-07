@@ -16,38 +16,37 @@ object XPathMatcher {
       val lastStep = path.steps.last
       val restPath = LocationPath(path.steps.dropRight(1), path.isAbsolute)
       if (!lastStep.predicates.isEmpty) throw new NotImplementedError("predicates in paths are not implemented")
-      lastStep match {
-        // special handling of pattern '//'
-        case XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil) =>
-          // does any ancestor match the rest of the path?
-          node.ancestors.exists(a => matches(a, restPath))
-        case _ =>  val lastStepMatches = lastStep match {
-          // child::node() OR attribute::node()
-          // this matches any node (regardless of axis type) according to spec section 2.3
-          case XPathStep(ChildAxis | AttributeAxis, AllNodeTest, Nil) => true
-          // child::comment()
-          case XPathStep(ChildAxis, CommentNodeTest, Nil) => node.isInstanceOf[XMLComment]
-          // child::text()
-          case XPathStep(ChildAxis, TextNodeTest, Nil) => node.isInstanceOf[XMLTextNode]
-          // child::*
-          case XPathStep(ChildAxis, NameTest("*"), Nil) => node.isInstanceOf[XMLElement]
-          // child::name
-          case XPathStep(ChildAxis, NameTest(name), Nil) => node.isInstanceOf[XMLElement] && node.asInstanceOf[XMLElement].name == name
-          // attribute::*
-          case XPathStep(AttributeAxis, NameTest("*"), Nil) => node.isInstanceOf[XMLAttribute]
-          // attribute::name
-          case XPathStep(AttributeAxis, NameTest(name), Nil) => node.isInstanceOf[XMLAttribute] && node.asInstanceOf[XMLAttribute].name == name
-          // attribute::comment() OR attribute::text()
-          // these can never match anything
-          case XPathStep(AttributeAxis, CommentNodeTest | TextNodeTest, _) => false
-        }
+      val lastStepMatches = lastStep match {
+        // child::node() OR attribute::node()
+        // this matches any node (regardless of axis type) according to spec section 2.3
+        case XPathStep(ChildAxis | AttributeAxis, AllNodeTest, Nil) => true
+        // child::comment()
+        case XPathStep(ChildAxis, CommentNodeTest, Nil) => node.isInstanceOf[XMLComment]
+        // child::text()
+        case XPathStep(ChildAxis, TextNodeTest, Nil) => node.isInstanceOf[XMLTextNode]
+        // child::*
+        case XPathStep(ChildAxis, NameTest("*"), Nil) => node.isInstanceOf[XMLElement]
+        // child::name
+        case XPathStep(ChildAxis, NameTest(name), Nil) => node.isInstanceOf[XMLElement] && node.asInstanceOf[XMLElement].name == name
+        // attribute::*
+        case XPathStep(AttributeAxis, NameTest("*"), Nil) => node.isInstanceOf[XMLAttribute]
+        // attribute::name
+        case XPathStep(AttributeAxis, NameTest(name), Nil) => node.isInstanceOf[XMLAttribute] && node.asInstanceOf[XMLAttribute].name == name
+        // attribute::comment() OR attribute::text()
+        // these can never match anything
+        case XPathStep(AttributeAxis, CommentNodeTest | TextNodeTest, _) => false
+      }
 
-        if (!lastStepMatches) {
-          false
-        } else {
-          // does the parent match the rest of the path?
-          matches(node.parent, restPath)
+      if (!lastStepMatches) {
+        false
+      } else {
+        if (!restPath.steps.isEmpty && restPath.steps.last == XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil)) {
+          // the next step is '//' and must be handled separately
+          val nextRestPath = LocationPath(restPath.steps.dropRight(1), path.isAbsolute)
+          node.ancestors.exists(a => matches(a, nextRestPath))
         }
+        else
+          matches(node.parent, restPath) // does the parent match the rest of the path?
       }
     }
   }

@@ -50,6 +50,24 @@ class MatchPatternSuite extends FunSuite {
     assertResult(true) { XPathMatcher.matches(c, pattern) }
   }
 
+  test("a//b") {
+    val pattern = XPathParser.parse("a//b").asInstanceOf[LocationPath]
+    assertResult(false) { XPathMatcher.matches(root, pattern) }
+    assertResult(false) { XPathMatcher.matches(a, pattern) }
+    assertResult(false) { XPathMatcher.matches(x, pattern) }
+    assertResult(true) { XPathMatcher.matches(b1, pattern) }
+    assertResult(true) { XPathMatcher.matches(b2, pattern) }
+  }
+
+  test("a//a") {
+    val pattern = XPathParser.parse("a//a").asInstanceOf[LocationPath]
+    assertResult(false) { XPathMatcher.matches(root, pattern) }
+    assertResult(false) { XPathMatcher.matches(a, pattern) }
+    assertResult(false) { XPathMatcher.matches(x, pattern) }
+    assertResult(false) { XPathMatcher.matches(b1, pattern) }
+    assertResult(false) { XPathMatcher.matches(b2, pattern) }
+  }
+
   test("c") {
     val pattern = XPathParser.parse("c").asInstanceOf[LocationPath]
     assertResult(false) { XPathMatcher.matches(root, pattern) }
