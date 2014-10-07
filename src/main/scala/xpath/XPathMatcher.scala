@@ -41,7 +41,7 @@ object XPathMatcher {
         false
       } else {
         if (!restPath.steps.isEmpty && restPath.steps.last == XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil)) {
-          // the next step is '//' and must be handled separately
+          // the next step is '//' and must be handled separately (does any ancestor match the rest of the path?)
           val nextRestPath = LocationPath(restPath.steps.dropRight(1), path.isAbsolute)
           node.ancestors.exists(a => matches(a, nextRestPath))
         }

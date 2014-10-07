@@ -193,8 +193,12 @@ class PowersetDomainSuite extends FunSuite {
 
     assertResult((Some(Set(doc)), Some(Set(root, attr1, otherattr, a1, b1, a2, a3, b2, attr2)))) { matcher.matches(all, pattern("/")) }
     assertResult((Some(Set()), all)) { matcher.matches(all, pattern("/a")) }
-    // FIXME: these tests are currently failing
-    assertResult((Some(Set(a1, a2, a3)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2)))) { matcher.matches(all, pattern("/root/a")) }
-    assertResult((Some(Set(a1, a2, a3)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2)))) { matcher.matches(all, pattern("/*/a")) }
+    assertResult((Some(Set(a1)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2, a2, a3)))) { matcher.matches(all, pattern("/root/a")) }
+    assertResult((Some(Set(a1)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2, a2, a3)))) { matcher.matches(all, pattern("/*/a")) }
+    assertResult((Some(Set(a2, a3)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2, a1)))) { matcher.matches(all, pattern("/*/*/a")) }
+    assertResult((Some(Set()), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2, a1, a2, a3)))) { matcher.matches(all, pattern("/*/*/*/a")) }
+    assertResult((Some(Set(a2, a3)), Some(Set(a1)))) { matcher.matches(Some(Set(a1, a2, a3)), pattern("/*/*/a")) }
+    assertResult((Some(Set(a1, a2, a3)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2)))) { matcher.matches(all, pattern("//a")) }
+    assertResult((Some(Set(a2, a3)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2, a1)))) { matcher.matches(all, pattern("b//a")) }
   }
 }

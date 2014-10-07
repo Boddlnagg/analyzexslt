@@ -245,19 +245,25 @@ object PowersetXMLDomain {
 
     // first result is a node of which we KNOW that it matches
     // second result is a node of which we KNOW that it won't match
-    def parentMatches(node: N, parent: N): (N, N) = (node, parent) match {
+    def hasParent(node: N, parent: N): (N, N) = (node, parent) match {
       case (None, _) => (None, None) // don't know anything about the node
       case (Some(_), None) => (node, node) // don't know anything about the parent
       case ((Some(nodes), Some(parents))) => {
-        // TODO: I have the feeling that this is not entirely correct ...
         val yes = nodes.filter(n => parents.contains(n.parent))
         val no = nodes.filter(n => !parents.contains(n.parent))
         (Some(yes), Some(no))
       }
     }
 
-    //override def partitionByParent(node: N, goodParent: N, badParent: N): (N, N) = ???
-
-    //override def parentMatches(node: N, f: N => (N, N)): (N, N) = ???
+    def hasAncestor(node: N, ancestor: N): (N, N) = (node, ancestor) match {
+      case (None, _) => (None, None) // don't know anything about the node
+      case (Some(_), None) => (node, node) // don't know anything about the ancestor
+      case ((Some(nodes), Some(ancestors))) => {
+        val allAncestors = nodes.flatMap(n => n.ancestors)
+        val yes = nodes.filter(n => ancestors.exists(a => n.ancestors.contains(a)))
+        val no = nodes.filter(n => !ancestors.exists(a => n.ancestors.contains(a)))
+        (Some(yes), Some(no))
+      }
+    }
   }
 }

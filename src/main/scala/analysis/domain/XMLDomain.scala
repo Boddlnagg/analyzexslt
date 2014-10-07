@@ -44,7 +44,11 @@ trait XMLDomain[N, L, V] {
 
   def getParent(node: N): N // TODO: remove if unnecessary
 
-  def parentMatches(node: N, parent: N): (N, N)
+  def hasParent(node: N, parent: N): (N, N)
+
+  def hasAncestor(node: N, ancestor: N): (N, N)
+
+  //def parentMatches(node: N, f: N => (N, N)): (N, N)
 
   def listConcat(list1: L, list2: L): L
 
