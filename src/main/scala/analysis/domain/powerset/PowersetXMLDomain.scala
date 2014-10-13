@@ -20,8 +20,6 @@ object PowersetXMLDomain {
     override def listTop: L = None
     override def listBottom: L = Some(Set())
 
-    override def map(list: L, f: N => N): L = ??? // TODO if needed
-
     override def join(n1: N, n2: N): N = (n1, n2) match {
       case (None, _) => None
       case (_, None) => None
@@ -231,25 +229,32 @@ object PowersetXMLDomain {
 
     // first result is a node of which we KNOW that it matches
     // second result is a node of which we KNOW that it won't match
-    def hasParent(node: N, parent: N): (N, N) = (node, parent) match {
+    override def hasParent(node: N, parent: N): (N, N) = (node, parent) match {
       case (None, _) => (None, None) // don't know anything about the node
       case (Some(_), None) => (node, node) // don't know anything about the parent
-      case ((Some(nodes), Some(parents))) => {
+      case ((Some(nodes), Some(parents))) =>
         val yes = nodes.filter(n => parents.contains(n.parent))
         val no = nodes.filter(n => !parents.contains(n.parent))
         (Some(yes), Some(no))
-      }
     }
 
-    def hasAncestor(node: N, ancestor: N): (N, N) = (node, ancestor) match {
+    override def hasAncestor(node: N, ancestor: N): (N, N) = (node, ancestor) match {
       case (None, _) => (None, None) // don't know anything about the node
       case (Some(_), None) => (node, node) // don't know anything about the ancestor
-      case ((Some(nodes), Some(ancestors))) => {
-        val allAncestors = nodes.flatMap(n => n.ancestors)
+      case ((Some(nodes), Some(ancestors))) =>
         val yes = nodes.filter(n => ancestors.exists(a => n.ancestors.contains(a)))
         val no = nodes.filter(n => !ancestors.exists(a => n.ancestors.contains(a)))
         (Some(yes), Some(no))
-      }
+    }
+
+    // return empty string if node has no name
+    override def getNodeName(node: N): V = node match {
+      case None => xpathDom.top
+      case Some(s) => xpathDom.join(s.map {
+        case XMLElement(nodeName, _, _, _) => xpathDom.liftLiteral(nodeName)
+        case XMLAttribute(nodeName, _, _) => xpathDom.liftLiteral(nodeName)
+        case _ => xpathDom.liftLiteral("")
+      }.toList)
     }
   }
 }

@@ -10,8 +10,6 @@ trait XMLDomain[N, L, V] {
   def listTop: L
   def listBottom: L
 
-  def map(list: L, f: N => N): L
-
   def join(n1: N, n2: N): N
   //def meet(n1: N, n2: N): N
   //def compare(morePrecise: N, lessPrecise: N): Boolean
@@ -71,4 +69,7 @@ trait XMLDomain[N, L, V] {
   def isAttribute(node: N): (N, N)
 
   def nameMatches(node: N, name: String): (N, N)
+
+  // return empty string if node has no name
+  def getNodeName(node: N): V
 }

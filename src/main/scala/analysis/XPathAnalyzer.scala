@@ -44,15 +44,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
           if (nodeSets == xmlDom.listBottom) xpathDom.bottom // return bottom if the input is definitely not a node-set
           else xpathDom.top // TODO: implement this? (could also return topNumber if available)
-        case ("name"|"local-name", List(arg)) =>
-          val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
-          if (nodeSets == xmlDom.listBottom) xpathDom.bottom // return bottom if the input is definitely not a node-set
-          else xpathDom.top // TODO: implement this? (could also return topString if available)
-          /*node match {
-            case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
-            case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
-            case _ => StringValue("")
-          }*/
+        case ("name"|"local-name", Nil) => xmlDom.getNodeName(ctx.node)
         case (_, evaluatedParams) =>
           throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
       }

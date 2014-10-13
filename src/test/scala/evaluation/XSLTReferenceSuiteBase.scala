@@ -434,13 +434,13 @@ abstract class XSLTReferenceSuiteBase extends FunSuite {
         </xsl:template>
         <xsl:template match='*'>
           <xsl:choose>
-            <xsl:when test="name(.) = 'a' and string(@recurse) = 'yes'">
+            <xsl:when test="name() = 'a' and string(@recurse) = 'yes'">
               <aa><xsl:apply-templates/></aa>
             </xsl:when>
-            <xsl:when test="name(.) = 'a'">
+            <xsl:when test="name() = 'a'">
               <aa/>
             </xsl:when>
-            <xsl:when test="name(.) = 'b'">
+            <xsl:when test="name() = 'b'">
               <bb/>
             </xsl:when>
             <xsl:otherwise>
@@ -573,10 +573,10 @@ abstract class XSLTReferenceSuiteBase extends FunSuite {
         </xsl:template>
         <xsl:template match="text()"/> <!-- Ignore text nodes -->
         <xsl:template match="@*"> <!-- All attribute nodes -->
-          <attribute><xsl:attribute name="name"><xsl:value-of select="name(.)"/></xsl:attribute></attribute>
+          <attribute><xsl:attribute name="name"><xsl:value-of select="name()"/></xsl:attribute></attribute>
         </xsl:template>
         <xsl:template match="*"> <!-- All element nodes -->
-          <element><xsl:attribute name="name"><xsl:value-of select="name(.)"/></xsl:attribute></element>
+          <element><xsl:attribute name="name"><xsl:value-of select="name()"/></xsl:attribute></element>
         </xsl:template>
       </xsl:stylesheet>
 
