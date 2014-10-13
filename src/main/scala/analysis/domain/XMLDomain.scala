@@ -40,13 +40,11 @@ trait XMLDomain[N, L, V] {
 
   def getChildren(node: N): L
 
-  def getParent(node: N): N // TODO: remove if unnecessary
+  def getParent(node: N): N
 
   def hasParent(node: N, parent: N): (N, N)
 
   def hasAncestor(node: N, ancestor: N): (N, N)
-
-  //def parentMatches(node: N, f: N => (N, N)): (N, N)
 
   def listConcat(list1: L, list2: L): L
 
@@ -54,7 +52,7 @@ trait XMLDomain[N, L, V] {
 
   def wrapInRoot(list: L): N
 
-  def copyToOutput(list: L): L // TODO: maybe use map() and copy() for single nodes instead
+  def copyToOutput(list: L): L // TODO: maybe use map() and copy() for single nodes instead?
 
   def flatMapWithIndex(list: L, f: (N, V) => L): L
 
