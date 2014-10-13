@@ -7,6 +7,7 @@ import javax.xml.transform.{OutputKeys, TransformerFactory}
 import analysis.domain.Domain
 import analysis.domain.powerset.PowersetDomain
 import analysis.XSLTAnalyzer
+import util.EvaluationError
 import xml.{XMLParser, XMLRoot}
 import xslt.{XSLTEvaluator, XSLTParser}
 
@@ -38,9 +39,10 @@ object TransformHelper {
     val xmlDom = analyzer.xmlDom
     val result = analyzer.transform(stylesheet, analyzer.xmlDom.liftDocument(XMLParser.parseDocument(data))).map(_.toList)
     result match {
-      case None => throw new AssertionError(f"Expected single result root element, but got infinite result (TOP)")
+      case None => throw new AssertionError("Expected single result root element, but got infinite result (TOP)")
       case Some(List(r: XMLRoot)) => r
-      case _ => throw new AssertionError(f"Expected single result root element, got $result")
+      case Some(Nil) => throw new EvaluationError("Expected single result root element, but got no result (BOTTOM)")
+      case _ => throw new AssertionError(f"Expected single result root element, but got $result")
     }
   }
 

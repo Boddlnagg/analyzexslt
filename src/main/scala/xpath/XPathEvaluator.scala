@@ -50,6 +50,7 @@ object XPathEvaluator {
           case ("count", List(NodeSetValue(nodes))) => NumberValue(nodes.size)
           case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
           case ("name"|"local-name", List(NodeSetValue(List(node)))) => node match {
+            // this only accepts node-sets with a single node (contrary to the spec)
             case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
             case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
             case _ => StringValue("")

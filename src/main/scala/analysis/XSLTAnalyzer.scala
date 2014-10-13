@@ -1,5 +1,6 @@
 package analysis
 
+import xpath.XPathExpr
 import xslt._
 import util.EvaluationError
 import analysis.domain.Domain
@@ -124,28 +125,35 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val restOutput = xmlDom.liftList(List(xmlDom.liftTextNode(xpathDom.toStringValue(rest))))
         Left(xmlDom.listJoin(nodeSetsOutput, restOutput))
       case ChooseInstruction(branches, otherwise) =>
-        throw new NotImplementedError("Analyzing choose instructions is not implemented yet.")
-        //Left(evaluate(sheet, chooseBranch(branches, otherwise, context.toXPathContext), context))
+        val possibleBranches = chooseBranches(branches, otherwise, xsltToXPathContext(context))
+        // evaluate all possible branches and join the result lists
+        Left(xmlDom.listJoin(possibleBranches.map(br => evaluate(sheet, br, context)).toList))
 
     }
   }
 
-  /** Chooses the correct branch of a choose instruction.
+  /** Chooses the possible branches of a choose instruction.
     *
     * @param branches the remaining branches to test
     * @param otherwise the otherwise branch that will be evaluated when there is no other branch left
     * @param context the context to evaluate the instructions in
-    * @return a list of resulting XML nodes
+    * @return a set of possible branches, represented by their body as XSLT instructions
     */
-  /*def chooseBranch(branches: List[(XPathExpr, Seq[XSLTInstruction])], otherwise: Seq[XSLTInstruction], context: XPathContext): Seq[XSLTInstruction] = {
+  def chooseBranches(branches: List[(XPathExpr, Seq[XSLTInstruction])], otherwise: Seq[XSLTInstruction], context: AbstractXPathContext[N, L, V]): Set[Seq[XSLTInstruction]] = {
     branches match {
-      case Nil => otherwise
-      case (firstExpr, firstTmpl) :: rest => XPathEvaluator.evaluate(firstExpr, context).toBooleanValue.value match {
-        case true => firstTmpl
-        case false => evaluateChoose(rest, otherwise, context)
-      }
+      case Nil => Set(otherwise)
+      case (firstExpr, firstTmpl) :: rest =>
+        val result = xpathDom.toBooleanValue(xpathAnalyzer.evaluate(firstExpr, context))
+        val maybeTrue = xpathDom.maybeTrue(result) // the value may be true -> evaluate this branch
+        val maybeFalse = xpathDom.maybeFalse(result) // the value may be false -> evaluate further branches after this one
+        (maybeTrue, maybeFalse) match {
+          case (true, true) => Set(firstTmpl) ++ chooseBranches(rest, otherwise, context)
+          case (true, false) => Set(firstTmpl)
+          case (false, true) => chooseBranches(rest, otherwise, context)
+          case (false, false) => Set[Seq[XSLTInstruction]]()
+        }
     }
-  }*/
+  }
 
   def xsltToXPathContext(ctx: AbstractXSLTContext[N, L, V]): AbstractXPathContext[N, L, V] =
     AbstractXPathContext[N, L, V](ctx.node, ctx.position, xmlDom.getNodeListSize(ctx.nodeList), ctx.variables)

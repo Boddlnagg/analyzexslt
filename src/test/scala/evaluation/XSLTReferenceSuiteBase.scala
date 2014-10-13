@@ -380,6 +380,55 @@ abstract class XSLTReferenceSuiteBase extends FunSuite {
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match="/root">
           <result>
+            <xsl:call-template name="choose">
+              <xsl:with-param name="input" select="1"/>
+            </xsl:call-template>
+            <xsl:call-template name="choose">
+              <xsl:with-param name="input" select="2"/>
+            </xsl:call-template>
+            <xsl:call-template name="choose">
+              <xsl:with-param name="input" select="3"/>
+            </xsl:call-template>
+          </result>
+        </xsl:template>
+        <xsl:template name='choose'>
+          <xsl:param name="input" select="-1"/>
+          <xsl:choose>
+            <xsl:when test="$input &lt; 2">
+              <lessThanTwo><xsl:value-of select="$input"/></lessThanTwo>
+            </xsl:when>
+            <xsl:when test="$input = 2">
+              <equalsTwo><xsl:value-of select="$input"/></equalsTwo>
+            </xsl:when>
+            <xsl:otherwise>
+              <largerThanTwo><xsl:value-of select="$input"/></largerThanTwo>
+            </xsl:otherwise>
+          </xsl:choose>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root>
+        <a recurse="yes">
+          <b/>
+          <a recurse="no"><b/></a>
+          <a recurse="yes"><c/><b/></a>
+          <c/>
+        </a>
+        <a recurse="no">
+          <a/>
+        </a>
+        <c/>
+      </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
+  test("<xsl:choose> with node names") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/root">
+          <result>
             <xsl:apply-templates/>
           </result>
         </xsl:template>
@@ -599,6 +648,44 @@ abstract class XSLTReferenceSuiteBase extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("Wrong types for union operator") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <result>
+            <xsl:variable name="x" select="1"/>
+            <xsl:value-of select="$x | $x"/>
+          </result>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+        <root/>
+
+    assertTransformMatches(xslt, data)
+  }
+
+  test("Choose with error") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <result>
+            <xsl:choose>
+              <xsl:when test="1 = 0"><false/></xsl:when>
+              <!--<xsl:when test=""><impossible/></xsl:when>-->
+              <xsl:when test="0 = 0"><true><xsl:variable name="x" select="1"/><xsl:value-of select="$x | $x"/></true></xsl:when>
+              <xsl:otherwise><otherwise/></xsl:otherwise>
+            </xsl:choose>
+          </result>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root/>
+
+    assertTransformMatches(xslt, data)
+  }
+
   def transform(xslt: Elem, data: Elem): XMLRoot
 
   def assertTransformMatches(xslt: Elem, data: Elem) = {
@@ -609,7 +696,7 @@ abstract class XSLTReferenceSuiteBase extends FunSuite {
     } catch {
       case eJava: TransformerException =>
         // if Java throws an exception, we should do the same (because of invalid input)
-        val eScala = intercept[EvaluationError] (TransformHelper.transformScala(xslt, data))
+        val eScala = intercept[EvaluationError] (transform(xslt, data))
         println(f"Scala error: $eScala")
         println(f"Java error: $eJava")
     }

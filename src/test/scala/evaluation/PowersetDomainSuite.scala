@@ -171,8 +171,6 @@ class PowersetDomainSuite extends FunSuite {
   }
 
   test("Match patterns") {
-    // TODO: move to separate test suite and write more tests
-
     // TODO: we need the id attributes here, because the <a> nodes would be (illegally) considered equal otherwise -> can this be fixed in a more general way?
     val doc = XMLParser.parseDocument(<root attr="1" otherattr="foobar"><a id="1"/><b><a id="2"/><a id="3"/></b><b attr="2"/></root>)
     val root = doc.elem
@@ -200,5 +198,22 @@ class PowersetDomainSuite extends FunSuite {
     assertResult((Some(Set(a2, a3)), Some(Set(a1)))) { matcher.matches(Some(Set(a1, a2, a3)), pattern("/*/*/a")) }
     assertResult((Some(Set(a1, a2, a3)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2)))) { matcher.matches(all, pattern("//a")) }
     assertResult((Some(Set(a2, a3)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2, a1)))) { matcher.matches(all, pattern("b//a")) }
+  }
+
+  test("Boolean evaluation") {
+    val stringVal = xpathDom.liftLiteral("String")
+    val trueVal = xpathDom.liftBoolean(true)
+    val falseVal = xpathDom.liftBoolean(false)
+    val anyVal = xpathDom.join(xpathDom.join(trueVal, falseVal), stringVal)
+
+    assertResult(false) { xpathDom.maybeFalse(xpathDom.bottom) }
+    assertResult(false) { xpathDom.maybeTrue(xpathDom.bottom) }
+    assertResult(true) { xpathDom.maybeFalse(falseVal) }
+    assertResult(false) { xpathDom.maybeTrue(falseVal) }
+    assertResult(false) { xpathDom.maybeFalse(trueVal) }
+    assertResult(true) { xpathDom.maybeTrue(anyVal) }
+    assertResult(true) { xpathDom.maybeFalse(anyVal) }
+    assertResult(false) { xpathDom.maybeTrue(stringVal) }
+    assertResult(false) { xpathDom.maybeFalse(stringVal) }
   }
 }

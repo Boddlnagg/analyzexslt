@@ -40,9 +40,14 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         case ("count", List(arg)) =>
           val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
           xmlDom.getNodeListSize(nodeSets)
-        case ("sum", List(arg)) => xpathDom.top // should return bottom if arg is not a node-set
-          //NumberValue(nodes.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
-        case ("name"|"local-name", List(arg)) => xpathDom.top // should return bottom if arg is not a node-set with only a single node
+        case ("sum", List(arg)) =>
+          val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
+          if (nodeSets == xpathDom.bottom) xpathDom.bottom // return bottom if the input is definitely not a node-set
+          else xpathDom.top // TODO: implement this? (could also return topNumber if available)
+        case ("name"|"local-name", List(arg)) =>
+          val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
+          if (nodeSets == xpathDom.bottom) xpathDom.bottom // return bottom if the input is definitely not a node-set
+          else xpathDom.top // TODO: implement this? (could also return topString if available)
           /*node match {
             case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
             case XMLAttribute(nodeName, _, _) => StringValue(nodeName)

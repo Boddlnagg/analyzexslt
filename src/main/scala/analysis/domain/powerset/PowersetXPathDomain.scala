@@ -108,5 +108,15 @@ object PowersetXPathDomain {
       case (NodeSetValue(lVal), NodeSetValue(rVal)) => NodeSetValue((TreeSet[XMLNode]() ++ lVal ++ rVal).toList)
       // NOTE: ignore values that are not node-sets by not including them in the result (essentially evaluating them to bottom)
     })
+
+    override def maybeTrue(v: V): Boolean = v match {
+      case None => false
+      case Some(s) => s.contains(BooleanValue(true))
+    }
+
+    override def maybeFalse(v: V): Boolean = v match {
+      case None => false
+      case Some(s) => s.contains(BooleanValue(false))
+    }
   }
 }

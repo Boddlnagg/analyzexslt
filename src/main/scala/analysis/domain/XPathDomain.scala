@@ -33,6 +33,8 @@ trait XPathDomain[V, N, L] {
   def toStringValue(v: V): V
   def toNumberValue(v: V): V
   def toBooleanValue(v: V): V
+  def maybeTrue(v: V): Boolean
+  def maybeFalse(v: V): Boolean
 
   // TODO: implement this in an abstract way in the analyzer instead (not in each domain)
   def evaluateLocationPath(startNodeSet: V, steps: List[XPathStep], isAbsolute: Boolean): V

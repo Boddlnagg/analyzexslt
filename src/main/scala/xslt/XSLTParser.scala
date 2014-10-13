@@ -165,7 +165,11 @@ object XSLTParser {
     // TODO: support content of element instead of "select" attribute?
     val params = input.filter(isElem(_, elemName))
       .map(n => n.asInstanceOf[Elem])
-      .map(elem => (elem.attribute("name").get.text, XPathParser.parse(elem.attribute("select").get.text)))
+      .map(elem => (elem.attribute("name"), elem.attribute("select")) match {
+        case (Some(name), Some(select)) => (name.text, XPathParser.parse(select.text))
+        case (None, _) => throw new AssertionError("Parameter nodes must have a `name` attribute")
+        case (_, None) => throw new NotImplementedError("Parameter nodes must have a `select` attribute specifying their (default) value. The ability to provide a content template (result tree fragment) is not implemented.")
+    })
     Map() ++ params
   }
 }

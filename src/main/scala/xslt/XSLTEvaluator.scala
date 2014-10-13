@@ -128,7 +128,7 @@ object XSLTEvaluator {
     * @param branches the remaining branches to test
     * @param otherwise the otherwise branch that will be evaluated when there is no other branch left
     * @param context the context to evaluate the instructions in
-    * @return a list of resulting XML nodes
+    * @return a list of resulting XSLT instructions representing the body of the branch
     */
   def chooseBranch(branches: List[(XPathExpr, Seq[XSLTInstruction])], otherwise: Seq[XSLTInstruction], context: XPathContext): Seq[XSLTInstruction] = {
     branches match {
