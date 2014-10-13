@@ -256,5 +256,12 @@ object PowersetXMLDomain {
         case _ => xpathDom.liftLiteral("")
       }.toList)
     }
+
+    override def getConcatenatedTextNodeValues(list: L): V = list match {
+      case None => xpathDom.top
+      case Some(s) => xpathDom.join(s.map { l =>
+        xpathDom.liftLiteral(l.collect { case n: XMLTextNode => n.value }.mkString(""))
+      }.toList)
+    }
   }
 }

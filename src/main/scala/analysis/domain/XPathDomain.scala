@@ -39,6 +39,5 @@ trait XPathDomain[V, N, L] {
   // TODO: implement this in an abstract way in the analyzer instead (not in each domain)
   def evaluateLocationPath(startNodeSet: V, steps: List[XPathStep], isAbsolute: Boolean): V
 
-  def getConcatenatedTextNodeValues(list: L): V
   def matchNodeSetValues(value: V): (L, V)
  }

@@ -104,7 +104,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case LiteralTextNode(text) => Left(xmlDom.liftList(List(xmlDom.liftTextNode(xpathDom.liftLiteral(text)))))
       case SetAttributeInstruction(attribute, value) =>
         // merge the content of all text-node children to create the attribute value
-        val textResult = xpathDom.getConcatenatedTextNodeValues(evaluate(sheet, value, context))
+        val textResult = xmlDom.getConcatenatedTextNodeValues(evaluate(sheet, value, context))
         Left(xmlDom.liftList(List(xmlDom.liftAttribute(attribute, textResult))))
       case ApplyTemplatesInstruction(None, params) =>
         // TODO: what happens when template is applied on attribute or text node?

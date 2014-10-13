@@ -72,11 +72,6 @@ object PowersetDomain extends Domain[N, L, V] {
       })
     }
 
-    override def getConcatenatedTextNodeValues(list: L): V =
-      list.map(_.map(l => StringValue(l.collect { case n: XMLTextNode => n.value }.mkString(""))))
-
-
-
     override def matchNodeSetValues(value: V): (L, V) = value match {
       case None => (None, None)
       case Some(s) =>

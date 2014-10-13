@@ -72,4 +72,6 @@ trait XMLDomain[N, L, V] {
 
   // return empty string if node has no name
   def getNodeName(node: N): V
+
+  def getConcatenatedTextNodeValues(list: L): V
 }
