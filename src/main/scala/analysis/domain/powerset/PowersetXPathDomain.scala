@@ -36,56 +36,56 @@ object PowersetXPathDomain {
       case (Some(s1), Some(s2)) => Some(s1.cross(s2).collect(pf).toSet)
     }
 
-    def liftBinaryLogicalOp(left: V, right: V, pf: PartialFunction[(XPathValue, XPathValue), XPathValue]): V =
-      liftBinaryOp(left, right, pf) match {
+    def liftBinaryLogicalOp(left: V, right: V, f: (XPathValue, XPathValue) => XPathValue): V =
+      liftBinaryOp(left, right, { case (v1, v2) => f(v1, v2) }) match {
         case None => anyBoolean
         case Some(s) => Some(s)
       }
 
-    def liftBinaryNumOp(left: V, right: V, pf: PartialFunction[(Double, Double), Double]): V = (left, right) match {
+    def liftBinaryNumOp(left: V, right: V, f: (Double, Double) => Double): V = (left, right) match {
       case (None, _) => None
       case (_, None) => None
       case (Some(s1), Some(s2)) => Some(s1.cross(s2)
-        .map { case (v1, v2) => (v1.toNumberValue.value, v2.toNumberValue.value)}
-        .collect(pf)
-        .map(NumberValue)
+        .map { case (v1, v2) => NumberValue(f(v1.toNumberValue.value, v2.toNumberValue.value))}
         .toSet
       )
     }
 
-    override def add(left: V, right: V): V = liftBinaryNumOp(left, right, {
-      case (v1, v2) => v1 + v2
-    })
+    override def add(left: V, right: V): V = liftBinaryNumOp(left, right,
+      (v1, v2) => v1 + v2
+    )
 
-    override def subtract(left: V, right: V): V = liftBinaryNumOp(left, right, {
-      case (v1, v2) => v1 - v2
-    })
+    override def subtract(left: V, right: V): V = liftBinaryNumOp(left, right,
+      (v1, v2) => v1 - v2
+    )
 
-    override def multiply(left: V, right: V): V = liftBinaryNumOp(left, right, {
-      case (v1, v2) => v1 * v2
-    })
+    override def multiply(left: V, right: V): V = liftBinaryNumOp(left, right,
+      (v1, v2) => v1 * v2
+    )
 
-    override def divide(left: V, right: V): V = liftBinaryNumOp(left, right, {
-      case (v1, v2) if v2 != 0 => v1 / v2
-    })
+    override def divide(left: V, right: V): V = liftBinaryNumOp(left, right,
+      (v1, v2) => v1 / v2
+    )
 
-    override def modulo(left: V, right: V): V = liftBinaryNumOp(left, right, {
-      case (v1, v2) if v2 != 0 => v1 % v2
-    })
+    override def modulo(left: V, right: V): V = liftBinaryNumOp(left, right,
+      (v1, v2) => v1 % v2
+    )
 
-    override def compare(left: V, right: V, relOp: RelationalOperator): V = liftBinaryLogicalOp(left, right, {
-      case (v1, v2) => BooleanValue(v1.compare(v2, relOp))
-    })
+    override def compare(left: V, right: V, relOp: RelationalOperator): V = liftBinaryLogicalOp(left, right,
+      (v1, v2) => BooleanValue(v1.compare(v2, relOp))
+    )
 
-    override def logicalAnd(left: V, right: V): V = liftBinaryLogicalOp(left, right, {
-      // TODO: does shortcut evaluation matter in XPath? (it should use shortcut evaluation according to the spec)
-      case (v1, v2) => BooleanValue(v1.toBooleanValue.value && v2.toBooleanValue.value)
-    })
+    override def logicalAnd(left: V, right: V): V = liftBinaryLogicalOp(left, right,
+      // TODO: does shortcut evaluation matter in XPath?
+      // (shortcut evaluation should be used according to the spec, but XPath has no side-effects)
+      (v1, v2) => BooleanValue(v1.toBooleanValue.value && v2.toBooleanValue.value)
+    )
 
-    override def logicalOr(left: V, right: V): V = liftBinaryLogicalOp(left, right, {
-      // TODO: does shortcut evaluation matter in XPath? (it should use shortcut evaluation according to the spec)
-      case (v1, v2) => BooleanValue(v1.toBooleanValue.value || v2.toBooleanValue.value)
-    })
+    override def logicalOr(left: V, right: V): V = liftBinaryLogicalOp(left, right,
+      // TODO: does shortcut evaluation matter in XPath?
+      // (shortcut evaluation should be used according to the spec, but XPath has no side-effects)
+      (v1, v2) => BooleanValue(v1.toBooleanValue.value || v2.toBooleanValue.value)
+    )
 
     override def negateNum(v: V): V = v.map(_.map(num => NumberValue(-num.toNumberValue.value)))
 

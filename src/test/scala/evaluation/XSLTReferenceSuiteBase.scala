@@ -686,6 +686,27 @@ abstract class XSLTReferenceSuiteBase extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("Division by zero") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <result>
+            <div>
+              <xsl:value-of select="1 div 0"/>
+            </div>
+            <mod>
+              <xsl:value-of select="1 mod 0"/>
+            </mod>
+          </result>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+        <root/>
+
+    assertTransformMatches(xslt, data)
+  }
+
   def transform(xslt: Elem, data: Elem): XMLRoot
 
   def assertTransformMatches(xslt: Elem, data: Elem) = {
