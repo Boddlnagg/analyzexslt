@@ -110,12 +110,12 @@ object PowersetXPathDomain {
     })
 
     override def maybeTrue(v: V): Boolean = v match {
-      case None => false
+      case None => true
       case Some(s) => s.contains(BooleanValue(true))
     }
 
     override def maybeFalse(v: V): Boolean = v match {
-      case None => false
+      case None => true
       case Some(s) => s.contains(BooleanValue(false))
     }
   }
