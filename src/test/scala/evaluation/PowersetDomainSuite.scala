@@ -216,4 +216,27 @@ class PowersetDomainSuite extends FunSuite {
     assertResult(false) { xpathDom.maybeTrue(stringVal) }
     assertResult(false) { xpathDom.maybeFalse(stringVal) }
   }
+
+  test("Transform multiple inputs") {
+    val xslt =
+      <xsl:stylesheet version='1.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>
+        <xsl:template match='/'>
+          <reRoot><reNode><xsl:value-of select='/root/node/@val' /> world</reNode></reRoot>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data1 = XMLParser.parseDocument(<root><node val='hello'/></root>)
+    val data2 = XMLParser.parseDocument(<root><node val='Hello'/></root>)
+    val data3 = XMLParser.parseDocument(<root></root>)
+
+    val data: N = Some(Set(data1, data2, data3))
+
+    val output1 = XMLParser.parseDocument(<reRoot><reNode>hello world</reNode></reRoot>)
+    val output2 = XMLParser.parseDocument(<reRoot><reNode>Hello world</reNode></reRoot>)
+    val output3 = XMLParser.parseDocument(<reRoot><reNode> world</reNode></reRoot>)
+
+    assertResult(Some(Set(output1, output2, output3))) {
+      TransformHelper.transformAbstract(xslt, data, PowersetDomain)
+    }
+  }
 }
