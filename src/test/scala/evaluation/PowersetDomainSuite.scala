@@ -118,10 +118,10 @@ class PowersetDomainSuite extends FunSuite {
     val n2: N = Some(Set(b))
     val n3: N = Some(Set(c))
 
-    val input = Set(n1, n2, n3)
+    val input = List(n1, n2, n3)
 
     assertResult(Some(Set(NodeSetValue(List(a, b, c))))) {
-      xpathDom.liftNodeSet(input)
+      xpathDom.toNodeSet(xmlDom.liftList(input))
     }
   }
 
@@ -130,7 +130,7 @@ class PowersetDomainSuite extends FunSuite {
     val n2: N = Some(Set(a, b, c)) // either a, b or c
     val n3: N = Some(Set(d)) // exactly d
 
-    val input = Set(n1, n2, n3)
+    val input = List(n1, n2, n3)
     val expected = Some(Set(
       NodeSetValue(List(b, d)),
       NodeSetValue(List(a, b, d)),
@@ -140,7 +140,7 @@ class PowersetDomainSuite extends FunSuite {
     ))
 
     assertResult(expected) {
-      xpathDom.liftNodeSet(input)
+      xpathDom.toNodeSet(xmlDom.liftList(input))
     }
   }
 

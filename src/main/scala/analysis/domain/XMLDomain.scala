@@ -36,6 +36,10 @@ trait XMLDomain[N, L, V] {
 
   def getRoot(node: N): N
 
+  // this must return an empty list, NOT BOTTOM, when the node is not an element
+  def getAttributes(node: N): L
+
+  // this must return an empty list, NOT BOTTOM, when the node does not have children
   def getChildren(node: N): L
 
   def getParent(node: N): N
@@ -50,7 +54,7 @@ trait XMLDomain[N, L, V] {
 
   def wrapInRoot(list: L): N
 
-  def copyToOutput(list: L): L // TODO: maybe use map() and copy() for single nodes instead?
+  def copyToOutput(list: L): L
 
   def flatMapWithIndex(list: L, f: (N, V) => L): L
 
@@ -74,4 +78,6 @@ trait XMLDomain[N, L, V] {
   def getNodeName(node: N): V
 
   def getConcatenatedTextNodeValues(list: L): V
+
+  def filter(list: L, predicate: N => N): L
 }

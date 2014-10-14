@@ -76,13 +76,13 @@ object PowersetXPathDomain {
     )
 
     override def logicalAnd(left: V, right: V): V = liftBinaryLogicalOp(left, right,
-      // TODO: does shortcut evaluation matter in XPath?
+      // TODO: does shortcut evaluation matter in XPath (it probably does only with type error in union operator)?
       // (shortcut evaluation should be used according to the spec, but XPath has no side-effects)
       (v1, v2) => BooleanValue(v1.toBooleanValue.value && v2.toBooleanValue.value)
     )
 
     override def logicalOr(left: V, right: V): V = liftBinaryLogicalOp(left, right,
-      // TODO: does shortcut evaluation matter in XPath?
+      // TODO: does shortcut evaluation matter in XPath (it probably does only with type error in union operator)?
       // (shortcut evaluation should be used according to the spec, but XPath has no side-effects)
       (v1, v2) => BooleanValue(v1.toBooleanValue.value || v2.toBooleanValue.value)
     )

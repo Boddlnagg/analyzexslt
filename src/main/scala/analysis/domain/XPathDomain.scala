@@ -28,16 +28,14 @@ trait XPathDomain[V, N, L] {
   def liftLiteral(lit: String): V
   def liftNumber(num: Double): V
   def liftBoolean(bool: Boolean): V
-  def liftNodeSet(set: Set[N]): V
+
+  // converts a list to a node-set value (orders in document order, removes duplicates, wraps in XPath value)
+  def toNodeSet(list: L): V
   def nodeSetUnion(left: V, right: V): V
   def toStringValue(v: V): V
   def toNumberValue(v: V): V
   def toBooleanValue(v: V): V
   def maybeTrue(v: V): Boolean
   def maybeFalse(v: V): Boolean
-
-  // TODO: implement this in an abstract way in the analyzer instead (not in each domain)
-  def evaluateLocationPath(startNodeSet: V, steps: List[XPathStep], isAbsolute: Boolean): V
-
   def matchNodeSetValues(value: V): (L, V)
  }

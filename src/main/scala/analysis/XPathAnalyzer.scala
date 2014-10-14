@@ -2,7 +2,10 @@ package analysis
 
 import analysis.domain.Domain
 import util.EvaluationError
+import xml._
 import xpath._
+
+import scala.collection.immutable.TreeSet
 
 class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   val xmlDom = dom.xmlDom
@@ -47,38 +50,49 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         case (_, evaluatedParams) =>
           throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
       }
-      case LocationPath(steps, isAbsolute) => xpathDom.evaluateLocationPath(xpathDom.liftNodeSet(Set(ctx.node)), steps, isAbsolute)
-      case PathExpr(filter, locationPath) => xpathDom.evaluateLocationPath(evaluate(filter, ctx), locationPath.steps, locationPath.isAbsolute)
+      case LocationPath(steps, isAbsolute) => xpathDom.toNodeSet(evaluateLocationPathSingle(ctx.node, steps, isAbsolute))
+      case PathExpr(filter, locationPath) =>
+        val (startNodeSet, _) = xpathDom.matchNodeSetValues(evaluate(filter, ctx))
+        xpathDom.toNodeSet(evaluateLocationPath(startNodeSet, locationPath.steps, locationPath.isAbsolute))
       case FilterExpr(subexpr, predicates) =>
         if (!predicates.isEmpty) throw new NotImplementedError("Predicates are not supported")
         evaluate(subexpr, ctx)
     }
   }
 
-  // TODO: make this more abstract so that it will work again (use L instead of TreeSet[XMLNode])?
-  // currently this does not type check
-  /*def evaluateLocationPathAbstract(ctxNode: N, steps: List[XPathStep], isAbsolute: Boolean): Option[Set[TreeSet[XMLNode]]] = {
+  /** Evaluates the steps of a location path for a set of starting nodes.
+    *
+    * @param startNodeSet the set of nodes to start with
+    * @param steps the list of remaining steps to evaluate
+    * @param isAbsolute a value indicating whether the location path is absolute (or relative)
+    * @return an ordered set of nodes resulting from the location path, ordered in document order
+    */
+  def evaluateLocationPath(startNodeSet: L, steps: List[XPathStep], isAbsolute: Boolean): L =
+    xmlDom.flatMapWithIndex(startNodeSet, {
+      case (n, _) => evaluateLocationPathSingle(n, steps, isAbsolute)
+    })
+
+  /** Evaluates the steps of a location path for a single starting node.
+    *
+    * @param ctxNode the context node
+    * @param steps the list of remaining steps to evaluate
+    * @param isAbsolute a value indicating whether the location path is absolute (or relative)
+    * @return an ordered set of nodes resulting from the location path, ordered in document order
+    */
+  def evaluateLocationPathSingle(ctxNode: N, steps: List[XPathStep], isAbsolute: Boolean): L = {
+    // TODO: implement more axes WITH TESTS!
     // evaluate steps from left to right, keep nodes in document order (not required by XPath, but by XSLT)
     (steps, isAbsolute) match {
-      case (Nil, true) => ctxNode match {
-        case None => None
-        case Some(s) => Some(s.map(n => TreeSet[XMLNode](n.root)))
-      }
-      case (steps, true) => evaluateLocationPathInternalAbstract(getRoot(ctxNode), steps, false)
+      case (Nil, true) => xmlDom.liftList(List(xmlDom.getRoot(ctxNode)))
+      case (_, true) => evaluateLocationPathSingle(xmlDom.getRoot(ctxNode), steps, false)
       case (first :: rest, false) =>
-        val nodes: Option[Set[TreeSet[XMLNode]]] = first.axis match {
+        val nodes: L = first.axis match {
           // the child axis contains the children of the context node
-          case ChildAxis => ctxNode match {
-            case None => None // know nothing about the node -> know nothing about it's children
-            case Some(s) => Some(s.map(n => n match {
-              case XMLRoot(elem) => TreeSet[XMLNode](elem)
-              case XMLElement(_, _, children, _) => TreeSet[XMLNode]() ++ children
-              case _ => TreeSet[XMLNode]()
-            }))
-          }
+          case ChildAxis => xmlDom.getChildren(ctxNode)
           // the descendant axis contains the descendants of the context node
           // a descendant is a child or a child of a child and so on
-          /*case DescendantAxis => TreeSet[XMLNode]() ++ ctxNode.descendants
+          case DescendantAxis => getDescendants(ctxNode)
+          /*
           // the parent axis contains the parent of the context node, if there is one
           case ParentAxis => ctxNode match {
             case XMLRoot(_) => TreeSet() // root does not have a parent
@@ -115,43 +129,59 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           case PrecedingAxis =>
             val ancestors = ctxNode.ancestors
             TreeSet[XMLNode]() ++ ctxNode.root.nodesInOrder.filter(n => !n.isInstanceOf[XMLAttribute] && n < ctxNode && !ancestors.contains(n))
+          */
           // the attribute axis contains the attributes of the context node; the axis will be empty
           // unless the context node is an element
-          case AttributeAxis => ctxNode match {
-            case XMLElement(_, attr, _, _) => TreeSet[XMLNode]() ++ attr
-          }
+          case AttributeAxis => xmlDom.getAttributes(ctxNode)
           // the namespace axis contains the namespace nodes of the context node
           // the axis will be empty unless the context node is an element
           case NamespaceAxis => throw new NotImplementedError("Namespace nodes are not implemented, therefore the namespace axis is not supported")
           // the self axis contains just the context node itself
-          case SelfAxis => TreeSet(ctxNode)
+          case SelfAxis => xmlDom.liftList(List(ctxNode))
           // the descendant-or-self axis contains the context node and the descendants of the context node
-          case DescendantOrSelfAxis => TreeSet(ctxNode) ++ ctxNode.descendants
+          case DescendantOrSelfAxis => xmlDom.listConcat(xmlDom.liftList(List(ctxNode)), getDescendants(ctxNode))
+          /*
           // the ancestor-or-self axis contains the context node and the ancestors of the context node
           // thus, the ancestor axis will always include the root node
-          case AncestorOrSelfAxis => TreeSet(ctxNode) ++ ctxNode.ancestors*/
+          case AncestorOrSelfAxis => TreeSet(ctxNode) ++ ctxNode.ancestors
+          */
         }
-        val testedNodes = nodes.map(_.map(s => s.filter {node => first.test match {
-          case NameTest("*") => XPathAxis.isPrincipalNodeType(first.axis, node)
-          case NameTest(testName) => XPathAxis.isPrincipalNodeType(first.axis, node) && (node match {
-            case XMLElement(name, _, _, _) => name == testName
-            case XMLAttribute(name, _, _) => name == testName
-            case _ => false
-          })
-          case TextNodeTest => node.isInstanceOf[XMLTextNode]
-          case CommentNodeTest => node.isInstanceOf[XMLComment]
-          case AllNodeTest => true
-        }}))
+        val testedNodes = xmlDom.filter(nodes, node => {
+          val (testMatches, _) = first.test match {
+            case NameTest("*") => isPrincipalNodeType(first.axis, node)
+            case NameTest(testName) =>
+              val (correctType, _) = isPrincipalNodeType(first.axis, node)
+              xmlDom.nameMatches(correctType, testName)
+            case TextNodeTest => xmlDom.isTextNode(node)
+            case CommentNodeTest => xmlDom.isComment(node)
+            case AllNodeTest => (node, xmlDom.bottom)
+          }
+          testMatches
+        })
         if (!first.predicates.isEmpty) throw new NotImplementedError("Predicates are not supported") // NOTE: see XPath spec section 2.4 to implement these
-        testedNodes match {
-          case None => None
-          case Some(s) => Some(s.map(nodes => nodes.flatMap { n => evaluateLocationPathAbstract(lift(n), rest, false)}))
-         //.flatMap { n => evaluateLocationPath(n, rest, false)}
-        }
-      case (Nil, false) => ctxNode match {
-        case None => None
-        case Some(s) => Some(s.map(n => TreeSet(n)))
-      }
+        // convert to node-set value and back to L in order to sort the list and remove duplicates
+        val (testedNodeSet, _) = xpathDom.matchNodeSetValues(xpathDom.toNodeSet(testedNodes))
+        xmlDom.flatMapWithIndex(testedNodeSet, {
+          case (node, _) => evaluateLocationPathSingle(node, rest, false)
+        })
+      case (Nil, false) => xmlDom.liftList(List(ctxNode))
     }
-  }*/
+  }
+
+  /** Returns a value indicating whether a node is of the principal node type of a given axis (see XPath spec section 2.3) */
+  def isPrincipalNodeType(axis: XPathAxis, node: N): (N, N) = {
+    axis match {
+      case AttributeAxis => xmlDom.isAttribute(node)
+      case NamespaceAxis => (xmlDom.bottom, node) // namespace nodes are not supported
+      case _ => xmlDom.isElement(node)
+    }
+  }
+
+  /** Returns a list of all descendants of a node */
+  def getDescendants(node: N): L = {
+      val children = xmlDom.getChildren(node)
+      xmlDom.flatMapWithIndex(children, {
+        case (n, _) => xmlDom.listConcat(xmlDom.liftList(List(n)), getDescendants(n))
+      })
+  }
 }

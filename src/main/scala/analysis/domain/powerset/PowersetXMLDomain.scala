@@ -2,8 +2,6 @@ package analysis.domain.powerset
 
 import analysis.domain.{XPathDomain, XMLDomain}
 import xml._
-import xpath._
-import xslt.{XSLTStylesheet, XSLTTemplate}
 
 /** Just a wrapper for the type aliases */
 object PowersetXMLDomain {
@@ -48,16 +46,15 @@ object PowersetXMLDomain {
 
     def liftElement(name: String, attributes: L, children: L): N = {
       // TODO: simplify (remove helper functions that are able to do more than necessary)
-
       // appendChildren (taking a list of nodes) probably is better than appendChild applied multiple times (because of
       // combinatorial possibilities). We can still lift a single node to a list to append a single child
       def appendChildren(node: N, list: L): N = (node, list) match {
         case (None, _) => None
         case (_, None) => None
         case (Some(n), Some(l)) => Some(n.cross(l).map {
+          // it can only be an XMLElement because we start with a single XMLElement and the type can't change
           case (e: XMLElement, ll) => {
-            // TODO: do we need to copy the nodes here? (each element of the set must refer to its own copy)
-            // TODO: check if there is ever a case where the parent is already set (make sure we always build up result trees from bottom to top)
+            // copy the node, because each element of the set must refer to its own copy (because of the parent-child-references)
             assert(e.parent == null)
             val copy = e.copy.asInstanceOf[XMLElement]
             ll.foreach(newChild => {
@@ -66,7 +63,6 @@ object PowersetXMLDomain {
             })
             copy
           }
-          // TODO: what happens if it's not an XMLElement?
         }.toSet)
       }
 
@@ -74,9 +70,9 @@ object PowersetXMLDomain {
         case (None, _) => None
         case (_, None) => None
         case (Some(n), Some(l)) => Some(n.cross(l).map {
+          // it can only be an XMLElement because we start with a single XMLElement and the type can't change
           case (e: XMLElement, ll) => {
-            // TODO: do we need to copy the nodes here? (each element of the set must refer to its own copy)
-            // TODO: check if there is ever a case where the parent is already set (make sure we always build up result trees from bottom to top)
+            // copy the node, because each element of the set must refer to its own copy (because of the parent-child-references)
             assert(e.parent == null)
             val copy = e.copy.asInstanceOf[XMLElement]
             ll.foreach(newChild => {
@@ -85,7 +81,6 @@ object PowersetXMLDomain {
             })
             copy
           }
-          // TODO: what happens if it's not an XMLElement?
         }.toSet)
       }
 
@@ -115,10 +110,15 @@ object PowersetXMLDomain {
       case Some(s) => Some(s.map(n => n.root))
     }
 
-    override def getChildren(node: PowersetXMLDomain.N): L = node.map(_.collect {
+    override def getAttributes(node: N): L = node.map(_.map {
+      case XMLElement(_, attr, _, _) => attr.toList
+      case _ => Nil // NOTE: other node types have no attributes, but this must NOT evaluate to BOTTOM
+    })
+
+    override def getChildren(node: PowersetXMLDomain.N): L = node.map(_.map {
       case XMLRoot(elem) => List(elem)
       case XMLElement(_, _, children, _) => children.toList
-      case _ => Nil // NOTE: other node types have no children
+      case _ => Nil // NOTE: other node types have no children, but this must NOT evaluate to BOTTOM
     })
 
     def getParent(node: N): N = node match {
@@ -213,7 +213,6 @@ object PowersetXMLDomain {
       case None => (None, None)
       case Some(s) =>
         // nodes that can't have a name are evaluated to bottom implicitly, i.e. they won't appear in the output at all
-        // TODO: is that the right strategy?
         val yes = s.filter {
           case XMLElement(elementName, _, _, _) => elementName == name
           case XMLAttribute(attributeName, _, _) => attributeName == name
@@ -262,6 +261,22 @@ object PowersetXMLDomain {
       case Some(s) => xpathDom.join(s.map { l =>
         xpathDom.liftLiteral(l.collect { case n: XMLTextNode => n.value }.mkString(""))
       }.toList)
+    }
+
+    override def filter(list: L, predicate: N => N): L = list match {
+      case None => None
+      case Some(s) => Some(s.map(_.filter { n =>
+        val node: N = Some(Set(n))
+        val result = predicate(node)
+        assert(result.isDefined)
+        result.get.toList match {
+          case Nil => false // list without elements -> element was filtered out
+          case first :: Nil => true // list with one element -> element was not filtered out
+          case _ =>
+            // list with more than one element -> this should not happen in this domain
+            throw new AssertionError("Filter predicate returned node with more than one possibility.")
+        }
+      }))
     }
   }
 }

@@ -107,7 +107,6 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val textResult = xmlDom.getConcatenatedTextNodeValues(evaluate(sheet, value, context))
         Left(xmlDom.liftList(List(xmlDom.liftAttribute(attribute, textResult))))
       case ApplyTemplatesInstruction(None, params) =>
-        // TODO: what happens when template is applied on attribute or text node?
         Left(transform(sheet, xmlDom.getChildren(context.node), context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case ApplyTemplatesInstruction(Some(expr), params) =>
         val result = xpathAnalyzer.evaluate(expr, xsltToXPathContext(context))

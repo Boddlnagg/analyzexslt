@@ -93,7 +93,7 @@ object XPathEvaluator {
     // evaluate steps from left to right, keep nodes in document order (not required by XPath, but by XSLT)
     (steps, isAbsolute) match {
       case (Nil, true) => TreeSet(ctxNode.root)
-      case (steps, true) => evaluateLocationPathSingle(ctxNode.root, steps, false)
+      case (_, true) => evaluateLocationPathSingle(ctxNode.root, steps, false)
       case (first :: rest, false) =>
         val nodes: TreeSet[XMLNode] = first.axis match {
           // the child axis contains the children of the context node

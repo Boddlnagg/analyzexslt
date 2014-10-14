@@ -162,7 +162,6 @@ object XSLTParser {
 
   /** Parses &lt;xsl:param&gt; and &lt;xsl:with-param&gt; nodes */
   def parseParams(input: Seq[Node], elemName: String): Map[String, XPathExpr] = {
-    // TODO: support content of element instead of "select" attribute?
     val params = input.filter(isElem(_, elemName))
       .map(n => n.asInstanceOf[Elem])
       .map(elem => (elem.attribute("name"), elem.attribute("select")) match {

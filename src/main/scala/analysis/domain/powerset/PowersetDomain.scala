@@ -1,11 +1,10 @@
 package analysis.domain.powerset
 
 import analysis.domain.Domain
-import analysis.domain.powerset.PowersetXMLDomain.N
-import analysis.domain.powerset.PowersetXMLDomain.L
+import analysis.domain.powerset.PowersetXMLDomain.{L, N}
 import analysis.domain.powerset.PowersetXPathDomain.V
-import xpath._
 import xml.{XMLAttribute, XMLTextNode, XMLNode}
+import xpath._
 
 import scala.collection.immutable.TreeSet
 
@@ -48,28 +47,8 @@ object PowersetDomain extends Domain[N, L, V] {
 
   object XPATH extends PowersetXPathDomain.D[N, L] {
 
-    // TODO: replace this with toNodeSet(L), because we already have liftList(List[N])
-    // but maybe this is not even needed
-    override def liftNodeSet(set: Set[N]): V = {
-      def getProduct(input:List[List[XMLNode]]): List[List[XMLNode]] = input match{
-        case Nil => Nil // just in case you input an empty list
-        case head::Nil => head.map(_::Nil)
-        case head::tail => for(elem<- head; sub <- getProduct(tail)) yield elem::sub
-      }
-
-      if (set.exists(n => !n.isDefined))
-        None
-      else
-        Some(getProduct(set.map(_.get.toList).toList).map(nodes => NodeSetValue((TreeSet[XMLNode]() ++ nodes).toList)).toSet)
-    }
-
-    override def evaluateLocationPath(startNodeSet: V, steps: List[XPathStep], isAbsolute: Boolean): V = startNodeSet match {
-      case None => None
-      // TODO: implement this using join instead of flatMap
-      case Some(values) => Some(values.flatMap {
-        case nodes@NodeSetValue(_) => Set[XPathValue](NodeSetValue(XPathEvaluator.evaluateLocationPath(TreeSet[XMLNode]() ++ nodes.nodes, steps, isAbsolute).toList))
-        case _ => Set[XPathValue]() // bottom
-      })
+    override def toNodeSet(set: L): V = {
+      set.map(_.map(nodes => NodeSetValue((TreeSet[XMLNode]() ++ nodes).toList)))
     }
 
     override def matchNodeSetValues(value: V): (L, V) = value match {
