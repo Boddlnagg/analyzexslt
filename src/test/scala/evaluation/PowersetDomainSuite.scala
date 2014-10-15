@@ -40,31 +40,31 @@ class PowersetDomainSuite extends FunSuite {
     val out2 = XMLParser.parse(<out2/>).asInstanceOf[XMLElement]
     val out3 = XMLParser.parse(<out3/>).asInstanceOf[XMLElement]
 
-    assertResult(Some(Set(List(out1)))) { xmlDom.liftList(List(xmlDom.liftElement("out1"))) }
-    assertResult(None) { xmlDom.liftList(List(xmlDom.liftElement("out1"), None))} // this is true for this domain
+    assertResult(Some(Set(List(out1)))) { xmlDom.liftList(List(xmlDom.createElement("out1"))) }
+    assertResult(None) { xmlDom.liftList(List(xmlDom.createElement("out1"), None))} // this is true for this domain
     assertResult(Some(Set(List(out1, out3), List(out2, out3)))) { xmlDom.liftList(List(Some(Set(out1, out2)), Some(Set(out3)))) }
     // this is true for all domains (if one of the elements is bottom, the resulting list must be bottom)
-    assertResult(xmlDom.listBottom) { xmlDom.liftList(List(Some(Set(out1, out2)), xmlDom.bottom)) }
+    assertResult(xmlDom.bottomList) { xmlDom.liftList(List(Some(Set(out1, out2)), xmlDom.bottom)) }
     // the empty list must be lifted to the empty list
     assertResult(Some(Set(Nil))) { xmlDom.liftList(Nil) }
   }
 
   test("Lift element with children") {
-    val child = xmlDom.liftList(List(xmlDom.liftElement("child")))
+    val child = xmlDom.liftList(List(xmlDom.createElement("child")))
     assertResult(Some(Set(XMLParser.parse(<e1><child/></e1>)))) {
-      xmlDom.liftElement("e1", xmlDom.liftList(Nil), child)
+      xmlDom.createElement("e1", xmlDom.liftList(Nil), child)
     }
 
-    val children = xmlDom.listJoin(xmlDom.liftList(List(xmlDom.liftElement("child1"), xmlDom.liftElement("child2"))), child)
+    val children = xmlDom.joinList(xmlDom.liftList(List(xmlDom.createElement("child1"), xmlDom.createElement("child2"))), child)
     assertResult(Some(Set(XMLParser.parse(<e1><child/></e1>), XMLParser.parse(<e1><child1/><child2/></e1>)))) {
-      xmlDom.liftElement("e1", xmlDom.liftList(Nil), children)
+      xmlDom.createElement("e1", xmlDom.liftList(Nil), children)
     }
   }
 
   test("Lift element with attributes") {
-    val attr = xmlDom.liftList(List(xmlDom.liftAttribute("name", xpathDom.liftLiteral("value"))))
+    val attr = xmlDom.liftList(List(xmlDom.createAttribute("name", xpathDom.liftLiteral("value"))))
     assertResult(Some(Set(XMLParser.parse(<e1 name="value"/>)))) {
-      xmlDom.liftElement("e1", attr, xmlDom.liftList(Nil))
+      xmlDom.createElement("e1", attr, xmlDom.liftList(Nil))
     }
     /*assertResult(Some(Set(XMLParser.parse(<e1 name="value"/>), XMLParser.parse(<e2 name="value"/>)))) {
       xmlDom.addAttributes(Some(Set(e1, e2)), attr)
@@ -81,7 +81,7 @@ class PowersetDomainSuite extends FunSuite {
       XMLParser.parse(<e1 attr1="-1" attr2="-2"/>),
       XMLParser.parse(<e1/>)
     ))) {
-      xmlDom.liftElement("e1", attr2, xmlDom.liftList(Nil))
+      xmlDom.createElement("e1", attr2, xmlDom.liftList(Nil))
     }
   }
 
@@ -91,9 +91,9 @@ class PowersetDomainSuite extends FunSuite {
     val attr2 = XMLAttribute("attr2", "2")
     val attr3 = XMLAttribute("attr3", "3")
 
-    val l1a = xmlDom.liftList(List(xmlDom.liftAttribute("attr1", xpathDom.liftLiteral("1"))))
-    val l2 = xmlDom.liftList(List(xmlDom.liftAttribute("attr2", xpathDom.liftLiteral("2"))))
-    val l3 = xmlDom.liftList(List(xmlDom.liftAttribute("attr3", xpathDom.liftLiteral("3"))))
+    val l1a = xmlDom.liftList(List(xmlDom.createAttribute("attr1", xpathDom.liftLiteral("1"))))
+    val l2 = xmlDom.liftList(List(xmlDom.createAttribute("attr2", xpathDom.liftLiteral("2"))))
+    val l3 = xmlDom.liftList(List(xmlDom.createAttribute("attr3", xpathDom.liftLiteral("3"))))
 
     val l1ab: L = Some(Set(List(attr1a), List(attr1b)))
     val l12: L = Some(Set(List(attr1a), List(attr1a, attr2)))

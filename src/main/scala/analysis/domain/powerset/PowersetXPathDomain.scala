@@ -13,7 +13,9 @@ object PowersetXPathDomain {
   /** This is the actual (partial) domain implementation */
   trait D[N, L] extends XPathDomain[V, N, L] {
     override def top: V = None
-    override def bottom: V = Some(Set())
+    override def bottom: V = BOT
+
+    val BOT: V = Some(Set())
 
     // booleans are a finite domain so we don't need to represent an unknown boolean as None
     val anyBoolean: V = Some(Set(BooleanValue(true), BooleanValue(false)))
@@ -31,9 +33,10 @@ object PowersetXPathDomain {
     }*/
 
     def liftBinaryOp(left: V, right: V, pf: PartialFunction[(XPathValue, XPathValue), XPathValue]): V = (left, right) match {
-      case (None, _) => None
-      case (_, None) => None
+      case (BOT, _) => BOT
+      case (_, BOT) => BOT
       case (Some(s1), Some(s2)) => Some(s1.cross(s2).collect(pf).toSet)
+      case _ => None
     }
 
     def liftBinaryLogicalOp(left: V, right: V, f: (XPathValue, XPathValue) => XPathValue): V =
@@ -43,12 +46,13 @@ object PowersetXPathDomain {
       }
 
     def liftBinaryNumOp(left: V, right: V, f: (Double, Double) => Double): V = (left, right) match {
-      case (None, _) => None
-      case (_, None) => None
+      case (BOT, _) => BOT
+      case (_, BOT) => BOT
       case (Some(s1), Some(s2)) => Some(s1.cross(s2)
         .map { case (v1, v2) => NumberValue(f(v1.toNumberValue.value, v2.toNumberValue.value))}
         .toSet
       )
+      case _ => None
     }
 
     override def add(left: V, right: V): V = liftBinaryNumOp(left, right,

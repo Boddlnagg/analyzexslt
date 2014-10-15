@@ -36,14 +36,14 @@ class AbstractXPathMatcher[N, L, V](dom: Domain[N, L, V]) {
         // child::name
         case XPathStep(ChildAxis, NameTest(name), Nil) =>
           val (element, notElement) = xmlDom.isElement(node)
-          val (hasName, notHasName) = xmlDom.nameMatches(element, name)
+          val (hasName, notHasName) = xmlDom.hasName(element, name)
           (hasName, xmlDom.join(notElement, notHasName))
         // attribute::*
         case XPathStep(AttributeAxis, NameTest("*"), Nil) => xmlDom.isAttribute(node)
         // attribute::name
         case XPathStep(AttributeAxis, NameTest(name), Nil) =>
           val (attr, notAttr) = xmlDom.isAttribute(node)
-          val (hasName, notHasName) = xmlDom.nameMatches(attr, name)
+          val (hasName, notHasName) = xmlDom.hasName(attr, name)
           (hasName, xmlDom.join(notAttr, notHasName))
         // attribute::comment() OR attribute::text()
         // these can never match anything

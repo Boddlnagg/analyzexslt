@@ -13,10 +13,12 @@ object PowersetXMLDomain {
     val xpathDom: XPathDomain[V, N, L]
 
     override def top: N = None
-    override def bottom: N = Some(Set())
+    override def bottom: N = BOT
 
-    override def listTop: L = None
-    override def listBottom: L = Some(Set())
+    val BOT: N = Some(Set())
+
+    override def topList: L = None
+    override def bottomList: L = Some(Set())
 
     override def join(n1: N, n2: N): N = (n1, n2) match {
       case (None, _) => None
@@ -36,21 +38,17 @@ object PowersetXMLDomain {
       case (Some(s1), Some(s2)) => s1.subsetOf(s2)
     }*/
 
-    override def listJoin(l1: L, l2: L): L = (l1, l2) match {
+    override def joinList(l1: L, l2: L): L = (l1, l2) match {
       case (None, _) => None
       case (_, None) => None
       case (Some(s1), Some(s2)) => Some(s1.union(s2))
     }
 
-    override def liftDocument(root: XMLRoot): N = Some(Set(root))
-
-    def liftElement(name: String, attributes: L, children: L): N = {
+    def createElement(name: String, attributes: L, children: L): N = {
       // TODO: simplify (remove helper functions that are able to do more than necessary)
       // appendChildren (taking a list of nodes) probably is better than appendChild applied multiple times (because of
       // combinatorial possibilities). We can still lift a single node to a list to append a single child
       def appendChildren(node: N, list: L): N = (node, list) match {
-        case (None, _) => None
-        case (_, None) => None
         case (Some(n), Some(l)) => Some(n.cross(l).map {
           // it can only be an XMLElement because we start with a single XMLElement and the type can't change
           case (e: XMLElement, ll) => {
@@ -64,11 +62,10 @@ object PowersetXMLDomain {
             copy
           }
         }.toSet)
+        case _ => None
       }
 
       def addAttributes(node: N, list: L): N = (node, list) match {
-        case (None, _) => None
-        case (_, None) => None
         case (Some(n), Some(l)) => Some(n.cross(l).map {
           // it can only be an XMLElement because we start with a single XMLElement and the type can't change
           case (e: XMLElement, ll) => {
@@ -82,6 +79,7 @@ object PowersetXMLDomain {
             copy
           }
         }.toSet)
+        case _ => None
       }
 
       var result: N = Some(Set(XMLElement(name)))
@@ -127,11 +125,10 @@ object PowersetXMLDomain {
     }
 
     override def listConcat(list1: L, list2: L): L = (list1, list2) match {
-      case (None, _) => None
-      case (_, None) => None
       case (Some(l1), Some(l2)) => Some(l1.cross(l2).map {
         case (ll1, ll2) => ll1 ++ ll2
       }.toSet)
+      case _ => None
     }
 
     override def partitionAttributes(list: L): (L, L) = list match {
@@ -209,7 +206,7 @@ object PowersetXMLDomain {
 
     // first result is a node of which we KNOW that it matches
     // second result is a node of which we KNOW that it won't match
-    override def nameMatches(node: N, name: String): (N, N) = node match {
+    override def hasName(node: N, name: String): (N, N) = node match {
       case None => (None, None)
       case Some(s) =>
         // nodes that can't have a name are evaluated to bottom implicitly, i.e. they won't appear in the output at all
@@ -226,20 +223,23 @@ object PowersetXMLDomain {
         (Some(yes), Some(no))
     }
 
-    // first result is a node of which we KNOW that it matches
-    // second result is a node of which we KNOW that it won't match
     override def hasParent(node: N, parent: N): (N, N) = (node, parent) match {
+      case (BOT, _) => (BOT, BOT)
+      case (_, BOT) => (BOT, node) // parent is BOTTOM -> can't match
       case (None, _) => (None, None) // don't know anything about the node
-      case (Some(_), None) => (node, node) // don't know anything about the parent
+      case (Some(_), None) => (node, node) // parent is TOP -> don't know anything
       case ((Some(nodes), Some(parents))) =>
         val yes = nodes.filter(n => parents.contains(n.parent))
         val no = nodes.filter(n => !parents.contains(n.parent))
         (Some(yes), Some(no))
+
     }
 
     override def hasAncestor(node: N, ancestor: N): (N, N) = (node, ancestor) match {
+      case (BOT, _) => (BOT, BOT)
+      case (_, BOT) => (BOT, node) // ancestor is BOTTOM -> can't match
       case (None, _) => (None, None) // don't know anything about the node
-      case (Some(_), None) => (node, node) // don't know anything about the ancestor
+      case (Some(_), None) => (node, node) // ancestor is TOP -> don't know anything
       case ((Some(nodes), Some(ancestors))) =>
         val yes = nodes.filter(n => ancestors.exists(a => n.ancestors.contains(a)))
         val no = nodes.filter(n => !ancestors.exists(a => n.ancestors.contains(a)))
@@ -248,7 +248,7 @@ object PowersetXMLDomain {
 
     // return empty string if node has no name
     override def getNodeName(node: N): V = node match {
-      case None => xpathDom.top
+      case None => xpathDom.top // TODO: could return topString
       case Some(s) => xpathDom.join(s.map {
         case XMLElement(nodeName, _, _, _) => xpathDom.liftLiteral(nodeName)
         case XMLAttribute(nodeName, _, _) => xpathDom.liftLiteral(nodeName)
@@ -257,19 +257,19 @@ object PowersetXMLDomain {
     }
 
     override def getConcatenatedTextNodeValues(list: L): V = list match {
-      case None => xpathDom.top
+      case None => xpathDom.top // TODO: could return topString
       case Some(s) => xpathDom.join(s.map { l =>
         xpathDom.liftLiteral(l.collect { case n: XMLTextNode => n.value }.mkString(""))
       }.toList)
     }
 
-    override def filter(list: L, predicate: N => N): L = list match {
+    override def filter(list: L, predicate: N => (N, N)): L = list match {
       case None => None
       case Some(s) => Some(s.map(_.filter { n =>
         val node: N = Some(Set(n))
-        val result = predicate(node)
-        assert(result.isDefined)
-        result.get.toList match {
+        val (resultTrue, _) = predicate(node)
+        assert(resultTrue.isDefined)
+        resultTrue.get.toList match {
           case Nil => false // list without elements -> element was filtered out
           case first :: Nil => true // list with one element -> element was not filtered out
           case _ =>
@@ -281,7 +281,7 @@ object PowersetXMLDomain {
 
     override def flatMapWithIndex(list: L, f: (N, V) => L): L = list match {
       case None => None
-      case Some(s) => listJoin(s.map { l =>
+      case Some(s) => joinList(s.map { l =>
         val mapped = l.zipWithIndex.map { case (n, i) => f(Some(Set(n)), xpathDom.liftNumber(i)) }
         val flattened = mapped.foldLeft(liftList(Nil))((acc, next) => listConcat(acc, next))
         flattened

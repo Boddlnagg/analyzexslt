@@ -44,7 +44,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           xmlDom.getNodeListSize(nodeSets)
         case ("sum", List(arg)) =>
           val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
-          if (nodeSets == xmlDom.listBottom) xpathDom.bottom // return bottom if the input is definitely not a node-set
+          if (nodeSets == xmlDom.bottomList) xpathDom.bottom // return bottom if the input is definitely not a node-set
           else xpathDom.top // TODO: implement this correctly? (could also return topNumber if available)
         case ("name"|"local-name", Nil) => xmlDom.getNodeName(ctx.node)
         case (_, evaluatedParams) =>
@@ -91,7 +91,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           case ChildAxis => xmlDom.getChildren(ctxNode)
           // the descendant axis contains the descendants of the context node
           // a descendant is a child or a child of a child and so on
-          case DescendantAxis => getDescendants(ctxNode)
+          case DescendantAxis => xmlDom.getDescendants(ctxNode)
           /*
           // the parent axis contains the parent of the context node, if there is one
           case ParentAxis => ctxNode match {
@@ -139,7 +139,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           // the self axis contains just the context node itself
           case SelfAxis => xmlDom.liftList(List(ctxNode))
           // the descendant-or-self axis contains the context node and the descendants of the context node
-          case DescendantOrSelfAxis => xmlDom.listConcat(xmlDom.liftList(List(ctxNode)), getDescendants(ctxNode))
+          case DescendantOrSelfAxis => xmlDom.listConcat(xmlDom.liftList(List(ctxNode)), xmlDom.getDescendants(ctxNode))
           /*
           // the ancestor-or-self axis contains the context node and the ancestors of the context node
           // thus, the ancestor axis will always include the root node
@@ -147,16 +147,15 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           */
         }
         val testedNodes = xmlDom.filter(nodes, node => {
-          val (testMatches, _) = first.test match {
+          first.test match {
             case NameTest("*") => isPrincipalNodeType(first.axis, node)
             case NameTest(testName) =>
               val (correctType, _) = isPrincipalNodeType(first.axis, node)
-              xmlDom.nameMatches(correctType, testName)
+              xmlDom.hasName(correctType, testName)
             case TextNodeTest => xmlDom.isTextNode(node)
             case CommentNodeTest => xmlDom.isComment(node)
             case AllNodeTest => (node, xmlDom.bottom)
           }
-          testMatches
         })
         if (!first.predicates.isEmpty) throw new NotImplementedError("Predicates are not supported") // NOTE: see XPath spec section 2.4 to implement these
         // convert to node-set value and back to L in order to sort the list and remove duplicates
@@ -175,13 +174,5 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case NamespaceAxis => (xmlDom.bottom, node) // namespace nodes are not supported
       case _ => xmlDom.isElement(node)
     }
-  }
-
-  /** Returns a list of all descendants of a node */
-  def getDescendants(node: N): L = {
-      val children = xmlDom.getChildren(node)
-      xmlDom.flatMapWithIndex(children, {
-        case (n, _) => xmlDom.listConcat(xmlDom.liftList(List(n)), getDescendants(n))
-      })
   }
 }

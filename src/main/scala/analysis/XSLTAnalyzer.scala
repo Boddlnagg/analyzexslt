@@ -25,7 +25,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     xmlDom.flatMapWithIndex(sources, (node, index) => {
       val templates = chooseTemplates(sheet, node)
 
-      xmlDom.listJoin(templates.map { case (tmpl, specificNode) =>
+      xmlDom.joinList(templates.map { case (tmpl, specificNode) =>
         val context = AbstractXSLTContext[N, L, V](specificNode, sources, xpathDom.add(index, xpathDom.liftNumber(1)), variables)
         evaluateTemplate(sheet, tmpl, context, params)
       }.toList)
@@ -99,13 +99,13 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case LiteralElement(name, children) =>
         val innerNodes = evaluate(sheet, children, context)
         val (resultAttributes, resultChildren) = xmlDom.partitionAttributes(innerNodes)
-        val result = xmlDom.liftElement(name, resultAttributes, resultChildren)
+        val result = xmlDom.createElement(name, resultAttributes, resultChildren)
         Left(xmlDom.liftList(List(result)))
-      case LiteralTextNode(text) => Left(xmlDom.liftList(List(xmlDom.liftTextNode(xpathDom.liftLiteral(text)))))
+      case LiteralTextNode(text) => Left(xmlDom.liftList(List(xmlDom.createTextNode(xpathDom.liftLiteral(text)))))
       case SetAttributeInstruction(attribute, value) =>
         // merge the content of all text-node children to create the attribute value
         val textResult = xmlDom.getConcatenatedTextNodeValues(evaluate(sheet, value, context))
-        Left(xmlDom.liftList(List(xmlDom.liftAttribute(attribute, textResult))))
+        Left(xmlDom.liftList(List(xmlDom.createAttribute(attribute, textResult))))
       case ApplyTemplatesInstruction(None, params) =>
         Left(transform(sheet, xmlDom.getChildren(context.node), context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case ApplyTemplatesInstruction(Some(expr), params) =>
@@ -121,12 +121,12 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val evaluated = xpathAnalyzer.evaluate(select, xsltToXPathContext(context))
         val (nodeSets, rest) = xpathDom.matchNodeSetValues(evaluated)
         val nodeSetsOutput = xmlDom.copyToOutput(nodeSets)
-        val restOutput = xmlDom.liftList(List(xmlDom.liftTextNode(xpathDom.toStringValue(rest))))
-        Left(xmlDom.listJoin(nodeSetsOutput, restOutput))
+        val restOutput = xmlDom.liftList(List(xmlDom.createTextNode(xpathDom.toStringValue(rest))))
+        Left(xmlDom.joinList(nodeSetsOutput, restOutput))
       case ChooseInstruction(branches, otherwise) =>
         val possibleBranches = chooseBranches(branches, otherwise, xsltToXPathContext(context))
         // evaluate all possible branches and join the result lists
-        Left(xmlDom.listJoin(possibleBranches.map(br => evaluate(sheet, br, context)).toList))
+        Left(xmlDom.joinList(possibleBranches.map(br => evaluate(sheet, br, context)).toList))
 
     }
   }

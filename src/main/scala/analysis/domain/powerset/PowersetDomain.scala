@@ -19,7 +19,7 @@ object PowersetDomain extends Domain[N, L, V] {
   object XML extends PowersetXMLDomain.D[V] {
     override val xpathDom = XPATH
 
-    override def liftAttribute(name: String, value: V): N = value match {
+    override def createAttribute(name: String, value: V): N = value match {
       case None => None
       case Some(s) => Some(s.collect {
         case StringValue(str) => XMLAttribute(name, str)
@@ -27,7 +27,7 @@ object PowersetDomain extends Domain[N, L, V] {
       })
     }
 
-    override def liftTextNode(value: V): N = value match {
+    override def createTextNode(value: V): N = value match {
       case None => None
       case Some(s) => Some(s.collect {
         case StringValue(str) => XMLTextNode(str)
@@ -42,7 +42,7 @@ object PowersetDomain extends Domain[N, L, V] {
       set.map(_.map(nodes => NodeSetValue((TreeSet[XMLNode]() ++ nodes).toList)))
     }
 
-    override def matchNodeSetValues(value: V): (L, V) = value match {
+    override def matchNodeSetValues(v: V): (L, V) = v match {
       case None => (None, None)
       case Some(s) =>
         val nodeSetContents = Some(s.collect {

@@ -5,7 +5,7 @@ import javax.xml.transform.stream.{StreamResult, StreamSource}
 import javax.xml.transform.{OutputKeys, TransformerFactory}
 
 import analysis.domain.Domain
-import analysis.domain.powerset.PowersetDomain
+import analysis.domain.powerset.{PowersetXMLDomain, PowersetDomain}
 import analysis.XSLTAnalyzer
 import util.EvaluationError
 import xml.{XMLParser, XMLRoot}
@@ -37,7 +37,8 @@ object TransformHelper {
     val stylesheet = XSLTParser.parseStylesheet(xslt)
     val analyzer = new XSLTAnalyzer(PowersetDomain)
     val xmlDom = analyzer.xmlDom
-    val result = analyzer.transform(stylesheet, analyzer.xmlDom.liftDocument(XMLParser.parseDocument(data))).map(_.toList)
+    val liftedInput: PowersetXMLDomain.N = Some(Set(XMLParser.parseDocument(data)))
+    val result = analyzer.transform(stylesheet, liftedInput).map(_.toList)
     result match {
       case None => throw new AssertionError("Expected single result root element, but got infinite result (TOP)")
       case Some(List(r: XMLRoot)) => r
