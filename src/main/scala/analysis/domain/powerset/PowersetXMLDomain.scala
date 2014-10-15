@@ -278,5 +278,14 @@ object PowersetXMLDomain {
         }
       }))
     }
+
+    override def flatMapWithIndex(list: L, f: (N, V) => L): L = list match {
+      case None => None
+      case Some(s) => listJoin(s.map { l =>
+        val mapped = l.zipWithIndex.map { case (n, i) => f(Some(Set(n)), xpathDom.liftNumber(i)) }
+        val flattened = mapped.foldLeft(liftList(Nil))((acc, next) => listConcat(acc, next))
+        flattened
+      }.toList)
+    }
   }
 }

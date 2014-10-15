@@ -19,15 +19,6 @@ object PowersetDomain extends Domain[N, L, V] {
   object XML extends PowersetXMLDomain.D[V] {
     override val xpathDom = XPATH
 
-    override def flatMapWithIndex(list: L, f: (N, V) => L): L = list match {
-      case None => None
-      case Some(s) => xmlDom.listJoin(s.map { l =>
-        val mapped = l.zipWithIndex.map { case (n, i) => f(Some(Set(n)), Some(Set(NumberValue(i)))) }
-        val flattened = mapped.foldLeft(xmlDom.liftList(Nil))((acc, next) => xmlDom.listConcat(acc, next))
-        flattened
-      }.toList)
-    }
-
     override def liftAttribute(name: String, value: V): N = value match {
       case None => None
       case Some(s) => Some(s.collect {
