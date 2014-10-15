@@ -5,6 +5,7 @@ import javax.xml.transform.stream.{StreamResult, StreamSource}
 import javax.xml.transform.{OutputKeys, TransformerFactory}
 
 import analysis.domain.Domain
+import analysis.domain.concrete._
 import analysis.domain.powerset.{PowersetXMLDomain, PowersetDomain}
 import analysis.XSLTAnalyzer
 import util.EvaluationError
@@ -43,6 +44,20 @@ object TransformHelper {
       case None => throw new AssertionError("Expected single result root element, but got infinite result (TOP)")
       case Some(List(r: XMLRoot)) => r
       case Some(Nil) => throw new EvaluationError("Expected single result root element, but got no result (BOTTOM)")
+      case _ => throw new AssertionError(f"Expected single result root element, but got $result")
+    }
+  }
+
+  def transformAbstractConcrete(xslt: Elem, data: Elem): XMLRoot = {
+    val stylesheet = XSLTParser.parseStylesheet(xslt)
+    val analyzer = new XSLTAnalyzer(ConcreteDomain)
+    val xmlDom = analyzer.xmlDom
+    val liftedInput: ConcreteXMLDomain.N = Value(XMLParser.parseDocument(data))
+    val result = analyzer.transform(stylesheet, liftedInput)
+    result match {
+      case Top() => throw new AssertionError("Expected single result root element, but got infinite result (TOP)")
+      case Value(r: XMLRoot) => r
+      case Bottom() => throw new EvaluationError("Expected single result root element, but got no result (BOTTOM)")
       case _ => throw new AssertionError(f"Expected single result root element, but got $result")
     }
   }

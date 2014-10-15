@@ -148,7 +148,7 @@ trait XMLDomain[N, L, V] {
     */
   def hasName(node: N, name: String): (N, N)
 
-  /** Get the name for a given node. Nodes that don't have a name (i.e. is not an element or attribute node)
+  /** Get the name for a given node. Nodes that don't have a name (i.e. are not an element or attribute node)
     * are evaluated to the empty string, not BOTTOM!
     */
   def getNodeName(node: N): V
@@ -156,7 +156,9 @@ trait XMLDomain[N, L, V] {
   /** Concatenates the values of all text nodes in the list. List elements that are not text nodes are ignored. */
   def getConcatenatedTextNodeValues(list: L): V
 
-  /** Filters a list using a given predicate function. */
+  /** Filters a list using a given predicate function. The predicate function should never return a node
+  * (as its first result) that is less precise than the input node.
+  */
   def filter(list: L, predicate: N => (N, N)): L
 
   /** Get a list of all descendants of a node. */
