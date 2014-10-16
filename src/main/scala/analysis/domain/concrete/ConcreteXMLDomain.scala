@@ -15,16 +15,16 @@ object ConcreteXMLDomain {
     val xpathDom: XPathDomain[V, N, L]
 
     /** Get the TOP element for XML nodes. */
-    override def top: N = Top()
+    override def top: N = Top
 
     /** Gets the BOTTOM element for XML nodes. */
-    override def bottom: N = Bottom()
+    override def bottom: N = Bottom
 
     /** Get the TOP element for XML node lists.*/
-    override def topList: L = Top()
+    override def topList: L = Top
 
     /** Gets the BOTTOM element for XML node lists. */
-    override def bottomList: L = Bottom()
+    override def bottomList: L = Bottom
 
     /** Join two nodes. This calculates their supremum (least upper bound). */
     override def join(n1: N, n2: N): N = n1.join(n2)
@@ -38,18 +38,18 @@ object ConcreteXMLDomain {
     override def createElement(name: String, attributes: L, children: L): N = (attributes, children) match {
       case (Value(attr), Value(chld)) => try Value(XMLElement(name, attr.map(_.asInstanceOf[XMLAttribute]), chld))
         catch {
-          case e: ClassCastException => Bottom()
-          case e: IllegalArgumentException => Bottom()
+          case e: ClassCastException => Bottom
+          case e: IllegalArgumentException => Bottom
         }
-      case (Bottom(), _) => Bottom()
-      case (_, Bottom()) => Bottom()
-      case _ => Top()
+      case (Bottom, _) => Bottom
+      case (_, Bottom) => Bottom
+      case _ => Top
     }
 
     /** Lift a concrete list of abstract nodes to an abstract node list */
     override def liftList(nodes: List[N]): L = {
-      if (nodes.contains(Bottom())) Bottom()
-      else if (nodes.contains(Top())) Top()
+      if (nodes.contains(Bottom)) Bottom
+      else if (nodes.contains(Top)) Top
       else Value(nodes.map {
         case Value(v) => v
       })
@@ -83,11 +83,11 @@ object ConcreteXMLDomain {
       * BOTTOM if the node definitely does have that parent). The two results are not necessarily disjoint.
       */
     override def hasParent(node: N, parent: N): (N, N) = (node, parent) match {
-      case (Bottom(), _) => (Bottom(), Bottom())
-      case (_, Bottom()) => (Bottom(), node) // parent is BOTTOM -> can't match
-      case (Top(), _) => (Top(), Top()) // don't know anything about the node
-      case (Value(_), Top()) => (node, node) // parent is TOP -> don't know anything
-      case (Value(n), Value(p)) => if (n.parent == p) (node, Bottom()) else (Bottom(), node)
+      case (Bottom, _) => (Bottom, Bottom)
+      case (_, Bottom) => (Bottom, node) // parent is BOTTOM -> can't match
+      case (Top, _) => (Top, Top) // don't know anything about the node
+      case (Value(_), Top) => (node, node) // parent is TOP -> don't know anything
+      case (Value(n), Value(p)) => if (n.parent == p) (node, Bottom) else (Bottom, node)
     }
 
     /** Predicate function that checks whether a node has a specified node as its ancestor.
@@ -96,11 +96,11 @@ object ConcreteXMLDomain {
       * BOTTOM if the node definitely does have that ancestor). The two results are not necessarily disjoint.
       */
     override def hasAncestor(node: N, ancestor: N): (N, N) = (node, ancestor) match {
-      case (Bottom(), _) => (Bottom(), Bottom())
-      case (_, Bottom()) => (Bottom(), node)
-      case (Top(), _) => (Top(), Top())
-      case (Value(_), Top()) => (node, node)
-      case (Value(n), Value(a)) => if (n.ancestors.contains(a)) (node, Bottom()) else (Bottom(), node)
+      case (Bottom, _) => (Bottom, Bottom)
+      case (_, Bottom) => (Bottom, node)
+      case (Top, _) => (Top, Top)
+      case (Value(_), Top) => (node, node)
+      case (Value(n), Value(a)) => if (n.ancestors.contains(a)) (node, Bottom) else (Bottom, node)
     }
 
     /** Concatenates two lists. */
@@ -113,8 +113,8 @@ object ConcreteXMLDomain {
       * contains all other nodes.
       */
     override def partitionAttributes(list: L): (L, L) = list match {
-      case Top() => (Top(), Top())
-      case Bottom() => (Bottom(), Bottom())
+      case Top => (Top, Top)
+      case Bottom => (Bottom, Bottom)
       case Value(l) =>
         val resultAttributes = l.takeWhile(n => n.isInstanceOf[XMLAttribute]) // NOTE: takeWhile, not filter!
         val resultChildren = l.filter(n => !n.isInstanceOf[XMLAttribute])
@@ -123,9 +123,9 @@ object ConcreteXMLDomain {
 
     /** Wraps a list of nodes in a document/root node. Lists that don't have exactly one element evaluate to BOTTOM. */
     override def wrapInRoot(list: L): N = list match {
-      case Top() => Top()
+      case Top => Top
       case Value(List(elem: XMLElement)) => Value(XMLRoot(elem))
-      case _ => Bottom()
+      case _ => Bottom
     }
 
     /** Copies a list of nodes, so that they can be used in the output.
@@ -139,33 +139,33 @@ object ConcreteXMLDomain {
       * The resulting lists are flattened into a single list.
       */
     override def flatMapWithIndex(list: L, f: (N, V) => L): L = list match {
-      case Top() => Top()
+      case Top => Top
       case Value(l) =>
         val mapped: List[L] = l.zipWithIndex.map {
           case (n, i) => f(Value(n), xpathDom.liftNumber(i))
         }
-        if (mapped.contains(Bottom())) Bottom()
-        else if (mapped.contains(Top())) Top()
+        if (mapped.contains(Bottom)) Bottom
+        else if (mapped.contains(Top)) Top
         else {
           val unpacked = mapped.map {
             case Value(v) => v
           }
           Value(unpacked.flatten)
         }
-      case Bottom() => Bottom()
+      case Bottom => Bottom
     }
 
     /** Gets the size of a node list */
     override def getNodeListSize(list: L): V = list match {
-      case Top() => xpathDom.top
-      case Bottom() => xpathDom.bottom
+      case Top => xpathDom.top
+      case Bottom => xpathDom.bottom
       case Value(l) => xpathDom.liftNumber(l.size)
     }
 
     /** Gets the string-value of a node, as specified in the XSLT specification */
     override def getStringValue(node: N): V = node match {
-      case Top() => xpathDom.top
-      case Bottom() => xpathDom.bottom
+      case Top => xpathDom.top
+      case Bottom => xpathDom.bottom
       case Value(n) => xpathDom.liftLiteral(n.stringValue)
     }
 
@@ -175,11 +175,11 @@ object ConcreteXMLDomain {
       * BOTTOM if the node definitely is a root node). The two results are not necessarily disjoint.
       */
     override def isRoot(node: N): (N, N) = node match {
-      case Bottom() => (Bottom(), Bottom())
-      case Top() => (Top(), Top())
+      case Bottom => (Bottom, Bottom)
+      case Top => (Top, Top)
       case Value(n) => n match {
-        case XMLRoot(_) => (node, Bottom())
-        case _ => (Bottom(), node)
+        case XMLRoot(_) => (node, Bottom)
+        case _ => (Bottom, node)
       }
     }
 
@@ -189,11 +189,11 @@ object ConcreteXMLDomain {
       * BOTTOM if the node definitely is an element node). The two results are not necessarily disjoint.
       */
     override def isElement(node: N): (N, N) = node match {
-      case Bottom() => (Bottom(), Bottom())
-      case Top() => (Top(), Top())
+      case Bottom => (Bottom, Bottom)
+      case Top => (Top, Top)
       case Value(n) => n match {
-        case XMLElement(_, _, _, _) => (node, Bottom())
-        case _ => (Bottom(), node)
+        case XMLElement(_, _, _, _) => (node, Bottom)
+        case _ => (Bottom, node)
       }
     }
 
@@ -203,11 +203,11 @@ object ConcreteXMLDomain {
       * BOTTOM if the node definitely is a text node). The two results are not necessarily disjoint.
       */
     override def isTextNode(node: N): (N, N) = node match {
-      case Bottom() => (Bottom(), Bottom())
-      case Top() => (Top(), Top())
+      case Bottom => (Bottom, Bottom)
+      case Top => (Top, Top)
       case Value(n) => n match {
-        case XMLTextNode(_, _) => (node, Bottom())
-        case _ => (Bottom(), node)
+        case XMLTextNode(_, _) => (node, Bottom)
+        case _ => (Bottom, node)
       }
     }
 
@@ -217,11 +217,11 @@ object ConcreteXMLDomain {
       * BOTTOM if the node definitely is a comment node). The two results are not necessarily disjoint.
       */
     override def isComment(node: N): (N, N) = node match {
-      case Bottom() => (Bottom(), Bottom())
-      case Top() => (Top(), Top())
+      case Bottom => (Bottom, Bottom)
+      case Top => (Top, Top)
       case Value(n) => n match {
-        case XMLComment(_, _) => (node, Bottom())
-        case _ => (Bottom(), node)
+        case XMLComment(_, _) => (node, Bottom)
+        case _ => (Bottom, node)
       }
     }
 
@@ -231,11 +231,11 @@ object ConcreteXMLDomain {
       * BOTTOM if the node definitely is an attribute node). The two results are not necessarily disjoint.
       */
     override def isAttribute(node: N): (N, N) = node match {
-      case Bottom() => (Bottom(), Bottom())
-      case Top() => (Top(), Top())
+      case Bottom => (Bottom, Bottom)
+      case Top => (Top, Top)
       case Value(n) => n match {
-        case XMLAttribute(_, _, _) => (node, Bottom())
-        case _ => (Bottom(), node)
+        case XMLAttribute(_, _, _) => (node, Bottom)
+        case _ => (Bottom, node)
       }
     }
 
@@ -246,12 +246,12 @@ object ConcreteXMLDomain {
       * Nodes that don't have a name (any node except element and attribute nodes) are evaluated to BOTTOM.
       */
     override def hasName(node: N, name: String): (N, N) = node match {
-      case Bottom() => (Bottom(), Bottom())
-      case Top() => (Top(), Top())
+      case Bottom => (Bottom, Bottom)
+      case Top => (Top, Top)
       case Value(n) => n match {
-        case XMLElement(elemname, _, _, _) if elemname == name => (node, Bottom())
-        case XMLAttribute(attribname, _, _) if attribname == name => (node, Bottom())
-        case _ => (Bottom(), node)
+        case XMLElement(elemname, _, _, _) if elemname == name => (node, Bottom)
+        case XMLAttribute(attribname, _, _) if attribname == name => (node, Bottom)
+        case _ => (Bottom, node)
       }
     }
 
@@ -259,8 +259,8 @@ object ConcreteXMLDomain {
       * are evaluated to the empty string, not BOTTOM!
       */
     override def getNodeName(node: N): V = node match {
-      case Top() => xpathDom.top
-      case Bottom() => xpathDom.bottom
+      case Top => xpathDom.top
+      case Bottom => xpathDom.bottom
       case Value(n) => xpathDom.liftLiteral(n match {
         case XMLElement(name, _, _, _) => name
         case XMLAttribute(name, _, _) => name
@@ -270,8 +270,8 @@ object ConcreteXMLDomain {
 
     /** Concatenates the values of all text nodes in the list. List elements that are not text nodes are ignored. */
     override def getConcatenatedTextNodeValues(list: L): V = list match {
-      case Top() => xpathDom.top
-      case Bottom() => xpathDom.bottom
+      case Top => xpathDom.top
+      case Bottom => xpathDom.bottom
       case Value(l) => xpathDom.liftLiteral(l.collect { case XMLTextNode(text, _) => text }.mkString(""))
     }
 
@@ -279,12 +279,12 @@ object ConcreteXMLDomain {
       * (as its first result) that is less precise than the input node.
       */
     override def filter(list: L, predicate: N => (N, N)): L = list match {
-      case Top() => Top()
-      case Bottom() => Bottom()
+      case Top => Top
+      case Bottom => Bottom
       case Value(l) => Value(l.filter { node =>
         val (predicateTrue, _) = predicate(Value(node))
         predicateTrue match {
-          case Bottom() => false
+          case Bottom => false
           case Value(n) if n == node => true
           case _  => throw new AssertionError("predicate should never return Top or a different element from what it was given")
         }

@@ -13,10 +13,10 @@ object ConcreteXPathDomain {
   /** This is the actual (partial) domain implementation */
   trait D[N, L] extends XPathDomain[V, N, L] {
     /** Get the TOP element */
-    override def top: V = Top()
+    override def top: V = Top
 
     /** Get the BOTTOM element */
-    override def bottom: V = Bottom()
+    override def bottom: V = Bottom
 
     /** Join two values. This calculates their supremum (least upper bound). */
     override def join(v1: V, v2: V): V = v1.join(v2)
@@ -75,10 +75,10 @@ object ConcreteXPathDomain {
     override def nodeSetUnion(left: V, right: V): V = (left, right) match {
       case (Value(NodeSetValue(lVal)), Value(NodeSetValue(rVal))) =>
         Value(NodeSetValue((TreeSet[XMLNode]() ++ lVal ++ rVal).toList))
-      case (Value(_), Value(_)) => Bottom() // values of incompatible type -> error/bottom
-      case (Bottom(), _) => Bottom()
-      case (_, Bottom()) => Bottom()
-      case _ => Top()
+      case (Value(_), Value(_)) => Bottom // values of incompatible type -> error/bottom
+      case (Bottom, _) => Bottom
+      case (_, Bottom) => Bottom
+      case _ => Top
     }
 
     /** Convert a value to a string as defined by the XPath specification section 4.2. */
@@ -92,14 +92,14 @@ object ConcreteXPathDomain {
 
     /** If the value may be the boolean value `true` (without conversion), return true. False otherwise. */
     override def maybeTrue(v: V): Boolean = v match {
-      case Top() => true
+      case Top => true
       case Value(BooleanValue(true)) => true
       case _ => false
     }
 
     /** If the value may be the boolean value `false` (without conversion), return true. False otherwise. */
     override def maybeFalse(v: V): Boolean = v match {
-      case Top() => true
+      case Top => true
       case Value(BooleanValue(false)) => true
       case _ => false
     }

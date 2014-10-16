@@ -55,9 +55,9 @@ object TransformHelper {
     val liftedInput: ConcreteXMLDomain.N = Value(XMLParser.parseDocument(data))
     val result = analyzer.transform(stylesheet, liftedInput)
     result match {
-      case Top() => throw new AssertionError("Expected single result root element, but got infinite result (TOP)")
+      case Top => throw new AssertionError("Expected single result root element, but got infinite result (TOP)")
       case Value(r: XMLRoot) => r
-      case Bottom() => throw new EvaluationError("Expected single result root element, but got no result (BOTTOM)")
+      case Bottom => throw new EvaluationError("Expected single result root element, but got no result (BOTTOM)")
       case _ => throw new AssertionError(f"Expected single result root element, but got $result")
     }
   }

@@ -22,18 +22,18 @@ object ConcreteDomain extends Domain[N, L, V] {
       * Values that are not strings evaluate to BOTTOM.
       */
     override def createAttribute(name: String, value: V): N = value match {
-      case Top() => Top()
+      case Top => Top
       case Value(StringValue(v)) => Value(XMLAttribute(name, v))
-      case _ => Bottom()
+      case _ => Bottom
     }
 
     /** Create a text node with the given text value.
       * Values that are not strings evaluate to BOTTOM.
       */
     override def createTextNode(value: V): N = value match {
-      case Top() => Top()
+      case Top => Top
       case Value(StringValue(v)) => Value(XMLTextNode(v))
-      case _ => Bottom()
+      case _ => Bottom
     }
   }
 
@@ -48,10 +48,10 @@ object ConcreteDomain extends Domain[N, L, V] {
       * the part of the value that isn't is returned in the second result value.
       */
     override def matchNodeSetValues(v: V): (L, V) = v match {
-      case Top() => (Top(), Top())
-      case Bottom() => (Bottom(), Bottom())
-      case Value(NodeSetValue(nodes)) => (Value(nodes), Bottom())
-      case Value(other) => (Bottom(), Value(other))
+      case Top => (Top, Top)
+      case Bottom => (Bottom, Bottom)
+      case Value(NodeSetValue(nodes)) => (Value(nodes), Bottom)
+      case Value(other) => (Bottom, Value(other))
     }
   }
 
