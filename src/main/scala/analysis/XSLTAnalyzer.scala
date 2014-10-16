@@ -16,7 +16,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
 
   /** Transforms a source document (represented by it's root node) into a new document using an XSLT stylesheet*/
   def transform(sheet: XSLTStylesheet, source: N): N = {
-    xmlDom.wrapInRoot(transform(sheet, xmlDom.liftList(List(source)), Map(), Map()))
+    xmlDom.wrapInRoot(transform(sheet, xmlDom.createSingletonList(source), Map(), Map()))
   }
 
   /** Transforms a list of source nodes to a new list of nodes using given variable and parameter bindings */
@@ -83,10 +83,10 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     // if any of these is shadowed in the SAME scope
     var scopeVariables = scala.collection.mutable.Set[String]()
 
-    val (result, _) = nodes.foldLeft((xmlDom.liftList(Nil), context)) {
+    val (result, _) = nodes.foldLeft((xmlDom.createEmptyList(), context)) {
       case ((resultNodes, ctx), next) =>
         evaluate(sheet, next, ctx) match {
-          case Left(moreResultNodes) => (xmlDom.listConcat(resultNodes, moreResultNodes), ctx)
+          case Left(moreResultNodes) => (xmlDom.concatLists(resultNodes, moreResultNodes), ctx)
           case Right((name, value)) =>
             if (scopeVariables.contains(name)) throw new EvaluationError(f"Variable $name is defined multiple times in the same scope")
             scopeVariables += name
@@ -105,12 +105,12 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val innerNodes = evaluate(sheet, children, context)
         val (resultAttributes, resultChildren) = xmlDom.partitionAttributes(innerNodes)
         val result = xmlDom.createElement(name, resultAttributes, resultChildren)
-        Left(xmlDom.liftList(List(result)))
-      case LiteralTextNode(text) => Left(xmlDom.liftList(List(xmlDom.createTextNode(xpathDom.liftLiteral(text)))))
+        Left(xmlDom.createSingletonList(result))
+      case LiteralTextNode(text) => Left(xmlDom.createSingletonList(xmlDom.createTextNode(xpathDom.liftLiteral(text))))
       case SetAttributeInstruction(attribute, value) =>
         // merge the content of all text-node children to create the attribute value
         val textResult = xmlDom.getConcatenatedTextNodeValues(evaluate(sheet, value, context))
-        Left(xmlDom.liftList(List(xmlDom.createAttribute(attribute, textResult))))
+        Left(xmlDom.createSingletonList(xmlDom.createAttribute(attribute, textResult)))
       case ApplyTemplatesInstruction(None, params) =>
         Left(transform(sheet, xmlDom.getChildren(context.node), context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case ApplyTemplatesInstruction(Some(expr), params) =>
@@ -126,7 +126,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val evaluated = xpathAnalyzer.evaluate(select, xsltToXPathContext(context))
         val (nodeSets, rest) = xpathDom.matchNodeSetValues(evaluated)
         val nodeSetsOutput = xmlDom.copyToOutput(nodeSets)
-        val restOutput = xmlDom.liftList(List(xmlDom.createTextNode(xpathDom.toStringValue(rest))))
+        val restOutput = xmlDom.createSingletonList(xmlDom.createTextNode(xpathDom.toStringValue(rest)))
         Left(xmlDom.joinList(nodeSetsOutput, restOutput))
       case ChooseInstruction(branches, otherwise) =>
         val possibleBranches = chooseBranches(branches, otherwise, xsltToXPathContext(context))

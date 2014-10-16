@@ -35,7 +35,7 @@ trait XMLDomain[N, L, V] {
   /** Create an element node with the given name and no children or attributes.
     * The output is created bottom-up, so children are always created before their parent nodes.
     */
-  def createElement(name: String): N = createElement(name, liftList(Nil), liftList(Nil)) // TODO: in order to support <xsl:element> this would need to take the name as V
+  def createElement(name: String): N = createElement(name, createEmptyList(), createEmptyList()) // TODO: in order to support <xsl:element> this would need to take the name as V
 
   /** Create an attribute node with the given name and text value.
     * Values that are not strings evaluate to BOTTOM.
@@ -47,8 +47,11 @@ trait XMLDomain[N, L, V] {
     */
   def createTextNode(value: V): N
 
-  /** Lift a concrete list of abstract nodes to an abstract node list */
-  def liftList(nodes: List[N]): L
+  /** Create an emtpy list containing no nodes */
+  def createEmptyList(): L
+
+  /** Create a list containing a single abstract node */
+  def createSingletonList(node: N): L
 
   /** Get the root node of a given node */
   def getRoot(node: N): N // TODO: this might be implementable using getParent() and isRoot()
@@ -80,7 +83,7 @@ trait XMLDomain[N, L, V] {
   def hasAncestor(node: N, ancestor: N): (N, N)
 
   /** Concatenates two lists. */
-  def listConcat(list1: L, list2: L): L
+  def concatLists(list1: L, list2: L): L
 
   /** Partitions a node list in such a way that the first result contains all attribute nodes from the beginning of
     * the list (as soon as there are other node types in the list, attributes are ignored) and the second result
@@ -166,7 +169,7 @@ trait XMLDomain[N, L, V] {
   def getDescendants(node: N): L = {
     val children = getChildren(node)
     flatMapWithIndex(children, {
-      case (n, _) => listConcat(liftList(List(n)), getDescendants(n))
+      case (n, _) => concatLists(createSingletonList(n), getDescendants(n))
     })
   }
 }

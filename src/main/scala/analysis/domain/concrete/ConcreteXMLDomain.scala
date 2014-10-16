@@ -46,14 +46,11 @@ object ConcreteXMLDomain {
       case _ => Top
     }
 
-    /** Lift a concrete list of abstract nodes to an abstract node list */
-    override def liftList(nodes: List[N]): L = {
-      if (nodes.contains(Bottom)) Bottom
-      else if (nodes.contains(Top)) Top
-      else Value(nodes.map {
-        case Value(v) => v
-      })
-    }
+    /** Create an emtpy list containing no nodes */
+    override def createEmptyList(): L = Value(Nil)
+
+    /** Create a list containing a single abstract node */
+    override def createSingletonList(node: N): L = node.map(n => List(n))
 
     /** Get the root node of a given node */
     override def getRoot(node: N): N = node.map(_.root)
@@ -104,7 +101,7 @@ object ConcreteXMLDomain {
     }
 
     /** Concatenates two lists. */
-    override def listConcat(list1: L, list2: L): L = list1.liftBinaryOp(list2) {
+    override def concatLists(list1: L, list2: L): L = list1.liftBinaryOp(list2) {
       (l1, l2) => l1 ++ l2
     }
 

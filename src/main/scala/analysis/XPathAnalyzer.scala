@@ -83,7 +83,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     // TODO: implement more axes WITH TESTS!
     // evaluate steps from left to right, keep nodes in document order (not required by XPath, but by XSLT)
     (steps, isAbsolute) match {
-      case (Nil, true) => xmlDom.liftList(List(xmlDom.getRoot(ctxNode)))
+      case (Nil, true) => xmlDom.createSingletonList(xmlDom.getRoot(ctxNode))
       case (_, true) => evaluateLocationPathSingle(xmlDom.getRoot(ctxNode), steps, false)
       case (first :: rest, false) =>
         val nodes: L = first.axis match {
@@ -137,9 +137,9 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           // the axis will be empty unless the context node is an element
           case NamespaceAxis => throw new NotImplementedError("Namespace nodes are not implemented, therefore the namespace axis is not supported")
           // the self axis contains just the context node itself
-          case SelfAxis => xmlDom.liftList(List(ctxNode))
+          case SelfAxis => xmlDom.createSingletonList(ctxNode)
           // the descendant-or-self axis contains the context node and the descendants of the context node
-          case DescendantOrSelfAxis => xmlDom.listConcat(xmlDom.liftList(List(ctxNode)), xmlDom.getDescendants(ctxNode))
+          case DescendantOrSelfAxis => xmlDom.concatLists(xmlDom.createSingletonList(ctxNode), xmlDom.getDescendants(ctxNode))
           /*
           // the ancestor-or-self axis contains the context node and the ancestors of the context node
           // thus, the ancestor axis will always include the root node
@@ -163,7 +163,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         xmlDom.flatMapWithIndex(testedNodeSet, {
           case (node, _) => evaluateLocationPathSingle(node, rest, false)
         })
-      case (Nil, false) => xmlDom.liftList(List(ctxNode))
+      case (Nil, false) => xmlDom.createSingletonList(ctxNode)
     }
   }
 

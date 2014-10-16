@@ -88,20 +88,9 @@ object PowersetXMLDomain {
       result
     }
 
-    override def liftList(nodes: List[N]): L = {
-      def getProduct(input:List[List[XMLNode]]): List[List[XMLNode]] = input match{
-        case Nil => Nil // just in case you input an empty list
-        case head::Nil => head.map(_::Nil)
-        case head::tail => for(elem<- head; sub <- getProduct(tail)) yield elem::sub
-      }
+    override def createEmptyList(): L = Some(Set(Nil))
 
-      if (nodes.isEmpty)
-        Some(Set(Nil))
-      else if (nodes.exists(n => !n.isDefined))
-        None
-      else
-        Some(getProduct(nodes.map(_.get.toList).toList).toSet)
-    }
+    override def createSingletonList(node: N): L = node.map(_.map(n => List(n)))
 
     override def getRoot(node: N): N = node match {
       case None => None // infinite set of all possible roots (in this domain we can't express that it must be a root node)
@@ -124,7 +113,7 @@ object PowersetXMLDomain {
       case Some(s) => Some(s.map(n => n.parent))
     }
 
-    override def listConcat(list1: L, list2: L): L = (list1, list2) match {
+    override def concatLists(list1: L, list2: L): L = (list1, list2) match {
       case (Some(l1), Some(l2)) => Some(l1.cross(l2).map {
         case (ll1, ll2) => ll1 ++ ll2
       }.toSet)
@@ -283,7 +272,7 @@ object PowersetXMLDomain {
       case None => None
       case Some(s) => joinList(s.map { l =>
         val mapped = l.zipWithIndex.map { case (n, i) => f(Some(Set(n)), xpathDom.liftNumber(i)) }
-        val flattened = mapped.foldLeft(liftList(Nil))((acc, next) => listConcat(acc, next))
+        val flattened = mapped.foldLeft(createEmptyList())((acc, next) => concatLists(acc, next))
         flattened
       }.toList)
     }
