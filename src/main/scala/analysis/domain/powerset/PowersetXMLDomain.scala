@@ -18,7 +18,9 @@ object PowersetXMLDomain {
     val BOT: N = Some(Set())
 
     override def topList: L = None
-    override def bottomList: L = Some(Set())
+    override def bottomList: L = BOT_LIST
+
+    val BOT_LIST: L = Some(Set())
 
     override def join(n1: N, n2: N): N = (n1, n2) match {
       case (None, _) => None
@@ -114,10 +116,12 @@ object PowersetXMLDomain {
     }
 
     override def concatLists(list1: L, list2: L): L = (list1, list2) match {
+      case (BOT_LIST, _) => BOT_LIST
+      case (_, BOT_LIST) => BOT_LIST
       case (Some(l1), Some(l2)) => Some(l1.cross(l2).map {
         case (ll1, ll2) => ll1 ++ ll2
       }.toSet)
-      case _ => None
+      case _ => None // at least one operand is TOP and the other is not BOTTOM
     }
 
     override def partitionAttributes(list: L): (L, L) = list match {
