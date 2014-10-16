@@ -60,6 +60,11 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           result.put(tpl, matches)
         if (notMatches == xmlDom.bottom)
           break()
+
+        // TODO: use comparison instead of second match result?
+        //if (node < matches)
+        //  break()
+
         currentNode = notMatches
       }
     }
