@@ -128,8 +128,12 @@ object ConcreteXMLDomain {
       case _ => Bottom()
     }
 
-    /** Copies a list of nodes, so that they can be used in the output */
-    override def copyToOutput(list: L): L = list.map(_.map(_.copy))
+    /** Copies a list of nodes, so that they can be used in the output.
+      * A root node is copied by copying its child (not wrapped in a root node). */
+    override def copyToOutput(list: L): L = list.map(_.map({
+      case XMLRoot(elem) => elem.copy // "a root node is copied by copying its children" according to spec
+      case node => node.copy
+    }))
 
     /** Evaluates a function for every element in the given list, providing also the index of each element in the list.
       * The resulting lists are flattened into a single list.
@@ -278,13 +282,12 @@ object ConcreteXMLDomain {
       case Top() => Top()
       case Bottom() => Bottom()
       case Value(l) => Value(l.filter { node =>
-        val (predicateTrue, predicateFalse) = predicate(Value(node))
+        val (predicateTrue, _) = predicate(Value(node))
         predicateTrue match {
           case Bottom() => false
           case Value(n) if n == node => true
           case _  => throw new AssertionError("predicate should never return Top or a different element from what it was given")
         }
-        true
       })
     }
   }

@@ -91,7 +91,8 @@ trait XMLDomain[N, L, V] {
   /** Wraps a list of nodes in a document/root node. Lists that don't have exactly one element evaluate to BOTTOM. */
   def wrapInRoot(list: L): N
 
-  /** Copies a list of nodes, so that they can be used in the output */
+  /** Copies a list of nodes, so that they can be used in the output.
+    * A root node is copied by copying its child (not wrapped in a root node). */
   def copyToOutput(list: L): L
 
   /** Evaluates a function for every element in the given list, providing also the index of each element in the list.
