@@ -15,12 +15,12 @@ object PowersetXMLDomain {
     override def top: N = None
     override def bottom: N = BOT
 
-    val BOT: N = Some(Set())
+    protected val BOT: N = Some(Set())
 
     override def topList: L = None
     override def bottomList: L = BOT_LIST
 
-    val BOT_LIST: L = Some(Set())
+    protected val BOT_LIST: L = Some(Set())
 
     override def join(n1: N, n2: N): N = (n1, n2) match {
       case (None, _) => None
@@ -261,7 +261,7 @@ object PowersetXMLDomain {
       case Some(s) => Some(s.map(_.filter { n =>
         val node: N = Some(Set(n))
         val (resultTrue, _) = predicate(node)
-        assert(resultTrue.isDefined)
+        assert(resultTrue.isDefined) // TODO: instead assert that resultTrue <= node (using compare operation)
         resultTrue.get.toList match {
           case Nil => false // list without elements -> element was filtered out
           case first :: Nil => true // list with one element -> element was not filtered out

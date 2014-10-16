@@ -3,8 +3,6 @@ package analysis.domain.concrete
 import analysis.domain.{XPathDomain, XMLDomain}
 import xml._
 
-import scala.collection.immutable.TreeSet
-
 /** Just a wrapper for the type alias */
 object ConcreteXMLDomain {
   type N = SingleValueLattice[XMLNode]

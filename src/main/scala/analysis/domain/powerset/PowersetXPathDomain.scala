@@ -15,7 +15,7 @@ object PowersetXPathDomain {
     override def top: V = None
     override def bottom: V = BOT
 
-    val BOT: V = Some(Set())
+    protected val BOT: V = Some(Set())
 
     // booleans are a finite domain so we don't need to represent an unknown boolean as None
     val anyBoolean: V = Some(Set(BooleanValue(true), BooleanValue(false)))
