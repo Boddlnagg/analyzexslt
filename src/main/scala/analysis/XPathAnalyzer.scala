@@ -44,7 +44,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           xmlDom.getNodeListSize(nodeSets)
         case ("sum", List(arg)) =>
           val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
-          if (nodeSets == xmlDom.bottomList) xpathDom.bottom // return bottom if the input is definitely not a node-set
+          if (xmlDom.compareList(nodeSets, xmlDom.bottomList) == Equal) xpathDom.bottom // return bottom if the input is definitely not a node-set
           else xpathDom.top // TODO: implement this correctly? (could also return topNumber if available)
         case ("name"|"local-name", Nil) => xmlDom.getNodeName(ctx.node)
         case (_, evaluatedParams) =>

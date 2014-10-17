@@ -56,9 +56,9 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     breakable {
       sheet.matchableTemplates.reverse.foreach { case (path, tpl, _, _) =>
         val (matches, notMatches) = xpathMatcher.matches(currentNode, path)
-        if (matches != xmlDom.bottom)
+        if (xmlDom.compare(matches, xmlDom.bottom) == Greater)
           result.put(tpl, matches)
-        if (notMatches == xmlDom.bottom)
+        if (xmlDom.compare(notMatches, xmlDom.bottom) == Equal)
           break()
 
         // TODO: use comparison instead of second match result?

@@ -50,7 +50,7 @@ class AbstractXPathMatcher[N, L, V](dom: Domain[N, L, V]) {
         case XPathStep(AttributeAxis, CommentNodeTest | TextNodeTest, _) => (xmlDom.bottom, node)
       }
 
-      if (lastStepMatches == xmlDom.bottom) {
+      if (xmlDom.compare(lastStepMatches,xmlDom.bottom) == Equal) {
         (xmlDom.bottom, notLastStepMatches)
       } else {
         // this node could match, but what about the rest of the path?
@@ -60,7 +60,7 @@ class AbstractXPathMatcher[N, L, V](dom: Domain[N, L, V]) {
           var current = lastStepMatches
           var currentResult = xmlDom.bottom
           var (root, notRoot) = xmlDom.isRoot(current)
-          while (notRoot != xmlDom.bottom) {
+          while (xmlDom.compare(notRoot, xmlDom.bottom) == Greater) {
             // TODO: this may not terminate (make sure that domains can not have infinite chains of parents?)
             val parent = xmlDom.getParent(notRoot)
             val (parentMatchesRest, _) = matches(parent, nextRestPath)

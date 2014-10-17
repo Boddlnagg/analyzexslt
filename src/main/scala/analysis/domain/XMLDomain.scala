@@ -1,5 +1,7 @@
 package analysis.domain
 
+import analysis.LatticeOrdering
+
 /** An XML domain, providing operations on XML nodes (N) and list of nodes (L). */
 trait XMLDomain[N, L, V] {
   /** Get the TOP element for XML nodes. */
@@ -9,7 +11,7 @@ trait XMLDomain[N, L, V] {
   def bottom: N
 
   /** Get the TOP element for XML node lists.*/
-  def topList: L
+  def topList: L // TODO: this is currently never used
 
   /** Gets the BOTTOM element for XML node lists. */
   def bottomList: L
@@ -26,6 +28,16 @@ trait XMLDomain[N, L, V] {
     case List(list) => list
     case _ => lists.reduceLeft(joinList)
   }
+
+  /** Compares two elements of the lattice of nodes.
+    * TOP is always greater than everything else, BOTTOM is always less than everything else.
+    */
+  def compare(n1: N, n2: N): LatticeOrdering
+
+  /** Compares two elements of the lattice of node lists.
+    * TOP is always greater than everything else, BOTTOM is always less than everything else.
+    */
+  def compareList(l1: L, l2: L): LatticeOrdering // TODO: is this really needed?
 
   /** Create an element node with the given name, attributes and children.
     * The output is created bottom-up, so children are always created before their parent nodes.

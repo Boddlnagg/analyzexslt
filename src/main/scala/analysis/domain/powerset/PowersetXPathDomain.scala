@@ -34,7 +34,7 @@ object PowersetXPathDomain {
       case (Some(s1), Some(s2)) => Some(s1.intersect(s2))
     }*/
 
-    def compare(v1: V, v2: V): LatticeOrdering = (v1, v2) match {
+    override def compare(v1: V, v2: V): LatticeOrdering = (v1, v2) match {
       case (None, None) => Equal
       case (None, _) => Greater
       case (_, None) => Less

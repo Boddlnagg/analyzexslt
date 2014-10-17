@@ -25,12 +25,7 @@ object ConcreteXPathDomain {
     /** Compares two elements of the lattice.
       * TOP is always greater than everything else, BOTTOM is always less than everything else.
       */
-    def compare(v1: V, v2: V): LatticeOrdering = (v1, v2) match {
-      case (_, _) if v1 == v2 => Equal
-      case (Top, _) => Greater
-      case (Bottom, _) => Less
-      case _ => Incomparable
-    }
+    override def compare(v1: V, v2: V): LatticeOrdering = v1.compare(v2)
 
     def liftBinaryNumOp(left: V, right: V)(f: (Double, Double) => Double): V =
         left.liftBinaryOp(right) {(v1, v2) => NumberValue(f(v1.toNumberValue.value, v2.toNumberValue.value))}

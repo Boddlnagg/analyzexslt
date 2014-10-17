@@ -1,5 +1,6 @@
 package analysis.domain.concrete
 
+import analysis._
 import analysis.domain.{XPathDomain, XMLDomain}
 import xml._
 
@@ -29,6 +30,16 @@ object ConcreteXMLDomain {
 
     /** Join two node lists. This calculates their supremum (least upper bound). */
     override def joinList(l1: L, l2: L): L = l1.join(l2)
+
+    /** Compares two elements of the lattice of nodes.
+      * TOP is always greater than everything else, BOTTOM is always less than everything else.
+      */
+    override def compare(n1: N, n2: N): LatticeOrdering = n1.compare(n2)
+
+    /** Compares two elements of the lattice of node lists.
+      * TOP is always greater than everything else, BOTTOM is always less than everything else.
+      */
+    override def compareList(l1: L, l2: L): LatticeOrdering = l1.compare(l2)
 
     /** Create an element node with the given name, attributes and children.
       * The output is created bottom-up, so children are always created before their parent nodes.
