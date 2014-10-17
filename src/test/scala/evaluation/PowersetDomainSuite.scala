@@ -1,6 +1,6 @@
 package evaluation
 
-import analysis.AbstractXPathMatcher
+import analysis._
 import org.scalatest.FunSuite
 import xml._
 import analysis.domain.powerset._
@@ -200,21 +200,21 @@ class PowersetDomainSuite extends FunSuite {
     assertResult((Some(Set(a2, a3)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2, a1)))) { matcher.matches(all, pattern("b//a")) }
   }
 
-  test("Boolean evaluation") {
+  test("Compare (with booleans)") {
     val stringVal = xpathDom.liftLiteral("String")
     val trueVal = xpathDom.liftBoolean(true)
     val falseVal = xpathDom.liftBoolean(false)
     val anyVal = xpathDom.join(xpathDom.join(trueVal, falseVal), stringVal)
 
-    assertResult(false) { xpathDom.maybeFalse(xpathDom.bottom) }
-    assertResult(false) { xpathDom.maybeTrue(xpathDom.bottom) }
-    assertResult(true) { xpathDom.maybeFalse(falseVal) }
-    assertResult(false) { xpathDom.maybeTrue(falseVal) }
-    assertResult(false) { xpathDom.maybeFalse(trueVal) }
-    assertResult(true) { xpathDom.maybeTrue(anyVal) }
-    assertResult(true) { xpathDom.maybeFalse(anyVal) }
-    assertResult(false) { xpathDom.maybeTrue(stringVal) }
-    assertResult(false) { xpathDom.maybeFalse(stringVal) }
+    assertResult(Greater) { xpathDom.compare(trueVal, xpathDom.bottom) }
+    assertResult(Greater) { xpathDom.compare(falseVal, xpathDom.bottom) }
+    assertResult(Equal) { xpathDom.compare(falseVal, falseVal) }
+    assertResult(Incomparable) { xpathDom.compare(trueVal, falseVal) }
+    assertResult(Incomparable) { xpathDom.compare(falseVal, trueVal) }
+    assertResult(Less) { xpathDom.compare(trueVal, anyVal) }
+    assertResult(Less) { xpathDom.compare(falseVal, anyVal) }
+    assertResult(Incomparable) { xpathDom.compare(trueVal, stringVal) }
+    assertResult(Incomparable) { xpathDom.compare(falseVal, stringVal) }
   }
 
   test("Transform multiple inputs") {

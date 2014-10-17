@@ -1,5 +1,7 @@
 package analysis.domain.powerset
 
+import analysis.domain.concrete.{Bottom, Top}
+import analysis._
 import analysis.domain.XPathDomain
 import xml._
 import xpath._
@@ -31,6 +33,18 @@ object PowersetXPathDomain {
       case (_, None) => None
       case (Some(s1), Some(s2)) => Some(s1.intersect(s2))
     }*/
+
+    def compare(v1: V, v2: V): LatticeOrdering = (v1, v2) match {
+      case (None, None) => Equal
+      case (None, _) => Greater
+      case (_, None) => Less
+      case (Some(s1), Some(s2)) => (s1.subsetOf(s2), s2.subsetOf(s1)) match {
+        case (true, true) => Equal
+        case (true, false) => Less
+        case (false, true) => Greater
+        case (false, false) => Incomparable
+      }
+    }
 
     def liftBinaryOp(left: V, right: V, pf: PartialFunction[(XPathValue, XPathValue), XPathValue]): V = (left, right) match {
       case (BOT, _) => BOT
@@ -75,7 +89,7 @@ object PowersetXPathDomain {
       (v1, v2) => v1 % v2
     )
 
-    override def compare(left: V, right: V, relOp: RelationalOperator): V = liftBinaryLogicalOp(left, right,
+    override def compareRelational(left: V, right: V, relOp: RelationalOperator): V = liftBinaryLogicalOp(left, right,
       (v1, v2) => BooleanValue(v1.compare(v2, relOp))
     )
 
@@ -112,15 +126,5 @@ object PowersetXPathDomain {
       case (NodeSetValue(lVal), NodeSetValue(rVal)) => NodeSetValue((TreeSet[XMLNode]() ++ lVal ++ rVal).toList)
       // NOTE: ignore values that are not node-sets by not including them in the result (essentially evaluating them to bottom)
     })
-
-    override def maybeTrue(v: V): Boolean = v match {
-      case None => true
-      case Some(s) => s.contains(BooleanValue(true))
-    }
-
-    override def maybeFalse(v: V): Boolean = v match {
-      case None => true
-      case Some(s) => s.contains(BooleanValue(false))
-    }
   }
 }

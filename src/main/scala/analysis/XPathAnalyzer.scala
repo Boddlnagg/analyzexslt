@@ -19,7 +19,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case MultiplyExpr(lhs, rhs) => xpathDom.multiply(evaluate(lhs, ctx), evaluate(rhs, ctx))
       case DivExpr(lhs, rhs) => xpathDom.divide(evaluate(lhs, ctx), evaluate(rhs, ctx))
       case ModExpr(lhs, rhs) => xpathDom.modulo(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case RelationalExpr(lhs, rhs, relOp) => xpathDom.compare(evaluate(lhs, ctx), evaluate(rhs, ctx), relOp)
+      case RelationalExpr(lhs, rhs, relOp) => xpathDom.compareRelational(evaluate(lhs, ctx), evaluate(rhs, ctx), relOp)
       case AndExpr(lhs, rhs) => xpathDom.logicalAnd(evaluate(lhs, ctx), evaluate(rhs, ctx))
       case OrExpr(lhs, rhs) => xpathDom.logicalOr(evaluate(lhs, ctx), evaluate(rhs, ctx))
       case NegExpr(subexpr) => xpathDom.negateNum(evaluate(subexpr, ctx))

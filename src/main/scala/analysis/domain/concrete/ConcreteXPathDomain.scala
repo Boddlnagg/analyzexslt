@@ -1,5 +1,6 @@
 package analysis.domain.concrete
 
+import analysis._
 import analysis.domain.XPathDomain
 import xml.XMLNode
 import xpath._
@@ -20,6 +21,16 @@ object ConcreteXPathDomain {
 
     /** Join two values. This calculates their supremum (least upper bound). */
     override def join(v1: V, v2: V): V = v1.join(v2)
+
+    /** Compares two elements of the lattice.
+      * TOP is always greater than everything else, BOTTOM is always less than everything else.
+      */
+    def compare(v1: V, v2: V): LatticeOrdering = (v1, v2) match {
+      case (_, _) if v1 == v2 => Equal
+      case (Top, _) => Greater
+      case (Bottom, _) => Less
+      case _ => Incomparable
+    }
 
     def liftBinaryNumOp(left: V, right: V)(f: (Double, Double) => Double): V =
         left.liftBinaryOp(right) {(v1, v2) => NumberValue(f(v1.toNumberValue.value, v2.toNumberValue.value))}
@@ -42,7 +53,7 @@ object ConcreteXPathDomain {
     /** Compares two values using a given relational operator (=, !=, <, >, >=, <=).
       * Must behave according to the XPath specification, section 3.4.
       */
-    override def compare(left: V, right: V, relOp: RelationalOperator): V = left.liftBinaryOp(right) {
+    override def compareRelational(left: V, right: V, relOp: RelationalOperator): V = left.liftBinaryOp(right) {
       (v1, v2) => BooleanValue(v1.compare(v2, relOp))
     }
 
@@ -89,19 +100,5 @@ object ConcreteXPathDomain {
 
     /** Convert a value to a number as defined by the XPath specification section 4.4. */
     override def toNumberValue(v: V): V = v.map(_.toNumberValue)
-
-    /** If the value may be the boolean value `true` (without conversion), return true. False otherwise. */
-    override def maybeTrue(v: V): Boolean = v match {
-      case Top => true
-      case Value(BooleanValue(true)) => true
-      case _ => false
-    }
-
-    /** If the value may be the boolean value `false` (without conversion), return true. False otherwise. */
-    override def maybeFalse(v: V): Boolean = v match {
-      case Top => true
-      case Value(BooleanValue(false)) => true
-      case _ => false
-    }
   }
 }

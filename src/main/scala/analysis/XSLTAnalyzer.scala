@@ -148,8 +148,14 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case Nil => Set(otherwise)
       case (firstExpr, firstTmpl) :: rest =>
         val result = xpathDom.toBooleanValue(xpathAnalyzer.evaluate(firstExpr, context))
-        val maybeTrue = xpathDom.maybeTrue(result) // the value may be true -> evaluate this branch
-        val maybeFalse = xpathDom.maybeFalse(result) // the value may be false -> evaluate further branches after this one
+        val maybeTrue = xpathDom.compare(result, xpathDom.liftBoolean(true)) match {
+          case Greater | Equal => true // the value may be true -> evaluate this branch
+          case _ => false
+        }
+        val maybeFalse = xpathDom.compare(result, xpathDom.liftBoolean(false)) match {
+          case Greater | Equal => true // the value may be false -> evaluate further branches after this one
+          case _ => false
+        }
         (maybeTrue, maybeFalse) match {
           case (true, true) => Set(firstTmpl) ++ chooseBranches(rest, otherwise, context)
           case (true, false) => Set(firstTmpl)

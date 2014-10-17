@@ -1,5 +1,6 @@
 package analysis.domain
 
+import analysis.{Equal, Greater, LatticeOrdering}
 import xpath.RelationalOperator
 
 /** An XPath domain, providing operations on XPath values (V). */
@@ -20,6 +21,11 @@ trait XPathDomain[V, N, L] {
     case _ => values.reduceLeft(join)
   }
 
+  /** Compares two elements of the lattice.
+    * TOP is always greater than everything else, BOTTOM is always less than everything else.
+    */
+  def compare(v1: V, v2: V): LatticeOrdering
+
   /** The addition operation. Must convert its operands to numbers first if they aren't. */
   def add(left: V, right: V): V
 
@@ -38,7 +44,7 @@ trait XPathDomain[V, N, L] {
   /** Compares two values using a given relational operator (=, !=, <, >, >=, <=).
     * Must behave according to the XPath specification, section 3.4.
     */
-  def compare(left: V, right: V, relOp: RelationalOperator): V
+  def compareRelational(left: V, right: V, relOp: RelationalOperator): V
 
   /** The logical AND operation. Must convert its operands to booleans if they aren't. */
   def logicalAnd(left: V, right: V): V
@@ -72,12 +78,6 @@ trait XPathDomain[V, N, L] {
 
   /** Convert a value to a number as defined by the XPath specification section 4.4. */
   def toNumberValue(v: V): V
-
-  /** If the value may be the boolean value `true` (without conversion), return true. False otherwise. */
-  def maybeTrue(v: V): Boolean
-
-  /** If the value may be the boolean value `false` (without conversion), return true. False otherwise. */
-  def maybeFalse(v: V): Boolean
 
   /** Converts a list of nodes to a node-set value.
     * This has to order the nodes in document order and remove duplicates.
