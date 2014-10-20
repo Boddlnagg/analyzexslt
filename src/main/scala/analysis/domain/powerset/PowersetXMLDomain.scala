@@ -250,7 +250,6 @@ object PowersetXMLDomain {
         val yes = nodes.filter(n => parents.contains(n.parent))
         val no = nodes.filter(n => !parents.contains(n.parent))
         (Some(yes), Some(no))
-
     }
 
     override def hasAncestor(node: N, ancestor: N): (N, N) = (node, ancestor) match {

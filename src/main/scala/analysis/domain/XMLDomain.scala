@@ -4,6 +4,9 @@ import analysis.LatticeOrdering
 
 /** An XML domain, providing operations on XML nodes (N) and list of nodes (L). */
 trait XMLDomain[N, L, V] {
+  // TODO: split this domain in two: XMLMatchingDomain with all operations needed by AbstractXPathMatcher
+  // and XMLDomain extending that one with the remaining operations
+
   /** Get the TOP element for XML nodes. */
   def top: N
 
