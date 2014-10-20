@@ -26,6 +26,12 @@ trait XPathDomain[V, N, L] {
     */
   def compare(v1: V, v2: V): LatticeOrdering
 
+  /** Get the TOP element of the subdomain of numbers (representing any number). topNumber <= top must hold. */
+  def topNumber: V
+
+  /** Get the TOP element of the subdomain of strings (representing any string). topString <= top must hold. */
+  def topString: V
+
   /** The addition operation. Must convert its operands to numbers first if they aren't. */
   def add(left: V, right: V): V
 

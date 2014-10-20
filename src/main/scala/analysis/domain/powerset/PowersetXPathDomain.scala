@@ -45,6 +45,10 @@ object PowersetXPathDomain {
       }
     }
 
+    override def topNumber: V = None // no type distinction in this domain
+
+    override def topString: V = None // no type distinction in this domain
+
     def liftBinaryOp(left: V, right: V, pf: PartialFunction[(XPathValue, XPathValue), XPathValue]): V = (left, right) match {
       case (BOT, _) => BOT
       case (_, BOT) => BOT

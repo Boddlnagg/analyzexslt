@@ -4,8 +4,7 @@ import analysis.domain.Domain
 import util.EvaluationError
 import xpath._
 
-import scala.collection.immutable.TreeSet
-
+/** Class to analyze XPath expressions using abstract interpretation */
 class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   val xmlDom = dom.xmlDom
   val xpathDom = dom.xpathDom
@@ -44,7 +43,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         case ("sum", List(arg)) =>
           val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
           if (xmlDom.compareList(nodeSets, xmlDom.bottomList) == Equal) xpathDom.bottom // return bottom if the input is definitely not a node-set
-          else xpathDom.top // TODO: implement this correctly? (could also return topNumber if available)
+          else xpathDom.topNumber // TODO: implement this correctly or remove it completely?
         case ("name"|"local-name", Nil) => xmlDom.getNodeName(ctx.node)
         case (_, evaluatedParams) =>
           throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")

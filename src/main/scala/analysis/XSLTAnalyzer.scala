@@ -6,7 +6,7 @@ import util.EvaluationError
 import analysis.domain.Domain
 import scala.util.control.Breaks._
 
-/** Trait to analyze XSLT stylesheets using abstract interpretation */
+/** Class to analyze XSLT stylesheets using abstract interpretation */
 class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
 
   val xmlDom = dom.xmlDom

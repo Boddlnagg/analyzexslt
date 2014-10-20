@@ -178,12 +178,12 @@ object PowersetXMLDomain {
     }))
 
     override def getNodeListSize(list: L): V = list match {
-      case None => xpathDom.top // we could return some "topNumber" or "topInt" here, but we would need to extend our domain to do that
+      case None => xpathDom.topNumber
       case Some(s) => xpathDom.join(s.map(l => xpathDom.liftNumber(l.size)).toList)
     }
 
     override def getStringValue(node: N): V = node match {
-      case None => xpathDom.top // we could return some "topString" here, but we would need to extend our domain to do that
+      case None => xpathDom.topString
       case Some(s) => xpathDom.join(s.map(n => xpathDom.liftLiteral(n.stringValue)).toList)
     }
 
@@ -266,7 +266,7 @@ object PowersetXMLDomain {
 
     // return empty string if node has no name
     override def getNodeName(node: N): V = node match {
-      case None => xpathDom.top // TODO: could return topString
+      case None => xpathDom.topString
       case Some(s) => xpathDom.join(s.map {
         case XMLElement(nodeName, _, _, _) => xpathDom.liftLiteral(nodeName)
         case XMLAttribute(nodeName, _, _) => xpathDom.liftLiteral(nodeName)
@@ -275,7 +275,7 @@ object PowersetXMLDomain {
     }
 
     override def getConcatenatedTextNodeValues(list: L): V = list match {
-      case None => xpathDom.top // TODO: could return topString
+      case None => xpathDom.topString
       case Some(s) => xpathDom.join(s.map { l =>
         xpathDom.liftLiteral(l.collect { case n: XMLTextNode => n.value }.mkString(""))
       }.toList)
@@ -286,7 +286,8 @@ object PowersetXMLDomain {
       case Some(s) => Some(s.map(_.filter { n =>
         val node: N = Some(Set(n))
         val (resultTrue, _) = predicate(node)
-        assert(resultTrue.isDefined) // TODO: instead assert that resultTrue <= node (using compare operation)
+        // TODO: this could be made more abstract using compare operations (e.g. assert that resultTrue <= node)
+        assert(resultTrue.isDefined)
         resultTrue.get.toList match {
           case Nil => false // list without elements -> element was filtered out
           case first :: Nil => true // list with one element -> element was not filtered out

@@ -27,6 +27,12 @@ object ConcreteXPathDomain {
       */
     override def compare(v1: V, v2: V): LatticeOrdering = v1.compare(v2)
 
+    /** Get the TOP element of the subdomain of numbers (representing any number). topNumber <= top must hold. */
+    override def topNumber: V = Top // no type distinction in this domain
+
+    /** Get the TOP element of the subdomain of strings (representing any string). topString <= top must hold. */
+    override def topString: V = Top // no type distinction in this domain
+
     def liftBinaryNumOp(left: V, right: V)(f: (Double, Double) => Double): V =
         left.liftBinaryOp(right) {(v1, v2) => NumberValue(f(v1.toNumberValue.value, v2.toNumberValue.value))}
 
