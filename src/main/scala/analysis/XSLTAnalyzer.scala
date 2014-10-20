@@ -16,11 +16,12 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
 
   /** Transforms a source document (represented by it's root node) into a new document using an XSLT stylesheet*/
   def transform(sheet: XSLTStylesheet, source: N): N = {
-    xmlDom.wrapInRoot(transform(sheet, xmlDom.createSingletonList(source), Map(), Map()))
+    val (rootSource, _) = xmlDom.isRoot(source) // enforce the source node to be a root node
+    xmlDom.wrapInRoot(transform(sheet, xmlDom.createSingletonList(rootSource), Map(), Map()))
   }
 
   /** Transforms a list of source nodes to a new list of nodes using given variable and parameter bindings */
-  def transform(sheet: XSLTStylesheet, sources: L, variables: Map[String, V], params: Map[String, V]): L = {
+  private def transform(sheet: XSLTStylesheet, sources: L, variables: Map[String, V], params: Map[String, V]): L = {
     // create context, choose template, instantiate template, append results
     xmlDom.flatMapWithIndex(sources, (node, index) => {
       val templates = chooseTemplates(sheet, node)
@@ -40,7 +41,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     *               a corresponding default parameter in the template, see XSLT spec section 11.6)
     * @return a list of resulting XML nodes
     */
-  def evaluateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: AbstractXSLTContext[N, L, V], params: Map[String, V]): L = {
+  private def evaluateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: AbstractXSLTContext[N, L, V], params: Map[String, V]): L = {
     val acceptedParams = params.filter { case (key, _) => tmpl.defaultParams.contains(key) }
     val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key)}.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))
     // the context for the newly instantiated template contains only global variables and parameters, no local parameters (static scoping)
@@ -48,7 +49,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     evaluate(sheet, tmpl.content, context.replaceVariables(Map()).addVariables(remainingDefaultParams ++ acceptedParams))
   }
 
-  def chooseTemplates(sheet: XSLTStylesheet, node: N): Map[XSLTTemplate, N] = {
+  private def chooseTemplates(sheet: XSLTStylesheet, node: N): Map[XSLTTemplate, N] = {
     // don't know anything -> return set of all matchable templates
     //case None => sheet.matchableTemplates.map { case (_, tmpl, _, _) => (tmpl, n)}.toMap
     val result = scala.collection.mutable.Map[XSLTTemplate, N]()
@@ -78,7 +79,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     * @param context the context to evaluate the first instruction in (subsequent instructions might have additional variable bindings)
     * @return a list of resulting XML nodes
     */
-  def evaluate(sheet: XSLTStylesheet, nodes: Seq[XSLTInstruction], context: AbstractXSLTContext[N, L, V]): L = {
+  private def evaluate(sheet: XSLTStylesheet, nodes: Seq[XSLTInstruction], context: AbstractXSLTContext[N, L, V]): L = {
     // remember variable names that were created in this scope so we can throw an error
     // if any of these is shadowed in the SAME scope
     var scopeVariables = scala.collection.mutable.Set[String]()
@@ -99,7 +100,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   /** Evaluates a single XSLT instruction in a given XSLT context, resulting in either a list of result nodes
     * or an additional variable binding (if the instruction was a variable definition).
     */
-  def evaluate(sheet: XSLTStylesheet, node: XSLTInstruction, context: AbstractXSLTContext[N, L, V]): Either[L, (String, V)] = {
+  private def evaluate(sheet: XSLTStylesheet, node: XSLTInstruction, context: AbstractXSLTContext[N, L, V]): Either[L, (String, V)] = {
     node match {
       case LiteralElement(name, children) =>
         val innerNodes = evaluate(sheet, children, context)
@@ -143,7 +144,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     * @param context the context to evaluate the instructions in
     * @return a set of possible branches, represented by their body as XSLT instructions
     */
-  def chooseBranches(branches: List[(XPathExpr, Seq[XSLTInstruction])], otherwise: Seq[XSLTInstruction], context: AbstractXPathContext[N, L, V]): Set[Seq[XSLTInstruction]] = {
+  private def chooseBranches(branches: List[(XPathExpr, Seq[XSLTInstruction])], otherwise: Seq[XSLTInstruction], context: AbstractXPathContext[N, L, V]): Set[Seq[XSLTInstruction]] = {
     branches match {
       case Nil => Set(otherwise)
       case (firstExpr, firstTmpl) :: rest =>
