@@ -1,6 +1,5 @@
 package analysis.domain.powerset
 
-import analysis.domain.concrete.{Bottom, Top}
 import analysis._
 import analysis.domain.XPathDomain
 import xml._

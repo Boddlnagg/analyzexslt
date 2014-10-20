@@ -2,7 +2,6 @@ package analysis
 
 import analysis.domain.Domain
 import util.EvaluationError
-import xml._
 import xpath._
 
 import scala.collection.immutable.TreeSet

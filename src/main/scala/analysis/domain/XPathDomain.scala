@@ -1,6 +1,6 @@
 package analysis.domain
 
-import analysis.{Equal, Greater, LatticeOrdering}
+import analysis.LatticeOrdering
 import xpath.RelationalOperator
 
 /** An XPath domain, providing operations on XPath values (V). */
