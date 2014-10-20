@@ -1,12 +1,9 @@
 package analysis
 
-import analysis.domain.Domain
-import xml._
+import analysis.domain.XMLDomain
 import xpath._
 
-class AbstractXPathMatcher[N, L, V](dom: Domain[N, L, V]) {
-  val xmlDom = dom.xmlDom
-  val xpathDom = dom.xpathDom
+class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
 
   /** Returns a value indicating whether a given node matches a location path pattern.
     * NOTE: only supports location path patterns (XSLT spec section 5.2) without predicates

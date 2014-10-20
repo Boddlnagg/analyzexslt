@@ -12,7 +12,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   val xmlDom = dom.xmlDom
   val xpathDom = dom.xpathDom
   val xpathAnalyzer = new XPathAnalyzer[N, L, V](dom)
-  val xpathMatcher = new AbstractXPathMatcher[N, L, V](dom)
+  val xpathMatcher = new AbstractXPathMatcher[N, L, V](xmlDom)
 
   /** Transforms a source document (represented by it's root node) into a new document using an XSLT stylesheet*/
   def transform(sheet: XSLTStylesheet, source: N): N = {

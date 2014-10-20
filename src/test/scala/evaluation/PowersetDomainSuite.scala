@@ -185,7 +185,7 @@ class PowersetDomainSuite extends FunSuite {
 
     def pattern(str: String) = XPathParser.parse(str).asInstanceOf[LocationPath]
 
-    val matcher = new AbstractXPathMatcher[N, L, V](PowersetDomain)
+    val matcher = new AbstractXPathMatcher[N, L, V](PowersetDomain.XML)
 
     val all: N = Some(Set(doc, root, attr1, otherattr, a1, b1, a2, a3, b2, attr2))
 

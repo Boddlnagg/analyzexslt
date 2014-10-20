@@ -62,8 +62,8 @@ object TransformHelper {
     }
   }
 
-  def transformAbstract[N, L, V](xslt: Elem, data: N, domain: Domain[N, L, V]): N = {
-    val stylesheet = XSLTParser.parseStylesheet(xslt)
+  def transformAbstract[N, L, V](xslt: Elem, data: N, domain: Domain[N, L, V], disableBuiltinTemplates: Boolean = false): N = {
+    val stylesheet = XSLTParser.parseStylesheet(xslt, disableBuiltinTemplates)
     val analyzer = new XSLTAnalyzer(domain)
     analyzer.transform(stylesheet, data)
   }
