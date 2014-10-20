@@ -101,7 +101,7 @@ abstract class XSLTReferenceSuiteBase extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
-  test("<xsl:attribute>") {
+  test("<xsl:attribute> #1") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match='/'>
@@ -110,6 +110,37 @@ abstract class XSLTReferenceSuiteBase extends FunSuite {
               attr<p>-</p>value
             </xsl:attribute>
             text before<br/> text after</p>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data = <foo/>
+    assertTransformMatches(xslt, data)
+  }
+
+  test("<xsl:attribute> #2") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match='/'>
+          <result>
+            <elem1><xsl:call-template name="add-attr"/></elem1>
+            <elem2 attr="foo">
+              <!-- Overwrite predefined (literal) attribute -->
+              <xsl:call-template name="add-attr"/>
+            </elem2>
+            <elem3>
+              <!-- Add attribute twice (second overwrites first) -->
+              <xsl:call-template name="add-attr"/>
+              <xsl:call-template name="add-attr"/>
+            </elem3>
+            <elem4>
+              <child/>
+              <!-- Attribute should be ignored after child has already been added -->
+              <xsl:call-template name="add-attr"/>
+            </elem4>
+          </result>
+        </xsl:template>
+        <xsl:template name="add-attr">
+          <xsl:attribute name="attr">value</xsl:attribute>
         </xsl:template>
       </xsl:stylesheet>
 
