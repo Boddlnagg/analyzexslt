@@ -3,6 +3,8 @@ package analysis
 import analysis.domain.XMLDomain
 import xpath._
 
+import scala.collection.mutable.MutableList
+
 class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
 
   /** Returns a value indicating whether a given node matches a location path pattern.
@@ -55,19 +57,32 @@ class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
           // the next step is '//' and must be handled separately (does any ancestor match the rest of the path?)
           val nextRestPath = LocationPath(restPath.steps.dropRight(1), path.isAbsolute)
           var current = lastStepMatches
-          var currentResult = xmlDom.bottom
+          var ancestorMatches = xmlDom.bottom
+          var notAncestorMatches = node
           var (root, notRoot) = xmlDom.isRoot(current)
+          val nodeStack = MutableList(notRoot)
           while (xmlDom.compare(notRoot, xmlDom.bottom) == Greater) {
-            // TODO: this may not terminate (make sure that domains can not have infinite chains of parents?)
+            // TODO: this may not terminate (make sure that domains can not have infinite chains of parents or add stack?)
             val parent = xmlDom.getParent(notRoot)
             val (parentMatchesRest, _) = matches(parent, nextRestPath)
-            currentResult = xmlDom.join(currentResult, parentMatchesRest)
+            var parentMatches = parentMatchesRest
+
+            for (d <- (nodeStack.size - 1) to 1 by -1) {
+              // go down in the tree, back to the original level
+              val (newParentMatches, _) = xmlDom.hasParent(nodeStack(d), parentMatches)
+              parentMatches = newParentMatches
+            }
+
+            val (newParentMatches, newNotParentMatches) = xmlDom.hasParent(nodeStack(0), parentMatches)
+            ancestorMatches = xmlDom.join(ancestorMatches, newParentMatches)
+            notAncestorMatches = xmlDom.join(notAncestorMatches, newNotParentMatches) // TODO: this should probably be MEET instead of JOIN
+
             current = parent
-            val (newRoot, newNotRoot) = xmlDom.isRoot(current)
+            val (newRoot, newNotRoot) = xmlDom.isRoot(current) // instead of returning two results here, one could add isNotRoot
             root = newRoot
             notRoot = newNotRoot
+            nodeStack += notRoot
           }
-          val (ancestorMatches, notAncestorMatches) = xmlDom.hasAncestor(lastStepMatches, currentResult)
           (ancestorMatches, xmlDom.join(notAncestorMatches, notLastStepMatches))
         }
         else {

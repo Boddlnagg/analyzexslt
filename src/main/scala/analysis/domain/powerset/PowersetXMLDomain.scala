@@ -252,17 +252,6 @@ object PowersetXMLDomain {
         (Some(yes), Some(no))
     }
 
-    override def hasAncestor(node: N, ancestor: N): (N, N) = (node, ancestor) match {
-      case (BOT, _) => (BOT, BOT)
-      case (_, BOT) => (BOT, node) // ancestor is BOTTOM -> can't match
-      case (None, _) => (None, None) // don't know anything about the node
-      case (Some(_), None) => (node, node) // ancestor is TOP -> don't know anything
-      case ((Some(nodes), Some(ancestors))) =>
-        val yes = nodes.filter(n => ancestors.exists(a => n.ancestors.contains(a)))
-        val no = nodes.filter(n => !ancestors.exists(a => n.ancestors.contains(a)))
-        (Some(yes), Some(no))
-    }
-
     // return empty string if node has no name
     override def getNodeName(node: N): V = node match {
       case None => xpathDom.topString

@@ -96,19 +96,6 @@ object ConcreteXMLDomain {
       case (Value(n), Value(p)) => if (n.parent == p) (node, Bottom) else (Bottom, node)
     }
 
-    /** Predicate function that checks whether a node has a specified node as its ancestor.
-      * The first result is a node that is known to have that ancestor (this is BOTTOM if the node definitely
-      * doesn't have that ancestor), the second result is a node that might not have that ancestor (this is
-      * BOTTOM if the node definitely does have that ancestor). The two results are not necessarily disjoint.
-      */
-    override def hasAncestor(node: N, ancestor: N): (N, N) = (node, ancestor) match {
-      case (Bottom, _) => (Bottom, Bottom)
-      case (_, Bottom) => (Bottom, node)
-      case (Top, _) => (Top, Top)
-      case (Value(_), Top) => (node, node)
-      case (Value(n), Value(a)) => if (n.ancestors.contains(a)) (node, Bottom) else (Bottom, node)
-    }
-
     /** Concatenates two lists. */
     override def concatLists(list1: L, list2: L): L = list1.liftBinaryOp(list2) {
       (l1, l2) => l1 ++ l2

@@ -100,7 +100,15 @@ object XPathPatternDomain {
     def getChildren(node: N): L = ???
 
     /** Get the parent of given node. */
-    def getParent(node: N): N = Some(Set(AnyElement(None), Root))
+    def getParent(node: N): N = node match {
+      case None => Some(Set(AnyElement(None), Root))
+      case Some(s) => Some(s.toList.filter(e => e != Root).flatMap { e =>
+        e.prev match {
+          case None => List(AnyElement(None), Root)
+          case Some(p) => List(p)
+        }
+      }.toSet)
+    }
 
     /** Predicate function that checks whether a node has a specified node as its parent.
       * The first result is a node that is known to have that parent (this is BOTTOM if the node definitely
@@ -170,7 +178,7 @@ object XPathPatternDomain {
       node match
       {
         case None => (Some(rootSet), node)
-        case Some(s) => (Some(s.intersect(rootSet)), node)
+        case Some(s) => (Some(s.intersect(rootSet)), Some(s.diff(rootSet)))
       }
     }
 
@@ -221,12 +229,12 @@ object XPathPatternDomain {
       * Nodes that don't have a name (any node except element and attribute nodes) are evaluated to BOTTOM.
       */
     def hasName(node: N, name: String): (N, N) = node match {
-      case None => (Some(Set(NamedElement(None, name), NamedAttribute(None, name))), node)
+      case None => (Some(Set(NamedElement(name, None), NamedAttribute(name, None))), node)
       case Some(s) => (Some(s.collect {
-        case e@NamedElement(_, n) if (name == n) => e
-        case AnyElement(p) => NamedElement(p, name)
-        case a@NamedAttribute(_, n) if (name == n) => a
-        case AnyAttribute(p) => NamedAttribute(p, name)
+        case e@NamedElement(n, _) if (name == n) => e
+        case AnyElement(p) => NamedElement(name, p)
+        case a@NamedAttribute(n, _) if (name == n) => a
+        case AnyAttribute(p) => NamedAttribute(name, p)
       }), node)
     }
 

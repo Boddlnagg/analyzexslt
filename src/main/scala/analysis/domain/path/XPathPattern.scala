@@ -27,8 +27,8 @@ case class AnyElement(prev: Option[XPathPattern]) extends XPathPattern {
   override def stepString = "*"
 }
 
-case class NamedElement(prev: Option[XPathPattern], name: String) extends XPathPattern {
-  override def withPrev(pattern: XPathPattern) = NamedElement(Some(pattern), name)
+case class NamedElement(name: String, prev: Option[XPathPattern]) extends XPathPattern {
+  override def withPrev(pattern: XPathPattern) = NamedElement(name, Some(pattern))
   override def stepString = name
 }
 
@@ -37,7 +37,7 @@ case class AnyAttribute(prev: Option[XPathPattern]) extends XPathPattern {
   override def stepString = "@*"
 }
 
-case class NamedAttribute(prev: Option[XPathPattern], name: String) extends XPathPattern {
-  override def withPrev(pattern: XPathPattern) = NamedAttribute(Some(pattern), name)
+case class NamedAttribute(name: String, prev: Option[XPathPattern]) extends XPathPattern {
+  override def withPrev(pattern: XPathPattern) = NamedAttribute(name, Some(pattern))
   override def stepString = "@" + name
 }

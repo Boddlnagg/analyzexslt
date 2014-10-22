@@ -90,13 +90,6 @@ trait XMLDomain[N, L, V] {
     */
   def hasParent(node: N, parent: N): (N, N)
 
-  /** Predicate function that checks whether a node has a specified node as its ancestor.
-    * The first result is a node that is known to have that ancestor (this is BOTTOM if the node definitely
-    * doesn't have that ancestor), the second result is a node that might not have that ancestor (this is
-    * BOTTOM if the node definitely does have that ancestor). The two results are not necessarily disjoint.
-    */
-  def hasAncestor(node: N, ancestor: N): (N, N)
-
   /** Concatenates two lists. */
   def concatLists(list1: L, list2: L): L
 
