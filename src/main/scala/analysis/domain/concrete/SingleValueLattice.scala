@@ -10,8 +10,17 @@ trait SingleValueLattice[+T] {
     case (_, Top) => Top
     case (Value(v), Bottom) => Value(v)
     case (Bottom, Value(v)) => Value(v)
-    case (Value(v1), Value(v2)) if v1 == v2 => Value(v1)
+    case (Value(v1), Value(v2)) if v1 == v2 => this
     case _ => Bottom
+  }
+
+  def meet[T1 >: T](other: SingleValueLattice[T1]): SingleValueLattice[T1] = (this, other) match {
+    case (Bottom, _) => Bottom
+    case (_, Bottom) => Bottom
+    case (Value(v), Top) => Value(v)
+    case (Top, Value(v)) => Value(v)
+    case (Value(v1), Value(v2)) if v1 == v2 => this
+    case _ => Top
   }
 
   def liftBinaryOp[R, T1 >: T](other: SingleValueLattice[T1])(f: (T1, T1) => R): SingleValueLattice[R] = (this, other) match {

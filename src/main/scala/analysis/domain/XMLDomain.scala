@@ -19,8 +19,11 @@ trait XMLDomain[N, L, V] {
   /** Gets the BOTTOM element for XML node lists. */
   def bottomList: L
 
-  /** Join two nodes. This calculates their supremum (least upper bound). */
+  /** Calcucate the join of two abstract nodes. This is the supremum (least upper bound). */
   def join(n1: N, n2: N): N
+
+  /** Calculate the meet of two abstract nodes. This is the infimum (greatest lower bound). */
+  def meet(n1: N, n2: N): N
 
   /** Join two node lists. This calculates their supremum (least upper bound). */
   def joinList(l1: L, l2: L): L

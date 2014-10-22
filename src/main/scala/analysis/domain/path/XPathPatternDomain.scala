@@ -42,6 +42,12 @@ object XPathPatternDomain {
         Some(result)
     }
 
+    override def meet(n1: N, n2: N): N = (n1, n2) match {
+      case (None, _) => n2
+      case (_, None) => n1
+      case (Some(s1), Some(s2)) => Some(s1.intersect(s2)) // TODO: this is not yet correct
+    }
+
     /** Join two node lists. This calculates their supremum (least upper bound). */
     def joinList(l1: L, l2: L): L = ???
 

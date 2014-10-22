@@ -29,17 +29,11 @@ object PowersetXMLDomain {
       case (Some(s1), Some(s2)) => Some(s1.union(s2))
     }
 
-    /*override def meet(n1: N, n2: N): N = (n1, n2) match {
-      case (None, _) => None
-      case (_, None) => None
+    override def meet(n1: N, n2: N): N = (n1, n2) match {
+      case (None, _) => n2
+      case (_, None) => n1
       case (Some(s1), Some(s2)) => Some(s1.intersect(s2))
     }
-
-    override def compare(morePrecise: N, lessPrecise: N): Boolean = (morePrecise, lessPrecise) match {
-      case (_, None) => true
-      case (None, _) => false
-      case (Some(s1), Some(s2)) => s1.subsetOf(s2)
-    }*/
 
     override def compare(n1: N, n2: N): LatticeOrdering = (n1, n2) match {
       case (None, None) => Equal
