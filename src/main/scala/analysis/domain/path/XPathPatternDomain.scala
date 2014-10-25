@@ -34,13 +34,11 @@ object XPathPatternDomain {
       case (_, None) => None
       case (BOT, _) => n2
       case (_, BOT) => n1
-      case (Some(s1), Some(s2)) => Some(s1.cross(s2).flatMap { case (pat1, pat2) =>
-        (lessThanOrEqualSingle(Some(pat1), Some(pat2)), lessThanOrEqualSingle(Some(pat2), Some(pat1))) match {
-          case (true, true) => List(pat1) // pat1 == pat2
-          case (true, false) => List(pat2) // pat1 < pat2
-          case (false, true) => List(pat1) // pat1 > pat2
-          case (false, false) => List(pat1, pat2) // incomparable
-        }
+      case (Some(s1), Some(s2)) => Some(s1.union(s2).toList.foldRight(List[XPathPattern]()) {
+        case (next, acc) => if (acc.exists(e => lessThanOrEqualSingle(Some(next), Some(e))))
+          acc
+        else
+          next :: acc.filter(e => !lessThanOrEqualSingle(Some(e), Some(next)))
       }.toSet)
     }
 

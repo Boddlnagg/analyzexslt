@@ -105,8 +105,8 @@ class AbstractPathMatchingSuite extends FunSuite {
   test("Join") {
     val pat1: N = Some(Set(AnyElement(Some(Root)))) // "/*"
     val pat2: N = Some(Set(AnyElement(None))) // "*"
-    val pat3: N = Some(Set(NamedElement("a", (Some(Root))))) // "/a"
-    val pat4: N = Some(Set(NamedElement("b", (Some(Root))))) // "/b"
+    val pat3: N = Some(Set(NamedElement("a", Some(Root)))) // "/a"
+    val pat4: N = Some(Set(NamedElement("b", Some(Root)))) // "/b"
     val pat5: N = Some(Set(NamedElement("a", None), NamedElement("b", None))) // {"a", "b"}
     val pat6: N = Some(Set(NamedElement("b", None), NamedElement("c", None))) // {"b", "c"}
     val pat7: N = Some(Set(NamedElement("a", Some(AnyElement(Some(Root)))))) // "/*/a"
@@ -140,7 +140,8 @@ class AbstractPathMatchingSuite extends FunSuite {
     val pat7: N = Some(Set(NamedElement("a", Some(AnyElement(Some(Root)))))) // "/*/a"
     val pat8: N = Some(Set(NamedElement("a", Some(NamedElement("a", Some(Root)))))) // "/a/a"
     val pat9: N = Some(Set(NamedElement("a", Some(NamedElement("b", Some(Root)))))) // "/b/a"
-    val pat89: N = xmlDom.join(pat8, pat9) // {"/a/a", "/b/a"}
+    val pat89: N = Some(Set(NamedElement("a", Some(NamedElement("a", Some(Root)))),
+        NamedElement("a", Some(NamedElement("b", Some(Root)))))) // {"/a/a", "/b/a"}
 
     assertResult(Greater) { xmlDom.compare(pat1, pat2) }
     assertResult(Less) { xmlDom.compare(pat2, pat1) }
