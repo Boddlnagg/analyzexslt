@@ -5,7 +5,7 @@ import analysis.domain.XMLDomain
 
 object XPathPatternDomain {
   type N = Option[Set[XPathPattern]]
-  type L = Unit
+  type L = Option[Set[XPathPattern]] // TODO: add optional length of list
   type V = Unit
 
   implicit class Crossable[X](xs: Traversable[X]) {
@@ -32,14 +32,16 @@ object XPathPatternDomain {
     def join(n1: N, n2: N): N = (n1, n2) match {
       case (None, _) => None
       case (_, None) => None
-      case (Some(s1), Some(s2)) =>
-        val result = s1.union(s2)
-        // TODO: what happens when their `prev` is not None?
-        if (result.contains(AnyElement(None))) // any element includes named elements
-          result.filter(n => !n.isInstanceOf[NamedElement])
-        if (result.contains(AnyAttribute(None))) // any attribute includes named attributes
-          result.filter(n => !n.isInstanceOf[NamedAttribute])
-        Some(result)
+      case (BOT, _) => n2
+      case (_, BOT) => n1
+      case (Some(s1), Some(s2)) => Some(s1.cross(s2).flatMap { case (pat1, pat2) =>
+        (lessThanOrEqualSingle(Some(pat1), Some(pat2)), lessThanOrEqualSingle(Some(pat2), Some(pat1))) match {
+          case (true, true) => List(pat1) // pat1 == pat2
+          case (true, false) => List(pat2) // pat1 < pat2
+          case (false, true) => List(pat1) // pat1 > pat2
+          case (false, false) => List(pat1, pat2) // incomparable
+        }
+      }.toSet)
     }
 
     /** Join two node lists. This calculates their supremum (least upper bound). */
@@ -48,16 +50,32 @@ object XPathPatternDomain {
     /** Compares two elements of the lattice of nodes.
       * TOP is always greater than everything else, BOTTOM is always less than everything else.
       */
-    override def compare(n1: N, n2: N): LatticeOrdering = (n1, n2) match {
-      case (None, None) => Equal
-      case (None, _) => Greater
-      case (_, None) => Less
-      // TODO: this is currently wrong, because e.g. AnyElement > NamedElement
-      case (Some(s1), Some(s2)) => (s1.subsetOf(s2), s2.subsetOf(s1)) match {
-        case (true, true) => Equal
-        case (true, false) => Less
-        case (false, true) => Greater
-        case (false, false) => Incomparable
+    override def compare(n1: N, n2: N): LatticeOrdering = (lessThanOrEqual(n1, n2), lessThanOrEqual(n2, n1)) match {
+      case (true, true) => Equal
+      case (true, false) => Less
+      case (false, true) => Greater
+      case (false, false) => Incomparable
+    }
+
+    def lessThanOrEqual(n1: N, n2: N): Boolean = (n1, n2) match {
+      case (_, None) => true
+      case (None, Some(_)) => false
+      case (Some(s1), Some(s2)) => s1.forall(pat1 => s2.exists(pat2 => lessThanOrEqualSingle(Some(pat1), Some(pat2))))
+    }
+
+    def lessThanOrEqualSingle(left: Option[XPathPattern], right: Option[XPathPattern]): Boolean = (left, right) match {
+      case (_, None) => true
+      case (None, Some(_)) => false
+      case (Some(pat1), Some(pat2)) => (pat1, pat2) match {
+        case (Root, Root) => true
+        case (AnyElement(prev1), AnyElement(prev2)) => lessThanOrEqualSingle(prev1, prev2)
+        case (NamedElement(name1, prev1), NamedElement(name2, prev2)) if name1 == name2 => lessThanOrEqualSingle(prev1, prev2)
+        case (NamedElement(_, prev1), AnyElement(prev2)) => lessThanOrEqualSingle(prev1, prev2)
+        case (AnyAttribute(prev1), AnyAttribute(prev2)) => lessThanOrEqualSingle(prev1, prev2)
+        case (NamedAttribute(name1, prev1), NamedAttribute(name2, prev2)) if name1 == name2 => lessThanOrEqualSingle(prev1, prev2)
+        case (NamedAttribute(_, prev1), AnyAttribute(prev2)) => lessThanOrEqualSingle(prev1, prev2)
+        // TODO: add recursive cases for other node types
+        case _ => false
       }
     }
 
@@ -92,22 +110,28 @@ object XPathPatternDomain {
 
     /** Get the list of attributes of a given node.
       * Nodes that are not an element (and therefore don't have attributes) return an empty list, not BOTTOM! */
-    def getAttributes(node: N): L = ???
+    def getAttributes(node: N): L = node match {
+      case None => None
+      case Some(s) => Some(s.map(e => AnyAttribute(Some(e))))
+    }
 
     /** Get the list of children of a given node.
       * Root nodes have a single child, element nodes have an arbitrary number of children.
       * Nodes that don't have children return an empty list, not BOTTOM! */
-    def getChildren(node: N): L = ???
+    def getChildren(node: N): L = node match {
+      case None => None
+      case Some(s) => Some(s.map(e => AnyElement(Some(e))))
+    }
 
     /** Get the parent of given node. */
     def getParent(node: N): N = node match {
       case None => Some(Set(AnyElement(None), Root))
-      case Some(s) => Some(s.toList.filter(e => e != Root).flatMap { e =>
-        e.prev match {
-          case None => List(AnyElement(None), Root)
-          case Some(p) => List(p)
-        }
-      }.toSet)
+      case Some(s) => join(s.toList.filter(e => e != Root).map { e =>
+          e.prev match {
+            case None => Some(Set[XPathPattern](AnyElement(None), Root))
+            case Some(p) => Some(Set[XPathPattern](p))
+          }
+        })
     }
 
     /** Predicate function that checks whether a node has a specified node as its parent.

@@ -22,10 +22,17 @@ trait XMLDomain[N, L, V] {
   /** Join two nodes. This calculates their supremum (least upper bound). */
   def join(n1: N, n2: N): N
 
+  /** Join a list of nodes. The supremum of the empty list is BOTTOM. */
+  def join(nodes: List[N]): N = nodes match {
+    case Nil => bottom
+    case List(node) => node
+    case _ => nodes.reduceLeft(join)
+  }
+
   /** Join two node lists. This calculates their supremum (least upper bound). */
   def joinList(l1: L, l2: L): L
 
-  /** Join a list of nodes lists. The supremum of the empty list ist BOTTOM. */
+  /** Join a list of nodes lists. The supremum of the empty list is BOTTOM. */
   def joinList(lists: List[L]): L = lists match {
     case Nil => bottomList
     case List(list) => list
