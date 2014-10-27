@@ -38,14 +38,13 @@ object TransformHelper {
     val stylesheet = XSLTParser.parseStylesheet(xslt)
     val analyzer = new XSLTAnalyzer(PowersetDomain)
     val xmlDom = analyzer.xmlDom
-    val liftedInput: PowersetXMLDomain.N = Right(Set(XMLParser.parseDocument(data)))
-    analyzer.transform(stylesheet, liftedInput) match {
-      case Left(_) => throw new AssertionError("Expected single result root element, but got infinite result (TOP)")
-      case Right(s) => s.toList match {
-        case List(r: XMLRoot) => r
-        case Nil => throw new EvaluationError("Expected single result root element, but got no result (BOTTOM)")
-        case _ => throw new AssertionError(f"Expected single result root element, but got $s")
-      }
+    val liftedInput: PowersetXMLDomain.N = Some(Set(XMLParser.parseDocument(data)))
+    val result = analyzer.transform(stylesheet, liftedInput).map(_.toList)
+    result match {
+      case None => throw new AssertionError("Expected single result root element, but got infinite result (TOP)")
+      case Some(List(r: XMLRoot)) => r
+      case Some(Nil) => throw new EvaluationError("Expected single result root element, but got no result (BOTTOM)")
+      case _ => throw new AssertionError(f"Expected single result root element, but got $result")
     }
   }
 
