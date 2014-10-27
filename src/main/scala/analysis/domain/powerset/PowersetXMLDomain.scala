@@ -6,7 +6,7 @@ import xml._
 /** Just a wrapper for the type aliases */
 object PowersetXMLDomain {
   type N = Option[Set[XMLNode]] // None represents the infinite set, Some represents finite sets
-  type L = Option[Set[List[XMLNode]]]
+  type L = Either[Option[Int], Set[List[XMLNode]]] // Left(Some(n)) is a list with n unknown elements (n > 0)
 
   /** This is the actual (partial) domain implementation */
   trait D[V] extends XMLDomain[N, L, V] {
@@ -17,10 +17,10 @@ object PowersetXMLDomain {
 
     protected val BOT: N = Some(Set())
 
-    override def topList: L = None
+    override def topList: L = Left(None)
     override def bottomList: L = BOT_LIST
 
-    protected val BOT_LIST: L = Some(Set())
+    protected val BOT_LIST: L = Right(Set())
 
     override def join(n1: N, n2: N): N = (n1, n2) match {
       case (None, _) => None
@@ -41,48 +41,62 @@ object PowersetXMLDomain {
     }
 
     override def lessThanOrEqualList(l1: L, l2: L): Boolean = (l1, l2) match {
-      case (_, None) => true
-      case (None, Some(_)) => false
-      case (Some(s1), Some(s2)) => s1.subsetOf(s2)
+      case (_, Left(None)) => true
+      case (Left(Some(len1)), Left(Some(len2))) => len1 == len2
+      case (Left(None), Left(Some(_))) => false
+      case (Right(_), Left(_)) => true
+      case (Left(_), Right(_)) => false
+      case (Right(s1), Right(s2)) => s1.subsetOf(s2)
     }
 
     override def joinList(l1: L, l2: L): L = (l1, l2) match {
-      case (None, _) => None
-      case (_, None) => None
-      case (Some(s1), Some(s2)) => Some(s1.union(s2))
+      case (Left(Some(len1)), Left(Some(len2))) if len1 == len2 => l1
+      case (Left(_), Left(_)) => Left(None)
+      case (Left(_), Right(_)) => l1
+      case (Right(_), Left(_)) => l2
+      case (Right(s1), Right(s2)) => Right(s1.union(s2))
     }
 
     def createElement(name: String, attributes: L, children: L): N = (attributes, children) match {
-      case (None, _) => None
-      case (_, None) => None
-      case (Some(s1), Some(s2)) => Some(s1.cross(s2).map {
+      case (Left(_), _) => None
+      case (_, Left(_)) => None
+      case (Right(s1), Right(s2)) => Some(s1.cross(s2).map {
         case (attr, chld) => XMLElement(name,
           attr.map(a => a.asInstanceOf[XMLAttribute].copy),
           chld.map(c => c.copy))
       }.toSet)
     }
 
-    override def createEmptyList(): L = Some(Set(Nil))
+    override def createEmptyList(): L = Right(Set(Nil))
 
-    override def createSingletonList(node: N): L = node.map(_.map(n => List(n)))
+    override def createSingletonList(node: N): L = node match {
+      case None => Left(Some(1))
+      case Some(s) => Right(s.map(n => List(n)))
+    }
 
     override def getRoot(node: N): N = node match {
       case None => None // infinite set of all possible roots (in this domain we can't express that it must be a root node)
       case Some(s) => Some(s.map(n => n.root))
     }
 
-    override def getAttributes(node: N): L = node.map(_.map {
-      case XMLElement(_, attr, _, _) => attr.toList
-      case _ => Nil // NOTE: other node types have no attributes, but this must NOT evaluate to BOTTOM
-    })
+    override def getAttributes(node: N): L = node match {
+      case None => Left(None)
+      case Some(s) => Right(s.map {
+        case XMLElement(_, attr, _, _) => attr.toList
+        case _ => Nil // NOTE: other node types have no attributes, but this must NOT evaluate to BOTTOM
+      })
+    }
 
-    override def getChildren(node: PowersetXMLDomain.N): L = node.map(_.map {
-      case XMLRoot(elem) => List(elem)
-      case XMLElement(_, _, children, _) => children.toList
-      case _ => Nil // NOTE: other node types have no children, but this must NOT evaluate to BOTTOM
-    })
+    override def getChildren(node: PowersetXMLDomain.N): L = node match {
+      case None => Left(None)
+      case Some(s) => Right(s.map {
+        case XMLRoot(elem) => List(elem)
+        case XMLElement(_, _, children, _) => children.toList
+        case _ => Nil // NOTE: other node types have no children, but this must NOT evaluate to BOTTOM
+      })
+    }
 
-    def getParent(node: N): N = node match {
+    override def getParent(node: N): N = node match {
       case None => None
       case Some(s) => Some(s.map(n => n.parent))
     }
@@ -90,25 +104,30 @@ object PowersetXMLDomain {
     override def concatLists(list1: L, list2: L): L = (list1, list2) match {
       case (BOT_LIST, _) => BOT_LIST
       case (_, BOT_LIST) => BOT_LIST
-      case (Some(l1), Some(l2)) => Some(l1.cross(l2).map {
+      case (Right(l1), Right(l2)) => Right(l1.cross(l2).map {
         case (ll1, ll2) => ll1 ++ ll2
       }.toSet)
-      case _ => None // at least one operand is TOP and the other is not BOTTOM
+      case (Right(l1), Left(Some(len2))) => Left(Some(l1.size + len2))
+      case (Left(Some(len1)), Right(l2)) => Left(Some(len1 + l2.size))
+      case (Left(Some(len1)), Left(Some(len2))) => Left(Some(len1 + len2))
+      case _ => Left(None) // at least one operand is TOP and the other is not BOTTOM
     }
 
     override def partitionAttributes(list: L): (L, L) = list match {
-      case None => (None, None) // don't know anything about attributes or other nodes
-      case Some(s) => val (attr, children) = s.map { l =>
+      case Left(_) => (Left(None), Left(None)) // don't know anything about attributes or other nodes
+      case Right(s) => val (attr, children) = s.map { l =>
         val resultAttributes = l.takeWhile(n => n.isInstanceOf[XMLAttribute])
         val resultChildren = l.filter(n => !n.isInstanceOf[XMLAttribute])
         (resultAttributes, resultChildren)
       }.unzip
-      (Some(attr), Some(children))
+      (Right(attr), Right(children))
     }
 
     override def wrapInRoot(list: L): N = list match {
-      case None => None
-      case Some(s) => Some(
+      case Left(None) => None
+      case Left(Some(1)) => None
+      case Left(Some(_)) => BOT
+      case Right(s) => Some(
         s.filter {
           case List(e: XMLElement) => true
           case l => println(f"[WARNING] Failed to wrap nodes in root: $l"); false
@@ -119,14 +138,18 @@ object PowersetXMLDomain {
       )
     }
 
-    override def copyToOutput(list: L): L = list.map(_.map(_.map {
-      case XMLRoot(elem) => elem.copy // "a root node is copied by copying its children" according to spec
-      case node => node.copy
-    }))
+    override def copyToOutput(list: L): L = list match {
+      case Left(_) => list // list with same number of elements (if known)
+      case Right(s) => Right(s.map(_.map {
+        case XMLRoot(elem) => elem.copy // "a root node is copied by copying its children" according to spec
+        case node => node.copy
+      }))
+    }
 
     override def getNodeListSize(list: L): V = list match {
-      case None => xpathDom.topNumber
-      case Some(s) => xpathDom.join(s.map(l => xpathDom.liftNumber(l.size)).toList)
+      case Left(Some(len)) => xpathDom.liftNumber(len)
+      case Left(None) => xpathDom.topNumber
+      case Right(s) => xpathDom.join(s.map(l => xpathDom.liftNumber(l.size)).toList)
     }
 
     override def getStringValue(node: N): V = node match {
@@ -210,15 +233,15 @@ object PowersetXMLDomain {
     }
 
     override def getConcatenatedTextNodeValues(list: L): V = list match {
-      case None => xpathDom.topString
-      case Some(s) => xpathDom.join(s.map { l =>
+      case Left(_) => xpathDom.topString
+      case Right(s) => xpathDom.join(s.map { l =>
         xpathDom.liftLiteral(l.collect { case n: XMLTextNode => n.value }.mkString(""))
       }.toList)
     }
 
     override def filter(list: L, predicate: N => (N, N)): L = list match {
-      case None => None
-      case Some(s) => Some(s.map(_.filter { n =>
+      case Left(_) => Left(None)
+      case Right(s) => Right(s.map(_.filter { n =>
         val node: N = Some(Set(n))
         val (resultTrue, _) = predicate(node)
         // TODO: this could be made more abstract using compare operations (e.g. assert that resultTrue <= node)
@@ -234,8 +257,8 @@ object PowersetXMLDomain {
     }
 
     override def flatMapWithIndex(list: L, f: (N, V) => L): L = list match {
-      case None => None
-      case Some(s) => joinList(s.map { l =>
+      case Left(_) => Left(None)
+      case Right(s) => joinList(s.map { l =>
         val mapped = l.zipWithIndex.map { case (n, i) => f(Some(Set(n)), xpathDom.liftNumber(i)) }
         val flattened = mapped.foldLeft(createEmptyList())((acc, next) => concatLists(acc, next))
         flattened

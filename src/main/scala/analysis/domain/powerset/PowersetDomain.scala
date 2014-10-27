@@ -38,20 +38,21 @@ object PowersetDomain extends Domain[N, L, V] {
 
   object XPATH extends PowersetXPathDomain.D[N, L] {
 
-    override def toNodeSet(set: L): V = {
-      set.map(_.map(nodes => NodeSetValue((TreeSet[XMLNode]() ++ nodes).toList)))
+    override def toNodeSet(list: L): V = list match {
+      case Left(_) => None
+      case Right(s) => Some(s.map(nodes => NodeSetValue((TreeSet[XMLNode]() ++ nodes).toList)))
     }
 
     override def matchNodeSetValues(v: V): (L, V) = v match {
-      case None => (None, None)
+      case None => (Left(None), None)
       case Some(s) =>
-        val nodeSetContents = Some(s.collect {
+        val nodeSetContents = s.collect {
           case NodeSetValue(nodes) => nodes
-        })
-        val rest = Some(s.collect {
+        }
+        val rest = s.collect {
           case v@(NumberValue(_) | StringValue(_) | BooleanValue(_)) => v
-        })
-        (nodeSetContents, rest)
+        }
+        (Right(nodeSetContents), Some(rest))
     }
   }
 }
