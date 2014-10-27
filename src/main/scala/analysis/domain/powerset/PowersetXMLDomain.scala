@@ -52,8 +52,10 @@ object PowersetXMLDomain {
     override def joinList(l1: L, l2: L): L = (l1, l2) match {
       case (Left(Some(len1)), Left(Some(len2))) if len1 == len2 => l1
       case (Left(_), Left(_)) => Left(None)
-      case (Left(_), Right(_)) => l1
-      case (Right(_), Left(_)) => l2
+      case (Left(Some(len1)), Right(s2)) if len1 == s2.size => Left(Some(len1))
+      case (Left(_), Right(_)) => Left(None)
+      case (Right(s1), Left(Some(len2))) if s1.size == len2 => Left(Some(len2))
+      case (Right(_), Left(_)) => Left(None)
       case (Right(s1), Right(s2)) => Right(s1.union(s2))
     }
 
@@ -107,8 +109,14 @@ object PowersetXMLDomain {
       case (Right(l1), Right(l2)) => Right(l1.cross(l2).map {
         case (ll1, ll2) => ll1 ++ ll2
       }.toSet)
-      case (Right(l1), Left(Some(len2))) => Left(Some(l1.size + len2))
-      case (Left(Some(len1)), Right(l2)) => Left(Some(len1 + l2.size))
+      case (Right(s1), Left(Some(len2))) =>
+        val sizes = s1.map(_.size).toSet
+        if (sizes.size == 1) Left(Some(sizes.toList.head + len2))
+        else Left(None)
+      case (Left(Some(len1)), Right(s2)) =>
+        val sizes = s2.map(_.size).toSet
+        if (sizes.size == 1) Left(Some(sizes.toList.head + len1))
+        else Left(None)
       case (Left(Some(len1)), Left(Some(len2))) => Left(Some(len1 + len2))
       case _ => Left(None) // at least one operand is TOP and the other is not BOTTOM
     }
@@ -257,7 +265,11 @@ object PowersetXMLDomain {
     }
 
     override def flatMapWithIndex(list: L, f: (N, V) => L): L = list match {
-      case Left(_) => Left(None)
+      case Left(None) => Left(None)
+      case Left(Some(len)) =>
+        val mapped = List.range(0, len).map { i => f(None, xpathDom.liftNumber(i)) }
+        val flattened = mapped.foldLeft(createEmptyList())((acc, next) => concatLists(acc, next))
+        flattened
       case Right(s) => joinList(s.map { l =>
         val mapped = l.zipWithIndex.map { case (n, i) => f(Some(Set(n)), xpathDom.liftNumber(i)) }
         val flattened = mapped.foldLeft(createEmptyList())((acc, next) => concatLists(acc, next))

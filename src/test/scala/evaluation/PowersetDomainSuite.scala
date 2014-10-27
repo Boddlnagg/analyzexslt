@@ -66,9 +66,6 @@ class PowersetDomainSuite extends FunSuite {
     assertResult(Some(Set(XMLParser.parse(<e1 name="value"/>)))) {
       xmlDom.createElement("e1", attr, xmlDom.createEmptyList())
     }
-    /*assertResult(Some(Set(XMLParser.parse(<e1 name="value"/>), XMLParser.parse(<e2 name="value"/>)))) {
-      xmlDom.addAttributes(Some(Set(e1, e2)), attr)
-    }*/
 
     val attr2: L = Right(Set(
       List(XMLAttribute("attr1", "1"), XMLAttribute("attr2", "2")), // first alternative
