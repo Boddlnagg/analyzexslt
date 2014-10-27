@@ -108,15 +108,14 @@ class AbstractPathMatchingSuite extends FunSuite {
       NamedElement("b", Some(AnyElement(Some(NamedElement("a", Some(AnyElement(Some(Root))))))))
     ))
     val pattern = XPathParser.parse("a//b").asInstanceOf[LocationPath]
-    // TODO: define the result, should be either of (depending on the definition of JOIN):
-    // Some(Set("/*/a/b", "/*/a/a/b", "/a/a/b", "/*/a/*/b", "/a/a/*/b")) or Some(Set("/*/a/b", "/*/a/*/b"))
-    assertResult(null) { matchIntersect(pattern, start).map(_.map(_.toString)) }
+    assertResult(Some(Set("/*/a/b", "/*/a/*/b"))) { matchIntersect(pattern, start).map(_.map(_.toString)) }
   }
 
   val start1 = AnyElement(None) // "*"
   val start2 = AnyElement(Some(Root)) // "/*"
   val start3 = NamedElement("a", None) // "a"
   val start4 = AnyElement(Some(NamedElement("a", None))) // "a/*"
+  val start5 = AnyElement(Some(NamedElement("a", Some(Root)))) // "/a/*"
 
   test("/* starting from *") {
     val pattern = XPathParser.parse("/*").asInstanceOf[LocationPath]
@@ -136,6 +135,11 @@ class AbstractPathMatchingSuite extends FunSuite {
   test("*/b starting from a/*") {
     val pattern = XPathParser.parse("*/b").asInstanceOf[LocationPath]
     assertResult(Some(Set("a/b"))) { matchIntersect(pattern, Some(Set(start4))).map(_.map(_.toString)) }
+  }
+
+  test("*/b starting from /a/*") {
+    val pattern = XPathParser.parse("*/b").asInstanceOf[LocationPath]
+    assertResult(Some(Set("/a/b"))) { matchIntersect(pattern, Some(Set(start5))).map(_.map(_.toString)) }
   }
 
   test("/*/b starting from a/*") {

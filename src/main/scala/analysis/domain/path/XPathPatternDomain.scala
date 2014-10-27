@@ -154,23 +154,11 @@ object XPathPatternDomain {
       * doesn't have that parent), the second result is a node that might not have that parent (this is
       * BOTTOM if the node definitely does have that parent). The two results are not necessarily disjoint.
       */
-    override def hasParent(node: N, parent: N): (N, N) = (node, parent) match {
-      case (BOT, _) => (BOT, BOT)
-      case (_, BOT) => (BOT, node) // parent is BOTTOM -> can't match
-      case (None, _) => (None, None) // don't know anything about the node
-      case (Some(_), None) => (node, node) // parent is TOP -> don't know anything
-      case ((Some(nodes), Some(parents))) =>
-        // TODO: The following assumption is wrong. We need to apply a meet operator for `prev`
-        assert(nodes.forall(n => n.prev == None)) // nodes shouldn't have `prev` set yet
-        val validParents = parents.filter {
-          case Root => true
-          case AnyElement(_) => true
-          case NamedElement(_, _) => true
-          case _ => false
-        }
-        (Some(nodes.cross(validParents).map {
-          case (n, p) => n.withPrev(p)
-        }.toSet), node)
+    override def hasParent(node: N, parent: N): (N, N) = {
+      def listToNode(list: L): N = list
+
+      val childnodes = join(listToNode(getChildren(parent)), listToNode(getAttributes(parent)))
+      (meet(node, childnodes), node)
     }
 
     /** Concatenates two lists. */
