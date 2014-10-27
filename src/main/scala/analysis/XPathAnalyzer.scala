@@ -18,8 +18,40 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case DivExpr(lhs, rhs) => xpathDom.divide(evaluate(lhs, ctx), evaluate(rhs, ctx))
       case ModExpr(lhs, rhs) => xpathDom.modulo(evaluate(lhs, ctx), evaluate(rhs, ctx))
       case RelationalExpr(lhs, rhs, relOp) => xpathDom.compareRelational(evaluate(lhs, ctx), evaluate(rhs, ctx), relOp)
-      case AndExpr(lhs, rhs) => xpathDom.logicalAnd(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case OrExpr(lhs, rhs) => xpathDom.logicalOr(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case AndExpr(lhs, rhs) =>
+        val left = xpathDom.toBooleanValue(evaluate(lhs, ctx))
+        val leftMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), left)
+        val leftMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), left)
+        if (!leftMaybeTrue)
+          return xpathDom.liftBoolean(false)
+
+        val right = xpathDom.toBooleanValue(evaluate(rhs, ctx))
+        val rightMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), right)
+        val rightMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), right)
+        if (!rightMaybeTrue)
+          return xpathDom.liftBoolean(false)
+
+        if (!leftMaybeFalse && !rightMaybeFalse)
+          return xpathDom.liftBoolean(true)
+
+        xpathDom.join(xpathDom.liftBoolean(true), xpathDom.liftBoolean(false))
+      case OrExpr(lhs, rhs) =>
+        val left = xpathDom.toBooleanValue(evaluate(lhs, ctx))
+        val leftMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), left)
+        val leftMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), left)
+        if (!leftMaybeFalse)
+          return xpathDom.liftBoolean(true)
+
+        val right = xpathDom.toBooleanValue(evaluate(rhs, ctx))
+        val rightMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), right)
+        val rightMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), right)
+        if (!rightMaybeFalse)
+          return xpathDom.liftBoolean(true)
+
+        if (!leftMaybeTrue && !rightMaybeTrue)
+          return xpathDom.liftBoolean(false)
+
+        xpathDom.join(xpathDom.liftBoolean(true), xpathDom.liftBoolean(false))
       case NegExpr(subexpr) => xpathDom.negateNum(evaluate(subexpr, ctx))
       case LiteralExpr(literal) => xpathDom.liftLiteral(literal)
       case NumberExpr(num) => xpathDom.liftNumber(num)
@@ -31,7 +63,16 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case FunctionCallExpr(name, params) => (name, params.map(p => evaluate(p, ctx))) match {
         case ("true", Nil) => xpathDom.liftBoolean(true)
         case ("false", Nil) => xpathDom.liftBoolean(false)
-        case ("not", List(arg)) => xpathDom.negateBool(arg)
+        case ("not", List(arg)) =>
+          val bool = xpathDom.toBooleanValue(arg)
+          val maybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), bool)
+          val maybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), bool)
+          (maybeTrue, maybeFalse) match {
+            case (true, true) => xpathDom.join(xpathDom.liftBoolean(true), xpathDom.liftBoolean(false))
+            case (true, false) => xpathDom.liftBoolean(false)
+            case (false, true) => xpathDom.liftBoolean(true)
+            case (false, false) => xpathDom.bottom
+          }
         case ("string", List(arg)) => xpathDom.toStringValue(arg)
         case ("boolean", List(arg)) => xpathDom.toBooleanValue(arg)
         case ("number", List(arg)) => xpathDom.toNumberValue(arg)

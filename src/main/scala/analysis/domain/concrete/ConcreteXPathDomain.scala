@@ -57,21 +57,8 @@ object ConcreteXPathDomain {
       (v1, v2) => BooleanValue(v1.compare(v2, relOp))
     }
 
-    /** The logical AND operation. Must convert its operands to booleans if they aren't. */
-    override def logicalAnd(left: V, right: V): V = left.liftBinaryOp(right) {
-      (v1, v2) => BooleanValue(v1.toBooleanValue.value && v2.toBooleanValue.value)
-    }
-
-    /** The logical OR operation. Must convert its operands to booleans if they aren't. */
-    override def logicalOr(left: V, right: V): V = left.liftBinaryOp(right) {
-      (v1, v2) => BooleanValue(v1.toBooleanValue.value || v2.toBooleanValue.value)
-    }
-
     /** The numeric negation operation (unary minus). Must convert its operand to a number if it isn't. */
     override def negateNum(v: V): V = v.map(n => NumberValue(-n.toNumberValue.value))
-
-    /** The logical negation operation (NOT). Must convert its operand to a boolean if it isn't.  */
-    override def negateBool(v: V): V = v.map(b => BooleanValue(!b.toBooleanValue.value))
 
     /** Lift a literal string */
     override def liftLiteral(lit: String): V = Value(StringValue(lit))

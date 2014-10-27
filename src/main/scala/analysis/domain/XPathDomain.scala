@@ -62,17 +62,8 @@ trait XPathDomain[V, N, L] {
     */
   def compareRelational(left: V, right: V, relOp: RelationalOperator): V
 
-  /** The logical AND operation. Must convert its operands to booleans if they aren't. */
-  def logicalAnd(left: V, right: V): V
-
-  /** The logical OR operation. Must convert its operands to booleans if they aren't. */
-  def logicalOr(left: V, right: V): V
-
   /** The numeric negation operation (unary minus). Must convert its operand to a number if it isn't. */
   def negateNum(v: V): V
-
-  /** The logical negation operation (NOT). Must convert its operand to a boolean if it isn't.  */
-  def negateBool(v: V): V
 
   /** Lift a literal string */
   def liftLiteral(lit: String): V
