@@ -50,6 +50,12 @@ class AbstractPathMatchingSuite extends FunSuite {
     assertResult(Some(Set("*/a/b/@c", "/a/b/@c"))) { matchTop(pattern).map(_.map(_.toString)) }
   }
 
+  test("/@c") {
+    // this path never matches, because the root node can not have attributes
+    val pattern = XPathParser.parse("/@c").asInstanceOf[LocationPath]
+    assertResult(Some(Set())) { matchTop(pattern).map(_.map(_.toString)) }
+  }
+
   test("a/text()/c") {
     // this path never matches, because text nodes can't have children.
     val pattern = XPathParser.parse("a/text()/c").asInstanceOf[LocationPath]
@@ -137,34 +143,6 @@ class AbstractPathMatchingSuite extends FunSuite {
     assertResult(Some(Set("/a/b"))) { matchIntersect(pattern, Some(Set(start4))).map(_.map(_.toString)) }
   }
 
-  test("Join") {
-    val pat1: N = Some(Set(AnyElement(Some(Root)))) // "/*"
-    val pat2: N = Some(Set(AnyElement(None))) // "*"
-    val pat3: N = Some(Set(NamedElement("a", Some(Root)))) // "/a"
-    val pat4: N = Some(Set(NamedElement("b", Some(Root)))) // "/b"
-    val pat5: N = Some(Set(NamedElement("a", None), NamedElement("b", None))) // {"a", "b"}
-    val pat6: N = Some(Set(NamedElement("b", None), NamedElement("c", None))) // {"b", "c"}
-    val pat7: N = Some(Set(NamedElement("a", Some(AnyElement(Some(Root)))))) // "/*/a"
-    val pat8: N = Some(Set(AnyElement(Some(NamedElement("a", Some(Root)))))) // "/a/*"
-    val pat9: N = Some(Set(AnyElement(Some(AnyElement(None))))) // "*/*"
-    val pat37: N = xmlDom.join(pat3, pat7) // {"/a", "/*/a"}
-    val pat38: N = xmlDom.join(pat3, pat8) // {"/a", "/a/*"}
-
-    assertResult(Some(Set("/a", "/*/a"))) { pat37.map(_.map(_.toString)) }
-
-    assertResult(pat1) { xmlDom.join(List(pat1, pat3, pat4)) }
-    assertResult(pat2) { xmlDom.join(pat1, pat2) }
-    assertResult(Some(Set("/*", "a", "b"))) { xmlDom.join(pat1, pat5).map(_.map(_.toString)) }
-    assertResult(pat2) { xmlDom.join(pat2, pat5) }
-    assertResult(Some(Set("a", "b", "c"))) { xmlDom.join(pat5, pat6).map(_.map(_.toString)) }
-    assertResult(pat2) { xmlDom.join(List(pat5, pat6, pat2)) }
-    assertResult(Some(Set("/*", "/*/a"))) { xmlDom.join(pat37, pat1).map(_.map(_.toString)) }
-    assertResult(pat2) { xmlDom.join(pat37, pat2) }
-    assertResult(Some(Set("/a", "*/*"))) { xmlDom.join(pat38, pat9).map(_.map(_.toString)) }
-    assertResult(Some(Set("a", "b"))) { xmlDom.join(pat7, pat5).map(_.map(_.toString)) }
-    assertResult(Some(Set("*"))) { xmlDom.join(List(xmlDom.bottom, pat2, pat1)).map(_.map(_.toString)) }
-  }
-
   test("Compare") {
     val pat1: N = Some(Set(AnyElement(None))) // "*"
     val pat2: N = Some(Set(AnyElement(Some(Root)))) // "/*"
@@ -200,5 +178,33 @@ class AbstractPathMatchingSuite extends FunSuite {
     assertResult(Greater) { xmlDom.compare(pat1, pat89) }
     assertResult(Incomparable) { xmlDom.compare(pat2, pat89) }
     assertResult(Greater) { xmlDom.compare(pat3, pat89) } // {"a", "b"} > {"a"} > {"/a/a", "/b/a"}
+  }
+
+  test("Join") {
+    val pat1: N = Some(Set(AnyElement(Some(Root)))) // "/*"
+    val pat2: N = Some(Set(AnyElement(None))) // "*"
+    val pat3: N = Some(Set(NamedElement("a", Some(Root)))) // "/a"
+    val pat4: N = Some(Set(NamedElement("b", Some(Root)))) // "/b"
+    val pat5: N = Some(Set(NamedElement("a", None), NamedElement("b", None))) // {"a", "b"}
+    val pat6: N = Some(Set(NamedElement("b", None), NamedElement("c", None))) // {"b", "c"}
+    val pat7: N = Some(Set(NamedElement("a", Some(AnyElement(Some(Root)))))) // "/*/a"
+    val pat8: N = Some(Set(AnyElement(Some(NamedElement("a", Some(Root)))))) // "/a/*"
+    val pat9: N = Some(Set(AnyElement(Some(AnyElement(None))))) // "*/*"
+    val pat37: N = xmlDom.join(pat3, pat7) // {"/a", "/*/a"}
+    val pat38: N = xmlDom.join(pat3, pat8) // {"/a", "/a/*"}
+
+    assertResult(Some(Set("/a", "/*/a"))) { pat37.map(_.map(_.toString)) }
+
+    assertResult(pat1) { xmlDom.join(List(pat1, pat3, pat4)) }
+    assertResult(pat2) { xmlDom.join(pat1, pat2) }
+    assertResult(Some(Set("/*", "a", "b"))) { xmlDom.join(pat1, pat5).map(_.map(_.toString)) }
+    assertResult(pat2) { xmlDom.join(pat2, pat5) }
+    assertResult(Some(Set("a", "b", "c"))) { xmlDom.join(pat5, pat6).map(_.map(_.toString)) }
+    assertResult(pat2) { xmlDom.join(List(pat5, pat6, pat2)) }
+    assertResult(Some(Set("/*", "/*/a"))) { xmlDom.join(pat37, pat1).map(_.map(_.toString)) }
+    assertResult(pat2) { xmlDom.join(pat37, pat2) }
+    assertResult(Some(Set("/a", "*/*"))) { xmlDom.join(pat38, pat9).map(_.map(_.toString)) }
+    assertResult(Some(Set("a", "b"))) { xmlDom.join(pat7, pat5).map(_.map(_.toString)) }
+    assertResult(Some(Set("*"))) { xmlDom.join(List(xmlDom.bottom, pat2, pat1)).map(_.map(_.toString)) }
   }
 }

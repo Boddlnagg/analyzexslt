@@ -123,10 +123,14 @@ object XPathPatternDomain {
     override def getParent(node: N): N = node match {
       case None => Some(Set(AnyElement(None), Root))
       case Some(s) => join(s.toList.filter(e => e != Root).map { e =>
-          e.prev match {
-            case None => Some(Set[XPathPattern](AnyElement(None), Root))
-            case Some(p) => Some(Set[XPathPattern](p))
+        e.prev match {
+          case None => e match {
+            // NOTE: only elements can have Root as their parent
+            case AnyElement(_) | NamedElement(_, _) => Some(Set[XPathPattern](AnyElement(None), Root))
+            case _ => Some(Set[XPathPattern](AnyElement(None)))
           }
+          case Some(p) => Some(Set[XPathPattern](p))
+        }
         })
     }
 
