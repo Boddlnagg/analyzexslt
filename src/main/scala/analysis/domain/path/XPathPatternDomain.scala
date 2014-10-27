@@ -44,15 +44,15 @@ object XPathPatternDomain {
     /** Join two node lists. This calculates their supremum (least upper bound). */
     override def joinList(l1: L, l2: L): L = ???
 
+    /** Compares two elements of the lattice of nodes.
+      * Returns true if n1 < n2 or n1 = n2, false if n1 > n2 or if they are incomparable.
+      */
     override def lessThanOrEqual(n1: N, n2: N): Boolean = (n1, n2) match {
       case (_, None) => true
       case (None, Some(_)) => false
       case (Some(s1), Some(s2)) => s1.forall(pat1 => s2.exists(pat2 => lessThanOrEqualSingle(Some(pat1), Some(pat2))))
     }
 
-    /** Compares two elements of the lattice of nodes.
-      * Returns true if n1 < n2 or n1 = n2, false if n1 > n2 or if they are incomparable.
-      */
     def lessThanOrEqualSingle(left: Option[XPathPattern], right: Option[XPathPattern]): Boolean = (left, right) match {
       case (_, None) => true
       case (None, Some(_)) => false
