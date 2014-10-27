@@ -29,10 +29,10 @@ class PowersetDomainSuite extends FunSuite {
   val e2 = XMLParser.parse(<e2/>).asInstanceOf[XMLElement]
 
   test("Get root") {
-    assertResult(Some(Set(root))) { xmlDom.getRoot(Some(Set(a))) }
-    assertResult(Some(Set(root))) { xmlDom.getRoot(Some(Set(a, b, c))) }
-    assertResult(Some(Set(root, root2))) { xmlDom.getRoot(Some(Set(a, a2))) }
-    assertResult(Some(Set(root, root2))) { xmlDom.getRoot(Some(Set(a, b, c, d, a2, b2, c2, d2))) }
+    assertResult(Right(Set(root))) { xmlDom.getRoot(Right(Set(a))) }
+    assertResult(Right(Set(root))) { xmlDom.getRoot(Right(Set(a, b, c))) }
+    assertResult(Right(Set(root, root2))) { xmlDom.getRoot(Right(Set(a, a2))) }
+    assertResult(Right(Set(root, root2))) { xmlDom.getRoot(Right(Set(a, b, c, d, a2, b2, c2, d2))) }
   }
 
   test("Lift list") {
@@ -42,33 +42,30 @@ class PowersetDomainSuite extends FunSuite {
 
     assertResult(Right(Set(List(out1)))) { xmlDom.createSingletonList(xmlDom.createElement("out1")) }
     assertResult(Left(Some(2))) { xmlDom.concatLists(xmlDom.createSingletonList(xmlDom.createElement("out1")), xmlDom.createSingletonList(xmlDom.top))} // this is true for this domain
-    assertResult(Right(Set(List(out1, out3), List(out2, out3)))) { xmlDom.concatLists(xmlDom.createSingletonList(Some(Set(out1, out2))), xmlDom.createSingletonList(Some(Set(out3)))) }
+    assertResult(Right(Set(List(out1, out3), List(out2, out3)))) { xmlDom.concatLists(xmlDom.createSingletonList(Right(Set(out1, out2))), xmlDom.createSingletonList(Right(Set(out3)))) }
     // this is true for all domains (if one of the elements is bottom, the resulting list must be bottom)
-    assertResult(xmlDom.bottomList) { xmlDom.concatLists(xmlDom.createSingletonList(Some(Set(out1, out2))), xmlDom.createSingletonList(xmlDom.bottom)) }
+    assertResult(xmlDom.bottomList) { xmlDom.concatLists(xmlDom.createSingletonList(Right(Set(out1, out2))), xmlDom.createSingletonList(xmlDom.bottom)) }
     // the empty list must be lifted to the empty list
     assertResult(Right(Set(Nil))) { xmlDom.createEmptyList() }
   }
 
   test("Lift element with children") {
     val child = xmlDom.createSingletonList(xmlDom.createElement("child"))
-    assertResult(Some(Set(XMLParser.parse(<e1><child/></e1>)))) {
+    assertResult(Right(Set(XMLParser.parse(<e1><child/></e1>)))) {
       xmlDom.createElement("e1", xmlDom.createEmptyList(), child)
     }
 
     val children = xmlDom.joinList(xmlDom.concatLists(xmlDom.createSingletonList(xmlDom.createElement("child1")), xmlDom.createSingletonList(xmlDom.createElement("child2"))), child)
-    assertResult(Some(Set(XMLParser.parse(<e1><child/></e1>), XMLParser.parse(<e1><child1/><child2/></e1>)))) {
+    assertResult(Right(Set(XMLParser.parse(<e1><child/></e1>), XMLParser.parse(<e1><child1/><child2/></e1>)))) {
       xmlDom.createElement("e1", xmlDom.createEmptyList(), children)
     }
   }
 
   test("Lift element with attributes") {
     val attr = xmlDom.createSingletonList(xmlDom.createAttribute("name", xpathDom.liftLiteral("value")))
-    assertResult(Some(Set(XMLParser.parse(<e1 name="value"/>)))) {
+    assertResult(Right(Set(XMLParser.parse(<e1 name="value"/>)))) {
       xmlDom.createElement("e1", attr, xmlDom.createEmptyList())
     }
-    /*assertResult(Some(Set(XMLParser.parse(<e1 name="value"/>), XMLParser.parse(<e2 name="value"/>)))) {
-      xmlDom.addAttributes(Some(Set(e1, e2)), attr)
-    }*/
 
     val attr2: L = Right(Set(
       List(XMLAttribute("attr1", "1"), XMLAttribute("attr2", "2")), // first alternative
@@ -76,7 +73,7 @@ class PowersetDomainSuite extends FunSuite {
       Nil // third alternative
     ))
 
-    assertResult(Some(Set(
+    assertResult(Right(Set(
       XMLParser.parse(<e1 attr1="1" attr2="2"/>),
       XMLParser.parse(<e1 attr1="-1" attr2="-2"/>),
       XMLParser.parse(<e1/>)
@@ -114,9 +111,9 @@ class PowersetDomainSuite extends FunSuite {
   }
 
   test("Lift node set (single)") {
-    val l1: L = xmlDom.createSingletonList(Some(Set(a)))
-    val l2: L = xmlDom.createSingletonList(Some(Set(b)))
-    val l3: L = xmlDom.createSingletonList(Some(Set(c)))
+    val l1: L = xmlDom.createSingletonList(Right(Set(a)))
+    val l2: L = xmlDom.createSingletonList(Right(Set(b)))
+    val l3: L = xmlDom.createSingletonList(Right(Set(c)))
 
     val input = xmlDom.concatLists(l1, xmlDom.concatLists(l2, l3))
 
@@ -126,9 +123,9 @@ class PowersetDomainSuite extends FunSuite {
   }
 
   test("Lift node set (multiple)") {
-    val l1: L = xmlDom.createSingletonList(Some(Set(a, b))) // either a or b
-    val l2: L = xmlDom.createSingletonList(Some(Set(a, b, c))) // either a, b or c
-    val l3: L = xmlDom.createSingletonList(Some(Set(d))) // exactly d
+    val l1: L = xmlDom.createSingletonList(Right(Set(a, b))) // either a or b
+    val l2: L = xmlDom.createSingletonList(Right(Set(a, b, c))) // either a, b or c
+    val l3: L = xmlDom.createSingletonList(Right(Set(d))) // exactly d
 
     val input = xmlDom.concatLists(l1, xmlDom.concatLists(l2, l3))
     val expected = Some(Set(
@@ -152,13 +149,13 @@ class PowersetDomainSuite extends FunSuite {
 
     val input: L = Right(Set(List(a, b, c), List(c, b), List(a)))
     def transform(node: N, index: V): L = {
-      if (node == Some(Set(a))) {
+      if (node == Right(Set(a))) {
         assert(index == Some(Set(NumberValue(0))))
         Right(Set(List(out1, out2), List(out3)))
-      } else if (node == Some(Set(b))) {
+      } else if (node == Right(Set(b))) {
         assert(index == Some(Set(NumberValue(1))))
         Right(Set(List(out4)))
-      } else if (node == Some(Set(c))) {
+      } else if (node == Right(Set(c))) {
         Right(Set(List()))
       } else {
         throw new AssertionError(f"node must be a, b, or c but was $node")
@@ -187,18 +184,18 @@ class PowersetDomainSuite extends FunSuite {
 
     val matcher = new AbstractXPathMatcher[N, L, V](PowersetDomain.XML)
 
-    val all: N = Some(Set(doc, root, attr1, otherattr, a1, b1, a2, a3, b2, attr2))
+    val all: N = Right(Set(doc, root, attr1, otherattr, a1, b1, a2, a3, b2, attr2))
 
-    assertResult((Some(Set(doc)), Some(Set(root, attr1, otherattr, a1, b1, a2, a3, b2, attr2)))) { matcher.matches(all, pattern("/")) }
-    assertResult((Some(Set()), all)) { matcher.matches(all, pattern("/a")) }
-    assertResult((Some(Set(a1)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2, a2, a3)))) { matcher.matches(all, pattern("/root/a")) }
-    assertResult((Some(Set(a1)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2, a2, a3)))) { matcher.matches(all, pattern("/*/a")) }
-    assertResult((Some(Set(a2, a3)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2, a1)))) { matcher.matches(all, pattern("/*/*/a")) }
-    assertResult((Some(Set()), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2, a1, a2, a3)))) { matcher.matches(all, pattern("/*/*/*/a")) }
-    assertResult((Some(Set(a2, a3)), Some(Set(a1)))) { matcher.matches(Some(Set(a1, a2, a3)), pattern("/*/*/a")) }
+    assertResult((Right(Set(doc)), Right(Set(root, attr1, otherattr, a1, b1, a2, a3, b2, attr2)))) { matcher.matches(all, pattern("/")) }
+    assertResult((Right(Set()), all)) { matcher.matches(all, pattern("/a")) }
+    assertResult((Right(Set(a1)), Right(Set(doc, root, attr1, otherattr, b1, b2, attr2, a2, a3)))) { matcher.matches(all, pattern("/root/a")) }
+    assertResult((Right(Set(a1)), Right(Set(doc, root, attr1, otherattr, b1, b2, attr2, a2, a3)))) { matcher.matches(all, pattern("/*/a")) }
+    assertResult((Right(Set(a2, a3)), Right(Set(doc, root, attr1, otherattr, b1, b2, attr2, a1)))) { matcher.matches(all, pattern("/*/*/a")) }
+    assertResult((Right(Set()), Right(Set(doc, root, attr1, otherattr, b1, b2, attr2, a1, a2, a3)))) { matcher.matches(all, pattern("/*/*/*/a")) }
+    assertResult((Right(Set(a2, a3)), Right(Set(a1)))) { matcher.matches(Right(Set(a1, a2, a3)), pattern("/*/*/a")) }
 
-    assertResult((Some(Set(a1, a2, a3)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2)))) { matcher.matches(all, pattern("//a")) }
-    assertResult((Some(Set(a2, a3)), Some(Set(doc, root, attr1, otherattr, b1, b2, attr2, a1)))) { matcher.matches(all, pattern("b//a")) }
+    assertResult((Right(Set(a1, a2, a3)), Right(Set(doc, root, attr1, otherattr, b1, b2, attr2)))) { matcher.matches(all, pattern("//a")) }
+    assertResult((Right(Set(a2, a3)), Right(Set(doc, root, attr1, otherattr, b1, b2, attr2, a1)))) { matcher.matches(all, pattern("b//a")) }
   }
 
   test("Compare (with booleans)") {
@@ -230,13 +227,13 @@ class PowersetDomainSuite extends FunSuite {
     val data2 = XMLParser.parseDocument(<root><node val='Hello'/></root>)
     val data3 = XMLParser.parseDocument(<root></root>)
 
-    val data: N = Some(Set(data1, data2, data3))
+    val data: N = Right(Set(data1, data2, data3))
 
     val output1 = XMLParser.parseDocument(<reRoot><reNode>hello world</reNode></reRoot>)
     val output2 = XMLParser.parseDocument(<reRoot><reNode>Hello world</reNode></reRoot>)
     val output3 = XMLParser.parseDocument(<reRoot><reNode> world</reNode></reRoot>)
 
-    assertResult(Some(Set(output1, output2, output3))) {
+    assertResult(Right(Set(output1, output2, output3))) {
       TransformHelper.transformAbstract(xslt, data, PowersetDomain)
     }
   }
