@@ -23,9 +23,11 @@ class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
       val restPath = LocationPath(path.steps.dropRight(1), path.isAbsolute)
       if (!lastStep.predicates.isEmpty) throw new NotImplementedError("predicates in paths are not implemented")
       val (lastStepMatches, notLastStepMatches) = lastStep match {
-        // child::node() OR attribute::node()
-        // this matches any node (regardless of axis type) according to spec section 2.3
-        case XPathStep(ChildAxis | AttributeAxis, AllNodeTest, Nil) => (node, xmlDom.bottom)
+        // child::node()
+        case XPathStep(ChildAxis, AllNodeTest, Nil) =>
+          val matches = xmlDom.join(List(xmlDom.isElement(node)._1, xmlDom.isTextNode(node)._1, xmlDom.isComment(node)._1))
+          val notMatches = xmlDom.join(xmlDom.isRoot(node)._1, xmlDom.isAttribute(node)._1) // TODO: is this always correct?
+          (matches, notMatches)
         // child::comment()
         case XPathStep(ChildAxis, CommentNodeTest, Nil) => xmlDom.isComment(node)
         // child::text()
@@ -37,8 +39,8 @@ class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
           val (element, notElement) = xmlDom.isElement(node)
           val (hasName, notHasName) = xmlDom.hasName(element, name)
           (hasName, xmlDom.join(notElement, notHasName))
-        // attribute::*
-        case XPathStep(AttributeAxis, NameTest("*"), Nil) => xmlDom.isAttribute(node)
+        // attribute::* OR attribute::node()
+        case XPathStep(AttributeAxis, NameTest("*") | AllNodeTest, Nil) => xmlDom.isAttribute(node)
         // attribute::name
         case XPathStep(AttributeAxis, NameTest(name), Nil) =>
           val (attr, notAttr) = xmlDom.isAttribute(node)

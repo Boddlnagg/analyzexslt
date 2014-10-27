@@ -50,6 +50,41 @@ class AbstractPathMatchingSuite extends FunSuite {
     assertResult(Some(Set("*/a/b/@c", "/a/b/@c"))) { matchTop(pattern).map(_.map(_.toString)) }
   }
 
+  test("a/text()/c") {
+    // this path never matches, because text nodes can't have children.
+    val pattern = XPathParser.parse("a/text()/c").asInstanceOf[LocationPath]
+    assertResult(Some(Set())) { matchTop(pattern).map(_.map(_.toString)) }
+  }
+
+  test("a/b/text()") {
+    val pattern = XPathParser.parse("a/b/text()").asInstanceOf[LocationPath]
+    assertResult(Some(Set("*/a/b/text()", "/a/b/text()"))) { matchTop(pattern).map(_.map(_.toString)) }
+  }
+
+  test("/text()") {
+    // this path never matches, because the root node only has an element node child
+    val pattern = XPathParser.parse("/text()").asInstanceOf[LocationPath]
+    assertResult(Some(Set())) { matchTop(pattern).map(_.map(_.toString)) }
+  }
+
+  test("a/comment()/c") {
+    // this path never matches, because comment nodes can't have children.
+    val pattern = XPathParser.parse("a/comment()/c").asInstanceOf[LocationPath]
+    assertResult(Some(Set())) { matchTop(pattern).map(_.map(_.toString)) }
+  }
+
+  test("a/b/comment()") {
+    val pattern = XPathParser.parse("a/b/comment()").asInstanceOf[LocationPath]
+    assertResult(Some(Set("*/a/b/comment()", "/a/b/comment()"))) { matchTop(pattern).map(_.map(_.toString)) }
+  }
+
+  test("a/b/node()") {
+    val pattern = XPathParser.parse("a/b/node()").asInstanceOf[LocationPath]
+    assertResult(Some(Set("*/a/b/text()", "/a/b/text()", "*/a/b/comment()", "/a/b/comment()", "*/a/b/*", "/a/b/*"))) {
+      matchTop(pattern).map(_.map(_.toString))
+    }
+  }
+
   test("*/*/@*") {
     val pattern = XPathParser.parse("*/*/@*").asInstanceOf[LocationPath]
     assertResult(Some(Set("*/*/*/@*", "/*/*/@*"))) { matchTop(pattern).map(_.map(_.toString)) }

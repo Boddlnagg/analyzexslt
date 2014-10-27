@@ -64,6 +64,8 @@ object XPathPatternDomain {
         case (AnyAttribute(prev1), AnyAttribute(prev2)) => lessThanOrEqualSingle(prev1, prev2)
         case (NamedAttribute(name1, prev1), NamedAttribute(name2, prev2)) if name1 == name2 => lessThanOrEqualSingle(prev1, prev2)
         case (NamedAttribute(_, prev1), AnyAttribute(prev2)) => lessThanOrEqualSingle(prev1, prev2)
+        case (AnyTextNode(prev1), AnyTextNode(prev2)) => lessThanOrEqualSingle(prev1, prev2)
+        case (AnyCommentNode(prev1), AnyCommentNode(prev2)) => lessThanOrEqualSingle(prev1, prev2)
         // TODO: add recursive cases for other node types
         case _ => false
       }
@@ -110,7 +112,11 @@ object XPathPatternDomain {
       * Nodes that don't have children return an empty list, not BOTTOM! */
     override def getChildren(node: N): L = node match {
       case None => None
-      case Some(s) => Some(s.map(e => AnyElement(Some(e)))) // TODO: add other node types
+      case Some(s) => Some(s.collect {
+        case e@AnyElement(_) => List(AnyElement(Some(e)), AnyTextNode(Some(e)), AnyCommentNode(Some(e)))
+        case e@NamedElement(_, _) => List(AnyElement(Some(e)), AnyTextNode(Some(e)), AnyCommentNode(Some(e)))
+        case e@Root => List(AnyElement(Some(e)))
+      }.flatten)
     }
 
     /** Get the parent of given node. */
@@ -207,14 +213,24 @@ object XPathPatternDomain {
       * is not a text node), the second result is a node that might not be a text node (this is
       * BOTTOM if the node definitely is a text node). The two results are not necessarily disjoint.
       */
-    override def isTextNode(node: N): (N, N) = ???
+    override def isTextNode(node: N): (N, N) = node match {
+      case None => (Some(Set(AnyTextNode(None))), node)
+      case Some(s) => (Some(s.collect {
+        case e@AnyTextNode(_) => e
+      }), node)
+    }
 
     /** Predicate function that checks whether a node is a comment node.
       * The first result is a node that is known to be a comment node (this is BOTTOM if the node definitely
       * is not a comment node), the second result is a node that might not be a comment node (this is
       * BOTTOM if the node definitely is a comment node). The two results are not necessarily disjoint.
       */
-    override def isComment(node: N): (N, N) = ???
+    override def isComment(node: N): (N, N) = node match {
+      case None => (Some(Set(AnyCommentNode(None))), node)
+      case Some(s) => (Some(s.collect {
+        case e@AnyCommentNode(_) => e
+      }), node)
+    }
 
     /** Predicate function that checks whether a node is an attribute node.
       * The first result is a node that is known to be an attribute node (this is BOTTOM if the node definitely
