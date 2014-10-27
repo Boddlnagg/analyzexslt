@@ -28,11 +28,11 @@ object PowersetXMLDomain {
       case (Some(s1), Some(s2)) => Some(s1.union(s2))
     }
 
-    /*override def meet(n1: N, n2: N): N = (n1, n2) match {
-      case (None, _) => None
-      case (_, None) => None
+    override def meet(n1: N, n2: N): N = (n1, n2) match {
+      case (None, _) => n2
+      case (_, None) => n1
       case (Some(s1), Some(s2)) => Some(s1.intersect(s2))
-    }*/
+    }
 
     override def lessThanOrEqual(n1: N, n2: N): Boolean = (n1, n2) match {
       case (_, None) => true

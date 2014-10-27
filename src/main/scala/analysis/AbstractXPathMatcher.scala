@@ -77,7 +77,7 @@ class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
 
             val (newParentMatches, newNotParentMatches) = xmlDom.hasParent(nodeStack(0), parentMatches)
             ancestorMatches = xmlDom.join(ancestorMatches, newParentMatches)
-            notAncestorMatches = xmlDom.join(notAncestorMatches, newNotParentMatches) // TODO: this should probably be MEET instead of JOIN
+            notAncestorMatches = xmlDom.meet(notAncestorMatches, newNotParentMatches) // TODO: this should probably be MEET instead of JOIN
 
             current = parent
             val (newRoot, newNotRoot) = xmlDom.isRoot(current) // instead of returning two results here, one could add isNotRoot
@@ -92,6 +92,7 @@ class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
           val parent = xmlDom.getParent(lastStepMatches)
           val (parentMatchesRest, _) = matches(parent, restPath)
           val (parentMatches, notParentMatches) = xmlDom.hasParent(lastStepMatches, parentMatchesRest)
+          //TODO: xmlDom.meet(xmlDom.getChildren(parentMatchesRest), lastStepMatches)
           (parentMatches, xmlDom.join(notParentMatches, notLastStepMatches))
         }
       }

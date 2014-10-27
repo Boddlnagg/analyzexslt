@@ -41,6 +41,17 @@ object XPathPatternDomain {
       }.toSet)
     }
 
+    override def meet(n1: N, n2: N): N = (n1, n2) match {
+      case (None, _) => n2
+      case (_, None) => n1
+      case (BOT, _) => BOT
+      case (_, BOT) => BOT
+      case (Some(s1), Some(s2)) =>
+        val filtered1 = s1.filter(pat1 => s2.exists(pat2 => lessThanOrEqualSingle(Some(pat1), Some(pat2))))
+        val filtered2 = s2.filter(pat1 => s1.exists(pat2 => lessThanOrEqualSingle(Some(pat1), Some(pat2))))
+        Some(filtered1.union(filtered2))
+    }
+
     /** Join two node lists. This calculates their supremum (least upper bound). */
     override def joinList(l1: L, l2: L): L = ???
 
@@ -104,7 +115,11 @@ object XPathPatternDomain {
       * Nodes that are not an element (and therefore don't have attributes) return an empty list, not BOTTOM! */
     override def getAttributes(node: N): L = node match {
       case None => None
-      case Some(s) => Some(s.map(e => AnyAttribute(Some(e))))
+      case Some(s) => Some(s.collect {
+        // NOTE: only element nodes have attributes
+        case e: AnyElement => AnyAttribute(Some(e))
+        case e: NamedElement => AnyAttribute(Some(e))
+      })
     }
 
     /** Get the list of children of a given node.
@@ -139,23 +154,11 @@ object XPathPatternDomain {
       * doesn't have that parent), the second result is a node that might not have that parent (this is
       * BOTTOM if the node definitely does have that parent). The two results are not necessarily disjoint.
       */
-    override def hasParent(node: N, parent: N): (N, N) = (node, parent) match {
-      case (BOT, _) => (BOT, BOT)
-      case (_, BOT) => (BOT, node) // parent is BOTTOM -> can't match
-      case (None, _) => (None, None) // don't know anything about the node
-      case (Some(_), None) => (node, node) // parent is TOP -> don't know anything
-      case ((Some(nodes), Some(parents))) =>
-        // TODO: The following assumption is wrong. We need to apply a meet operator for `prev`
-        assert(nodes.forall(n => n.prev == None)) // nodes shouldn't have `prev` set yet
-        val validParents = parents.filter {
-          case Root => true
-          case AnyElement(_) => true
-          case NamedElement(_, _) => true
-          case _ => false
-        }
-        (Some(nodes.cross(validParents).map {
-          case (n, p) => n.withPrev(p)
-        }.toSet), node)
+    override def hasParent(node: N, parent: N): (N, N) = {
+      def listToNode(list: L): N = list
+
+      val childnodes = join(listToNode(getChildren(parent)), listToNode(getAttributes(parent)))
+      (meet(node, childnodes), node)
     }
 
     /** Concatenates two lists. */
