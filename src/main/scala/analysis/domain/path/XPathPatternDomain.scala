@@ -115,7 +115,11 @@ object XPathPatternDomain {
       * Nodes that are not an element (and therefore don't have attributes) return an empty list, not BOTTOM! */
     override def getAttributes(node: N): L = node match {
       case None => None
-      case Some(s) => Some(s.map(e => AnyAttribute(Some(e))))
+      case Some(s) => Some(s.collect {
+        // NOTE: only element nodes have attributes
+        case e: AnyElement => AnyAttribute(Some(e))
+        case e: NamedElement => AnyAttribute(Some(e))
+      })
     }
 
     /** Get the list of children of a given node.
