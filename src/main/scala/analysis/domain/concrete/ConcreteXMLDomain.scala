@@ -1,6 +1,5 @@
 package analysis.domain.concrete
 
-import analysis._
 import analysis.domain.{XPathDomain, XMLDomain}
 import xml._
 
@@ -32,14 +31,14 @@ object ConcreteXMLDomain {
     override def joinList(l1: L, l2: L): L = l1.join(l2)
 
     /** Compares two elements of the lattice of nodes.
-      * TOP is always greater than everything else, BOTTOM is always less than everything else.
+      * Returns true if n1 < n2 or n1 = n2, false if n1 > n2 or if they are incomparable.
       */
-    override def compare(n1: N, n2: N): LatticeOrdering = n1.compare(n2)
+    override def lessThanOrEqual(n1: N, n2: N): Boolean = n1.lessThanOrEqual(n2)
 
     /** Compares two elements of the lattice of node lists.
-      * TOP is always greater than everything else, BOTTOM is always less than everything else.
+      * Returns true if l1 < l2 or l1 = l2, false if l1 > l2 or if they are incomparable.
       */
-    override def compareList(l1: L, l2: L): LatticeOrdering = l1.compare(l2)
+    override def lessThanOrEqualList(l1: L, l2: L): Boolean = l1.lessThanOrEqual(l2)
 
     /** Create an element node with the given name, attributes and children.
       * The output is created bottom-up, so children are always created before their parent nodes.

@@ -49,7 +49,7 @@ class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
         case XPathStep(AttributeAxis, CommentNodeTest | TextNodeTest, _) => (xmlDom.bottom, node)
       }
 
-      if (xmlDom.compare(lastStepMatches,xmlDom.bottom) == Equal) {
+      if (xmlDom.lessThanOrEqual(lastStepMatches, xmlDom.bottom)) {
         (xmlDom.bottom, notLastStepMatches)
       } else {
         // this node could match, but what about the rest of the path?

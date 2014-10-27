@@ -21,6 +21,13 @@ trait SingleValueLattice[+T] {
     case _ => Top
   }
 
+  def lessThanOrEqual[T1 >: T](other: SingleValueLattice[T1]) = (this, other) match {
+    case (Value(v1), Value(v2)) if v1 == v2 => true
+    case (_, Top) => true
+    case (Bottom, _) => true
+    case _ => false
+  }
+
   def compare[T1 >: T](other: SingleValueLattice[T1]) = (this, other) match {
     case (_, _) if this == other => Equal
     case (Top, _) => Greater

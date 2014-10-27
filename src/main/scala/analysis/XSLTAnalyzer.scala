@@ -59,7 +59,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val (matches, notMatches) = xpathMatcher.matches(currentNode, path)
         if (xmlDom.compare(matches, xmlDom.bottom) == Greater)
           result.put(tpl, matches)
-        if (xmlDom.compare(notMatches, xmlDom.bottom) == Equal)
+        if (xmlDom.lessThanOrEqual(notMatches, xmlDom.bottom))
           break()
 
         // TODO: use comparison instead of second match result?
@@ -149,14 +149,8 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case Nil => Set(otherwise)
       case (firstExpr, firstTmpl) :: rest =>
         val result = xpathDom.toBooleanValue(xpathAnalyzer.evaluate(firstExpr, context))
-        val maybeTrue = xpathDom.compare(result, xpathDom.liftBoolean(true)) match {
-          case Greater | Equal => true // the value may be true -> evaluate this branch
-          case _ => false
-        }
-        val maybeFalse = xpathDom.compare(result, xpathDom.liftBoolean(false)) match {
-          case Greater | Equal => true // the value may be false -> evaluate further branches after this one
-          case _ => false
-        }
+        val maybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), result)
+        val maybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), result)
         (maybeTrue, maybeFalse) match {
           case (true, true) => Set(firstTmpl) ++ chooseBranches(rest, otherwise, context)
           case (true, false) => Set(firstTmpl)

@@ -1,6 +1,5 @@
 package analysis.domain.powerset
 
-import analysis._
 import analysis.domain.{XPathDomain, XMLDomain}
 import xml._
 
@@ -33,36 +32,18 @@ object PowersetXMLDomain {
       case (None, _) => None
       case (_, None) => None
       case (Some(s1), Some(s2)) => Some(s1.intersect(s2))
-    }
-
-    override def compare(morePrecise: N, lessPrecise: N): Boolean = (morePrecise, lessPrecise) match {
-      case (_, None) => true
-      case (None, _) => false
-      case (Some(s1), Some(s2)) => s1.subsetOf(s2)
     }*/
 
-    override def compare(n1: N, n2: N): LatticeOrdering = (n1, n2) match {
-      case (None, None) => Equal
-      case (None, _) => Greater
-      case (_, None) => Less
-      case (Some(s1), Some(s2)) => (s1.subsetOf(s2), s2.subsetOf(s1)) match {
-        case (true, true) => Equal
-        case (true, false) => Less
-        case (false, true) => Greater
-        case (false, false) => Incomparable
-      }
+    override def lessThanOrEqual(n1: N, n2: N): Boolean = (n1, n2) match {
+      case (_, None) => true
+      case (None, Some(_)) => false
+      case (Some(s1), Some(s2)) => s1.subsetOf(s2)
     }
 
-    override def compareList(l1: L, l2: L): LatticeOrdering = (l1, l2) match {
-      case (None, None) => Equal
-      case (None, _) => Greater
-      case (_, None) => Less
-      case (Some(s1), Some(s2)) => (s1.subsetOf(s2), s2.subsetOf(s1)) match {
-        case (true, true) => Equal
-        case (true, false) => Less
-        case (false, true) => Greater
-        case (false, false) => Incomparable
-      }
+    override def lessThanOrEqualList(l1: L, l2: L): Boolean = (l1, l2) match {
+      case (_, None) => true
+      case (None, Some(_)) => false
+      case (Some(s1), Some(s2)) => s1.subsetOf(s2)
     }
 
     override def joinList(l1: L, l2: L): L = (l1, l2) match {

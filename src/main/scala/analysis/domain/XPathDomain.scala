@@ -1,6 +1,6 @@
 package analysis.domain
 
-import analysis.LatticeOrdering
+import analysis._
 import xpath.RelationalOperator
 
 /** An XPath domain, providing operations on XPath values (V). */
@@ -22,9 +22,19 @@ trait XPathDomain[V, N, L] {
   }
 
   /** Compares two elements of the lattice.
+    * Returns true if v1 < v2 or v1 = v2, false if v1 > v2 or if they are incomparable.
+    */
+  def lessThanOrEqual(v1: V, v2: V): Boolean
+
+  /** Compares two elements of the lattice.
     * TOP is always greater than everything else, BOTTOM is always less than everything else.
     */
-  def compare(v1: V, v2: V): LatticeOrdering
+  def compare(v1: V, v2: V): LatticeOrdering = (lessThanOrEqual(v1, v2), lessThanOrEqual(v2, v1)) match {
+    case (true, true) => Equal
+    case (true, false) => Less
+    case (false, true) => Greater
+    case (false, false) => Incomparable
+  }
 
   /** Get the TOP element of the subdomain of numbers (representing any number). topNumber <= top must hold. */
   def topNumber: V
