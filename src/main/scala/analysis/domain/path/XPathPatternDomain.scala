@@ -33,13 +33,15 @@ object XPathPatternDomain {
       case (_, None) => None
       case (BOT, _) => n2
       case (_, BOT) => n1
-      case (Some(s1), Some(s2)) => Some(s1.union(s2).toList.foldRight(List[XPathPattern]()) {
-        case (next, acc) => if (acc.exists(e => lessThanOrEqualSingle(Some(next), Some(e))))
-          acc
-        else
-          next :: acc.filter(e => !lessThanOrEqualSingle(Some(e), Some(next)))
-      }.toSet)
+      case (Some(s1), Some(s2)) => Some(normalizeJoined(s1.union(s2)))
     }
+
+    def normalizeJoined(set: Iterable[XPathPattern]): Set[XPathPattern] = set.toList.foldRight(List[XPathPattern]()) {
+      case (next, acc) => if (acc.exists(e => lessThanOrEqualSingle(Some(next), Some(e))))
+        acc
+      else
+        next :: acc.filter(e => !lessThanOrEqualSingle(Some(e), Some(next)))
+    }.toSet
 
     override def meet(n1: N, n2: N): N = (n1, n2) match {
       case (None, _) => n2
@@ -115,11 +117,12 @@ object XPathPatternDomain {
       * Nodes that are not an element (and therefore don't have attributes) return an empty list, not BOTTOM! */
     override def getAttributes(node: N): L = node match {
       case None => None
-      case Some(s) => Some(s.collect {
+      case Some(s) => Some(normalizeJoined(s.collect {
         // NOTE: only element nodes have attributes
         case e: AnyElement => AnyAttribute(Some(e))
         case e: NamedElement => AnyAttribute(Some(e))
-      })
+        // TODO: other node types should return empty lists, which are currently not representable as L
+      }))
     }
 
     /** Get the list of children of a given node.
@@ -127,26 +130,27 @@ object XPathPatternDomain {
       * Nodes that don't have children return an empty list, not BOTTOM! */
     override def getChildren(node: N): L = node match {
       case None => None
-      case Some(s) => Some(s.collect {
+      case Some(s) => Some(normalizeJoined(s.collect {
         case e@AnyElement(_) => List(AnyElement(Some(e)), AnyTextNode(Some(e)), AnyCommentNode(Some(e)))
         case e@NamedElement(_, _) => List(AnyElement(Some(e)), AnyTextNode(Some(e)), AnyCommentNode(Some(e)))
         case e@Root => List(AnyElement(Some(e)))
-      }.flatten)
+        // TODO: other node types (text, attribute) should return empty lists, which are currently not representable as L
+      }.flatten))
     }
 
     /** Get the parent of given node. */
     override def getParent(node: N): N = node match {
       case None => Some(Set(AnyElement(None), Root))
-      case Some(s) => join(s.toList.filter(e => e != Root).map { e =>
+      case Some(s) => Some(normalizeJoined(s.toList.filter(e => e != Root).map { e =>
         e.prev match {
           case None => e match {
             // NOTE: only elements can have Root as their parent
-            case AnyElement(_) | NamedElement(_, _) => Some(Set[XPathPattern](AnyElement(None), Root))
-            case _ => Some(Set[XPathPattern](AnyElement(None)))
+            case AnyElement(_) | NamedElement(_, _) => List[XPathPattern](AnyElement(None), Root)
+            case _ => List[XPathPattern](AnyElement(None))
           }
-          case Some(p) => Some(Set[XPathPattern](p))
+          case Some(p) => List[XPathPattern](p)
         }
-        })
+      }.flatten))
     }
 
     /** Predicate function that checks whether a node has a specified node as its parent.
