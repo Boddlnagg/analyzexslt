@@ -44,7 +44,12 @@ object XPathPatternDomain {
     override def meet(n1: N, n2: N): N = (n1, n2) match {
       case (None, _) => n2
       case (_, None) => n1
-      case (Some(s1), Some(s2)) => Some(s1.intersect(s2)) // TODO: this is not yet correct
+      case (BOT, _) => BOT
+      case (_, BOT) => BOT
+      case (Some(s1), Some(s2)) =>
+        val filtered1 = s1.filter(pat1 => s2.exists(pat2 => lessThanOrEqualSingle(Some(pat1), Some(pat2))))
+        val filtered2 = s2.filter(pat1 => s1.exists(pat2 => lessThanOrEqualSingle(Some(pat1), Some(pat2))))
+        Some(filtered1.union(filtered2))
     }
 
     /** Join two node lists. This calculates their supremum (least upper bound). */

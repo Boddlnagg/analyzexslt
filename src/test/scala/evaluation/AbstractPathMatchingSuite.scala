@@ -207,4 +207,32 @@ class AbstractPathMatchingSuite extends FunSuite {
     assertResult(Some(Set("a", "b"))) { xmlDom.join(pat7, pat5).map(_.map(_.toString)) }
     assertResult(Some(Set("*"))) { xmlDom.join(List(xmlDom.bottom, pat2, pat1)).map(_.map(_.toString)) }
   }
+
+  test("Meet") {
+    val pat1: N = Some(Set(AnyElement(Some(Root)))) // "/*"
+    val pat2: N = Some(Set(AnyElement(None))) // "*"
+    val pat3: N = Some(Set(NamedElement("a", Some(Root)))) // "/a"
+    val pat4: N = Some(Set(NamedElement("a", None))) // "a"
+    val pat5: N = Some(Set(NamedElement("b", None))) // "b"
+    val pat45: N = Some(Set(NamedElement("a", None), NamedElement("b", None))) // {"a", "b"}
+    val pat6: N = Some(Set(NamedElement("a", Some(AnyElement(None))), NamedElement("b", Some(AnyElement(None))))) // {"*/a", "*/b"}
+    val pat7: N = Some(Set(AnyElement(Some(NamedElement("a", None))))) // "a/*"
+    val pat8: N = Some(Set(AnyElement(Some(AnyElement(None))))) // "*/*"
+    val pat67: N = xmlDom.join(pat6, pat7) // {"*/a", "*/b", "a/*"}
+    val pat9: N = Some(Set(AnyElement(Some(Root)), NamedAttribute("c", None))) // {"/*", "@c"}
+    val pat10: N = Some(Set(AnyAttribute(None), NamedElement("a", Some(Root)))) // {"@*", "/a"}
+
+    assertResult(Some(Set("/a"))) { xmlDom.meet(pat1, pat3).map(_.map(_.toString)) }
+    assertResult(Some(Set("a"))) { xmlDom.meet(pat2, pat4).map(_.map(_.toString)) }
+    assertResult(Some(Set())) { xmlDom.meet(pat1, pat4).map(_.map(_.toString)) }
+    assertResult(Some(Set())) { xmlDom.meet(pat4, pat5).map(_.map(_.toString)) }
+    assertResult(Some(Set("a"))) { xmlDom.meet(pat45, pat4).map(_.map(_.toString)) }
+    assertResult(Some(Set())) { xmlDom.meet(pat6, pat7).map(_.map(_.toString)) }
+    assertResult(pat67) { xmlDom.meet(pat67, pat8) }
+    assertResult(Some(Set("a", "b"))) { xmlDom.meet(pat2, pat45).map(_.map(_.toString)) }
+    assertResult(Some(Set("a/*"))) { xmlDom.meet(pat7, pat2).map(_.map(_.toString)) }
+    assertResult(Some(Set())) { xmlDom.meet(pat7, pat4).map(_.map(_.toString)) }
+    assertResult(Some(Set("@c", "/a"))) { xmlDom.meet(pat9, pat10).map(_.map(_.toString)) }
+    assertResult(Some(Set())) { xmlDom.meet(pat8, pat5).map(_.map(_.toString)) }
+  }
 }
