@@ -1,6 +1,6 @@
 package analysis.domain
 
-import analysis.LatticeOrdering
+import analysis._
 
 /** An XML domain, providing operations on XML nodes (N) and list of nodes (L). */
 trait XMLDomain[N, L, V] {
@@ -22,13 +22,20 @@ trait XMLDomain[N, L, V] {
   /** Calcucate the join of two abstract nodes. This is the supremum (least upper bound). */
   def join(n1: N, n2: N): N
 
+  /** Join a list of nodes. The supremum of the empty list is BOTTOM. */
+  def join(nodes: List[N]): N = nodes match {
+    case Nil => bottom
+    case List(node) => node
+    case _ => nodes.reduceLeft(join)
+  }
+
   /** Calculate the meet of two abstract nodes. This is the infimum (greatest lower bound). */
   def meet(n1: N, n2: N): N
 
   /** Join two node lists. This calculates their supremum (least upper bound). */
   def joinList(l1: L, l2: L): L
 
-  /** Join a list of nodes lists. The supremum of the empty list ist BOTTOM. */
+  /** Join a list of nodes lists. The supremum of the empty list is BOTTOM. */
   def joinList(lists: List[L]): L = lists match {
     case Nil => bottomList
     case List(list) => list
@@ -38,12 +45,32 @@ trait XMLDomain[N, L, V] {
   /** Compares two elements of the lattice of nodes.
     * TOP is always greater than everything else, BOTTOM is always less than everything else.
     */
-  def compare(n1: N, n2: N): LatticeOrdering
+  def compare(n1: N, n2: N): LatticeOrdering = (lessThanOrEqual(n1, n2), lessThanOrEqual(n2, n1)) match {
+    case (true, true) => Equal
+    case (true, false) => Less
+    case (false, true) => Greater
+    case (false, false) => Incomparable
+  }
+
+  /** Compares two elements of the lattice of nodes.
+    * Returns true if n1 < n2 or n1 = n2, false if n1 > n2 or if they are incomparable.
+    */
+  def lessThanOrEqual(n1: N, n2: N): Boolean
 
   /** Compares two elements of the lattice of node lists.
     * TOP is always greater than everything else, BOTTOM is always less than everything else.
     */
-  def compareList(l1: L, l2: L): LatticeOrdering // TODO: is this really needed?
+  def compareList(l1: L, l2: L): LatticeOrdering = (lessThanOrEqualList(l1, l2), lessThanOrEqualList(l2, l1)) match {
+    case (true, true) => Equal
+    case (true, false) => Less
+    case (false, true) => Greater
+    case (false, false) => Incomparable
+  }
+
+  /** Compares two elements of the lattice of node lists.
+    * Returns true if l1 < l2 or l1 = l2, false if l1 > l2 or if they are incomparable.
+    */
+  def lessThanOrEqualList(l1: L, l2: L): Boolean // TODO: is this operation really needed?
 
   /** Create an element node with the given name, attributes and children.
     * The output is created bottom-up, so children are always created before their parent nodes.

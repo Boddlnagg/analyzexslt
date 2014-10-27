@@ -738,6 +738,31 @@ abstract class XSLTReferenceSuiteBase extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("node() test") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/root">
+          <result>
+            <childaxis>
+              <xsl:apply-templates select="node()"/>
+            </childaxis>
+            <attributeaxis>
+              <xsl:apply-templates select="attribute::node()"/>
+            </attributeaxis>
+          </result>
+        </xsl:template>
+        <xsl:template match="node()">
+          <xsl:copy-of select="."/>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    // The handling of comment nodes is weird, therefore we don't test them here (TODO: remove comment nodes completely?)
+    val data =
+        <root attr1="val1" attr2="val2"><elem/>Some Text</root>
+
+    assertTransformMatches(xslt, data)
+  }
+
   def transform(xslt: Elem, data: Elem): XMLRoot
 
   def assertTransformMatches(xslt: Elem, data: Elem) = {

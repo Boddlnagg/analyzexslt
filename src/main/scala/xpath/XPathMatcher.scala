@@ -17,9 +17,8 @@ object XPathMatcher {
       val restPath = LocationPath(path.steps.dropRight(1), path.isAbsolute)
       if (!lastStep.predicates.isEmpty) throw new NotImplementedError("predicates in paths are not implemented")
       val lastStepMatches = lastStep match {
-        // child::node() OR attribute::node()
-        // this matches any node (regardless of axis type) according to spec section 2.3
-        case XPathStep(ChildAxis | AttributeAxis, AllNodeTest, Nil) => true
+        // child::node()
+        case XPathStep(ChildAxis, AllNodeTest, Nil) => node.isInstanceOf[XMLElement] | node.isInstanceOf[XMLTextNode] | node.isInstanceOf[XMLComment]
         // child::comment()
         case XPathStep(ChildAxis, CommentNodeTest, Nil) => node.isInstanceOf[XMLComment]
         // child::text()
@@ -29,7 +28,7 @@ object XPathMatcher {
         // child::name
         case XPathStep(ChildAxis, NameTest(name), Nil) => node.isInstanceOf[XMLElement] && node.asInstanceOf[XMLElement].name == name
         // attribute::*
-        case XPathStep(AttributeAxis, NameTest("*"), Nil) => node.isInstanceOf[XMLAttribute]
+        case XPathStep(AttributeAxis, NameTest("*") | AllNodeTest, Nil) => node.isInstanceOf[XMLAttribute]
         // attribute::name
         case XPathStep(AttributeAxis, NameTest(name), Nil) => node.isInstanceOf[XMLAttribute] && node.asInstanceOf[XMLAttribute].name == name
         // attribute::comment() OR attribute::text()

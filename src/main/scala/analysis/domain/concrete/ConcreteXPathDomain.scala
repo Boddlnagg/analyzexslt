@@ -1,6 +1,5 @@
 package analysis.domain.concrete
 
-import analysis._
 import analysis.domain.XPathDomain
 import xml.XMLNode
 import xpath._
@@ -23,9 +22,9 @@ object ConcreteXPathDomain {
     override def join(v1: V, v2: V): V = v1.join(v2)
 
     /** Compares two elements of the lattice.
-      * TOP is always greater than everything else, BOTTOM is always less than everything else.
+      * Returns true if v1 < v2 or v1 = v2, false if v1 > v2 or if they are incomparable.
       */
-    override def compare(v1: V, v2: V): LatticeOrdering = v1.compare(v2)
+    override def lessThanOrEqual(v1: V, v2: V): Boolean = v1.lessThanOrEqual(v2)
 
     /** Get the TOP element of the subdomain of numbers (representing any number). topNumber <= top must hold. */
     override def topNumber: V = Top // no type distinction in this domain

@@ -1,6 +1,5 @@
 package analysis.domain.powerset
 
-import analysis._
 import analysis.domain.XPathDomain
 import xml._
 import xpath._
@@ -33,16 +32,10 @@ object PowersetXPathDomain {
       case (Some(s1), Some(s2)) => Some(s1.intersect(s2))
     }*/
 
-    override def compare(v1: V, v2: V): LatticeOrdering = (v1, v2) match {
-      case (None, None) => Equal
-      case (None, _) => Greater
-      case (_, None) => Less
-      case (Some(s1), Some(s2)) => (s1.subsetOf(s2), s2.subsetOf(s1)) match {
-        case (true, true) => Equal
-        case (true, false) => Less
-        case (false, true) => Greater
-        case (false, false) => Incomparable
-      }
+    override def lessThanOrEqual(v1: V, v2: V): Boolean = (v1, v2) match {
+      case (_, None) => true
+      case (None, Some(_)) => false
+      case (Some(s1), Some(s2)) => s1.subsetOf(s2)
     }
 
     override def topNumber: V = None // no type distinction in this domain

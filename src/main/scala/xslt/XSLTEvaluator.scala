@@ -27,7 +27,7 @@ object XSLTEvaluator {
 
   /** Chooses a template that matches the given element best */
   def chooseTemplate(sheet: XSLTStylesheet, node: XMLNode): XSLTTemplate = {
-    def allMatching = sheet.matchableTemplates.filter { case (tmpl, _, _, _) => XPathMatcher.matches(node, tmpl)}
+    val allMatching = sheet.matchableTemplates.filter { case (tmpl, _, _, _) => XPathMatcher.matches(node, tmpl)}
     if (allMatching.isEmpty)
       throw new EvaluationError(f"Found no matching template for input node `${XMLNode.formatPath(node)}` [NOTE: this can only happen when builtin templates are disabled]")
     val (_, template, _, _) = allMatching.last // this one will have highest precedence and priority, because the templates are sorted

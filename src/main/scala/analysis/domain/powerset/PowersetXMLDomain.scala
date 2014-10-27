@@ -1,6 +1,5 @@
 package analysis.domain.powerset
 
-import analysis._
 import analysis.domain.{XPathDomain, XMLDomain}
 import xml._
 
@@ -35,28 +34,16 @@ object PowersetXMLDomain {
       case (Some(s1), Some(s2)) => Some(s1.intersect(s2))
     }
 
-    override def compare(n1: N, n2: N): LatticeOrdering = (n1, n2) match {
-      case (None, None) => Equal
-      case (None, _) => Greater
-      case (_, None) => Less
-      case (Some(s1), Some(s2)) => (s1.subsetOf(s2), s2.subsetOf(s1)) match {
-        case (true, true) => Equal
-        case (true, false) => Less
-        case (false, true) => Greater
-        case (false, false) => Incomparable
-      }
+    override def lessThanOrEqual(n1: N, n2: N): Boolean = (n1, n2) match {
+      case (_, None) => true
+      case (None, Some(_)) => false
+      case (Some(s1), Some(s2)) => s1.subsetOf(s2)
     }
 
-    override def compareList(l1: L, l2: L): LatticeOrdering = (l1, l2) match {
-      case (None, None) => Equal
-      case (None, _) => Greater
-      case (_, None) => Less
-      case (Some(s1), Some(s2)) => (s1.subsetOf(s2), s2.subsetOf(s1)) match {
-        case (true, true) => Equal
-        case (true, false) => Less
-        case (false, true) => Greater
-        case (false, false) => Incomparable
-      }
+    override def lessThanOrEqualList(l1: L, l2: L): Boolean = (l1, l2) match {
+      case (_, None) => true
+      case (None, Some(_)) => false
+      case (Some(s1), Some(s2)) => s1.subsetOf(s2)
     }
 
     override def joinList(l1: L, l2: L): L = (l1, l2) match {
@@ -65,48 +52,14 @@ object PowersetXMLDomain {
       case (Some(s1), Some(s2)) => Some(s1.union(s2))
     }
 
-    def createElement(name: String, attributes: L, children: L): N = {
-      // TODO: simplify (remove helper functions that are able to do more than necessary)
-      // appendChildren (taking a list of nodes) probably is better than appendChild applied multiple times (because of
-      // combinatorial possibilities). We can still lift a single node to a list to append a single child
-      def appendChildren(node: N, list: L): N = (node, list) match {
-        case (Some(n), Some(l)) => Some(n.cross(l).map {
-          // it can only be an XMLElement because we start with a single XMLElement and the type can't change
-          case (e: XMLElement, ll) => {
-            // copy the node, because each element of the set must refer to its own copy (because of the parent-child-references)
-            assert(e.parent == null)
-            val copy = e.copy.asInstanceOf[XMLElement]
-            ll.foreach(newChild => {
-              assert(newChild.parent == null)
-              copy.appendChild(newChild.copy)
-            })
-            copy
-          }
-        }.toSet)
-        case _ => None
-      }
-
-      def addAttributes(node: N, list: L): N = (node, list) match {
-        case (Some(n), Some(l)) => Some(n.cross(l).map {
-          // it can only be an XMLElement because we start with a single XMLElement and the type can't change
-          case (e: XMLElement, ll) => {
-            // copy the node, because each element of the set must refer to its own copy (because of the parent-child-references)
-            assert(e.parent == null)
-            val copy = e.copy.asInstanceOf[XMLElement]
-            ll.foreach(newChild => {
-              assert(newChild.parent == null)
-              copy.addAttribute(newChild.copy.asInstanceOf[XMLAttribute])
-            })
-            copy
-          }
-        }.toSet)
-        case _ => None
-      }
-
-      var result: N = Some(Set(XMLElement(name)))
-      result = addAttributes(result, attributes)
-      result = appendChildren(result, children)
-      result
+    def createElement(name: String, attributes: L, children: L): N = (attributes, children) match {
+      case (None, _) => None
+      case (_, None) => None
+      case (Some(s1), Some(s2)) => Some(s1.cross(s2).map {
+        case (attr, chld) => XMLElement(name,
+          attr.map(a => a.asInstanceOf[XMLAttribute].copy),
+          chld.map(c => c.copy))
+      }.toSet)
     }
 
     override def createEmptyList(): L = Some(Set(Nil))

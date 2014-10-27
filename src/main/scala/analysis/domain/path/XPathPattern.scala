@@ -41,3 +41,13 @@ case class NamedAttribute(name: String, prev: Option[XPathPattern]) extends XPat
   override def withPrev(pattern: XPathPattern) = NamedAttribute(name, Some(pattern))
   override def stepString = "@" + name
 }
+
+case class AnyTextNode(prev: Option[XPathPattern]) extends XPathPattern {
+  override def withPrev(pattern: XPathPattern) = AnyTextNode(Some(pattern))
+  override def stepString = "text()"
+}
+
+case class AnyCommentNode(prev: Option[XPathPattern]) extends XPathPattern {
+  override def withPrev(pattern: XPathPattern) = AnyCommentNode(Some(pattern))
+  override def stepString = "comment()"
+}
