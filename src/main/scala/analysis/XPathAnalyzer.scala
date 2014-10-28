@@ -22,14 +22,22 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val left = xpathDom.toBooleanValue(evaluate(lhs, ctx))
         val leftMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), left)
         val leftMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), left)
-        if (!leftMaybeTrue)
-          return xpathDom.liftBoolean(false)
+        if (!leftMaybeTrue) {
+          // Spec section 3.4: "The right operand is not evaluated if the left operand evaluates to false." (short-circuit evaluation)
+          if (!leftMaybeFalse)
+            return xpathDom.bottom
+          else
+            return xpathDom.liftBoolean(false)
+        }
 
         val right = xpathDom.toBooleanValue(evaluate(rhs, ctx))
         val rightMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), right)
         val rightMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), right)
         if (!rightMaybeTrue)
-          return xpathDom.liftBoolean(false)
+          if (!rightMaybeFalse && !leftMaybeFalse)
+            return xpathDom.bottom
+          else
+            return xpathDom.liftBoolean(false)
 
         if (!leftMaybeFalse && !rightMaybeFalse)
           return xpathDom.liftBoolean(true)
@@ -39,14 +47,22 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val left = xpathDom.toBooleanValue(evaluate(lhs, ctx))
         val leftMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), left)
         val leftMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), left)
-        if (!leftMaybeFalse)
-          return xpathDom.liftBoolean(true)
+        if (!leftMaybeFalse) {
+          // Spec section 3.4: "The right operand is not evaluated if the left operand evaluates to true." (short-circuit evaluation)
+          if (!leftMaybeTrue)
+            return xpathDom.bottom
+          else
+            return xpathDom.liftBoolean(true)
+        }
 
         val right = xpathDom.toBooleanValue(evaluate(rhs, ctx))
         val rightMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), right)
         val rightMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), right)
         if (!rightMaybeFalse)
-          return xpathDom.liftBoolean(true)
+          if (!rightMaybeTrue && !leftMaybeTrue)
+            return xpathDom.bottom
+          else
+            return xpathDom.liftBoolean(true)
 
         if (!leftMaybeTrue && !rightMaybeTrue)
           return xpathDom.liftBoolean(false)

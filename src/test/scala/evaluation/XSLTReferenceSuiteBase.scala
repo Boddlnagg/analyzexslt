@@ -763,6 +763,25 @@ abstract class XSLTReferenceSuiteBase extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("Boolean evaluation (bottom)") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <result>
+            <xsl:variable name="x" select="1"/>
+            <!-- Can't test short-circuit evaluation (`or` instead of `and`), because Java violates the spec -->
+            <xsl:if test="true() and ($x | $x)">
+              <foobar/>
+            </xsl:if>
+          </result>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data = <root/>
+
+    assertTransformMatches(xslt, data)
+  }
+
   def transform(xslt: Elem, data: Elem): XMLRoot
 
   def assertTransformMatches(xslt: Elem, data: Elem) = {
