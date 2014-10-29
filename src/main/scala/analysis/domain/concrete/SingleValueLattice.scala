@@ -36,15 +36,6 @@ trait SingleValueLattice[+T] {
     case (Bottom, _) => true
     case _ => false
   }
-
-  def compare[T1 >: T](other: SingleValueLattice[T1]) = (this, other) match {
-    case (_, _) if this == other => Equal
-    case (Top, _) => Greater
-    case (Bottom, _) => Less
-    case (_, Top) => Less
-    case (_, Bottom) => Greater
-    case _ => Incomparable
-  }
 }
 
 case object Top extends SingleValueLattice[Nothing] {
