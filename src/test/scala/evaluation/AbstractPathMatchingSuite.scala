@@ -102,13 +102,15 @@ class AbstractPathMatchingSuite extends FunSuite {
     assertResult(Some(Set("a//b"))) { matchTop(pattern).map(_.map(_.toString)) }
   }*/
 
-  test("a//b  starting from {/*/a/b, /*/a/*/b}") {
+  test("a//b  starting from {/*/a/b, /*/a/*/b, /a/b/b, /b/b}") {
     val start: N = Some(Set(
       NamedElement("b", Some(NamedElement("a", Some(AnyElement(Some(Root)))))),
-      NamedElement("b", Some(AnyElement(Some(NamedElement("a", Some(AnyElement(Some(Root))))))))
+      NamedElement("b", Some(AnyElement(Some(NamedElement("a", Some(AnyElement(Some(Root)))))))),
+      NamedElement("b", Some(NamedElement("b", Some(NamedElement("a", Some(Root)))))),
+      NamedElement("b", Some(NamedElement("b", Some(Root))))
     ))
     val pattern = XPathParser.parse("a//b").asInstanceOf[LocationPath]
-    assertResult(Some(Set("/*/a/b", "/*/a/*/b"))) { matchIntersect(pattern, start).map(_.map(_.toString)) }
+    assertResult(Some(Set("/*/a/b", "/*/a/*/b", "/a/b/b"))) { matchIntersect(pattern, start).map(_.map(_.toString)) }
   }
 
   val start1 = AnyElement(None) // "*"
@@ -116,8 +118,7 @@ class AbstractPathMatchingSuite extends FunSuite {
   val start3 = NamedElement("a", None) // "a"
   val start4 = AnyElement(Some(NamedElement("a", None))) // "a/*"
   val start5 = AnyElement(Some(NamedElement("a", Some(Root)))) // "/a/*"
-  val start6 = NamedElement("c", Some(AnyElement(Some(AnyElement(Some(NamedElement("b", Some(AnyElement(Some(Root)))))))))) // "/*/b/*/*/c"
-  val start7 = NamedElement("a", Some(AnyElement(Some(Root)))) // "/*/a"
+  val start6 = NamedElement("a", Some(AnyElement(Some(Root)))) // "/*/a"
 
   test("/* starting from *") {
     val pattern = XPathParser.parse("/*").asInstanceOf[LocationPath]
@@ -136,7 +137,7 @@ class AbstractPathMatchingSuite extends FunSuite {
 
   test("*/b starting from a/*") {
     val pattern = XPathParser.parse("*/b").asInstanceOf[LocationPath]
-    assertResult(Some(Set("a/b"))) { matchIntersect(pattern, Some(Set(start4))).map(_.map(_.toString)) }
+    assertResult(Some(Set("/a/b", "*/a/b"))) { matchIntersect(pattern, Some(Set(start4))).map(_.map(_.toString)) }
   }
 
   test("*/b starting from /a/*") {
@@ -145,8 +146,8 @@ class AbstractPathMatchingSuite extends FunSuite {
   }
 
   test("b/* starting from /*/a") {
-    val pattern = XPathParser.parse("*/b").asInstanceOf[LocationPath]
-    assertResult(Some(Set("/b/a"))) { matchIntersect(pattern, Some(Set(start7))).map(_.map(_.toString)) }
+    val pattern = XPathParser.parse("b/*").asInstanceOf[LocationPath]
+    assertResult(Some(Set("/b/a"))) { matchIntersect(pattern, Some(Set(start6))).map(_.map(_.toString)) }
   }
 
   test("/*/b starting from a/*") {
@@ -154,9 +155,13 @@ class AbstractPathMatchingSuite extends FunSuite {
     assertResult(Some(Set("/a/b"))) { matchIntersect(pattern, Some(Set(start4))).map(_.map(_.toString)) }
   }
 
-  test("a//b//c starting from /*/b/*/*/c") {
+  test("a//b//c starting from {/*/b/*/*/c, /a/b/c}") {
+    val start: N = Some(Set(
+      NamedElement("c", Some(AnyElement(Some(AnyElement(Some(NamedElement("b", Some(AnyElement(Some(Root)))))))))),
+      NamedElement("c", Some(NamedElement("b", Some(NamedElement("a", Some(Root))))))
+    ))
     val pattern = XPathParser.parse("a//b//c").asInstanceOf[LocationPath]
-    assertResult(Some(Set("/a/b/*/*/c", "/*/b/a/b/c"))) { matchIntersect(pattern, Some(Set(start6))).map(_.map(_.toString)) }
+    assertResult(Some(Set("/a/b/*/*/c", "/*/b/a/b/c", "/a/b/c"))) { matchIntersect(pattern, start).map(_.map(_.toString)) }
   }
 
   test("Compare") {
