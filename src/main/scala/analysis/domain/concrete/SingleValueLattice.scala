@@ -1,7 +1,5 @@
 package analysis.domain.concrete
 
-import analysis.{Incomparable, Less, Greater, Equal}
-
 trait SingleValueLattice[+T] {
   def map[R](f: T => R): SingleValueLattice[R]
 

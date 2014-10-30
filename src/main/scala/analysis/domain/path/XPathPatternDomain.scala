@@ -46,8 +46,6 @@ object XPathPatternDomain {
     override def meet(n1: N, n2: N): N = (n1, n2) match {
       case (None, _) => n2
       case (_, None) => n1
-      case (BOT, _) => BOT
-      case (_, BOT) => BOT
       case (Some(s1), Some(s2)) =>
         val filtered1 = s1.filter(pat1 => s2.exists(pat2 => lessThanOrEqualSingle(Some(pat1), Some(pat2))))
         val filtered2 = s2.filter(pat1 => s1.exists(pat2 => lessThanOrEqualSingle(Some(pat1), Some(pat2))))
@@ -274,9 +272,9 @@ object XPathPatternDomain {
     override def hasName(node: N, name: String): (N, N) = node match {
       case None => (Some(Set(NamedElement(name, None), NamedAttribute(name, None))), node)
       case Some(s) => (Some(s.collect {
-        case e@NamedElement(n, _) if (name == n) => e
+        case e@NamedElement(n, _) if name == n => e
         case AnyElement(p) => NamedElement(name, p)
-        case a@NamedAttribute(n, _) if (name == n) => a
+        case a@NamedAttribute(n, _) if name == n => a
         case AnyAttribute(p) => NamedAttribute(name, p)
       }), node)
     }
