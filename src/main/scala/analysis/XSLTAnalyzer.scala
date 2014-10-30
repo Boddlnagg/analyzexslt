@@ -50,8 +50,6 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   }
 
   private def chooseTemplates(sheet: XSLTStylesheet, node: N): Map[XSLTTemplate, N] = {
-    // don't know anything -> return set of all matchable templates
-    //case None => sheet.matchableTemplates.map { case (_, tmpl, _, _) => (tmpl, n)}.toMap
     val result = scala.collection.mutable.Map[XSLTTemplate, N]()
     var currentNode = node
     breakable {
