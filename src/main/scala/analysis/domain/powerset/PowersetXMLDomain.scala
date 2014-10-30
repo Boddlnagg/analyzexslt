@@ -59,7 +59,7 @@ object PowersetXMLDomain {
       case (Right(s1), Right(s2)) => Right(s1.union(s2))
     }
 
-    def createElement(name: String, attributes: L, children: L): N = (attributes, children) match {
+    override def createElement(name: String, attributes: L, children: L): N = (attributes, children) match {
       case (Left(_), _) => None
       case (_, Left(_)) => None
       case (Right(s1), Right(s2)) => Some(s1.cross(s2).map {

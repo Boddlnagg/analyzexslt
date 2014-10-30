@@ -27,7 +27,6 @@ abstract class XPathValue {
     * This matches the number() function specified in the XPath spec section 4.4
     */
   def toNumberValue: NumberValue = {
-    //
     this match {
       case num: NumberValue => num
       case BooleanValue(bool) => if (bool) NumberValue(1) else NumberValue(0)

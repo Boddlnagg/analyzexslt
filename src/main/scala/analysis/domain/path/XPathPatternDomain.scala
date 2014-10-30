@@ -36,7 +36,7 @@ object XPathPatternDomain {
       case (Some(s1), Some(s2)) => Some(normalizeJoined(s1.union(s2)))
     }
 
-    def normalizeJoined(set: Iterable[XPathPattern]): Set[XPathPattern] = set.toList.foldRight(List[XPathPattern]()) {
+    protected def normalizeJoined(set: Iterable[XPathPattern]): Set[XPathPattern] = set.toList.foldRight(List[XPathPattern]()) {
       case (next, acc) => if (acc.exists(e => lessThanOrEqualSingle(Some(next), Some(e))))
         acc
       else
@@ -44,6 +44,7 @@ object XPathPatternDomain {
     }.toSet
 
     override def meet(n1: N, n2: N): N = (n1, n2) match {
+      // TODO: this implementation is currently wrong
       case (None, _) => n2
       case (_, None) => n1
       case (Some(s1), Some(s2)) =>
@@ -64,7 +65,7 @@ object XPathPatternDomain {
       case (Some(s1), Some(s2)) => s1.forall(pat1 => s2.exists(pat2 => lessThanOrEqualSingle(Some(pat1), Some(pat2))))
     }
 
-    def lessThanOrEqualSingle(left: Option[XPathPattern], right: Option[XPathPattern]): Boolean = (left, right) match {
+    protected def lessThanOrEqualSingle(left: Option[XPathPattern], right: Option[XPathPattern]): Boolean = (left, right) match {
       case (_, None) => true
       case (None, Some(_)) => false
       case (Some(pat1), Some(pat2)) => (pat1, pat2) match {

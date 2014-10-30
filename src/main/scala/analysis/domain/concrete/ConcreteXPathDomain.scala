@@ -32,7 +32,7 @@ object ConcreteXPathDomain {
     /** Get the TOP element of the subdomain of strings (representing any string). topString <= top must hold. */
     override def topString: V = Top // no type distinction in this domain
 
-    def liftBinaryNumOp(left: V, right: V)(f: (Double, Double) => Double): V =
+    protected def liftBinaryNumOp(left: V, right: V)(f: (Double, Double) => Double): V =
         left.liftBinaryOp(right) {(v1, v2) => NumberValue(f(v1.toNumberValue.value, v2.toNumberValue.value))}
 
     /** The addition operation. Must convert its operands to numbers first if they aren't. */

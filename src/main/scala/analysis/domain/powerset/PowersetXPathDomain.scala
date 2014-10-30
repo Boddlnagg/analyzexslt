@@ -18,7 +18,7 @@ object PowersetXPathDomain {
     protected val BOT: V = Some(Set())
 
     // booleans are a finite domain so we don't need to represent an unknown boolean as None
-    val anyBoolean: V = Some(Set(BooleanValue(true), BooleanValue(false)))
+    protected val anyBoolean: V = Some(Set(BooleanValue(true), BooleanValue(false)))
 
     override def join(v1: V, v2: V): V = (v1, v2) match {
       case (None, _) => None
@@ -42,20 +42,20 @@ object PowersetXPathDomain {
 
     override def topString: V = None // no type distinction in this domain
 
-    def liftBinaryOp(left: V, right: V, pf: PartialFunction[(XPathValue, XPathValue), XPathValue]): V = (left, right) match {
+    protected def liftBinaryOp(left: V, right: V, pf: PartialFunction[(XPathValue, XPathValue), XPathValue]): V = (left, right) match {
       case (BOT, _) => BOT
       case (_, BOT) => BOT
       case (Some(s1), Some(s2)) => Some(s1.cross(s2).collect(pf).toSet)
       case _ => None
     }
 
-    def liftBinaryLogicalOp(left: V, right: V, f: (XPathValue, XPathValue) => XPathValue): V =
+    protected def liftBinaryLogicalOp(left: V, right: V, f: (XPathValue, XPathValue) => XPathValue): V =
       liftBinaryOp(left, right, { case (v1, v2) => f(v1, v2) }) match {
         case None => anyBoolean
         case Some(s) => Some(s)
       }
 
-    def liftBinaryNumOp(left: V, right: V, f: (Double, Double) => Double): V = (left, right) match {
+    protected def liftBinaryNumOp(left: V, right: V, f: (Double, Double) => Double): V = (left, right) match {
       case (BOT, _) => BOT
       case (_, BOT) => BOT
       case (Some(s1), Some(s2)) => Some(s1.cross(s2)

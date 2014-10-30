@@ -16,7 +16,7 @@ object PowersetDomain extends Domain[N, L, V] {
   override val xmlDom = XML
   override val xpathDom = XPATH
 
-  object XML extends PowersetXMLDomain.D[V] {
+  protected object XML extends PowersetXMLDomain.D[V] {
     override val xpathDom = XPATH
 
     override def createAttribute(name: String, value: V): N = value match {
@@ -36,7 +36,7 @@ object PowersetDomain extends Domain[N, L, V] {
     }
   }
 
-  object XPATH extends PowersetXPathDomain.D[N, L] {
+  protected object XPATH extends PowersetXPathDomain.D[N, L] {
 
     override def toNodeSet(list: L): V = list match {
       case Left(_) => None
