@@ -265,7 +265,16 @@ object PowersetXMLDomain {
     }
 
     override def flatMapWithIndex(list: L, f: (N, V) => L): L = list match {
-      case Left(None) => Left(None)
+      case Left(None) => // list with unknown number of unknown elements
+        val mappedNone = f(None, xpathDom.topNumber) // call f with TOP element and TOP index
+        mappedNone match {
+          case Right(s) => s.toList match {
+            case Nil => Right(Set()) // f always returns BOTTOM -> return BOTTOM
+            case List(Nil) => Right(Set(Nil)) // f always returns an empty list -> return empty list
+            case _ => Left(None) // f returns some elements
+          }
+          case Left(_) => Left(None) // don't result elements -> don't know output
+        }
       case Left(Some(len)) =>
         val mapped = List.range(0, len).map { i => f(None, xpathDom.liftNumber(i)) }
         val flattened = mapped.foldLeft(createEmptyList())((acc, next) => concatLists(acc, next))
