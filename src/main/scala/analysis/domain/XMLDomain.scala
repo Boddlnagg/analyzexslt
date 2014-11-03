@@ -70,7 +70,7 @@ trait XMLDomain[N, L, V] {
   /** Compares two elements of the lattice of node lists.
     * Returns true if l1 < l2 or l1 = l2, false if l1 > l2 or if they are incomparable.
     */
-  def lessThanOrEqualList(l1: L, l2: L): Boolean // TODO: is this operation really needed?
+  def lessThanOrEqualList(l1: L, l2: L): Boolean // TODO: is this operation really needed (could be replaced with isBottom)?
 
   /** Create an element node with the given name, attributes and children.
     * The output is created bottom-up, so children are always created before their parent nodes.

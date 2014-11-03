@@ -19,9 +19,14 @@ class TypedPowersetXPathDomain[L] {
     override def bottom: V = TypedXPathValue(Set(), bottomComponent, bottomComponent, xmlDom.bottomList)
 
     protected val BOTTOM_NUM: Option[Set[Double]] = Some(Set())
+    protected val BOTTOM_STR: Option[Set[String]] = Some(Set())
+
+    protected def fromBooleans(bool: Set[Boolean]) = TypedXPathValue(bool, bottomComponent[Double], bottomComponent[String], xmlDom.bottomList)
+    protected def fromNumbers(num: Option[Set[Double]]) = TypedXPathValue(Set(), num, bottomComponent[String], xmlDom.bottomList)
+    protected def fromStrings(str: Option[Set[String]]) = TypedXPathValue(Set(), bottomComponent[Double], str, xmlDom.bottomList)
 
     override def join(v1: V, v2: V): V = TypedXPathValue(
-      v1.bool.union(v2.bool),
+      v1.bool | v2.bool,
       joinComponent(v1.num, v2.num),
       joinComponent(v1.str, v2.str),
       xmlDom.joinList(v1.nodeSet, v2.nodeSet) // TODO: need to keep list sorted explicitly?
@@ -32,7 +37,7 @@ class TypedPowersetXPathDomain[L] {
     protected def joinComponent[T](lhs: Option[Set[T]], rhs: Option[Set[T]]): Option[Set[T]] = (lhs, rhs) match {
       case (None, _) => None
       case (_, None) => None
-      case (Some(s1), Some(s2)) => Some(s1.union(s2))
+      case (Some(s1), Some(s2)) => Some(s1 | s2)
     }
 
     protected def lessThanOrEqualComponent[T](lhs: Option[Set[T]], rhs: Option[Set[T]]): Boolean = (lhs, rhs) match {
@@ -74,7 +79,7 @@ class TypedPowersetXPathDomain[L] {
           val boolComponents = v.bool.map(b => if (b) 1.0 else 0.0)
           val strComponents = str.map(stringToNumber)
           val nodeSetComponents = nodeSet.map(stringToNumber)
-          Some(boolComponents union numComponents union strComponents union nodeSetComponents)
+          Some(boolComponents | numComponents | strComponents | nodeSetComponents)
       }
     }
 
@@ -90,7 +95,7 @@ class TypedPowersetXPathDomain[L] {
           val numComponents = num.map(n => n == 0 || n.isNaN)
           val strComponents = str.map(s => s.length > 0)
           val nodeSetComponents = sizes.map(s => s != 0) // node-set is non-empty
-          v.bool union numComponents union strComponents union nodeSetComponents
+          v.bool | numComponents | strComponents | nodeSetComponents
       }
     }
 
@@ -108,7 +113,7 @@ class TypedPowersetXPathDomain[L] {
             else if (n.isValidInt) n.toInt.toString
             else n.toString
           }
-          Some(boolComponents union numComponents union strComponents union nodeSetsComponents)
+          Some(boolComponents | numComponents | strComponents | nodeSetsComponents)
       }
     }
 
@@ -122,7 +127,7 @@ class TypedPowersetXPathDomain[L] {
         )
         case _ => None
       }
-      TypedXPathValue(Set(), numResult, bottomComponent[String], xmlDom.bottomList)
+      fromNumbers(numResult)
     }
 
     override def add(left: V, right: V): V = liftBinaryNumOp(left, right,
@@ -145,16 +150,77 @@ class TypedPowersetXPathDomain[L] {
       (v1, v2) => v1 % v2
     )
 
-    override def compareRelational(left: V, right: V, relOp: RelationalOperator): V = ??? // TODO
+    override def compareRelational(left: V, right: V, relOp: RelationalOperator): V = {
+      // compares for equality
+      def compareRelationalBooleans(left: Set[Boolean], right: Set[Boolean]): Set[Boolean] =
+      left.cross(right).map {
+        case (v1, v2) => v1 == v2
+      }.toSet
 
-    override def negateNum(v: V): V = {
-      val numResult = toNumberValueInternal(v).map(_.map(num => -num))
-      TypedXPathValue(Set(), numResult, bottomComponent[String], xmlDom.bottomList)
+      // compares for equality
+      def compareRelationalStrings(left: Option[Set[String]], right: Option[Set[String]]): Set[Boolean] =
+      (left, right) match {
+        case (BOTTOM_STR, _) | (_, BOTTOM_STR) => Set[Boolean]() // one operand is BOTTOM -> return BOTTOM
+        case (Some(s1), Some(s2)) => s1.cross(s2).map {
+          case (v1, v2) => v1 == v2
+        }.toSet
+        case _ => Set(true, false) // return TOP
+      }
+
+      // relOp is any relational operator
+      def compareRelationalNumbers(left: Option[Set[Double]], right: Option[Set[Double]], relOp: RelationalOperator): Set[Boolean] =
+      (left, right) match {
+        case (BOTTOM_NUM, _) | (_, BOTTOM_NUM)  => Set[Boolean]() // one operand is BOTTOM -> return BOTTOM
+        case (Some(s1), Some(s2)) => s1.cross(s2).map {
+          case (v1, v2) => relOp match {
+            case EqualsOperator => v1 == v2
+            case NotEqualsOperator => v1 != v2
+            case LessThanOperator => v1 < v2
+            case GreaterThanOperator => v1 > v2
+            case LessThanEqualOperator => v1 <= v2
+            case GreaterThanEqualOperator => v1 >= v2
+          }
+        }.toSet
+        case _ => Set(true, false) // return TOP
+      }
+
+      if (!xmlDom.lessThanOrEqualList(left.nodeSet, xmlDom.bottomList) || // if left node-set part is not BOTTOM ...
+          !xmlDom.lessThanOrEqualList(right.nodeSet, xmlDom.bottomList)) { // ... or right node-set part is not BOTTOM ...
+        // .. then we don't know the result because node-set comparisons are not implemented
+        fromBooleans(Set(true, false))
+      } else {
+        val result = relOp match {
+          case EqualsOperator | NotEqualsOperator =>
+            // we can ignore the node-sets now and compare all pairs of remaining components for equality
+            val equals =
+              // compare both as booleans if at least one of them is a boolean
+              compareRelationalBooleans(left.bool, right.bool) |
+              compareRelationalBooleans(left.bool, toBooleanValueInternal(fromNumbers(right.num))) |
+              compareRelationalBooleans(left.bool, toBooleanValueInternal(fromStrings(right.str))) |
+              compareRelationalBooleans(toBooleanValueInternal(fromNumbers(left.num)), right.bool) |
+              compareRelationalBooleans(toBooleanValueInternal(fromStrings(left.str)), right.bool) |
+              // compare both as numbers if at least ono of them is a number (and none is a boolean)
+              compareRelationalNumbers(left.num, right.num, EqualsOperator) |
+              compareRelationalNumbers(toNumberValueInternal(fromStrings(left.str)), right.num, EqualsOperator) |
+              compareRelationalNumbers(left.num, toNumberValueInternal(fromStrings(right.str)), EqualsOperator) |
+              // compare both as strings otherwise
+              compareRelationalStrings(left.str, right.str)
+
+            if (relOp == NotEqualsOperator) equals.map(b => !b)
+            else equals
+          case _ => compareRelationalNumbers(toNumberValueInternal(left), toNumberValueInternal(right), relOp)
+        }
+        fromBooleans(result)
+      }
     }
 
-    override def toStringValue(v: V): V = TypedXPathValue(Set[Boolean](), bottomComponent[Double], toStringValueInternal(v), xmlDom.bottomList)
-    override def toNumberValue(v: V): V = TypedXPathValue(Set[Boolean](), toNumberValueInternal(v), bottomComponent[String], xmlDom.bottomList)
-    override def toBooleanValue(v: V): V = TypedXPathValue(toBooleanValueInternal(v), bottomComponent[Double], bottomComponent[String], xmlDom.bottomList)
+    override def negateNum(v: V): V = {
+      fromNumbers(toNumberValueInternal(v).map(_.map(num => -num)))
+    }
+
+    override def toStringValue(v: V): V = fromStrings(toStringValueInternal(v))
+    override def toNumberValue(v: V): V = fromNumbers(toNumberValueInternal(v))
+    override def toBooleanValue(v: V): V = fromBooleans(toBooleanValueInternal(v))
 
     override def liftLiteral(lit: String): V =
       TypedXPathValue(Set(), bottomComponent[Double], Some(Set(lit)), xmlDom.bottomList)
