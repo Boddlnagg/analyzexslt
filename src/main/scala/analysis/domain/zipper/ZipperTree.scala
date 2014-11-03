@@ -60,7 +60,7 @@ case class ZipperLoc(subtree: ZipperTree, path: ZipperPath) {
     case ElementNodePath(_, attr, left, up, r :: right) => ZipperLoc(r, ElementNodePath(r.desc, attr, this.subtree::left, up, right))
     case AttributeNodePath(_, _, _, Nil, Nil) => throw new UnsupportedOperationException("No sibling to the right")
     case AttributeNodePath(_, left, up, Nil, c :: children) => ZipperLoc(c, ElementNodePath(c.desc, this.subtree::left, Nil, up, children)) // no attributes left -> switch to children
-    case AttributeNodePath(_, left, up, r :: right, children) => ZipperLoc(r, AttributeNodePath(r.asInstanceOf[AttributeNode], this.subtree::left, up, right, children))
+    case AttributeNodePath(_, left, up, r :: right, children) => ZipperLoc(r, AttributeNodePath(r.desc.asInstanceOf[AttributeNode], this.subtree::left, up, right, children))
   }
 
   def goUp = this.path match {
