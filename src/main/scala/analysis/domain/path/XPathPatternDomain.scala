@@ -33,10 +33,10 @@ object XPathPatternDomain {
       case (_, None) => None
       case (BOT, _) => n2
       case (_, BOT) => n1
-      case (Some(s1), Some(s2)) => Some(normalizeJoined(s1.union(s2)))
+      case (Some(s1), Some(s2)) => Some(normalize(s1.union(s2)))
     }
 
-    protected def normalizeJoined(set: Iterable[XPathPattern]): Set[XPathPattern] = set.toList.foldRight(List[XPathPattern]()) {
+    protected def normalize(set: Iterable[XPathPattern]): Set[XPathPattern] = set.toList.foldRight(List[XPathPattern]()) {
       case (next, acc) => if (acc.exists(e => lessThanOrEqualSingle(Some(next), Some(e))))
         acc
       else
@@ -44,13 +44,45 @@ object XPathPatternDomain {
     }.toSet
 
     override def meet(n1: N, n2: N): N = (n1, n2) match {
-      // TODO: this implementation is currently wrong
       case (None, _) => n2
       case (_, None) => n1
       case (Some(s1), Some(s2)) =>
-        val filtered1 = s1.filter(pat1 => s2.exists(pat2 => lessThanOrEqualSingle(Some(pat1), Some(pat2))))
-        val filtered2 = s2.filter(pat1 => s1.exists(pat2 => lessThanOrEqualSingle(Some(pat1), Some(pat2))))
-        Some(filtered1.union(filtered2))
+        val result = s1.cross(s2).map {
+          case (p1, p2) => meetSingle(Some(p1), Some(p2))
+        }.collect {
+          case Some(pat) => pat.get
+        }
+        Some(normalize(result.toSet))
+    }
+
+    protected def meetSingle(left: Option[XPathPattern], right: Option[XPathPattern]): Option[Option[XPathPattern]] = (left, right) match {
+      case (_, None) => Some(left)
+      case (None, _) => Some(right)
+      case (Some(pat1), Some(pat2)) => (pat1, pat2) match {
+        case (Root, Root) => Some(Some(Root))
+        case (AnyElement(prev1), AnyElement(prev2)) =>
+          meetSingle(prev1, prev2).map(r => Some(AnyElement(r)))
+        case (NamedElement(name1, prev1), NamedElement(name2, prev2)) if name1 == name2 =>
+          meetSingle(prev1, prev2).map(r => Some(NamedElement(name1, r)))
+        case (NamedElement(name, prev1), AnyElement(prev2)) =>
+          meetSingle(prev1, prev2).map(r => Some(NamedElement(name, r)))
+        case (AnyElement(prev1), NamedElement(name, prev2)) =>
+          meetSingle(prev1, prev2).map(r => Some(NamedElement(name, r)))
+        case (AnyAttribute(prev1), AnyAttribute(prev2)) =>
+          meetSingle(prev1, prev2).map(r => Some(AnyAttribute(r)))
+        case (NamedAttribute(name1, prev1), NamedAttribute(name2, prev2)) if name1 == name2 =>
+          meetSingle(prev1, prev2).map(r => Some(NamedAttribute(name1, r)))
+        case (NamedAttribute(name, prev1), AnyAttribute(prev2)) =>
+          meetSingle(prev1, prev2).map(r => Some(NamedAttribute(name, r)))
+        case (AnyAttribute(prev1), NamedAttribute(name, prev2)) =>
+          meetSingle(prev1, prev2).map(r => Some(NamedAttribute(name, r)))
+        case (AnyTextNode(prev1), AnyTextNode(prev2)) =>
+          meetSingle(prev1, prev2).map(r => Some(AnyTextNode(r)))
+        case (AnyCommentNode(prev1), AnyCommentNode(prev2)) =>
+          meetSingle(prev1, prev2).map(r => Some(AnyCommentNode(r)))
+        case _ => None
+        // TODO: add recursive cases for other node types
+      }
     }
 
     /** Join two node lists. This calculates their supremum (least upper bound). */
@@ -116,7 +148,7 @@ object XPathPatternDomain {
       * Nodes that are not an element (and therefore don't have attributes) return an empty list, not BOTTOM! */
     override def getAttributes(node: N): L = node match {
       case None => None
-      case Some(s) => Some(normalizeJoined(s.collect {
+      case Some(s) => Some(normalize(s.collect {
         // NOTE: only element nodes have attributes
         case e: AnyElement => AnyAttribute(Some(e))
         case e: NamedElement => AnyAttribute(Some(e))
@@ -129,7 +161,7 @@ object XPathPatternDomain {
       * Nodes that don't have children return an empty list, not BOTTOM! */
     override def getChildren(node: N): L = node match {
       case None => None
-      case Some(s) => Some(normalizeJoined(s.collect {
+      case Some(s) => Some(normalize(s.collect {
         case e@AnyElement(_) => List(AnyElement(Some(e)), AnyTextNode(Some(e)), AnyCommentNode(Some(e)))
         case e@NamedElement(_, _) => List(AnyElement(Some(e)), AnyTextNode(Some(e)), AnyCommentNode(Some(e)))
         case e@Root => List(AnyElement(Some(e)))
@@ -140,7 +172,7 @@ object XPathPatternDomain {
     /** Get the parent of given node. */
     override def getParent(node: N): N = node match {
       case None => Some(Set(AnyElement(None), Root))
-      case Some(s) => Some(normalizeJoined(s.toList.filter(e => e != Root).map { e =>
+      case Some(s) => Some(normalize(s.toList.filter(e => e != Root).map { e =>
         e.prev match {
           case None => e match {
             // NOTE: only elements can have Root as their parent
@@ -157,20 +189,11 @@ object XPathPatternDomain {
       * doesn't have that parent), the second result is a node that might not have that parent (this is
       * BOTTOM if the node definitely does have that parent). The two results are not necessarily disjoint.
       */
-    override def hasParent(node: N, parent: N): (N, N) = (node, parent) match {
-      case (BOT, _) => (BOT, BOT)
-      case (_, BOT) => (BOT, node) // parent is BOTTOM -> can't match
-      case (None, _) => (None, None) // don't know anything about the node
-      case (Some(_), None) => (node, node) // parent is TOP -> don't know anything
-      case ((Some(nodes), Some(parents))) =>
-        val result = nodes.cross(parents).map {
-          case (n, p) =>
-            meet(getParent(Some(Set(n))), Some(Set(p))).get.toList match {
-              case Nil => Nil
-              case List(e) => List(n.withPrev(e))
-            }
-        }.flatten.toSet
-        (Some(result), node)
+    override def hasParent(node: N, parent: N): (N, N) = {
+      def joinReduceList(list: L): N = list
+
+      val possibleChildren = join(joinReduceList(getChildren(parent)), joinReduceList(getAttributes(parent)))
+      (meet(node, possibleChildren), node)
     }
 
     /** Concatenates two lists. */

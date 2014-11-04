@@ -245,15 +245,15 @@ class AbstractPathMatchingSuite extends FunSuite {
 
     assertResult(Some(Set("/a"))) { xmlDom.meet(pat1, pat3).map(_.map(_.toString)) }
     assertResult(Some(Set("a"))) { xmlDom.meet(pat2, pat4).map(_.map(_.toString)) }
-    assertResult(Some(Set())) { xmlDom.meet(pat1, pat4).map(_.map(_.toString)) }
+    assertResult(Some(Set("/a"))) { xmlDom.meet(pat1, pat4).map(_.map(_.toString)) }
     assertResult(Some(Set())) { xmlDom.meet(pat4, pat5).map(_.map(_.toString)) }
     assertResult(Some(Set("a"))) { xmlDom.meet(pat45, pat4).map(_.map(_.toString)) }
-    assertResult(Some(Set())) { xmlDom.meet(pat6, pat7).map(_.map(_.toString)) }
+    assertResult(Some(Set("a/a", "a/b"))) { xmlDom.meet(pat6, pat7).map(_.map(_.toString)) }
     assertResult(pat67) { xmlDom.meet(pat67, pat8) }
-    assertResult(Some(Set("a", "b"))) { xmlDom.meet(pat2, pat45).map(_.map(_.toString)) }
-    assertResult(Some(Set("a/*"))) { xmlDom.meet(pat7, pat2).map(_.map(_.toString)) }
-    assertResult(Some(Set())) { xmlDom.meet(pat7, pat4).map(_.map(_.toString)) }
+    assertResult(pat45) { xmlDom.meet(pat2, pat45) }
+    assertResult(pat7) { xmlDom.meet(pat7, pat2) }
+    assertResult(Some(Set("a/a"))) { xmlDom.meet(pat7, pat4).map(_.map(_.toString)) }
     assertResult(Some(Set("@c", "/a"))) { xmlDom.meet(pat9, pat10).map(_.map(_.toString)) }
-    assertResult(Some(Set())) { xmlDom.meet(pat8, pat5).map(_.map(_.toString)) }
+    assertResult(Some(Set("*/b"))) { xmlDom.meet(pat8, pat5).map(_.map(_.toString)) }
   }
 }
