@@ -15,7 +15,7 @@ object XPathMatcher {
     } else {
       val lastStep = path.steps.last
       val restPath = LocationPath(path.steps.dropRight(1), path.isAbsolute)
-      if (!lastStep.predicates.isEmpty) throw new NotImplementedError("predicates in paths are not implemented")
+      if (lastStep.predicates.nonEmpty) throw new NotImplementedError("predicates in paths are not implemented")
       val lastStepMatches = lastStep match {
         // child::node()
         case XPathStep(ChildAxis, AllNodeTest, Nil) => node.isInstanceOf[XMLElement] | node.isInstanceOf[XMLTextNode] | node.isInstanceOf[XMLComment]
@@ -39,7 +39,7 @@ object XPathMatcher {
       if (!lastStepMatches) {
         false
       } else {
-        if (!restPath.steps.isEmpty && restPath.steps.last == XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil)) {
+        if (restPath.steps.nonEmpty && restPath.steps.last == XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil)) {
           // the next step is '//' and must be handled separately (does any ancestor match the rest of the path?)
           val nextRestPath = LocationPath(restPath.steps.dropRight(1), path.isAbsolute)
           node.ancestors.exists(a => matches(a, nextRestPath))

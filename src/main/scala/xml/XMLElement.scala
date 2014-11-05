@@ -12,7 +12,7 @@ case class XMLElement(name: String,
   def appendChild(child: XMLNode): Unit = {
     if(child.isInstanceOf[XMLAttribute]) throw new IllegalArgumentException("Children must not be attribute nodes.")
     if(child.isInstanceOf[XMLRoot]) throw new IllegalArgumentException("Children must not be root nodes.")
-    if (child.isInstanceOf[XMLTextNode] && !children.isEmpty && children.last.isInstanceOf[XMLTextNode]) {
+    if (child.isInstanceOf[XMLTextNode] && children.nonEmpty && children.last.isInstanceOf[XMLTextNode]) {
       //merge text nodes with adjacent text nodes (at least xsl:value-of requires this (see XSLT spec section 7.6.1))
       val previousText = children.last.asInstanceOf[XMLTextNode].value
       val newText = child.asInstanceOf[XMLTextNode].value

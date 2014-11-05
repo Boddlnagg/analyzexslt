@@ -65,7 +65,7 @@ object XPathEvaluator {
           case value => throw new EvaluationError(f"Filter expression must return a node-set (returned: $value)")
         }
       case FilterExpr(subexpr, predicates) =>
-        if (!predicates.isEmpty) throw new NotImplementedError("Predicates are not supported")
+        if (predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported")
         evaluate(subexpr, ctx)
     }
   }
@@ -168,7 +168,7 @@ object XPathEvaluator {
           case CommentNodeTest => node.isInstanceOf[XMLComment]
           case AllNodeTest => true
         }}
-        if (!first.predicates.isEmpty) throw new NotImplementedError("Predicates are not supported") // NOTE: see XPath spec section 2.4 to implement these
+        if (first.predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported") // NOTE: see XPath spec section 2.4 to implement these
         testedNodes.flatMap { n => evaluateLocationPathSingle(n, rest, false)}
       case (Nil, false) => TreeSet(ctxNode)
     }

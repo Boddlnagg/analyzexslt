@@ -110,7 +110,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val (startNodeSet, _) = xpathDom.matchNodeSetValues(evaluate(filter, ctx))
         xpathDom.toNodeSet(evaluateLocationPath(startNodeSet, locationPath.steps, locationPath.isAbsolute))
       case FilterExpr(subexpr, predicates) =>
-        if (!predicates.isEmpty) throw new NotImplementedError("Predicates are not supported")
+        if (predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported")
         evaluate(subexpr, ctx)
     }
   }
@@ -212,7 +212,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
             case AllNodeTest => (node, xmlDom.bottom)
           }
         })
-        if (!first.predicates.isEmpty) throw new NotImplementedError("Predicates are not supported") // NOTE: see XPath spec section 2.4 to implement these
+        if (first.predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported") // NOTE: see XPath spec section 2.4 to implement these
         // convert to node-set value and back to L in order to sort the list and remove duplicates
         val (testedNodeSet, _) = xpathDom.matchNodeSetValues(xpathDom.toNodeSet(testedNodes))
         xmlDom.flatMapWithIndex(testedNodeSet, {

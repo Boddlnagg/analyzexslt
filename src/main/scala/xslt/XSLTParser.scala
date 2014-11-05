@@ -59,7 +59,7 @@ object XSLTParser {
       .map(n => n.asInstanceOf[Elem])
       .map(elem => (elem.attribute("name").get.text, XPathParser.parse(elem.attribute("select").map(_.text).getOrElse("''"))))
 
-    if (!globalVariables.isEmpty) throw new NotImplementedError("Top-level variables are not implemented.")
+    if (globalVariables.nonEmpty) throw new NotImplementedError("Top-level variables are not implemented.")
 
     val templates = cleaned.child
       .filter(isElem(_, "template"))
@@ -95,7 +95,7 @@ object XSLTParser {
       case Namespace => elem.label match {
         // spec section 11.2
         case "variable" =>
-          if (!elem.child.isEmpty) throw new NotImplementedError("Variable definitions are only supported when they use the 'select' attribute")
+          if (elem.child.nonEmpty) throw new NotImplementedError("Variable definitions are only supported when they use the 'select' attribute")
           // value is empty string '' if there is no select attribute (see XSLT spec section 11.2)
           val select = XPathParser.parse(elem.attribute("select").map(_.text).getOrElse("''"))
           VariableDefinitionInstruction(elem.attribute("name").get.text, select)

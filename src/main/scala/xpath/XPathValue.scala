@@ -18,7 +18,7 @@ abstract class XPathValue {
     this match {
       case bool: BooleanValue => bool
       case NumberValue(num) => BooleanValue(num == 0 || num.isNaN)
-      case NodeSetValue(nodes) => BooleanValue(!nodes.isEmpty)
+      case NodeSetValue(nodes) => BooleanValue(nodes.nonEmpty)
       case StringValue(str) => BooleanValue(str.length > 0)
     }
   }
