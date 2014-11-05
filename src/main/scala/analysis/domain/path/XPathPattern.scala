@@ -1,53 +1,64 @@
 package analysis.domain.path
 
-abstract class XPathPattern {
-  def prev: Option[XPathPattern]
-  def withPrev(pattern: XPathPattern): XPathPattern
-  def stepString: String
+import xpath._
 
-  override def toString = prev match {
-    case None => stepString
-    case Some(Root) => "/" + stepString
-    case Some(p) => p + "/" + stepString
-  }
+abstract class PatternStepDescriptor
+case object AnyElement extends PatternStepDescriptor {
+  override def toString = "*"
+}
+case class NamedElement(name: String) extends PatternStepDescriptor {
+  override def toString = name
+}
+case object AnyAttribute extends PatternStepDescriptor {
+  override def toString = "@*"
+}
+case class NamedAttribute(name: String) extends PatternStepDescriptor {
+  override def toString = "@" + name
+}
+case object AnyTextNode extends PatternStepDescriptor {
+  override def toString = "text()"
+}
+case object AnyCommentNode extends PatternStepDescriptor {
+  override def toString = "comment()"
 }
 
-// TODO: use this class instead of Option with None?
-/*case class AnyNode(prev: Option[XPathPattern]) extends XPathPattern*/
+// TODO: use this instead of Option with None?
+/*case object AnyNode extends PatternStepDescriptor*/
+
+abstract class XPathPattern
 
 case object Root extends XPathPattern {
-  override def prev = None
-  override def withPrev(pattern: XPathPattern) = throw new UnsupportedOperationException()
-  override def stepString = throw new UnsupportedOperationException()
   override def toString = "/"
 }
 
-case class AnyElement(prev: Option[XPathPattern]) extends XPathPattern {
-  override def withPrev(pattern: XPathPattern) = AnyElement(Some(pattern))
-  override def stepString = "*"
+case class Step(descriptor: PatternStepDescriptor, previous: Option[XPathPattern]) extends XPathPattern {
+  def withPrev(pattern: XPathPattern) = Step(this.descriptor, Some(pattern))
+  override def toString = previous match {
+    case None => descriptor.toString
+    case Some(Root) => "/" + descriptor.toString
+    case Some(p) => p + "/" + descriptor.toString
+  }
 }
 
-case class NamedElement(name: String, prev: Option[XPathPattern]) extends XPathPattern {
-  override def withPrev(pattern: XPathPattern) = NamedElement(name, Some(pattern))
-  override def stepString = name
-}
+object XPathPattern {
+  def fromString(str: String) = fromLocationPath(XPathParser.parse(str).asInstanceOf[LocationPath])
 
-case class AnyAttribute(prev: Option[XPathPattern]) extends XPathPattern {
-  override def withPrev(pattern: XPathPattern) = AnyAttribute(Some(pattern))
-  override def stepString = "@*"
-}
+  def fromLocationPath(path: LocationPath): XPathPattern = fromLocationPath(path.steps.reverse, path.isAbsolute).get
 
-case class NamedAttribute(name: String, prev: Option[XPathPattern]) extends XPathPattern {
-  override def withPrev(pattern: XPathPattern) = NamedAttribute(name, Some(pattern))
-  override def stepString = "@" + name
-}
-
-case class AnyTextNode(prev: Option[XPathPattern]) extends XPathPattern {
-  override def withPrev(pattern: XPathPattern) = AnyTextNode(Some(pattern))
-  override def stepString = "text()"
-}
-
-case class AnyCommentNode(prev: Option[XPathPattern]) extends XPathPattern {
-  override def withPrev(pattern: XPathPattern) = AnyCommentNode(Some(pattern))
-  override def stepString = "comment()"
+  private def fromLocationPath(reverseSteps: List[XPathStep], isAbsolute: Boolean): Option[XPathPattern] = {
+    reverseSteps match {
+      case Nil => if (isAbsolute) Some(Root) else None
+      case next :: rest =>
+        val desc = next match {
+          case XPathStep(ChildAxis, CommentNodeTest, Nil) => AnyCommentNode
+          case XPathStep(ChildAxis, TextNodeTest, Nil) => AnyTextNode
+          case XPathStep(ChildAxis, NameTest("*"), Nil) => AnyElement
+          case XPathStep(ChildAxis, NameTest(name), Nil) => NamedElement(name)
+          case XPathStep(AttributeAxis, NameTest("*"), Nil) => AnyAttribute
+          case XPathStep(AttributeAxis, NameTest(name), Nil) => NamedAttribute(name)
+          case _ => throw new UnsupportedOperationException(f"Step $next can not be translated to this domain.")
+        }
+        Some(Step(desc, fromLocationPath(rest, isAbsolute)))
+    }
+  }
 }
