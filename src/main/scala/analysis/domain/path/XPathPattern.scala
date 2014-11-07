@@ -31,23 +31,27 @@ case object Root extends XPathPattern {
   override def toString = "/"
 }
 
-case class Step(descriptor: PatternStepDescriptor, previous: Option[XPathPattern]) extends XPathPattern {
-  def withPrev(pattern: XPathPattern) = Step(this.descriptor, Some(pattern))
+case object AnyNode extends XPathPattern {
+  override def toString = "<ANY>"
+}
+
+case class Step(descriptor: PatternStepDescriptor, previous: XPathPattern) extends XPathPattern {
+  def withPrev(pattern: XPathPattern) = Step(this.descriptor, pattern)
   override def toString = previous match {
-    case None => descriptor.toString
-    case Some(Root) => "/" + descriptor.toString
-    case Some(p) => p + "/" + descriptor.toString
+    case AnyNode => descriptor.toString
+    case Root => "/" + descriptor.toString
+    case p => p.toString + "/" + descriptor.toString
   }
 }
 
 object XPathPattern {
   def fromString(str: String) = fromLocationPath(XPathParser.parse(str).asInstanceOf[LocationPath])
 
-  def fromLocationPath(path: LocationPath): XPathPattern = fromLocationPath(path.steps.reverse, path.isAbsolute).get
+  def fromLocationPath(path: LocationPath): XPathPattern = fromLocationPath(path.steps.reverse, path.isAbsolute)
 
-  private def fromLocationPath(reverseSteps: List[XPathStep], isAbsolute: Boolean): Option[XPathPattern] = {
+  private def fromLocationPath(reverseSteps: List[XPathStep], isAbsolute: Boolean): XPathPattern = {
     reverseSteps match {
-      case Nil => if (isAbsolute) Some(Root) else None
+      case Nil => if (isAbsolute) Root else AnyNode
       case next :: rest =>
         val desc = next match {
           case XPathStep(ChildAxis, CommentNodeTest, Nil) => AnyCommentNode
@@ -58,7 +62,7 @@ object XPathPattern {
           case XPathStep(AttributeAxis, NameTest(name), Nil) => NamedAttribute(name)
           case _ => throw new UnsupportedOperationException(f"Step $next can not be translated to this domain.")
         }
-        Some(Step(desc, fromLocationPath(rest, isAbsolute)))
+        Step(desc, fromLocationPath(rest, isAbsolute))
     }
   }
 }

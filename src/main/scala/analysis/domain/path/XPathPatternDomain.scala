@@ -37,10 +37,10 @@ object XPathPatternDomain {
     }
 
     protected def normalize(set: Iterable[XPathPattern]): Set[XPathPattern] = set.toList.foldRight(List[XPathPattern]()) {
-      case (next, acc) => if (acc.exists(e => lessThanOrEqualSingle(Some(next), Some(e))))
+      case (next, acc) => if (acc.exists(e => lessThanOrEqualSingle(next, e)))
         acc
       else
-        next :: acc.filter(e => !lessThanOrEqualSingle(Some(e), Some(next)))
+        next :: acc.filter(e => !lessThanOrEqualSingle(e, next))
     }.toSet
 
     override def meet(n1: N, n2: N): N = (n1, n2) match {
@@ -48,28 +48,28 @@ object XPathPatternDomain {
       case (_, None) => n1
       case (Some(s1), Some(s2)) =>
         val result = s1.cross(s2).map {
-          case (p1, p2) => meetSingle(Some(p1), Some(p2))
+          case (p1, p2) => meetSingle(p1, p2)
         }.collect {
-          case Some(pat) => pat.get
+          case Some(pat) => pat
         }
         Some(normalize(result.toSet))
     }
 
-    protected def meetSingle(left: Option[XPathPattern], right: Option[XPathPattern]): Option[Option[XPathPattern]] = (left, right) match {
-      case (_, None) => Some(left)
-      case (None, _) => Some(right)
-      case (Some(Root), Some(Root)) => Some(Some(Root))
-      case (Some(Step(desc1, prev1)), Some(Step(desc2, prev2))) => (desc1, desc2) match {
+    protected def meetSingle(left: XPathPattern, right: XPathPattern): Option[XPathPattern] = (left, right) match {
+      case (_, AnyNode) => Some(left)
+      case (AnyNode, _) => Some(right)
+      case (Root, Root) => Some(Root)
+      case (Step(desc1, prev1), Step(desc2, prev2)) => (desc1, desc2) match {
         case _ if desc1 == desc2 =>
-          meetSingle(prev1, prev2).map(r => Some(Step(desc1, r)))
+          meetSingle(prev1, prev2).map(r => Step(desc1, r))
         case (NamedElement(name), AnyElement) =>
-          meetSingle(prev1, prev2).map(r => Some(Step(NamedElement(name), r)))
+          meetSingle(prev1, prev2).map(r => Step(NamedElement(name), r))
         case (AnyElement, NamedElement(name)) =>
-          meetSingle(prev1, prev2).map(r => Some(Step(NamedElement(name), r)))
+          meetSingle(prev1, prev2).map(r => Step(NamedElement(name), r))
         case (NamedAttribute(name), AnyAttribute) =>
-          meetSingle(prev1, prev2).map(r => Some(Step(NamedAttribute(name), r)))
+          meetSingle(prev1, prev2).map(r => Step(NamedAttribute(name), r))
         case (AnyAttribute, NamedAttribute(name)) =>
-          meetSingle(prev1, prev2).map(r => Some(Step(NamedAttribute(name), r)))
+          meetSingle(prev1, prev2).map(r => Step(NamedAttribute(name), r))
         case _ => None // bottom
       }
       case _ => None // mix of Root and Step -> bottom
@@ -84,14 +84,14 @@ object XPathPatternDomain {
     override def lessThanOrEqual(n1: N, n2: N): Boolean = (n1, n2) match {
       case (_, None) => true
       case (None, Some(_)) => false
-      case (Some(s1), Some(s2)) => s1.forall(pat1 => s2.exists(pat2 => lessThanOrEqualSingle(Some(pat1), Some(pat2))))
+      case (Some(s1), Some(s2)) => s1.forall(pat1 => s2.exists(pat2 => lessThanOrEqualSingle(pat1, pat2)))
     }
 
-    protected def lessThanOrEqualSingle(left: Option[XPathPattern], right: Option[XPathPattern]): Boolean = (left, right) match {
-      case (_, None) => true
-      case (None, Some(_)) => false
-      case (Some(Root), Some(Root)) => true
-      case (Some(Step(desc1, prev1)), Some(Step(desc2, prev2))) => (desc1, desc2) match {
+    protected def lessThanOrEqualSingle(left: XPathPattern, right: XPathPattern): Boolean = (left, right) match {
+      case (_, AnyNode) => true
+      case (AnyNode, _) => false // right operand is not RootOrDescendant (already handled in first case)
+      case (Root, Root) => true
+      case (Step(desc1, prev1), Step(desc2, prev2)) => (desc1, desc2) match {
         case _ if desc1 == desc2 => lessThanOrEqualSingle(prev1, prev2) // equal
         case (NamedElement(_), AnyElement) => lessThanOrEqualSingle(prev1, prev2) // less than
         case (NamedAttribute(_), AnyAttribute) => lessThanOrEqualSingle(prev1, prev2) // less than
@@ -135,8 +135,8 @@ object XPathPatternDomain {
       case None => None
       case Some(s) => Some(normalize(s.collect {
         // NOTE: only element nodes have attributes
-        case e@Step(AnyElement, _) => Step(AnyAttribute, Some(e))
-        case e@Step(NamedElement(_), _) => Step(AnyAttribute, Some(e))
+        case e@Step(AnyElement, _) => Step(AnyAttribute, e)
+        case e@Step(NamedElement(_), _) => Step(AnyAttribute, e)
         // TODO: other node types should return empty lists, which are currently not representable as L
       }))
     }
@@ -147,24 +147,24 @@ object XPathPatternDomain {
     override def getChildren(node: N): L = node match {
       case None => None
       case Some(s) => Some(normalize(s.collect {
-        case e@Step(AnyElement, _) => List(Step(AnyElement, Some(e)), Step(AnyTextNode, Some(e)), Step(AnyCommentNode, Some(e)))
-        case e@Step(NamedElement(_), _) => List(Step(AnyElement, Some(e)), Step(AnyTextNode, Some(e)), Step(AnyCommentNode, Some(e)))
-        case e@Root => List(Step(AnyElement, Some(e)))
+        case e@Step(AnyElement, _) => List(Step(AnyElement, e), Step(AnyTextNode, e), Step(AnyCommentNode, e))
+        case e@Step(NamedElement(_), _) => List(Step(AnyElement, e), Step(AnyTextNode, e), Step(AnyCommentNode, e))
+        case e@Root => List(Step(AnyElement, e))
         // TODO: other node types (text, attribute) should return empty lists, which are currently not representable as L
       }.flatten))
     }
 
     /** Get the parent of given node. If the node has no parent (root node), BOTTOM is returned. */
     override def getParent(node: N): N = node match {
-      case None => Some(Set(Step(AnyElement, None), Root))
+      case None => Some(Set(AnyNode))
       case Some(s) => Some(normalize(s.toList.collect {
         case Step(desc, prev) => prev match {
-          case None => desc match {
+          case AnyNode => desc match {
             // NOTE: only elements can have Root as their parent
-            case AnyElement | NamedElement(_) => List[XPathPattern](Step(AnyElement, None), Root)
-            case _ => List[XPathPattern](Step(AnyElement, None))
+            case AnyElement | NamedElement(_) => List[XPathPattern](Step(AnyElement, AnyNode), Root)
+            case _ => List[XPathPattern](Step(AnyElement, AnyNode))
           }
-          case Some(p) => List[XPathPattern](p)
+          case p => List[XPathPattern](p)
         }
       }.flatten))
     }
@@ -228,7 +228,7 @@ object XPathPatternDomain {
       * BOTTOM if the node definitely is an element node). The two results are not necessarily disjoint.
       */
     override def isElement(node: N): (N, N) = node match {
-      case None => (Some(Set(Step(AnyElement, None))), node)
+      case None => (Some(Set(Step(AnyElement, AnyNode))), node)
       case Some(s) => (Some(s.collect {
         case e@Step(NamedElement(_), _) => e
         case e@Step(AnyElement, _) => e
@@ -241,7 +241,7 @@ object XPathPatternDomain {
       * BOTTOM if the node definitely is a text node). The two results are not necessarily disjoint.
       */
     override def isTextNode(node: N): (N, N) = node match {
-      case None => (Some(Set(Step(AnyTextNode, None))), node)
+      case None => (Some(Set(Step(AnyTextNode, AnyNode))), node)
       case Some(s) => (Some(s.collect {
         case e@Step(AnyTextNode, _) => e
       }), node)
@@ -253,7 +253,7 @@ object XPathPatternDomain {
       * BOTTOM if the node definitely is a comment node). The two results are not necessarily disjoint.
       */
     override def isComment(node: N): (N, N) = node match {
-      case None => (Some(Set(Step(AnyCommentNode, None))), node)
+      case None => (Some(Set(Step(AnyCommentNode, AnyNode))), node)
       case Some(s) => (Some(s.collect {
         case e@Step(AnyCommentNode, _) => e
       }), node)
@@ -265,7 +265,7 @@ object XPathPatternDomain {
       * BOTTOM if the node definitely is an attribute node). The two results are not necessarily disjoint.
       */
     override def isAttribute(node: N): (N, N) = node match {
-      case None => (Some(Set(Step(AnyAttribute, None))), node)
+      case None => (Some(Set(Step(AnyAttribute, AnyNode))), node)
       case Some(s) => (Some(s.collect {
         case e@Step(NamedAttribute(_), _) => e
         case e@Step(AnyAttribute, _) => e
@@ -279,7 +279,7 @@ object XPathPatternDomain {
       * Nodes that don't have a name (any node except element and attribute nodes) are evaluated to BOTTOM.
       */
     override def hasName(node: N, name: String): (N, N) = node match {
-      case None => (Some(Set(Step(NamedElement(name), None), Step(NamedAttribute(name), None))), node)
+      case None => (Some(Set(Step(NamedElement(name), AnyNode), Step(NamedAttribute(name), AnyNode))), node)
       case Some(s) => (Some(s.collect {
         case e@Step(NamedElement(n), _) if name == n => e
         case Step(AnyElement, p) => Step(NamedElement(name), p)
