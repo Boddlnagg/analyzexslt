@@ -110,7 +110,7 @@ trait XMLDomain[N, L, V] {
     * Nodes that don't have children return an empty list, not BOTTOM! */
   def getChildren(node: N): L
 
-  /** Get the parent of given node. */
+  /** Get the parent of given node. If the node has no parent (root node), BOTTOM is returned. */
   def getParent(node: N): N
 
   /** Predicate function that checks whether a node has a specified node as its parent.
@@ -210,4 +210,9 @@ trait XMLDomain[N, L, V] {
       case (n, _) => concatLists(createSingletonList(n), getDescendants(n))
     })
   }
+
+  /** Gets the first node out of a node list.
+    * Second return value is true if the list may be empty, false otherwise.
+    */
+  def getFirst(list: L): (N, Boolean)
 }

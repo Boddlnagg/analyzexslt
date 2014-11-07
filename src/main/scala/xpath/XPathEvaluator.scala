@@ -55,6 +55,14 @@ object XPathEvaluator {
             case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
             case _ => StringValue("")
           }
+          case ("name"|"local-name", List(NodeSetValue(nodes))) => nodes.headOption match {
+            case None => StringValue("") // empty list
+            case Some(n) => n match {
+              case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
+              case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
+              case _ => StringValue("")
+            }
+          }
           case (_, evaluatedParams) =>
             throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
         }

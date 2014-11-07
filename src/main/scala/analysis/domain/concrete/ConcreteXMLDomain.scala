@@ -82,8 +82,11 @@ object ConcreteXMLDomain {
       case _ => Nil
     }
 
-    /** Get the parent of given node. */
-    override def getParent(node: N): N = node.map(_.parent)
+    /** Get the parent of given node. If the node has no parent (root node), BOTTOM is returned. */
+    override def getParent(node: N): N = node.map {
+      case XMLRoot(_) => return Bottom
+      case e => e.parent
+    }
 
     /** Predicate function that checks whether a node has a specified node as its parent.
       * The first result is a node that is known to have that parent (this is BOTTOM if the node definitely
@@ -284,6 +287,18 @@ object ConcreteXMLDomain {
           case _  => throw new AssertionError("predicate should never return Top or a different element from what it was given")
         }
       })
+    }
+
+    /** Gets the first node out of a node list.
+      * Second return value is true if the list may be empty, false otherwise.
+      */
+    override def getFirst(list: L): (N, Boolean) = list match {
+      case Top => (Top, true) // we don't know the first node and the list might be empty
+      case Bottom => (Bottom, false) // there is no first node but the list is not empty
+      case Value(l) => l match {
+        case Nil => (Bottom, true) // there is no first node because the list is empty
+        case first :: _ => (Value(first), false) // there is a first node and the list is not empty
+      }
     }
   }
 }

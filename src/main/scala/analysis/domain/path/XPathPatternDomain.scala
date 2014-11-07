@@ -154,7 +154,7 @@ object XPathPatternDomain {
       }.flatten))
     }
 
-    /** Get the parent of given node. */
+    /** Get the parent of given node. If the node has no parent (root node), BOTTOM is returned. */
     override def getParent(node: N): N = node match {
       case None => Some(Set(Step(AnyElement, None), Root))
       case Some(s) => Some(normalize(s.toList.collect {
@@ -300,5 +300,10 @@ object XPathPatternDomain {
       * (as its first result) that is less precise than the input node.
       */
     override def filter(list: L, predicate: N => (N, N)): L = ???
+
+    /** Gets the first node out of a node list.
+      * Second return value is true if the list may be empty, false otherwise.
+      */
+    override def getFirst(list: L): (N, Boolean) = ???
   }
 }

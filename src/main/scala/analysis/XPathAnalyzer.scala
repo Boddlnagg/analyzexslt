@@ -102,6 +102,14 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           if (xmlDom.lessThanOrEqualList(nodeSets, xmlDom.bottomList)) xpathDom.bottom // return bottom if the input is definitely not a node-set
           else xpathDom.topNumber // TODO: implement this correctly or remove it completely?
         case ("name"|"local-name", Nil) => xmlDom.getNodeName(ctx.node)
+        case ("name"|"local-name", List(arg)) =>
+          val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
+          val (first, maybeEmpty) = xmlDom.getFirst(nodeSets)
+          val result = xmlDom.getNodeName(first)
+          if (maybeEmpty)
+            xpathDom.join(result, xpathDom.liftLiteral(""))
+          else
+            result
         case (_, evaluatedParams) =>
           throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
       }
@@ -147,12 +155,15 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           // the descendant axis contains the descendants of the context node
           // a descendant is a child or a child of a child and so on
           case DescendantAxis => xmlDom.getDescendants(ctxNode)
-          /*
           // the parent axis contains the parent of the context node, if there is one
-          case ParentAxis => ctxNode match {
-            case XMLRoot(_) => TreeSet() // root does not have a parent
-            case node => TreeSet(node.parent)
-          }
+          case ParentAxis =>
+            val (root, nonRoot) = xmlDom.isRoot(ctxNode)
+            val result = xmlDom.createSingletonList(xmlDom.getParent(nonRoot))
+            if (!xmlDom.lessThanOrEqual(root, xmlDom.bottom)) // if the context node may be a root node ...
+              xmlDom.joinList(xmlDom.createEmptyList(), result) // ... we need to include the empty list as a result
+            else
+              result
+          /*
           // the ancestor axis contains the ancestors of the context node
           // the ancestors of the context node consist of the parent of context node and the parent's parent and so on
           case AncestorAxis => TreeSet[XMLNode]() ++ ctxNode.ancestors

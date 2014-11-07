@@ -100,7 +100,11 @@ object PowersetXMLDomain {
 
     override def getParent(node: N): N = node match {
       case None => None
-      case Some(s) => Some(s.map(n => n.parent))
+      case Some(s) => Some(s.collect {
+        case e if !e.isInstanceOf[XMLRoot] =>
+          assert(e.parent != null)
+          e.parent
+      })
     }
 
     override def concatLists(list1: L, list2: L): L = (list1, list2) match {
@@ -284,6 +288,14 @@ object PowersetXMLDomain {
         val flattened = mapped.foldLeft(createEmptyList())((acc, next) => concatLists(acc, next))
         flattened
       }.toList)
+    }
+
+    override def getFirst(list: L): (N, Boolean) = list match {
+      case Left(None) => (None, true)
+      case Left(Some(len)) => (None, false) // Left(Some(_)) always describes a non-empty list
+      case Right(s) =>
+        val (empty, nonempty) = s.partition(l => l.isEmpty)
+        (Some(nonempty.map(l => l.head)), empty.nonEmpty)
     }
   }
 }

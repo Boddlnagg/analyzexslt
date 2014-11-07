@@ -782,6 +782,39 @@ abstract class XSLTReferenceSuiteBase extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("Descendant selector (//) and parent axis") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <result><xsl:apply-templates select="//a"/></result>
+        </xsl:template>
+        <xsl:template match="//a">
+          <a>
+            <xsl:attribute name="parent">
+              <xsl:value-of select="name(..)"/>
+            </xsl:attribute>
+          </a>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <a>
+        <a/>
+        <a/>
+        <b>
+          <a/>
+        </b>
+        <a>
+          <a/>
+          <c>
+            <a/>
+          </c>
+        </a>
+      </a>
+
+    assertTransformMatches(xslt, data)
+  }
+
   def transform(xslt: Elem, data: Elem): XMLRoot
 
   def assertTransformMatches(xslt: Elem, data: Elem) = {
