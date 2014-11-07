@@ -22,9 +22,6 @@ case object AnyCommentNode extends PatternStepDescriptor {
   override def toString = "comment()"
 }
 
-// TODO: use this instead of Option with None?
-/*case object AnyNode extends PatternStepDescriptor*/
-
 abstract class XPathPattern
 
 case object Root extends XPathPattern {
