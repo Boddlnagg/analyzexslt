@@ -1,4 +1,4 @@
-package analysis.domain.zipper
+package analysis.domain.zipper.single
 
 abstract class NodeDescriptor
 case object RootNode extends NodeDescriptor

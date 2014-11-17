@@ -1,4 +1,4 @@
-package analysis.domain.zipper
+package analysis.domain.zipper.single
 
 import scala.xml._
 
