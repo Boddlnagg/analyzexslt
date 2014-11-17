@@ -241,9 +241,7 @@ object ZipperXMLDomain {
       */
     override def filter(list: L, predicate: N => (N, N)): L = ???
 
-    /** Gets the first node out of a node list.
-      * Second return value is true if the list may be empty, false otherwise.
-      */
-    override def getFirst(list: L): (N, Boolean) = ???
+    /** Gets the first node out of a node list. BOTTOM is returned if the list is empty or BOTTOM. */
+    override def getFirst(list: L): N = ???
   }
 }

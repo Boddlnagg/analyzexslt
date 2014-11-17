@@ -290,12 +290,12 @@ object PowersetXMLDomain {
       }.toList)
     }
 
-    override def getFirst(list: L): (N, Boolean) = list match {
-      case Left(None) => (None, true)
-      case Left(Some(len)) => (None, false) // Left(Some(_)) always describes a non-empty list
-      case Right(s) =>
-        val (empty, nonempty) = s.partition(l => l.isEmpty)
-        (Some(nonempty.map(l => l.head)), empty.nonEmpty)
+    override def getFirst(list: L): N = list match {
+      case Left(None) => None
+      case Left(Some(len)) => None // Left(Some(_)) always describes a non-empty list, so we can return TOP
+      case Right(s) => Some(s.collect {
+        case head :: _ => head
+      })
     }
   }
 }

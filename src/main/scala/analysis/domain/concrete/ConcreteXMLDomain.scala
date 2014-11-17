@@ -289,15 +289,13 @@ object ConcreteXMLDomain {
       })
     }
 
-    /** Gets the first node out of a node list.
-      * Second return value is true if the list may be empty, false otherwise.
-      */
-    override def getFirst(list: L): (N, Boolean) = list match {
-      case Top => (Top, true) // we don't know the first node and the list might be empty
-      case Bottom => (Bottom, false) // there is no first node but the list is not empty
+    /** Gets the first node out of a node list. BOTTOM is returned if the list is empty or BOTTOM. */
+    override def getFirst(list: L): N = list match {
+      case Top => Top // we don't know the first node
+      case Bottom => Bottom // there is no first node
       case Value(l) => l match {
-        case Nil => (Bottom, true) // there is no first node because the list is empty
-        case first :: _ => (Value(first), false) // there is a first node and the list is not empty
+        case Nil => Bottom // there is no first node because the list is empty
+        case first :: _ => Value(first) // there is a first node and we know what it is
       }
     }
   }

@@ -104,10 +104,9 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         case ("name"|"local-name", Nil) => xmlDom.getNodeName(ctx.node)
         case ("name"|"local-name", List(arg)) =>
           val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
-          val (first, maybeEmpty) = xmlDom.getFirst(nodeSets)
-          val result = xmlDom.getNodeName(first)
-          if (maybeEmpty)
-            xpathDom.join(result, xpathDom.liftLiteral(""))
+          val result = xmlDom.getNodeName(xmlDom.getFirst(nodeSets))
+          if (xmlDom.lessThanOrEqualList(xmlDom.createEmptyList(), nodeSets)) // may the set be empty?
+            xpathDom.join(result, xpathDom.liftLiteral("")) // ... then include the empty string in the result
           else
             result
         case (_, evaluatedParams) =>
