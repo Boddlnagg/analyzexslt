@@ -24,6 +24,22 @@ abstract class ZListLattice[T] {
     case (ZNil(), ZMaybeNil(_, _)) => other
     case (ZNil(), ZNil()) => ZNil()
   }
+
+  def <=(other: ZListLattice[T])(implicit lat: Lattice[T]): Boolean = (this, other) match {
+    case (_, ZTop()) => true
+    case (ZTop(), _) => false // second argument is not TOP because that was handled in the previous case
+    case (ZBottom(), _) => true
+    case (_, ZBottom()) => false // first argument is not BOTTOM because that was handled in the previous case
+    case (ZCons(head1, tail1), ZCons(head2, tail2)) => lat.lessThanOrEqual(head1, head2) && tail1 <= tail2
+    case (ZCons(head1, tail1), ZMaybeNil(head2, tail2)) => lat.lessThanOrEqual(head1, head2) && tail1 <= tail2
+    case (ZMaybeNil(head1, tail1), ZCons(head2, tail2)) => false
+    case (ZCons(head1, tail1), ZNil()) => false
+    case (ZNil(), ZCons(head1, tail1)) => false
+    case (ZMaybeNil(head1, tail1), ZMaybeNil(head2, tail2)) => lat.lessThanOrEqual(head1, head2) && tail1 <= tail2
+    case (ZMaybeNil(_, _), ZNil()) => false
+    case (ZNil(), ZMaybeNil(_, _)) => true
+    case (ZNil(), ZNil()) => true
+  }
 }
 
 case class ZBottom[T]() extends ZListLattice[T]

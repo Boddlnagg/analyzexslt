@@ -37,6 +37,7 @@ object ZipperXMLDomain {
     def bottom = ZipperTree(Some(Set()), ZBottom())
     def join(left: ZipperTree, right: ZipperTree): ZipperTree = ???
     def meet(left: ZipperTree, right: ZipperTree): ZipperTree = ???
+    def lessThanOrEqual(left: ZipperTree, right: ZipperTree): Boolean = ???
   }
 
   private def getDescriptorFlat(path: Option[Set[ZipperPath]]): Option[Set[NodeDescriptor]] = path match {
