@@ -25,6 +25,42 @@ abstract class ZListLattice[T] {
     case (ZNil(), ZNil()) => ZNil()
   }
 
+  def &(other: ZListLattice[T])(implicit lat: Lattice[T]): ZListLattice[T] = {
+    def isBottom(v: T) = lat.lessThanOrEqual(v, lat.bottom)
+
+    (this, other) match {
+      case (ZBottom(), _) => ZBottom()
+      case (_, ZBottom()) => ZBottom()
+      case (ZTop(), _) => other
+      case (_, ZTop()) => this
+      case (ZCons(head1, tail1), ZCons(head2, tail2)) => (lat.meet(head1, head2), tail1 & tail2) match {
+        case (_, ZBottom()) => ZBottom()
+        case (head, _) if isBottom(head) => ZBottom()
+        case (head, tail) => ZCons(head, tail.asInstanceOf[ZList[T]])
+      }
+      case (ZCons(head1, tail1), ZMaybeNil(head2, tail2)) => (lat.meet(head1, head2), tail1 & tail2) match {
+        case (_, ZBottom()) => ZBottom()
+        case (head, _) if isBottom(head) => ZBottom()
+        case (head, tail) => ZCons(head, tail.asInstanceOf[ZList[T]])
+      }
+      case (ZMaybeNil(head1, tail1), ZCons(head2, tail2)) => (lat.meet(head1, head2), tail1 & tail2) match {
+        case (_, ZBottom()) => ZBottom()
+        case (head, _) if isBottom(head) => ZBottom()
+        case (head, tail) => ZCons(head, tail.asInstanceOf[ZList[T]])
+      }
+      case (ZCons(_, _), ZNil()) => ZBottom()
+      case (ZNil(), ZCons(_, _)) => ZBottom()
+      case (ZMaybeNil(head1, tail1), ZMaybeNil(head2, tail2)) => (lat.meet(head1, head2), tail1 & tail2) match {
+        case (_, ZBottom()) => ZBottom()
+        case (head, _) if isBottom(head) => ZBottom()
+        case (head, tail) => ZMaybeNil(head, tail.asInstanceOf[ZMaybeNilList[T]])
+      }
+      case (ZMaybeNil(_, _), ZNil()) => other
+      case (ZNil(), ZMaybeNil(_, _)) => this
+      case (ZNil(), ZNil()) => ZNil()
+    }
+  }
+
   def <=(other: ZListLattice[T])(implicit lat: Lattice[T]): Boolean = (this, other) match {
     case (_, ZTop()) => true
     case (ZTop(), _) => false // second argument is not TOP because that was handled in the previous case
@@ -61,4 +97,7 @@ object ZListLattice {
 
   def join[T](lists: Traversable[ZListLattice[T]])(implicit lat: Lattice[T]): ZListLattice[T] =
     lists.fold(ZBottom())(_ | _)
+
+  def meet[T](lists: Traversable[ZListLattice[T]])(implicit lat: Lattice[T]): ZListLattice[T] =
+    lists.fold(ZTop())(_ & _)
 }

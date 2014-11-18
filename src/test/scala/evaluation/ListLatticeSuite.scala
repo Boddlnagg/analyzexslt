@@ -51,6 +51,27 @@ class ListLatticeSuite extends FunSuite {
     }
   }
 
+  test("Meet") {
+    val l1 = ZListLattice(List(lift(1), lift(2), lift(3)))
+    val l2 = ZListLattice(List(lift(4), lift(5)))
+    val l12 = l1 | l2
+    val l123 = l1 | l2 | ZNil()
+    val l1b = ZListLattice(List(lift(1), lift(2), lift(4)))
+
+    assertResult(ZBottom()) { l1 & l2 }
+    assertResult(l1) { l1 & ZTop() }
+    assertResult(l2) { ZTop() & l2 }
+    assertResult(ZBottom()) { l2 & ZBottom() }
+    assertResult(ZBottom()) { ZBottom() & l1 }
+    assertResult(ZBottom()) { ZBottom() & ZTop() }
+    assertResult(l1) { l12 & l1 }
+    assertResult(l2) { l2 & l12 }
+    assertResult(ZBottom()) { l12 & ZNil() }
+    assertResult(ZNil()) { l123 & ZNil() }
+    assertResult(l12) { l12 & l123 }
+    assertResult(ZBottom()) { l1 & l1b }
+  }
+
   test("Concat") {
     val l1 = ZListLattice(List(lift(1), lift(2), lift(3)))
     val l2 = ZListLattice(List(lift(1), lift(2)))
