@@ -32,6 +32,13 @@ object ZipperXMLDomain {
   type N = (ZipperTree, Set[ZipperPath])
   type L = Unit
 
+  implicit object ZipperTreeLattice extends Lattice[ZipperTree] {
+    def top = topTree
+    def bottom = ZipperTree(Some(Set()), ZBottom())
+    def join(left: ZipperTree, right: ZipperTree): ZipperTree = ???
+    def meet(left: ZipperTree, right: ZipperTree): ZipperTree = ???
+  }
+
   private def getDescriptorFlat(path: Option[Set[ZipperPath]]): Option[Set[NodeDescriptor]] = path match {
     case None => None
     case Some(s) => Some(s.map(_.getDescriptor).map {
@@ -48,16 +55,14 @@ object ZipperXMLDomain {
     }.flatten
   }
 
-  private def joinTree(left: ZipperTree, right: ZipperTree): ZipperTree = ???
-
   private def getLeftSiblingsFlat(path: Option[Set[ZipperPath]]): ZListLattice[ZipperTree] = path match {
-    case None => ZTop
-    case Some(s) => ZListLattice.join(s.map(_.getLeftSiblings), joinTree)
+    case None => ZTop()
+    case Some(s) => ZListLattice.join(s.map(_.getLeftSiblings))
   }
 
   private def getRightSiblingsFlat(path: Option[Set[ZipperPath]]): ZListLattice[ZipperTree] = path match {
-    case None => ZTop
-    case Some(s) => ZListLattice.join(s.map(_.getRightSiblings), joinTree)
+    case None => ZTop()
+    case Some(s) => ZListLattice.join(s.map(_.getRightSiblings))
   }
 
   def assertConsistency(node: N) = {
@@ -68,8 +73,8 @@ object ZipperXMLDomain {
     }
   }
 
-  val topTree = ZipperTree(None, ZTop)
-  val topPath: Set[ZipperPath] = Set(ChildPath(None, ZTop, None, ZTop))
+  val topTree = ZipperTree(None, ZTop())
+  val topPath: Set[ZipperPath] = Set(ChildPath(None, ZTop(), None, ZTop()))
 
   /** This is the actual (partial) domain implementation */
   trait D[V] extends XMLDomain[N, L, V] {
@@ -77,7 +82,7 @@ object ZipperXMLDomain {
     override def top: N = (topTree, topPath)
 
     /** Gets the BOTTOM element for XML nodes. */
-    override def bottom: N = (ZipperTree(Some(Set()), ZBottom), Set())
+    override def bottom: N = (ZipperTree(Some(Set()), ZBottom()), Set())
 
     /** Get the TOP element for XML node lists.*/
     override def topList: L = ???
@@ -144,7 +149,7 @@ object ZipperXMLDomain {
     override def getParent(node: N): N = {
       val (ZipperTree(desc, children), path) = node
       val (l, r) = (getLeftSiblingsFlat(Some(path)), getRightSiblingsFlat(Some(path)))
-      val newChildren: ZListLattice[ZipperTree] = ZListLattice.concat(ZListLattice.concat(l, ZCons(ZipperTree(desc, children), ZNil), joinTree), r, joinTree)
+      val newChildren: ZListLattice[ZipperTree] = l ++ ZCons(ZipperTree(desc, children), ZNil()) ++ r
       val parent = Some(getParentFlat(Some(path)))
       val newTree = ZipperTree(getDescriptorFlat(parent), newChildren)
       val newParent = getParentFlat(parent)
