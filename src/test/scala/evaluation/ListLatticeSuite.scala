@@ -98,4 +98,12 @@ class ListLatticeSuite extends FunSuite {
     assertResult(false) { ZNil() <= l12 }
     assertResult(true) { ZNil() <= l123 }
   }
+
+  test("Map") {
+    val l1 = ZListLattice(List(lift(1), lift(2), lift(3)))
+    val l2 = ZListLattice(List(lift(1), lift(2)))
+    val l12 = l1 | l2
+
+    assertResult(ZCons(lift(11),ZCons(lift(12),ZMaybeNil(lift(13),ZNil())))) { l12.map(_.map(_.map(_ + 10))) }
+  }
 }

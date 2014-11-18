@@ -78,6 +78,26 @@ abstract class ZListLattice[T] {
     case (ZNil(), ZMaybeNil(_, _)) => true
     case (ZNil(), ZNil()) => true
   }
+
+  def map[R](f: T => R)(implicit lat: Lattice[R]): ZListLattice[R] = {
+    def isBottom(v: R) = lat.lessThanOrEqual(v, lat.bottom)
+
+    this match {
+      case ZBottom() => ZBottom()
+      case ZTop() => ZTop()
+      case ZCons(head, tail) => (f(head), tail.map(f)) match {
+        case (_, ZBottom()) => ZBottom()
+        case (h, _) if isBottom(h) => ZBottom()
+        case (h, t) => ZCons(h, t.asInstanceOf[ZList[R]])
+      }
+      case ZMaybeNil(head, tail) => (f(head), tail.map(f)) match {
+        case (_, ZBottom()) => ZBottom()
+        case (h, _) if isBottom(h) => ZBottom()
+        case (h, t) => ZMaybeNil(h, t.asInstanceOf[ZMaybeNilList[R]])
+      }
+      case ZNil() => ZNil()
+    }
+  }
 }
 
 case class ZBottom[T]() extends ZListLattice[T]

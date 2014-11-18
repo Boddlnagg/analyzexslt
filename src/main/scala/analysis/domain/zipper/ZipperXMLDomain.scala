@@ -25,6 +25,7 @@ case class ChildPath(desc: Option[Set[NodeDescriptor]], left: ZListLattice[Zippe
   override def getRightSiblings: ZListLattice[ZipperTree] = left
   override def getParent: Option[Set[ZipperPath]] = parent
 }
+// TODO: how is the path of the root node modelled? introduce explicit RootPath?
 // TODO: add DescendantPath (and replace parent: Option[Set[ChildPath]] with Set[...Path] because None is representable as DescendantPath(..., RootPath)
 
 /** Just a wrapper for the type aliases */
@@ -125,7 +126,11 @@ object ZipperXMLDomain {
     /** Create an element node with the given name, attributes and children.
       * The output is created bottom-up, so children are always created before their parent nodes.
       */
-    override def createElement(name: String, attributes: L, children: L): N = ???
+    override def createElement(name: String, attributes: L, children: L): N = {
+      val tree = ZipperTree(Some(Set(ElementNode(name))), attributes.map(_._1) ++ children.map(_._1))
+      val path = Set[ZipperPath]() // TODO: use RootPath here?
+      (tree, path)
+    }
     
     /** Create an attribute node with the given name and text value.
       * Values that are not strings evaluate to BOTTOM.
@@ -138,10 +143,10 @@ object ZipperXMLDomain {
     override def createTextNode(value: V): N = ???
 
     /** Create an emtpy list containing no nodes */
-    override def createEmptyList(): L = ???
+    override def createEmptyList(): L = ZNil()
 
     /** Create a list containing a single abstract node */
-    override def createSingletonList(node: N): L = ???
+    override def createSingletonList(node: N): L = ZCons(node, ZNil())
 
     /** Get the root node of a given node */
     override def getRoot(node: N): N = ???
@@ -175,7 +180,7 @@ object ZipperXMLDomain {
     override def hasParent(node: N, parent: N): (N, N) = ???
 
     /** Concatenates two lists. */
-    override def concatLists(list1: L, list2: L): L = ???
+    override def concatLists(list1: L, list2: L): L = list1 ++ list2
 
     /** Partitions a node list in such a way that the first result contains all attribute nodes from the beginning of
       * the list (as soon as there are other node types in the list, attributes are ignored) and the second result
