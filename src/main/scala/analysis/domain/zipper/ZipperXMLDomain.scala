@@ -30,14 +30,24 @@ case class ChildPath(desc: Option[Set[NodeDescriptor]], left: ZListLattice[Zippe
 /** Just a wrapper for the type aliases */
 object ZipperXMLDomain {
   type N = (ZipperTree, Set[ZipperPath])
-  type L = Unit
+  type L = ZListLattice[N]
 
   implicit object ZipperTreeLattice extends Lattice[ZipperTree] {
+    val lat = Lattice.createFromOptionalSet[NodeDescriptor]
+
     def top = topTree
     def bottom = ZipperTree(Some(Set()), ZBottom())
-    def join(left: ZipperTree, right: ZipperTree): ZipperTree = ???
-    def meet(left: ZipperTree, right: ZipperTree): ZipperTree = ???
-    def lessThanOrEqual(left: ZipperTree, right: ZipperTree): Boolean = ???
+    def join(left: ZipperTree, right: ZipperTree): ZipperTree = ZipperTree(lat.join(left.desc, right.desc), left.children | right.children)
+    def meet(left: ZipperTree, right: ZipperTree): ZipperTree = ZipperTree(lat.meet(left.desc, right.desc), left.children & right.children) // TODO: how to represent BOTTOM with tuples?
+    def lessThanOrEqual(left: ZipperTree, right: ZipperTree): Boolean = lat.lessThanOrEqual(left.desc, right.desc) && left.children <= right.children
+  }
+
+  implicit object NodeLattice extends Lattice[N] {
+    def top = (topTree, topPath)
+    def bottom = (ZipperTree(Some(Set()), ZBottom()), Set())
+    def join(left: N, right: N): N = (ZipperTreeLattice.join(left._1, right._1), ???)
+    def meet(left: N, right: N): N = (ZipperTreeLattice.meet(left._1, right._1), ???)
+    def lessThanOrEqual(left: N, right: N): Boolean = ZipperTreeLattice.lessThanOrEqual(left._1, right._1) && ???
   }
 
   private def getDescriptorFlat(path: Option[Set[ZipperPath]]): Option[Set[NodeDescriptor]] = path match {
@@ -80,36 +90,36 @@ object ZipperXMLDomain {
   /** This is the actual (partial) domain implementation */
   trait D[V] extends XMLDomain[N, L, V] {
     /** Get the TOP element for XML nodes. */
-    override def top: N = (topTree, topPath)
+    override def top: N = NodeLattice.top
 
     /** Gets the BOTTOM element for XML nodes. */
-    override def bottom: N = (ZipperTree(Some(Set()), ZBottom()), Set())
+    override def bottom: N = NodeLattice.bottom
 
     /** Get the TOP element for XML node lists.*/
-    override def topList: L = ???
+    override def topList: L = ZTop()
     // TODO: this is currently never used
 
     /** Gets the BOTTOM element for XML node lists. */
-    override def bottomList: L = ???
+    override def bottomList: L = ZBottom()
 
     /** Calcucate the join of two abstract nodes. This is the supremum (least upper bound). */
-    override def join(n1: N, n2: N): N = ???
+    override def join(n1: N, n2: N): N = NodeLattice.join(n1, n2)
 
     /** Calculate the meet of two abstract nodes. This is the infimum (greatest lower bound). */
-    override def meet(n1: N, n2: N): N = ???
+    override def meet(n1: N, n2: N): N = NodeLattice.meet(n1, n2)
 
     /** Join two node lists. This calculates their supremum (least upper bound). */
-    override def joinList(l1: L, l2: L): L = ???
+    override def joinList(l1: L, l2: L): L = l1 | l2
 
     /** Compares two elements of the lattice of nodes.
       * Returns true if n1 < n2 or n1 = n2, false if n1 > n2 or if they are incomparable.
       */
-    override def lessThanOrEqual(n1: N, n2: N): Boolean = ???
+    override def lessThanOrEqual(n1: N, n2: N): Boolean = NodeLattice.lessThanOrEqual(n1, n2)
     
     /** Compares two elements of the lattice of node lists.
       * Returns true if l1 < l2 or l1 = l2, false if l1 > l2 or if they are incomparable.
       */
-    override def lessThanOrEqualList(l1: L, l2: L): Boolean = ???
+    override def lessThanOrEqualList(l1: L, l2: L): Boolean = l1 <= l2
     // TODO: is this operation really needed (could be replaced with isBottom)?
 
     /** Create an element node with the given name, attributes and children.
