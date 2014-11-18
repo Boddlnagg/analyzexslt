@@ -4,25 +4,6 @@ import analysis.domain.zipper._
 import org.scalatest.FunSuite
 
 class ListLatticeSuite extends FunSuite {
-  implicit object IntSetLattice extends Lattice[Option[Set[Int]]] {
-    def top = None
-    def bottom = Some(Set())
-    def join(left: Option[Set[Int]], right: Option[Set[Int]]): Option[Set[Int]] = (left, right) match {
-      case (None, _) | (_, None) => None
-      case (Some(s1), Some(s2)) => Some(s1 | s2)
-    }
-    def meet(left: Option[Set[Int]], right: Option[Set[Int]]): Option[Set[Int]] = (left, right) match {
-      case (None, _) => right
-      case (_, None) => left
-      case (Some(s1), Some(s2)) => Some(s1 & s2)
-    }
-    def lessThanOrEqual(left: Option[Set[Int]], right: Option[Set[Int]]): Boolean = (left, right) match {
-      case (_, None) => true
-      case (None, _) => false
-      case (Some(s1), Some(s2)) => s1.subsetOf(s2)
-    }
-  }
-
   def lift(v: Int*): Option[Set[Int]] = Some(v.toSet)
 
   test("Lift") {

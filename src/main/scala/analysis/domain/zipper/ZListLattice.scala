@@ -1,5 +1,7 @@
 package analysis.domain.zipper
 
+import analysis.domain.Lattice
+
 abstract class ZListLattice[T] {
   def ++(other: ZListLattice[T])(implicit lat: Lattice[T]): ZListLattice[T] = (this, other) match {
     case (ZBottom(), _) | (_, ZBottom()) => ZBottom()

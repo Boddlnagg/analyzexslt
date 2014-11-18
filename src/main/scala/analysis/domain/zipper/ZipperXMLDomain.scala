@@ -1,6 +1,6 @@
 package analysis.domain.zipper
 
-import analysis.domain.XMLDomain
+import analysis.domain.{XMLDomain, Lattice}
 
 abstract class NodeDescriptor
 case object RootNode extends NodeDescriptor
