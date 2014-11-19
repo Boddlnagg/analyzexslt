@@ -1,11 +1,15 @@
 package analysis.domain.zipper.single
 
-abstract class NodeDescriptor
-case object RootNode extends NodeDescriptor
-case class ElementNode(name: String) extends NodeDescriptor
+trait NodeDescriptor
+trait ParentNodeDescriptor extends NodeDescriptor
+
+case object RootNode extends ParentNodeDescriptor
+case class ElementNode(name: String) extends ParentNodeDescriptor
 case class AttributeNode(name: String, value: String) extends NodeDescriptor
 case class TextNode(value: String) extends NodeDescriptor
 case class CommentNode(value: String) extends NodeDescriptor
+
+// TODO: model attributes and children separately, and only for ElementNodes (and one child for RootNode)
 
 case class ZipperTree(desc: NodeDescriptor, children: List[ZipperTree]) {
   override def toString = desc match {
@@ -35,23 +39,23 @@ trait ZipperPath {
 }
 case object TopPath extends ZipperPath with LastZipperPath {
   def getDescriptor = RootNode
-  def extend(desc: NodeDescriptor) = this
+  def extend(desc: ParentNodeDescriptor) = this
   def shrink = this
 }
 
 // left children are in reverse order
-case class NodePath(desc: NodeDescriptor, left: List[ZipperTree], parent: ZipperPath, right: List[ZipperTree]) extends ZipperPath {
+case class NodePath(desc: ParentNodeDescriptor, left: List[ZipperTree], parent: ZipperPath, right: List[ZipperTree]) extends ZipperPath {
   def getDescriptor = desc
   def shrink = LastNodePath(left, parent, right)
 }
 
 trait LastZipperPath {
-  def extend(desc: NodeDescriptor): ZipperPath
+  def extend(desc: ParentNodeDescriptor): ZipperPath
 }
 
 // left children are in reverse order
 case class LastNodePath(left: List[ZipperTree], parent: ZipperPath, right: List[ZipperTree]) extends LastZipperPath {
-  def extend(desc: NodeDescriptor) = NodePath(desc, left, parent, right)
+  def extend(desc: ParentNodeDescriptor) = NodePath(desc, left, parent, right)
 }
 
 case class ZipperLoc(subtree: ZipperTree, path: LastZipperPath) {
@@ -74,6 +78,6 @@ case class ZipperLoc(subtree: ZipperTree, path: LastZipperPath) {
 
   def goDown = this.subtree match {
     case ZipperTree(_, Nil) => throw new UnsupportedOperationException("No attributes or children, can't go down")
-    case ZipperTree(desc, first :: children) => ZipperLoc(first, LastNodePath(Nil, this.path.extend(desc), children))
+    case ZipperTree(desc: ParentNodeDescriptor, first :: children) => ZipperLoc(first, LastNodePath(Nil, this.path.extend(desc), children))
   }
 }
