@@ -55,15 +55,10 @@ object XPathPatternDomain {
             case Some(desc) => Set(ChildStep(desc, r))
           }
         }
-      case (DescendantStep(desc1, Root), DescendantStep(desc2, Root)) => // TODO: remove this special case
-        meetDescriptor(desc1, desc2) match {
-          case None => Set()
-          case Some(desc) => Set(DescendantStep(desc, Root))
-        }
       case (DescendantStep(desc1, prev1), DescendantStep(desc2, prev2)) =>
         meetDescriptor(desc1, desc2) match {
           case None => Set()
-          case Some(desc) => meetSingle(prev1, prev2).map(r => ChildStep(desc, r)).asInstanceOf[Set[XPathPattern]] |
+          case Some(desc) => meetSingle(prev1, prev2).map(r => DescendantStep(desc, r)).asInstanceOf[Set[XPathPattern]] |
             meetSingle(DescendantStep(AnyElement, prev1), prev2).map(r => DescendantStep(desc, r)) |
             meetSingle(prev1, DescendantStep(AnyElement, prev2)).map(r => DescendantStep(desc, r))
         }
