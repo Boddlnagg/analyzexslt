@@ -28,13 +28,8 @@ case object Root extends XPathPattern {
   override def toString = "/"
 }
 
-case object AnyNode extends XPathPattern {
-  override def toString = "<ANY>"
-}
-
 case class ChildStep(descriptor: PatternStepDescriptor, parent: XPathPattern) extends XPathPattern {
   override def toString = parent match {
-    case AnyNode => descriptor.toString
     case Root => "/" + descriptor.toString
     case p => p.toString + "/" + descriptor.toString
   }

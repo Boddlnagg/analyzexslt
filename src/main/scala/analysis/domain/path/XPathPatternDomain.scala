@@ -14,7 +14,11 @@ object XPathPatternDomain {
   /** This is the actual domain implementation */
   object D extends XMLDomain[N, L, V] {
     /** Get the TOP element for XML nodes. */
-    override def top: N = Set(AnyNode) //TODO: Set(Root, DescendantStep(AnyElement, Root))
+    override def top: N = Set(Root,
+      DescendantStep(AnyElement, Root),
+      DescendantStep(AnyAttribute, Root),
+      DescendantStep(AnyCommentNode, Root),
+      DescendantStep(AnyTextNode, Root))
 
     /** Gets the BOTTOM element for XML nodes. */
     override def bottom: N = Set()
@@ -43,8 +47,6 @@ object XPathPatternDomain {
     }
 
     protected def meetSingle(left: XPathPattern, right: XPathPattern): Set[XPathPattern] = (left, right) match {
-      case (_, AnyNode) => Set(left)
-      case (AnyNode, _) => Set(right)
       case (Root, Root) => Set(Root)
       case (ChildStep(desc1, prev1), ChildStep(desc2, prev2)) =>
         meetSingle(prev1, prev2).flatMap { r =>
@@ -101,8 +103,6 @@ object XPathPatternDomain {
       n1.forall(pat1 => n2.exists(pat2 => lessThanOrEqualSingle(pat1, pat2)))
 
     protected def lessThanOrEqualSingle(left: XPathPattern, right: XPathPattern): Boolean = (left, right) match {
-      case (_, AnyNode) => true
-      case (AnyNode, _) => false // right operand is not RootOrDescendant (already handled in first case)
       case (Root, Root) => true
       case (ChildStep(desc1, prev1), ChildStep(desc2, prev2)) =>
         lessThanOrEqualDescriptor(desc1, desc2) && lessThanOrEqualSingle(prev1, prev2)
@@ -164,7 +164,6 @@ object XPathPatternDomain {
       case e@ChildStep(NamedElement(_), _) => ChildStep(AnyAttribute, e)
       case e@DescendantStep(AnyElement, _) => ChildStep(AnyAttribute, e)
       case e@DescendantStep(NamedElement(_), _) => ChildStep(AnyAttribute, e)
-      case AnyNode => ChildStep(AnyAttribute, AnyNode)
       // TODO: other node types should return empty lists, which are currently not representable as L
     })
 
@@ -177,29 +176,20 @@ object XPathPatternDomain {
       case e@DescendantStep(AnyElement, _) => List(ChildStep(AnyElement, e), ChildStep(AnyTextNode, e), ChildStep(AnyCommentNode, e))
       case e@DescendantStep(NamedElement(_), _) => List(ChildStep(AnyElement, e), ChildStep(AnyTextNode, e), ChildStep(AnyCommentNode, e))
       case e@Root => List(ChildStep(AnyElement, e))
-      case AnyNode => List(ChildStep(AnyElement, AnyNode))
       // TODO: other node types (text, attribute) should return empty lists, which are currently not representable as L
     }.flatten)
 
     /** Get the parent of given node. If the node has no parent (root node), BOTTOM is returned. */
     override def getParent(node: N): N = normalize(node.toList.collect {
-      case ChildStep(desc, prev) => prev match {
-        case AnyNode => desc match {
-          // NOTE: only elements can have Root as their parent
-          case AnyElement | NamedElement(_) => List(ChildStep(AnyElement, AnyNode), Root)
-          case _ => List(ChildStep(AnyElement, AnyNode))
-        }
-        case p => List(p)
-      }
+      case ChildStep(desc, prev) => List(prev)
       case DescendantStep(desc, prev) => prev match {
-        case AnyNode => desc match {
+        case Root => desc match {
           // NOTE: only elements can have Root as their parent
-          case AnyElement | NamedElement(_) => List(ChildStep(AnyElement, AnyNode), Root)
-          case _ => List(ChildStep(AnyElement, AnyNode))
+          case AnyElement | NamedElement(_) => List(Root, DescendantStep(AnyElement, Root))
+          case _ => List(DescendantStep(AnyElement, Root))
         }
         case p => List(p, DescendantStep(AnyElement, p))
       }
-      case AnyNode => List(AnyNode)
     }.flatten)
 
     /** Predicate function that checks whether a node has a specified node as its parent.
@@ -261,7 +251,6 @@ object XPathPatternDomain {
       case e@ChildStep(AnyElement, _) => e
       case e@DescendantStep(NamedElement(_), _) => e
       case e@DescendantStep(AnyElement, _) => e
-      case AnyNode => ChildStep(AnyElement, AnyNode)
     }), node)
 
     /** Predicate function that checks whether a node is a text node.
@@ -272,7 +261,6 @@ object XPathPatternDomain {
     override def isTextNode(node: N): (N, N) = (normalize(node.collect {
       case e@ChildStep(AnyTextNode, _) => e
       case e@DescendantStep(AnyTextNode, _) => e
-      case AnyNode => ChildStep(AnyTextNode, AnyNode)
     }), node)
 
     /** Predicate function that checks whether a node is a comment node.
@@ -283,7 +271,6 @@ object XPathPatternDomain {
     override def isComment(node: N): (N, N) = (normalize(node.collect {
       case e@ChildStep(AnyCommentNode, _) => e
       case e@DescendantStep(AnyCommentNode, _) => e
-      case AnyNode => ChildStep(AnyCommentNode, AnyNode)
     }), node)
 
     /** Predicate function that checks whether a node is an attribute node.
@@ -296,7 +283,6 @@ object XPathPatternDomain {
       case e@ChildStep(AnyAttribute, _) => e
       case e@DescendantStep(NamedAttribute(_), _) => e
       case e@DescendantStep(AnyAttribute, _) => e
-      case AnyNode => ChildStep(AnyAttribute, AnyNode)
     }), node)
 
     /** Predicate function that checks whether a node has a specified name.
@@ -311,10 +297,9 @@ object XPathPatternDomain {
       case a@ChildStep(NamedAttribute(n), _) if name == n => List(a)
       case ChildStep(AnyAttribute, p) => List(ChildStep(NamedAttribute(name), p))
       case e@DescendantStep(NamedElement(n), _) if name == n => List(e)
-      case DescendantStep(AnyElement, p) => List(ChildStep(NamedElement(name), p))
+      case DescendantStep(AnyElement, p) => List(DescendantStep(NamedElement(name), p))
       case a@DescendantStep(NamedAttribute(n), _) if name == n => List(a)
-      case DescendantStep(AnyAttribute, p) => List(ChildStep(NamedAttribute(name), p))
-      case AnyNode => List(ChildStep(NamedElement(name), AnyNode), ChildStep(NamedAttribute(name), AnyNode))
+      case DescendantStep(AnyAttribute, p) => List(DescendantStep(NamedAttribute(name), p))
     }.flatten), node)
 
     /** Get the name for a given node. Nodes that don't have a name (i.e. are not an element or attribute node)
