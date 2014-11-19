@@ -29,38 +29,51 @@ case class ZipperTree(desc: NodeDescriptor, children: List[ZipperTree]) {
 
 //case class ZipperTree(s: Set[(NodeDescriptor, List[ZipperTree])]) TODO: (infinite) sets
 
-abstract class ZipperPath {
+trait ZipperPath {
   def getDescriptor: NodeDescriptor
+  def shrink: LastZipperPath
 }
-case object TopPath extends ZipperPath {
+case object TopPath extends ZipperPath with LastZipperPath {
   def getDescriptor = RootNode
+  def extend(desc: NodeDescriptor) = this
+  def shrink = this
 }
 
 // left children are in reverse order
 case class NodePath(desc: NodeDescriptor, left: List[ZipperTree], parent: ZipperPath, right: List[ZipperTree]) extends ZipperPath {
   def getDescriptor = desc
+  def shrink = LastNodePath(left, parent, right)
 }
 
-case class ZipperLoc(subtree: ZipperTree, path: ZipperPath) {
+trait LastZipperPath {
+  def extend(desc: NodeDescriptor): ZipperPath
+}
+
+// left children are in reverse order
+case class LastNodePath(left: List[ZipperTree], parent: ZipperPath, right: List[ZipperTree]) extends LastZipperPath {
+  def extend(desc: NodeDescriptor) = NodePath(desc, left, parent, right)
+}
+
+case class ZipperLoc(subtree: ZipperTree, path: LastZipperPath) {
   def goLeft = this.path match {
     case TopPath => throw new UnsupportedOperationException("Cannot go left on top")
-    case NodePath(_, Nil, _, _) => throw new UnsupportedOperationException("No sibling to the left")
-    case NodePath(_, l::left, up, right) => ZipperLoc(l, NodePath(l.desc, Nil, up, this.subtree::right))
+    case LastNodePath(Nil, _, _) => throw new UnsupportedOperationException("No sibling to the left")
+    case LastNodePath(l::left, up, right) => ZipperLoc(l, LastNodePath(Nil, up, this.subtree::right))
   }
 
   def goRight = this.path match {
     case TopPath => throw new UnsupportedOperationException("Cannot go right on top")
-    case NodePath(_, _, _, Nil) => throw new UnsupportedOperationException("No sibling to the right")
-    case NodePath(_, left, up, r :: right) => ZipperLoc(r, NodePath(r.desc, this.subtree::left, up, right))
+    case LastNodePath(_, _, Nil) => throw new UnsupportedOperationException("No sibling to the right")
+    case LastNodePath(left, up, r :: right) => ZipperLoc(r, LastNodePath(this.subtree::left, up, right))
   }
 
   def goUp = this.path match {
     case TopPath => throw new UnsupportedOperationException("Already on top, can't go up")
-    case NodePath(_, left, up, right) => ZipperLoc(ZipperTree(up.getDescriptor, left.reverse ++ (this.subtree :: right)), up)
+    case LastNodePath(left, up, right) => ZipperLoc(ZipperTree(up.getDescriptor, left.reverse ++ (this.subtree :: right)), up.shrink)
   }
 
   def goDown = this.subtree match {
     case ZipperTree(_, Nil) => throw new UnsupportedOperationException("No attributes or children, can't go down")
-    case ZipperTree(_, first :: children) => ZipperLoc(first, NodePath(first.desc, Nil, this.path, children))
+    case ZipperTree(desc, first :: children) => ZipperLoc(first, LastNodePath(Nil, this.path.extend(desc), children))
   }
 }
