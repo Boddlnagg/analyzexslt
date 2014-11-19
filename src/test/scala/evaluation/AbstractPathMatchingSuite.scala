@@ -192,6 +192,10 @@ class AbstractPathMatchingSuite extends FunSuite {
     assertResult(Greater) { xmlDom.compare(pat1, pat89) }
     assertResult(Incomparable) { xmlDom.compare(pat2, pat89) }
     assertResult(Greater) { xmlDom.compare(pat3, pat89) } // {"a", "b"} > {"a"} > {"/a/a", "/b/a"}
+    assertResult(Greater) {xmlDom.compare(parse("a//b"), parse("a/b"))}
+    assertResult(Greater) {xmlDom.compare(parse("a//b"), parse("a/*/b"))}
+    assertResult(Greater) {xmlDom.compare(parse("a//b"), parse("a//a/b"))}
+    assertResult(Greater) {xmlDom.compare(parse("a//b"), parse("a//c/b"))}
   }
 
   test("Join") {
@@ -254,5 +258,8 @@ class AbstractPathMatchingSuite extends FunSuite {
     assertResult(Set("a/a")) { xmlDom.meet(pat7, pat4).map(_.toString) }
     assertResult(Set("@c", "/a")) { xmlDom.meet(pat9, pat10).map(_.toString) }
     assertResult(Set("*/b")) { xmlDom.meet(pat8, pat5).map(_.toString) }
+    assertResult(Set("x//a//b//y//*", "a//b//x//y//*", "x//a//y//b//*", "a//x//b//y//*", "a//x//y//b//*", "x//y//a//b//*")) {
+      xmlDom.meet(parse("a//b//*"), parse("x//y//*")).map(_.toString) // creates interleavings
+    }
   }
 }

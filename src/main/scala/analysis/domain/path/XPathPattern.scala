@@ -32,12 +32,18 @@ case object AnyNode extends XPathPattern {
   override def toString = "<ANY>"
 }
 
-case class Step(descriptor: PatternStepDescriptor, previous: XPathPattern) extends XPathPattern {
-  def withPrev(pattern: XPathPattern) = Step(this.descriptor, pattern)
-  override def toString = previous match {
+case class ChildStep(descriptor: PatternStepDescriptor, parent: XPathPattern) extends XPathPattern {
+  override def toString = parent match {
     case AnyNode => descriptor.toString
     case Root => "/" + descriptor.toString
     case p => p.toString + "/" + descriptor.toString
+  }
+}
+
+case class DescendantStep(descriptor: PatternStepDescriptor, ancestor: XPathPattern) extends XPathPattern {
+  override def toString = ancestor match {
+    case Root => descriptor.toString
+    case p => p.toString + "//" + descriptor.toString
   }
 }
 
@@ -47,19 +53,25 @@ object XPathPattern {
   def fromLocationPath(path: LocationPath): XPathPattern = fromLocationPath(path.steps.reverse, path.isAbsolute)
 
   private def fromLocationPath(reverseSteps: List[XPathStep], isAbsolute: Boolean): XPathPattern = {
+    def parseStep(step: XPathStep) = step match {
+      case XPathStep(ChildAxis, CommentNodeTest, Nil) => AnyCommentNode
+      case XPathStep(ChildAxis, TextNodeTest, Nil) => AnyTextNode
+      case XPathStep(ChildAxis, NameTest("*"), Nil) => AnyElement
+      case XPathStep(ChildAxis, NameTest(name), Nil) => NamedElement(name)
+      case XPathStep(AttributeAxis, NameTest("*"), Nil) => AnyAttribute
+      case XPathStep(AttributeAxis, NameTest(name), Nil) => NamedAttribute(name)
+      case _ => throw new UnsupportedOperationException(f"Step $step can not be translated to this domain.")
+    }
+
     reverseSteps match {
-      case Nil => if (isAbsolute) Root else AnyNode
-      case next :: rest =>
-        val desc = next match {
-          case XPathStep(ChildAxis, CommentNodeTest, Nil) => AnyCommentNode
-          case XPathStep(ChildAxis, TextNodeTest, Nil) => AnyTextNode
-          case XPathStep(ChildAxis, NameTest("*"), Nil) => AnyElement
-          case XPathStep(ChildAxis, NameTest(name), Nil) => NamedElement(name)
-          case XPathStep(AttributeAxis, NameTest("*"), Nil) => AnyAttribute
-          case XPathStep(AttributeAxis, NameTest(name), Nil) => NamedAttribute(name)
-          case _ => throw new UnsupportedOperationException(f"Step $next can not be translated to this domain.")
-        }
-        Step(desc, fromLocationPath(rest, isAbsolute))
+      case Nil if isAbsolute => Root
+      case Nil => throw new UnsupportedOperationException("Empty relative paths cannot exist.")
+      case next :: Nil if !isAbsolute =>
+        DescendantStep(parseStep(next), Root) // last step of a relative path -> descendant of root
+      case next :: XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil) :: rest =>
+        DescendantStep(parseStep(next), fromLocationPath(rest, isAbsolute))
+      case next :: rest => // default case
+        ChildStep(parseStep(next), fromLocationPath(rest, isAbsolute))
     }
   }
 }
