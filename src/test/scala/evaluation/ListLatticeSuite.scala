@@ -4,7 +4,9 @@ import analysis.domain.zipper._
 import org.scalatest.FunSuite
 
 class ListLatticeSuite extends FunSuite {
-  def lift(v: Int*): Option[Set[Int]] = Some(v.toSet)
+  type L = Option[Set[Int]]
+
+  def lift(v: Int*): L = Some(v.toSet)
 
   test("Lift") {
     assertResult(ZCons(lift(1), ZCons(lift(2), ZCons(lift(3), ZNil())))) {
@@ -17,6 +19,7 @@ class ListLatticeSuite extends FunSuite {
     val l2 = ZListLattice(List(lift(4), lift(5)))
     val l3 = ZListLattice(List(lift(6)))
     val l4 = ZCons(lift(4), ZCons(lift(5), ZTop()))
+    val l5 = ZCons(lift(1), ZUnknownLength(lift(4,5,6)))
 
     assertResult(ZCons(lift(1, 4),ZCons(lift(2, 5),ZMaybeNil(lift(3),ZNil())))) {
       l1 | l2
@@ -35,6 +38,7 @@ class ListLatticeSuite extends FunSuite {
     }
 
     assertResult(ZCons(lift(1, 4), ZCons(lift(2, 5), ZTop()))) { l1 | l4 }
+    assertResult(ZCons(lift(1), ZUnknownLength(lift(2,3,4,5,6)))) { l1 | l5 }
   }
 
   test("Meet") {
@@ -45,6 +49,8 @@ class ListLatticeSuite extends FunSuite {
     val l12Nil = l1 | l2 | ZNil()
     val l1b = ZListLattice(List(lift(1), lift(2), lift(4)))
     val l13 = l1 | l3
+    val l4 = ZCons(lift(1,4), ZUnknownLength(lift(2,3)))
+    val l5 = ZCons(lift(1,4), ZUnknownLength(lift(5)))
 
     assertResult(ZBottom()) { l1 & l2 }
     assertResult(l1) { l1 & ZTop() }
@@ -61,6 +67,15 @@ class ListLatticeSuite extends FunSuite {
     assertResult(l1) { l13 & l1 }
     assertResult(l3) { l13 & l3 }
     assertResult(ZBottom()) { l13 & ZListLattice(List(lift(1), lift(2))) }
+    assertResult(ZCons(lift(1, 4), ZCons(lift(2), ZMaybeNil(lift(3), ZNil())))) { l12 & l4 }
+    assertResult(ZCons(lift(1, 4), ZCons(lift(5), ZNil()))) { l12 & l5 }
+    assertResult(ZMaybeNil(lift(1), ZUnknownLength(lift(1)))) {
+      ZMaybeNil(lift(1), ZUnknownLength(lift(1, 2))) & ZUnknownLength(lift(1))
+    }
+    assertResult(ZNil()) { ZMaybeNil(lift(1), ZUnknownLength(lift(1, 2))) & ZUnknownLength(lift(2)) }
+    assertResult(ZBottom()) { ZCons(lift(1), ZUnknownLength(lift(1, 2))) & ZUnknownLength(lift(2)) }
+    assertResult(ZMaybeNil(lift(2), ZNil())) { ZMaybeNil(lift(1, 2), ZUnknownLength(lift(1))) & ZUnknownLength(lift(2)) }
+    assertResult(ZCons(lift(2), ZNil())) { ZCons(lift(1, 2), ZUnknownLength(lift(1))) & ZUnknownLength(lift(2)) }
   }
 
   test("Concat") {
@@ -87,7 +102,8 @@ class ListLatticeSuite extends FunSuite {
       l13 ++ l3
     }
 
-    assertResult(ZTop()) { l12 ++ ZTop() }
+    assertResult(ZCons(lift(1),ZCons(lift(2),ZTop()))) { l12 ++ ZTop() }
+
     assertResult(ZTop()) { ZTop() ++ l12 }
     assertResult(ZBottom()) { l12 ++ ZBottom() }
     assertResult(ZBottom()) { ZBottom() ++ l12 }
@@ -99,6 +115,15 @@ class ListLatticeSuite extends FunSuite {
     }
     assertResult(ZMaybeNil(Some(Set(1, 2)), ZTop())) {
       ZMaybeNil(lift(1), ZTop()) ++ ZMaybeNil(lift(2), ZTop())
+    }
+    assertResult(ZCons(lift(1), ZCons(lift(2, 4), ZUnknownLength(lift(3, 4, 5))))) {
+      ZCons(lift(1), ZMaybeNil(lift(2), ZCons(lift(3), ZNil()))) ++ ZCons(lift(4), ZUnknownLength(lift(5)))
+    }
+    assertResult(ZCons(lift(1), ZUnknownLength(lift(2,3)))) {
+      ZCons(lift(1), ZUnknownLength(lift(2))) ++ ZCons(lift(3), ZNil())
+    }
+    assertResult(ZUnknownLength(lift(1, 2, 3))) {
+      ZUnknownLength(lift(1)) ++ l1
     }
   }
 
@@ -120,6 +145,12 @@ class ListLatticeSuite extends FunSuite {
     assertResult(false) { l12 <= l2 }
     assertResult(false) { ZNil() <= l12 }
     assertResult(true) { ZNil() <= l123 }
+    assertResult(true) { l1 <= ZUnknownLength(lift(1,2,3)) }
+    assertResult(false) { ZUnknownLength(lift(1,2,3)) <= l1 }
+    assertResult(true) { ZUnknownLength[L](None) <= ZTop() } // these are equal
+    assertResult(true) { ZTop() <= ZUnknownLength[L](None) }
+    assertResult(false) { l1 <= ZUnknownLength(lift(1,2)) } // these are incomparable
+    assertResult(false) { ZUnknownLength(lift(1,2)) <= l1 }
   }
 
   test("Map") {
