@@ -17,11 +17,11 @@ abstract class ZListLattice[T] {
     case (ZBottom(), _) => other
     case (_, ZBottom()) => this
     case (ZCons(head1, tail1), ZCons(head2, tail2)) => ZCons(lat.join(head1, head2), (tail1 | tail2).asInstanceOf[ZList[T]])
-    case (ZCons(head1, tail1), ZMaybeNil(head2, tail2)) => ZMaybeNil(lat.join(head1, head2), (tail1 | tail2).asInstanceOf[ZMaybeNilList[T]])
-    case (ZMaybeNil(head1, tail1), ZCons(head2, tail2)) => ZMaybeNil(lat.join(head1, head2), (tail1 | tail2).asInstanceOf[ZMaybeNilList[T]])
-    case (ZCons(head1, tail1), ZNil()) => ZMaybeNil(head1, (tail1 | ZNil()).asInstanceOf[ZMaybeNilList[T]])
-    case (ZNil(), ZCons(head1, tail1)) => ZMaybeNil(head1, (tail1 | ZNil()).asInstanceOf[ZMaybeNilList[T]])
-    case (ZMaybeNil(head1, tail1), ZMaybeNil(head2, tail2)) => ZMaybeNil(lat.join(head1, head2), (tail1 | tail2).asInstanceOf[ZMaybeNilList[T]])
+    case (ZCons(head1, tail1), ZMaybeNil(head2, tail2)) => ZMaybeNil(lat.join(head1, head2), (tail1 | tail2).asInstanceOf[ZList[T]])
+    case (ZMaybeNil(head1, tail1), ZCons(head2, tail2)) => ZMaybeNil(lat.join(head1, head2), (tail1 | tail2).asInstanceOf[ZList[T]])
+    case (ZCons(head1, tail1), ZNil()) => ZMaybeNil(head1, tail1)
+    case (ZNil(), ZCons(head1, tail1)) => ZMaybeNil(head1, tail1)
+    case (ZMaybeNil(head1, tail1), ZMaybeNil(head2, tail2)) => ZMaybeNil(lat.join(head1, head2), (tail1 | tail2).asInstanceOf[ZList[T]])
     case (ZMaybeNil(_, _), ZNil()) => this
     case (ZNil(), ZMaybeNil(_, _)) => other
     case (ZNil(), ZNil()) => ZNil()
@@ -38,24 +38,24 @@ abstract class ZListLattice[T] {
       case (ZCons(head1, tail1), ZCons(head2, tail2)) => (lat.meet(head1, head2), tail1 & tail2) match {
         case (_, ZBottom()) => ZBottom()
         case (head, _) if isBottom(head) => ZBottom()
-        case (head, tail) => ZCons(head, tail.asInstanceOf[ZList[T]])
+        case (head, tail: ZList[T]) => ZCons(head, tail)
       }
       case (ZCons(head1, tail1), ZMaybeNil(head2, tail2)) => (lat.meet(head1, head2), tail1 & tail2) match {
         case (_, ZBottom()) => ZBottom()
         case (head, _) if isBottom(head) => ZBottom()
-        case (head, tail) => ZCons(head, tail.asInstanceOf[ZList[T]])
+        case (head, tail: ZList[T]) => ZCons(head, tail)
       }
       case (ZMaybeNil(head1, tail1), ZCons(head2, tail2)) => (lat.meet(head1, head2), tail1 & tail2) match {
         case (_, ZBottom()) => ZBottom()
         case (head, _) if isBottom(head) => ZBottom()
-        case (head, tail) => ZCons(head, tail.asInstanceOf[ZList[T]])
+        case (head, tail: ZList[T]) => ZCons(head, tail)
       }
       case (ZCons(_, _), ZNil()) => ZBottom()
       case (ZNil(), ZCons(_, _)) => ZBottom()
       case (ZMaybeNil(head1, tail1), ZMaybeNil(head2, tail2)) => (lat.meet(head1, head2), tail1 & tail2) match {
         case (_, ZBottom()) => ZBottom()
         case (head, _) if isBottom(head) => ZBottom()
-        case (head, tail) => ZMaybeNil(head, tail.asInstanceOf[ZMaybeNilList[T]])
+        case (head, tail: ZList[T]) => ZMaybeNil(head, tail)
       }
       case (ZMaybeNil(_, _), ZNil()) => other
       case (ZNil(), ZMaybeNil(_, _)) => this
@@ -88,26 +88,24 @@ abstract class ZListLattice[T] {
       case ZCons(head, tail) => (f(head), tail.map(f)) match {
         case (_, ZBottom()) => ZBottom()
         case (h, _) if isBottom(h) => ZBottom()
-        case (h, t) => ZCons(h, t.asInstanceOf[ZList[R]])
+        case (h, t: ZList[R]) => ZCons(h, t)
       }
       case ZMaybeNil(head, tail) => (f(head), tail.map(f)) match {
         case (_, ZBottom()) => ZBottom()
         case (h, _) if isBottom(h) => ZBottom()
-        case (h, t) => ZMaybeNil(h, t.asInstanceOf[ZMaybeNilList[R]])
+        case (h, t: ZList[R]) => ZMaybeNil(h, t)
       }
       case ZNil() => ZNil()
     }
   }
 }
 
-case class ZBottom[T]() extends ZListLattice[T]
-case class ZTop[T]() extends ZListLattice[T]
-
+case class ZBottom[T]() extends ZListLattice[T] // single element can not be BOTTOM, only the whole list
 abstract class ZList[T] extends ZListLattice[T]
+case class ZTop[T]() extends ZList[T]
 case class ZCons[T](head: T, tail: ZList[T]) extends ZList[T]
-abstract class ZMaybeNilList[T] extends ZList[T]
-case class ZMaybeNil[T](head: T, tail: ZMaybeNilList[T]) extends ZMaybeNilList[T]
-case class ZNil[T]() extends ZMaybeNilList[T]
+case class ZMaybeNil[T](head: T, tail: ZList[T]) extends ZList[T]
+case class ZNil[T]() extends ZList[T]
 
 object ZListLattice {
   def apply[T](list: List[T]): ZList[T] = {

@@ -16,6 +16,7 @@ class ListLatticeSuite extends FunSuite {
     val l1 = ZListLattice(List(lift(1), lift(2), lift(3)))
     val l2 = ZListLattice(List(lift(4), lift(5)))
     val l3 = ZListLattice(List(lift(6)))
+    val l4 = ZCons(lift(4), ZCons(lift(5), ZTop()))
 
     assertResult(ZCons(lift(1, 4),ZCons(lift(2, 5),ZMaybeNil(lift(3),ZNil())))) {
       l1 | l2
@@ -27,17 +28,23 @@ class ListLatticeSuite extends FunSuite {
     assertResult(ZTop()) { ZTop() | l2 }
     assertResult(ZTop()) { ZBottom() | ZTop() }
 
+    assertResult(ZCons(Some(Set(1, 6)),ZMaybeNil(Some(Set(2)),ZCons(Some(Set(3)),ZNil())))) { l1 | l3 }
+
     assertResult(ZCons(lift(1, 4, 6),ZMaybeNil(lift(2, 5),ZMaybeNil(lift(3),ZNil())))) {
       ZListLattice.join(List(l1, l2, l3))
     }
+
+    assertResult(ZCons(lift(1, 4), ZCons(lift(2, 5), ZTop()))) { l1 | l4 }
   }
 
   test("Meet") {
     val l1 = ZListLattice(List(lift(1), lift(2), lift(3)))
     val l2 = ZListLattice(List(lift(4), lift(5)))
+    val l3 = ZListLattice(List(lift(6)))
     val l12 = l1 | l2
-    val l123 = l1 | l2 | ZNil()
+    val l12Nil = l1 | l2 | ZNil()
     val l1b = ZListLattice(List(lift(1), lift(2), lift(4)))
+    val l13 = l1 | l3
 
     assertResult(ZBottom()) { l1 & l2 }
     assertResult(l1) { l1 & ZTop() }
@@ -48,27 +55,36 @@ class ListLatticeSuite extends FunSuite {
     assertResult(l1) { l12 & l1 }
     assertResult(l2) { l2 & l12 }
     assertResult(ZBottom()) { l12 & ZNil() }
-    assertResult(ZNil()) { l123 & ZNil() }
-    assertResult(l12) { l12 & l123 }
+    assertResult(ZNil()) { l12Nil & ZNil() }
+    assertResult(l12) { l12 & l12Nil }
     assertResult(ZBottom()) { l1 & l1b }
+    assertResult(l1) { l13 & l1 }
+    assertResult(l3) { l13 & l3 }
+    assertResult(ZBottom()) { l13 & ZListLattice(List(lift(1), lift(2))) }
   }
 
   test("Concat") {
     val l1 = ZListLattice(List(lift(1), lift(2), lift(3)))
     val l2 = ZListLattice(List(lift(1), lift(2)))
+    val l3 = ZListLattice(List(lift(1)))
 
     val l12 = l1 | l2
+    val l13 = l1 | l3
 
     assertResult(ZCons(lift(1), ZCons(lift(2), ZCons(lift(1), ZCons(lift(2), ZNil()))))) {
       l2 ++ l2
     }
 
-    assertResult(ZCons(lift(1),ZCons(lift(2),ZCons(lift(3, 1),ZCons(lift(1, 2),ZMaybeNil(lift(2),ZNil())))))) {
+    assertResult(ZCons(lift(1), ZCons(lift(2), ZCons(lift(3, 1), ZCons(lift(1, 2), ZMaybeNil(lift(2), ZNil())))))) {
       l12 ++ l2
     }
 
-    assertResult(ZCons(lift(1),ZCons(lift(2),ZCons(lift(3, 1),ZCons(lift(1, 2),ZMaybeNil(lift(2, 3),ZMaybeNil(lift(3),ZNil()))))))) {
+    assertResult(ZCons(lift(1), ZCons(lift(2), ZCons(lift(3, 1), ZCons(lift(1, 2), ZMaybeNil(lift(2, 3), ZMaybeNil(lift(3), ZNil()))))))) {
       l12 ++ l12
+    }
+
+    assertResult(ZCons(lift(1), ZCons(lift(1, 2), ZMaybeNil(lift(3), ZCons(lift(1), ZNil()))))) {
+      l13 ++ l3
     }
 
     assertResult(ZTop()) { l12 ++ ZTop() }
