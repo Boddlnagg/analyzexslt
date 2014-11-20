@@ -223,14 +223,13 @@ object PowersetXMLDomain {
         (Some(yes), Some(no))
     }
 
-    override def hasParent(node: N, parent: N): (N, N) = (node, parent) match {
+    override def isContainedIn(node: N, list: L): (N, N) = (node, list) match {
       case (BOT, _) => (BOT, BOT)
-      case (_, BOT) => (BOT, node) // parent is BOTTOM -> can't match
+      case (_, BOT_LIST) => (BOT, node) // list is BOTTOM -> can't be contained in it
       case (None, _) => (None, None) // don't know anything about the node
-      case (Some(_), None) => (node, node) // parent is TOP -> don't know anything
-      case ((Some(nodes), Some(parents))) =>
-        val yes = nodes.filter(n => parents.contains(n.parent))
-        val no = nodes.filter(n => !parents.contains(n.parent))
+      case (Some(_), Left(_)) => (node, node) //  list is TOP (or has unknown elements) -> don't know if it contains the node
+      case (Some(nodes), Right(lists)) =>
+        val (yes, no) = nodes.partition(n => lists.exists(l => l.contains(n)))
         (Some(yes), Some(no))
     }
 

@@ -88,17 +88,17 @@ object ConcreteXMLDomain {
       case e => e.parent
     }
 
-    /** Predicate function that checks whether a node has a specified node as its parent.
-      * The first result is a node that is known to have that parent (this is BOTTOM if the node definitely
-      * doesn't have that parent), the second result is a node that might not have that parent (this is
-      * BOTTOM if the node definitely does have that parent). The two results are not necessarily disjoint.
+    /** Predicate function that checks whether a node is in a given list of nodes.
+      * The first result is a node that is known to be in that list (this is BOTTOM if the node definitely
+      * is not in the list), the second result is a node that might not be in the list (this is
+      * BOTTOM if the node definitely is contained in the list). The two results are not necessarily disjoint.
       */
-    override def hasParent(node: N, parent: N): (N, N) = (node, parent) match {
+    override def isContainedIn(node: N, list: L): (N, N) = (node, list) match {
       case (Bottom, _) => (Bottom, Bottom)
-      case (_, Bottom) => (Bottom, node) // parent is BOTTOM -> can't match
+      case (_, Bottom) => (Bottom, node) // list is BOTTOM -> can't be contained in it
       case (Top, _) => (Top, Top) // don't know anything about the node
-      case (Value(_), Top) => (node, node) // parent is TOP -> don't know anything
-      case (Value(n), Value(p)) => if (n.parent == p) (node, Bottom) else (Bottom, node)
+      case (Value(_), Top) => (node, node) //  list is TOP -> don't know if it contains the node
+      case (Value(n), Value(l)) => if (l.contains(n)) (node, Bottom) else (Bottom, node)
     }
 
     /** Concatenates two lists. */
