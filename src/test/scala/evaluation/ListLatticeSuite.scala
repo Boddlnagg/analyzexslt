@@ -157,7 +157,23 @@ class ListLatticeSuite extends FunSuite {
     val l1 = ZListLattice(List(lift(1), lift(2), lift(3)))
     val l2 = ZListLattice(List(lift(1), lift(2)))
     val l12 = l1 | l2
+    val l3 = l2 ++ ZTop()
 
     assertResult(ZCons(lift(11),ZCons(lift(12),ZMaybeNil(lift(13),ZNil())))) { l12.map(_.map(_.map(_ + 10))) }
+    assertResult(ZCons(lift(11),ZCons(lift(12),ZTop()))) { l3.map(_.map(_.map(_ + 10))) }
+  }
+
+  test("Contains") {
+    val l1 = ZListLattice(List(lift(1), lift(2), lift(3)))
+    val l2 = ZListLattice(List(lift(1), lift(2)))
+    val l12 = l1 | l2
+    val l3 = l2 ++ ZTop()
+    val l4 = l2 ++ ZUnknownLength(lift(3,4))
+
+    assertResult(lift(1,3)) { l1.contains(lift(1,3,4)) }
+    assertResult(lift(1,3)) { l12.contains(lift(1,3,4)) }
+    assertResult(lift()) { l12.contains(lift(4)) }
+    assertResult(lift(1,3,4)) { l3.contains(lift(1,3,4)) }
+    assertResult(lift(1,3)) { l4.contains(lift(1,3,5)) }
   }
 }

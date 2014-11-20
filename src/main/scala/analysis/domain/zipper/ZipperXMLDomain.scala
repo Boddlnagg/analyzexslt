@@ -177,7 +177,7 @@ object ZipperXMLDomain {
       * is not in the list), the second result is a node that might not be in the list (this is
       * BOTTOM if the node definitely is contained in the list). The two results are not necessarily disjoint.
       */
-    override def isContainedIn(node: N, list: L): (N, N) = ???
+    override def isContainedIn(node: N, list: L): (N, N) = (list.contains(node), node)
 
     /** Concatenates two lists. */
     override def concatLists(list1: L, list2: L): L = list1 ++ list2

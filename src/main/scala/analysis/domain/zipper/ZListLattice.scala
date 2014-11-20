@@ -126,6 +126,7 @@ abstract class ZListLattice[T] {
 
     this match {
       case ZBottom() => ZBottom()
+      case ZTop() => ZTop()
       case ZUnknownLength(elems) => ZUnknownLength(f(elems))
       case ZCons(head, tail) => (f(head), tail.map(f)) match {
         case (_, ZBottom()) => ZBottom()
@@ -139,6 +140,15 @@ abstract class ZListLattice[T] {
       }
       case ZNil() => ZNil()
     }
+  }
+
+  def contains(element: T)(implicit lat: Lattice[T]): T = this match {
+    case ZBottom() => lat.bottom
+    case ZTop() => element
+    case ZUnknownLength(elems) => lat.meet(element, elems)
+    case ZCons(head, tail) => lat.join(lat.meet(head, element), tail.contains(element))
+    case ZMaybeNil(head, tail) => lat.join(lat.meet(head, element), tail.contains(element))
+    case ZNil() => lat.bottom
   }
 }
 
