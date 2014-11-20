@@ -93,6 +93,13 @@ class ListLatticeSuite extends FunSuite {
     assertResult(ZBottom()) { ZBottom() ++ l12 }
     assertResult(ZBottom()) { ZTop() ++ ZBottom() }
     assertResult(ZBottom()) { ZBottom() ++ ZTop() }
+
+    assertResult(ZCons(Some(Set(1, 2)), ZTop())) { // result length is at least 1
+      ZMaybeNil(lift(1), ZTop()) ++ ZCons(lift(2), ZTop())
+    }
+    assertResult(ZMaybeNil(Some(Set(1, 2)), ZTop())) {
+      ZMaybeNil(lift(1), ZTop()) ++ ZMaybeNil(lift(2), ZTop())
+    }
   }
 
   test("Compare (<=)") {
