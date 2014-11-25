@@ -9,20 +9,20 @@ case class AttributeNode(name: String, value: String) extends NodeDescriptor
 case class TextNode(value: String) extends NodeDescriptor
 case class CommentNode(value: String) extends NodeDescriptor
 
-case class ZipperTree(desc: Option[Set[NodeDescriptor]], children: ZListLattice[ZipperTree])
+case class ZipperTree(desc: Option[Set[NodeDescriptor]], children: ZList[ZipperTree])
 
 // left siblings are in reverse order
 abstract class ZipperPath {
   def getDescriptor: Option[Set[NodeDescriptor]]
-  def getLeftSiblings: ZListLattice[ZipperTree]
-  def getRightSiblings: ZListLattice[ZipperTree]
+  def getLeftSiblings: ZList[ZipperTree]
+  def getRightSiblings: ZList[ZipperTree]
   def getParent: Option[Set[ZipperPath]]
 }
 
-case class ChildPath(desc: Option[Set[NodeDescriptor]], left: ZListLattice[ZipperTree], parent: Option[Set[ZipperPath]], right: ZListLattice[ZipperTree]) extends ZipperPath {
+case class ChildPath(desc: Option[Set[NodeDescriptor]], left: ZList[ZipperTree], parent: Option[Set[ZipperPath]], right: ZList[ZipperTree]) extends ZipperPath {
   override def getDescriptor: Option[Set[NodeDescriptor]] = desc
-  override def getLeftSiblings: ZListLattice[ZipperTree] = right
-  override def getRightSiblings: ZListLattice[ZipperTree] = left
+  override def getLeftSiblings: ZList[ZipperTree] = right
+  override def getRightSiblings: ZList[ZipperTree] = left
   override def getParent: Option[Set[ZipperPath]] = parent
 }
 // TODO: how is the path of the root node modelled? introduce explicit RootPath?
@@ -31,7 +31,7 @@ case class ChildPath(desc: Option[Set[NodeDescriptor]], left: ZListLattice[Zippe
 /** Just a wrapper for the type aliases */
 object ZipperXMLDomain {
   type N = (ZipperTree, Set[ZipperPath])
-  type L = ZListLattice[N]
+  type L = ZList[N]
 
   implicit object ZipperTreeLattice extends Lattice[ZipperTree] {
     val lat = Lattice.createFromOptionalSet[NodeDescriptor]
@@ -67,14 +67,14 @@ object ZipperXMLDomain {
     }.flatten
   }
 
-  private def getLeftSiblingsFlat(path: Option[Set[ZipperPath]]): ZListLattice[ZipperTree] = path match {
+  private def getLeftSiblingsFlat(path: Option[Set[ZipperPath]]): ZList[ZipperTree] = path match {
     case None => ZTop()
-    case Some(s) => ZListLattice.join(s.map(_.getLeftSiblings))
+    case Some(s) => ZList.join(s.map(_.getLeftSiblings))
   }
 
-  private def getRightSiblingsFlat(path: Option[Set[ZipperPath]]): ZListLattice[ZipperTree] = path match {
+  private def getRightSiblingsFlat(path: Option[Set[ZipperPath]]): ZList[ZipperTree] = path match {
     case None => ZTop()
-    case Some(s) => ZListLattice.join(s.map(_.getRightSiblings))
+    case Some(s) => ZList.join(s.map(_.getRightSiblings))
   }
 
   def assertConsistency(node: N) = {
@@ -165,7 +165,7 @@ object ZipperXMLDomain {
     override def getParent(node: N): N = {
       val (ZipperTree(desc, children), path) = node
       val (l, r) = (getLeftSiblingsFlat(Some(path)), getRightSiblingsFlat(Some(path)))
-      val newChildren: ZListLattice[ZipperTree] = l ++ ZCons(ZipperTree(desc, children), ZNil()) ++ r
+      val newChildren: ZList[ZipperTree] = l ++ ZCons(ZipperTree(desc, children), ZNil()) ++ r
       val parent = Some(getParentFlat(Some(path)))
       val newTree = ZipperTree(getDescriptorFlat(parent), newChildren)
       val newParent = getParentFlat(parent)
