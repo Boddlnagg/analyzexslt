@@ -4,21 +4,32 @@ import analysis.domain.{XMLDomain, Lattice}
 
 /** Just a wrapper for the type aliases */
 object ZipperXMLDomain {
-  type S = Option[Set[NodeDescriptor]] // type of subtrees
+  type S = ZipperTree // type of subtrees
   type P = Set[Path] // type of paths
   type N = (S, P) // a node is a subtree and a path
   type L = ZList[N]
 
-  abstract class NodeDescriptor // TODO: rename to TreeNode or XMLTreeNode or SubtreeNode
-  case class RootNode(child: S) extends NodeDescriptor
-  case class ElementNode(name: String, children: ZList[S]) extends NodeDescriptor
+  abstract class NodeDescriptor
+  case object RootNode extends NodeDescriptor
+  case class ElementNode(name: String) extends NodeDescriptor
   case class AttributeNode(name: String, value: String) extends NodeDescriptor
   case class TextNode(value: String) extends NodeDescriptor
   case class CommentNode(value: String) extends NodeDescriptor
 
-  val latS: Lattice[S] = ??? //Lattice.createFromOptionalSet[NodeDescriptor] // lattice for subtrees
-                             // TODO: the above would be wrong because the operations need to be defined recursively
-  val latP = Path.PathSetLattice // lattice for paths
+  case class ZipperTree(desc: Option[Set[NodeDescriptor]], children: ZList[ZipperTree])
+
+  implicit object ZipperTreeLattice extends Lattice[ZipperTree] {
+
+    def top = topTree
+    def bottom = ZipperTree(Some(Set()), ZBottom())
+    def join(left: ZipperTree, right: ZipperTree): ZipperTree = ZipperTree(latD.join(left.desc, right.desc), left.children | right.children)
+    def meet(left: ZipperTree, right: ZipperTree): ZipperTree = ZipperTree(latD.meet(left.desc, right.desc), left.children & right.children)
+    def lessThanOrEqual(left: ZipperTree, right: ZipperTree): Boolean = latD.lessThanOrEqual(left.desc, right.desc) && left.children <= right.children
+  }
+
+  private val latS: Lattice[S] = ZipperTreeLattice // lattice for subtrees
+  private val latP = Path.PathSetLattice // lattice for paths
+  private val latD = Lattice.createFromOptionalSet[NodeDescriptor] // lattice for descriptors
 
   implicit object NodeLattice extends Lattice[N] {
     def top = (latS.top, latP.top)
@@ -30,11 +41,11 @@ object ZipperXMLDomain {
       latS.lessThanOrEqual(left._1, right._1) && latP.lessThanOrEqual(left._2, right._2)
   }
 
-  private def getSubtreeFromPath(path: P): S = {
+  private def getDescriptorsFromPaths(path: P): Option[Set[NodeDescriptor]] = {
     def getSingle(desc: PatternStepDescriptor): Option[NodeDescriptor] = desc match {
         // TODO: support more cases in NodeDescriptor
       case AnyElement => None // TOP
-      case NamedElement(name) => Some(ElementNode(name, ZTop())) // don't know anything about children
+      case NamedElement(name) => Some(ElementNode(name))
       case AnyAttribute => None
       case NamedAttribute(name) => None
       case AnyTextNode => None
@@ -42,7 +53,7 @@ object ZipperXMLDomain {
     }
 
     Some(path.map {
-      case RootPath => RootNode(None)
+      case RootPath => RootNode
       case ChildStep(desc, _) => getSingle(desc) match {
         case Some(res) => res
         case None => return None
@@ -54,23 +65,21 @@ object ZipperXMLDomain {
     })
   }
 
-  private def getPathFromSubtree(subtree: S): P = {
-    subtree match {
-      case None => latP.top
-      case Some(s) => s.map {
-        case RootNode(_) => RootPath
-        case ElementNode(name, _) => DescendantStep(NamedElement(name), RootPath)
-        case AttributeNode(name, _) => DescendantStep(NamedAttribute(name), RootPath)
-        case TextNode(_) => DescendantStep(AnyTextNode, RootPath)
-        case CommentNode(_) => DescendantStep(AnyCommentNode, RootPath)
-      }
+  private def getPathsFromDescriptors(descriptors: Option[Set[NodeDescriptor]]): P = descriptors match {
+    case None => latP.top
+    case Some(s) => s.map {
+      case RootNode => RootPath
+      case ElementNode(name) => DescendantStep(NamedElement(name), RootPath)
+      case AttributeNode(name, _) => DescendantStep(NamedAttribute(name), RootPath)
+      case TextNode(_) => DescendantStep(AnyTextNode, RootPath)
+      case CommentNode(_) => DescendantStep(AnyCommentNode, RootPath)
     }
   }
 
   /** Removes impossible elements (where Path and Subtree descriptors don't agree) */
   private def normalize(node: N) = {
-    val (subtree, path) = node
-    (latS.meet(getSubtreeFromPath(path), subtree), latP.meet(getPathFromSubtree(subtree), path))
+    val (ZipperTree(desc, children), path) = node
+    (ZipperTree(latD.meet(getDescriptorsFromPaths(path), desc), children), latP.meet(getPathsFromDescriptors(desc), path))
   }
 
   val topTree = latS.top
@@ -114,8 +123,7 @@ object ZipperXMLDomain {
       * The output is created bottom-up, so children are always created before their parent nodes.
       */
     override def createElement(name: String, attributes: L, children: L): N = {
-      val childs = attributes.map(_._1) ++ children.map(_._1)
-      val tree: S = Some(Set(ElementNode(name, childs)))
+      val tree = ZipperTree(Some(Set(ElementNode(name))), attributes.map(_._1) ++ children.map(_._1))
       val path = Set[Path]() // TODO: use RootPath here?
       (tree, path)
     }
@@ -140,11 +148,10 @@ object ZipperXMLDomain {
     override def getRoot(node: N): N = {
       if (lessThanOrEqual(node, bottom)) {
         bottom
-      } else if (node._2 == Set(RootPath)) {
-        node
       } else {
+        val (ZipperTree(desc, children), path) = node
         val root: P = Set(RootPath)
-        (getSubtreeFromPath(root), root)
+        (ZipperTree(latD.meet(desc, getDescriptorsFromPaths(root)), children), latP.meet(path, root))
       }
     }
     // TODO: this might be implementable using getParent() and isRoot()
@@ -160,12 +167,13 @@ object ZipperXMLDomain {
 
     /** Get the parent of given node. If the node has no parent (root node), BOTTOM is returned. */
     override def getParent(node: N): N = {
-      val (subtree, path) = node
+      val (ZipperTree(desc, children), path) = node
       val parent = latP.getParent(path)
       if (latP.lessThanOrEqual(parent, latP.bottom)) {
         bottom
       } else {
-        (getSubtreeFromPath(parent), parent)
+        val newChildren: ZList[ZipperTree] = ZTop() // don't know anything about siblings of `node`
+        (ZipperTree(getDescriptorsFromPaths(parent), newChildren), parent)
       }
     }
 
@@ -209,8 +217,9 @@ object ZipperXMLDomain {
       * BOTTOM if the node definitely is a root node). The two results are not necessarily disjoint.
       */
     override def isRoot(node: N): (N, N) = {
-      val (subtree, path) = node
-      val positiveResult: N = (latS.meet(subtree, Some(Set(RootNode(None)))), latP.meet(path, Set(RootPath)))
+      val (ZipperTree(desc, children), path) = node
+      // TODO: this might be problematic because we don't gain any information about the children
+      val positiveResult: N = (ZipperTree(latD.meet(desc, Some(Set(RootNode))), children), latP.meet(path, Set(RootPath)))
       (positiveResult, node)
     }
 
