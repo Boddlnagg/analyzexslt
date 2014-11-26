@@ -16,6 +16,19 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
 
   protected object XML extends ZipperXMLDomain.D[V] {
     override val xpathDom = XPATH
+
+    /** Create a text node with the given text value.
+      * Values that are not strings evaluate to BOTTOM.
+      */
+    override def createTextNode(value: V): N = {
+      val desc: Option[Set[NodeDescriptor]] = value.str match {
+        case None => None // TODO: AnyTextNode node descriptor
+        case Some(s) => Some(s.map(text => TextNode(text)))
+      }
+      val tree = ZipperTree(desc, ZNil()) // text nodes have no children
+      val path = Set[Path](DescendantStep(AnyTextNode, RootPath))
+      (tree, path)
+    }
   }
 
   protected object XPATH extends OuterXPATH.D[N] {
@@ -60,6 +73,13 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
     }
 
     /** Turn a node list into a set by sorting nodes in document order and removing duplicate nodes */
-    override def nodeListToSet(list: L): L = ???
+    override def nodeListToSet(list: L): L = list match {
+      case ZBottom() => ZBottom()
+      case ZTop() => ZTop()
+      case ZUnknownLength(node) => list
+      case ZCons(head, tail) => ZUnknownLength(list.joinInner) // TODO: this could be made more precise
+      case ZMaybeNil(head, tail) => ZUnknownLength(list.joinInner) // TODO: this could be made more precise
+      case ZNil() => ZNil()
+    }
   }
 }

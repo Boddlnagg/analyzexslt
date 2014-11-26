@@ -9,7 +9,7 @@ object ZipperXMLDomain {
   type N = (S, P) // a node is a subtree and a path
   type L = ZList[N]
 
-  abstract class NodeDescriptor
+  abstract class NodeDescriptor // TODO: add AnyElementNode (`*`), and similar ...
   case object RootNode extends NodeDescriptor
   case class ElementNode(name: String) extends NodeDescriptor
   case class AttributeNode(name: String, value: String) extends NodeDescriptor
@@ -126,7 +126,7 @@ object ZipperXMLDomain {
       */
     override def createElement(name: String, attributes: L, children: L): N = {
       val tree = ZipperTree(Some(Set(ElementNode(name))), attributes.map(_._1) ++ children.map(_._1))
-      val path = Set[Path]() // TODO: use RootPath here?
+      val path = Set[Path](DescendantStep(AnyElement, RootPath))
       (tree, path)
     }
     
@@ -134,11 +134,6 @@ object ZipperXMLDomain {
       * Values that are not strings evaluate to BOTTOM.
       */
     override def createAttribute(name: String, value: V): N = ???
-
-    /** Create a text node with the given text value.
-      * Values that are not strings evaluate to BOTTOM.
-      */
-    override def createTextNode(value: V): N = ???
 
     /** Create an emtpy list containing no nodes */
     override def createEmptyList(): L = ZNil()
@@ -208,11 +203,32 @@ object ZipperXMLDomain {
     }
 
     /** Wraps a list of nodes in a document/root node. Lists that don't have exactly one element evaluate to BOTTOM. */
-    override def wrapInRoot(list: L): N = ???
+    override def wrapInRoot(list: L): N = {
+      val (firstChild, _): N = list match {
+        case ZTop() => top
+        case ZBottom() => bottom
+        case ZUnknownLength(elems) => elems
+        case ZCons(head, ZNil()) => head // list with exactly one element
+        case ZCons(head, _) => bottom // list with more than one element
+        case ZMaybeNil(head, ZNil()) => head // list with 0 or 1 elements (can't know exactly)
+        case ZMaybeNil(head, _) => bottom // list with 0 or more than one element
+        case ZNil() => bottom // list with 0 elements
+      }
+      (ZipperTree(Some(Set(RootNode)), ZCons(firstChild, ZNil())), Set(RootPath))
+    }
 
     /** Copies a list of nodes, so that they can be used in the output.
       * A root node is copied by copying its child (not wrapped in a root node). */
-    override def copyToOutput(list: L): L = ???
+    override def copyToOutput(list: L): L = list.map {
+      case in@(ZipperTree(desc, children), path) =>
+        val (root, notRoot) = isRoot(in)
+        if (!lessThanOrEqual(root, bottom)) { // isRoot is not BOTTOM -> node might be a root node
+          val child = getChildren(in).first
+          join(notRoot, child)
+        } else {
+          in
+        }
+    }
 
     /** Evaluates a function for every element in the given list, providing also the index of each element in the list.
       * The resulting lists are flattened into a single list.
@@ -269,7 +285,12 @@ object ZipperXMLDomain {
       val (ZipperTree(desc, children), path) = node
       // TODO: this might be problematic because we don't gain any information about the children
       val positiveResult: N = normalize(ZipperTree(latD.meet(desc, Some(Set(RootNode))), children), latP.meet(path, Set(RootPath)))
-      (positiveResult, node)
+      val negativeDesc = desc match {
+        case None => None
+        case Some(s) => Some(s.diff(Set(RootNode)))
+      }
+      val negativeResult: N = normalize(ZipperTree(negativeDesc, children), path.diff(Set(RootPath)))
+      (positiveResult, negativeResult)
     }
 
     /** Predicate function that checks whether a node is an element node.
@@ -371,7 +392,33 @@ object ZipperXMLDomain {
     /** Filters a list using a given predicate function. The predicate function should never return a node
       * (as its first result) that is less precise than the input node.
       */
-    override def filter(list: L, predicate: N => (N, N)): L = ???
+    override def filter(list: L, predicate: N => (N, N)): L = list match {
+      case ZBottom() => ZBottom()
+      case ZTop() =>
+        ZUnknownLength(predicate(top)._1)
+      case ZUnknownLength(elems) => ZUnknownLength(predicate(elems)._1)
+      case ZCons(head, tail) =>
+        val result = predicate(head)._1
+        val tailResult = filter(tail, predicate)
+        if (lessThanOrEqual(head, result)) { // head == result (because predicate application should never yield something greater)
+          ZCons(head, tailResult.asInstanceOf[ZListElement[(S, P)]]) // ... so nothing is filtered out
+        } else if (lessThanOrEqual(result, bottom)) { // result == BOTTOM
+          tailResult // current node is filtered out completely
+        } else {
+          tailResult | ZCons(head, tailResult.asInstanceOf[ZListElement[(S, P)]])
+        }
+      case ZMaybeNil(head, tail) =>
+        val result = predicate(head)._1
+        val tailResult = filter(tail, predicate)
+        if (lessThanOrEqual(head, result)) { // head == result (because predicate application should never yield something greater)
+          ZMaybeNil(head, tailResult.asInstanceOf[ZListElement[(S, P)]]) // ... so nothing is filtered out
+        } else if (lessThanOrEqual(result, bottom)) { // result == BOTTOM
+          tailResult // current node is filtered out completely
+        } else {
+          tailResult | ZMaybeNil(head, tailResult.asInstanceOf[ZListElement[(S, P)]])
+        }
+      case ZNil() => ZNil()
+    }
 
     /** Gets the first node out of a node list. BOTTOM is returned if the list is empty or BOTTOM. */
     override def getFirst(list: L): N = list.first

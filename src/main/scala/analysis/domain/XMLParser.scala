@@ -21,4 +21,6 @@ class XMLParser[N, L, V](dom: Domain[N, L, V]) {
       case _ => throw new NotImplementedError(f"Unsupported XML node: ${node.getClass} ($node)")
     }
   }
+
+  def parseDocument(elem: Elem): N = xml.wrapInRoot(xml.createSingletonList(parse(elem)))
 }

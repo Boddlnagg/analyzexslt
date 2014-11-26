@@ -12,7 +12,7 @@ import util.EvaluationError
 import xml.{XMLParser, XMLRoot}
 import xslt.{XSLTEvaluator, XSLTParser}
 
-import scala.xml.Elem
+import scala.xml.{XML, Elem}
 
 
 object TransformHelper {
@@ -21,7 +21,7 @@ object TransformHelper {
     XSLTEvaluator.transform(stylesheet, XMLParser.parseDocument(data))
   }
 
-  def transformJava(xslt: Elem, data: Elem): XMLRoot = {
+  def transformJava(xslt: Elem, data: Elem): Elem = {
     // this is a wrapper around the javax.xml.transform interface
     val xmlResultResource = new StringWriter()
     val xmlTransformer = TransformerFactory.newInstance().newTransformer(
@@ -31,7 +31,7 @@ object TransformHelper {
     xmlTransformer.transform(
       new StreamSource(new StringReader(data.toString())), new StreamResult(xmlResultResource)
     )
-    XMLParser.parseDocument(xmlResultResource.getBuffer.toString)
+    XML.loadString(xmlResultResource.getBuffer.toString)
   }
 
   def transformAbstractPowerset(xslt: Elem, data: Elem): XMLRoot = {
