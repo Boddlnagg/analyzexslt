@@ -79,7 +79,16 @@ object ZipperXMLDomain {
   private def normalize(node: N) = {
     // TODO: further refinements (e.g. if the descriptor only describes nodes that can't have children, set children to ZNil)
     val (ZipperTree(desc, children), path) = node
-    (ZipperTree(latD.meet(getDescriptorsFromPaths(path), desc), children), latP.meet(getPathsFromDescriptors(desc), path))
+    if (children.isInstanceOf[ZBottom[ZipperTree]]) {
+      NodeLattice.bottom
+    } else {
+      val meetDesc = latD.meet(getDescriptorsFromPaths(path), desc)
+      if (meetDesc == Some(Set())) { // BOTTOM
+        NodeLattice.bottom // necessary to make children BOTTOM also (which would not happen in the below case)
+      } else {
+        (ZipperTree(meetDesc, children), latP.meet(getPathsFromDescriptors(desc), path))
+      }
+    }
   }
 
   val topTree = latS.top
@@ -201,17 +210,18 @@ object ZipperXMLDomain {
 
     /** Wraps a list of nodes in a document/root node. Lists that don't have exactly one element evaluate to BOTTOM. */
     override def wrapInRoot(list: L): N = {
-      val (firstChild, _): N = list match {
+      val firstChild: N = list match {
         case ZTop() => top
-        case ZBottom() => return bottom
+        case ZBottom() => bottom
         case ZUnknownLength(elems) => elems
-        case ZCons(head, ZNil()) => head // list with exactly one element
-        case ZCons(head, _) => return bottom // list with more than one element
-        case ZMaybeNil(head, ZCons(_, _)) => return bottom // list with 0 or more than one element (at least 2)
+        case ZCons(head, ZCons(_, _)) => bottom // list with more than one element
+        case ZCons(head, _) => head // list with at least one element
+        case ZMaybeNil(head, ZCons(_, _)) => bottom // list with 0 or more than one element (at least 2)
         case ZMaybeNil(head, _) => head // list with 0 or more elements (can't know exactly)
-        case ZNil() => return bottom // list with 0 elements
+        case ZNil() => bottom // list with 0 elements
       }
-      (ZipperTree(Some(Set(RootNode)), ZList(List(firstChild))), Set(RootPath))
+      val (firstChildElement, _) = isElement(firstChild)
+      normalize(ZipperTree(Some(Set(RootNode)), ZList(List(firstChildElement._1))), Set(RootPath))
     }
 
     /** Copies a list of nodes, so that they can be used in the output.
