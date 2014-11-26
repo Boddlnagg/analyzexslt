@@ -92,7 +92,6 @@ class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
           val parent = xmlDom.getParent(lastStepMatches)
           val (parentMatchesRest, _) = matches(parent, restPath)
           val (parentMatches, notParentMatches) = xmlDom.hasParent(lastStepMatches, parentMatchesRest)
-          //TODO: xmlDom.meet(xmlDom.getChildren(parentMatchesRest), lastStepMatches)
           (parentMatches, xmlDom.join(notParentMatches, notLastStepMatches))
         }
       }

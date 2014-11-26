@@ -241,44 +241,60 @@ object XPathPatternDomain {
       * is not an element node), the second result is a node that might not be an element node (this is
       * BOTTOM if the node definitely is an element node). The two results are not necessarily disjoint.
       */
-    override def isElement(node: N): (N, N) = (normalize(node.collect {
-      case e@ChildStep(NamedElement(_), _) => e
-      case e@ChildStep(AnyElement, _) => e
-      case e@DescendantStep(NamedElement(_), _) => e
-      case e@DescendantStep(AnyElement, _) => e
-    }), node)
+    override def isElement(node: N): (N, N) = {
+      val (yes, no) = node.partition {
+        case ChildStep(NamedElement(_), _) => true
+        case ChildStep(AnyElement, _) => true
+        case DescendantStep(NamedElement(_), _) => true
+        case DescendantStep(AnyElement, _) => true
+        case _ => false
+      }
+      (normalize(yes), normalize(no))
+    }
 
     /** Predicate function that checks whether a node is a text node.
       * The first result is a node that is known to be a text node (this is BOTTOM if the node definitely
       * is not a text node), the second result is a node that might not be a text node (this is
       * BOTTOM if the node definitely is a text node). The two results are not necessarily disjoint.
       */
-    override def isTextNode(node: N): (N, N) = (normalize(node.collect {
-      case e@ChildStep(AnyTextNode, _) => e
-      case e@DescendantStep(AnyTextNode, _) => e
-    }), node)
+    override def isTextNode(node: N): (N, N) = {
+      val (yes, no) = node.partition {
+        case ChildStep(AnyTextNode, _) => true
+        case DescendantStep(AnyTextNode, _) => true
+        case _ => false
+      }
+      (normalize(yes), normalize(no))
+    }
 
     /** Predicate function that checks whether a node is a comment node.
       * The first result is a node that is known to be a comment node (this is BOTTOM if the node definitely
       * is not a comment node), the second result is a node that might not be a comment node (this is
       * BOTTOM if the node definitely is a comment node). The two results are not necessarily disjoint.
       */
-    override def isComment(node: N): (N, N) = (normalize(node.collect {
-      case e@ChildStep(AnyCommentNode, _) => e
-      case e@DescendantStep(AnyCommentNode, _) => e
-    }), node)
+    override def isComment(node: N): (N, N) = {
+      val (yes, no) = node.partition {
+        case ChildStep(AnyCommentNode, _) => true
+        case DescendantStep(AnyCommentNode, _) => true
+        case _ => false
+      }
+      (normalize(yes), normalize(no))
+    }
 
     /** Predicate function that checks whether a node is an attribute node.
       * The first result is a node that is known to be an attribute node (this is BOTTOM if the node definitely
       * is not an attribute node), the second result is a node that might not be an attribute node (this is
       * BOTTOM if the node definitely is an attribute node). The two results are not necessarily disjoint.
       */
-    override def isAttribute(node: N): (N, N) = (normalize(node.collect {
-      case e@ChildStep(NamedAttribute(_), _) => e
-      case e@ChildStep(AnyAttribute, _) => e
-      case e@DescendantStep(NamedAttribute(_), _) => e
-      case e@DescendantStep(AnyAttribute, _) => e
-    }), node)
+    override def isAttribute(node: N): (N, N) = {
+      val (yes, no) = node.partition {
+        case ChildStep(NamedAttribute(_), _) => true
+        case ChildStep(AnyAttribute, _) => true
+        case DescendantStep(NamedAttribute(_), _) => true
+        case DescendantStep(AnyAttribute, _) => true
+        case _ => false
+      }
+      (normalize(yes), normalize(no))
+    }
 
     /** Predicate function that checks whether a node has a specified name.
       * The first result is a node that is known to have that name (this is BOTTOM if the node definitely
@@ -295,7 +311,7 @@ object XPathPatternDomain {
       case DescendantStep(AnyElement, p) => List(DescendantStep(NamedElement(name), p))
       case a@DescendantStep(NamedAttribute(n), _) if name == n => List(a)
       case DescendantStep(AnyAttribute, p) => List(DescendantStep(NamedAttribute(name), p))
-    }.flatten), node)
+    }.flatten), node) // TODO: negative result
 
     /** Get the name for a given node. Nodes that don't have a name (i.e. are not an element or attribute node)
       * are evaluated to the empty string, not BOTTOM!

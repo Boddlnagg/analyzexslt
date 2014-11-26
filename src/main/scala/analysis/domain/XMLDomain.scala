@@ -120,7 +120,7 @@ trait XMLDomain[N, L, V] {
     */
   def hasParent(node: N, parent: N): (N, N) = {
     val (isChild, isNotChild) = isContainedIn(node, getChildren(parent))
-    val (isAttribute, isNeither) =isContainedIn(isNotChild, getAttributes(parent))
+    val (isAttribute, isNeither) = isContainedIn(isNotChild, getAttributes(parent))
     (join(isChild, isAttribute), isNeither)
   }
 
