@@ -203,15 +203,15 @@ object ZipperXMLDomain {
     override def wrapInRoot(list: L): N = {
       val (firstChild, _): N = list match {
         case ZTop() => top
-        case ZBottom() => bottom
+        case ZBottom() => return bottom
         case ZUnknownLength(elems) => elems
         case ZCons(head, ZNil()) => head // list with exactly one element
-        case ZCons(head, _) => bottom // list with more than one element
-        case ZMaybeNil(head, ZCons(_, _)) => bottom // list with 0 or more than one element (at least 2)
+        case ZCons(head, _) => return bottom // list with more than one element
+        case ZMaybeNil(head, ZCons(_, _)) => return bottom // list with 0 or more than one element (at least 2)
         case ZMaybeNil(head, _) => head // list with 0 or more elements (can't know exactly)
-        case ZNil() => bottom // list with 0 elements
+        case ZNil() => return bottom // list with 0 elements
       }
-      (ZipperTree(Some(Set(RootNode)), ZCons(firstChild, ZNil())), Set(RootPath))
+      (ZipperTree(Some(Set(RootNode)), ZList(List(firstChild))), Set(RootPath))
     }
 
     /** Copies a list of nodes, so that they can be used in the output.

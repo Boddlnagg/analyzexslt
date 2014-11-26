@@ -1,17 +1,18 @@
 package evaluation
 
-import analysis.domain.powerset.{PowersetXMLDomain, PowersetDomain}
-import xml.XMLParser
+import analysis.domain.zipper.{ZipperXMLDomain, ZipperDomain}
+import analysis.domain.XMLParser
 import org.scalatest.FunSuite
 
 import scala.xml.Elem
 
-class PowersetTransformSuite extends FunSuite {
-  val xmlDom = PowersetDomain.xmlDom
-  val xpathDom = PowersetDomain.xpathDom
+class ZipperTransformSuite extends FunSuite {
+  val xmlDom = ZipperDomain.xmlDom
+  val xpathDom = ZipperDomain.xpathDom
+  val parser = new XMLParser(ZipperDomain)
 
-  def transform(xslt: Elem, source: PowersetXMLDomain.N = xmlDom.top) =
-    TransformHelper.transformAbstract(xslt: Elem, source, PowersetDomain, true)
+  def transform(xslt: Elem, source: ZipperXMLDomain.N = xmlDom.top) =
+    TransformHelper.transformAbstract(xslt: Elem, source, ZipperDomain, true)
 
   test("Simple literal result element") {
     val xslt =
@@ -21,7 +22,7 @@ class PowersetTransformSuite extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    assertResult(Some(Set(XMLParser.parseDocument(<result/>)))) { transform(xslt) }
+    assertResult(parser.parseDocument(<result/>)) { transform(xslt) }
   }
 
   test("No templates") {
@@ -30,7 +31,7 @@ class PowersetTransformSuite extends FunSuite {
       </xsl:stylesheet>
 
     // built-in templates are disabled, so this should evaluate to BOTTOM
-    assertResult(Some(Set())) { transform(xslt) }
+    assertResult(xmlDom.bottom) { transform(xslt) }
   }
 
   /*test("No matching templates") {
