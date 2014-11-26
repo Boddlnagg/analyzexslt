@@ -15,8 +15,7 @@ class XSLTZipperReferenceSuite extends XSLTReferenceSuiteBase[N] {
 
   override def checkMatch(transformed: N, referenceResult: Elem) = {
     val parsedReference = parser.parseDocument(referenceResult)
-    assert(ZipperDomain.xmlDom.lessThanOrEqual(parsedReference, transformed), f"Result: $transformed, expected $parsedReference")
+    assert(ZipperDomain.xmlDom.lessThanOrEqual(parsedReference, transformed), f"Result: ${transformed._1}; Expected: ${parsedReference._1}")
+    println(transformed._1)
   }
-
-  // TODO: override checkMatch to check for <= instead of ==
 }

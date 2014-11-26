@@ -19,8 +19,7 @@ object ZipperXMLDomain {
   case class ZipperTree(desc: Option[Set[NodeDescriptor]], children: ZList[ZipperTree])
 
   implicit object ZipperTreeLattice extends Lattice[ZipperTree] {
-
-    def top = topTree
+    def top = ZipperTree(None, ZTop())
     def bottom = ZipperTree(Some(Set()), ZBottom())
     def join(left: ZipperTree, right: ZipperTree): ZipperTree = ZipperTree(latD.join(left.desc, right.desc), left.children | right.children)
     def meet(left: ZipperTree, right: ZipperTree): ZipperTree = ZipperTree(latD.meet(left.desc, right.desc), left.children & right.children)
