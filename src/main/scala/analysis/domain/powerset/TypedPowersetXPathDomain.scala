@@ -243,7 +243,7 @@ class TypedPowersetXPathDomain[L] {
     /** A node-set is converted to a string by returning the string-value of the node in the node-set that is
       * first in document order. If the node-set is empty, an empty string is returned.
       */
-    def nodeSetToStringValue(nodeSet: L): Option[Set[String]]
+    def nodeSetToStringValue(nodeSet: L): Option[Set[String]] // TODO: remove this in favor of getFirst and getStringValue?
 
     /** Turn a node list into a set by sorting nodes in document order and removing duplicate nodes */
     def nodeListToSet(list: L): L

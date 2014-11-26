@@ -6,6 +6,9 @@ trait Lattice[A] {
   def join(left: A, right: A): A
   def meet(left: A, right: A): A
   def lessThanOrEqual(left: A, right: A): Boolean
+
+  def joinAll(seq: Traversable[A]) = seq.fold(bottom)(join)
+  def meetAll(seq: Traversable[A]) = seq.fold(top)(meet)
 }
 
 object Lattice {

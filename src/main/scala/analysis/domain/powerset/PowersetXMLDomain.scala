@@ -161,12 +161,12 @@ object PowersetXMLDomain {
     override def getNodeListSize(list: L): V = list match {
       case Left(Some(len)) => xpathDom.liftNumber(len)
       case Left(None) => xpathDom.topNumber
-      case Right(s) => xpathDom.join(s.map(l => xpathDom.liftNumber(l.size)).toList)
+      case Right(s) => xpathDom.join(s.map(l => xpathDom.liftNumber(l.size)))
     }
 
     override def getStringValue(node: N): V = node match {
       case None => xpathDom.topString
-      case Some(s) => xpathDom.join(s.map(n => xpathDom.liftLiteral(n.stringValue)).toList)
+      case Some(s) => xpathDom.join(s.map(n => xpathDom.liftLiteral(n.stringValue)))
     }
 
     override def isRoot(node: N): (N, N) = node match {
@@ -240,14 +240,14 @@ object PowersetXMLDomain {
         case XMLElement(nodeName, _, _, _) => xpathDom.liftLiteral(nodeName)
         case XMLAttribute(nodeName, _, _) => xpathDom.liftLiteral(nodeName)
         case _ => xpathDom.liftLiteral("")
-      }.toList)
+      })
     }
 
     override def getConcatenatedTextNodeValues(list: L): V = list match {
       case Left(_) => xpathDom.topString
       case Right(s) => xpathDom.join(s.map { l =>
         xpathDom.liftLiteral(l.collect { case n: XMLTextNode => n.value }.mkString(""))
-      }.toList)
+      })
     }
 
     override def filter(list: L, predicate: N => (N, N)): L = list match {

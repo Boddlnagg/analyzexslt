@@ -34,7 +34,7 @@ object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
   protected object XPATH extends OuterXPATH.D[N] {
     override val xmlDom: XMLDomain[N, L, OuterXPATH.V] = XML
 
-    // A node-set is converted to a string by returning the string-value of the node in the node-set that is
+    // A node-set is converted to a string by returning the string-value of the node in the node-set that is first in document order.
     override def nodeSetToStringValue(nodeSet: L): Option[Set[String]] = nodeSet match {
       case Left(_) => None
       case Right(s) => Some(s.map {
