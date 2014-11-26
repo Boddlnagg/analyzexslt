@@ -77,6 +77,7 @@ object ZipperXMLDomain {
 
   /** Removes impossible elements (where Path and Subtree descriptors don't agree) */
   private def normalize(node: N) = {
+    // TODO: further refinements (e.g. if the descriptor only describes nodes that can't have children, set children to ZNil)
     val (ZipperTree(desc, children), path) = node
     (ZipperTree(latD.meet(getDescriptorsFromPaths(path), desc), children), latP.meet(getPathsFromDescriptors(desc), path))
   }
@@ -124,15 +125,12 @@ object ZipperXMLDomain {
       * The output is created bottom-up, so children are always created before their parent nodes.
       */
     override def createElement(name: String, attributes: L, children: L): N = {
+      // TODO: attributes should be a map (name -> value), not a list
+      // TODO: empty text nodes should be filtered out and multiple consecutive ones should be merged
       val tree = ZipperTree(Some(Set(ElementNode(name))), attributes.map(_._1) ++ children.map(_._1))
       val path = Set[Path](DescendantStep(AnyElement, RootPath))
       (tree, path)
     }
-    
-    /** Create an attribute node with the given name and text value.
-      * Values that are not strings evaluate to BOTTOM.
-      */
-    override def createAttribute(name: String, value: V): N = ???
 
     /** Create an emtpy list containing no nodes */
     override def createEmptyList(): L = ZNil()
@@ -378,15 +376,40 @@ object ZipperXMLDomain {
       * BOTTOM if the node definitely does have that name). The two results are not necessarily disjoint.
       * Nodes that don't have a name (any node except element and attribute nodes) are evaluated to BOTTOM.
       */
-    override def hasName(node: N, name: String): (N, N) = ???
+    override def hasName(node: N, name: String): (N, N) = {
+      val (ZipperTree(desc, children), path) = node
+      val (pathYes, pathNo) = latP.hasName(path, name)
+      val (descYes, descNo) = desc match {
+        case None => (None, None) // TODO: these can probably be expressed more precisely with `NamedElement`, etc
+        case Some(s) =>
+          val (y, n) = s.partition {
+            case AttributeNode(n, _) if name == n => true
+            case ElementNode(n) if name == n => true
+            case _ => false
+          }
+          (Some(y), Some(n))
+      }
+
+      (normalize(ZipperTree(descYes, children), pathYes), normalize(ZipperTree(descNo, children), pathNo))
+    }
 
     /** Get the name for a given node. Nodes that don't have a name (i.e. are not an element or attribute node)
       * are evaluated to the empty string, not BOTTOM!
       */
-    override def getNodeName(node: N): V = ???
+    override def getNodeName(node: N): V = {
+      val (ZipperTree(desc, children), path) = node
+      desc match {
+        case None => xpathDom.topString
+        case Some(s) => xpathDom.join(s.map {
+          case ElementNode(name) => xpathDom.liftLiteral(name)
+          case AttributeNode(name, _) => xpathDom.liftLiteral(name)
+          case _ => xpathDom.liftLiteral("")
+        })
+      }
+    }
 
     /** Concatenates the values of all text nodes in the list. List elements that are not text nodes are ignored. */
-    override def getConcatenatedTextNodeValues(list: L): V = ???
+    override def getConcatenatedTextNodeValues(list: L): V = xpathDom.topString // TODO
 
     /** Filters a list using a given predicate function. The predicate function should never return a node
       * (as its first result) that is less precise than the input node.

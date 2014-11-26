@@ -236,5 +236,16 @@ object Path {
       }
       (normalize(yes), normalize(no))
     }
+
+    def hasName(node: Set[Path], name: String): (Set[Path], Set[Path]) = (normalize(node.collect {
+      case e@ChildStep(NamedElement(n), _) if name == n => List(e)
+      case ChildStep(AnyElement, p) => List(ChildStep(NamedElement(name), p))
+      case a@ChildStep(NamedAttribute(n), _) if name == n => List(a)
+      case ChildStep(AnyAttribute, p) => List(ChildStep(NamedAttribute(name), p))
+      case e@DescendantStep(NamedElement(n), _) if name == n => List(e)
+      case DescendantStep(AnyElement, p) => List(DescendantStep(NamedElement(name), p))
+      case a@DescendantStep(NamedAttribute(n), _) if name == n => List(a)
+      case DescendantStep(AnyAttribute, p) => List(DescendantStep(NamedAttribute(name), p))
+    }.flatten), node) // TODO: negative result
   }
 }

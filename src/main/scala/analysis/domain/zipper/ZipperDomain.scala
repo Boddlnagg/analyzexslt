@@ -29,6 +29,19 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
       val path = Set[Path](DescendantStep(AnyTextNode, RootPath))
       (tree, path)
     }
+
+    /** Create an attribute node with the given name and text value.
+      * Values that are not strings evaluate to BOTTOM.
+      */
+    override def createAttribute(name: String, value: V): N = {
+      val desc: Option[Set[NodeDescriptor]] = value.str match {
+        case None => None // TODO: AnyAttribute node descriptor
+        case Some(s) => Some(s.map(text => AttributeNode(name, text)))
+      }
+      val tree = ZipperTree(desc, ZNil()) // attribute nodes have no children
+      val path = Set[Path](DescendantStep(NamedAttribute(name), RootPath))
+      (tree, path)
+    }
   }
 
   protected object XPATH extends OuterXPATH.D[N] {
