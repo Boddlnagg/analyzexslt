@@ -156,12 +156,20 @@ object ZipperXMLDomain {
 
     /** Get the list of attributes of a given node.
       * Nodes that are not an element (and therefore don't have attributes) return an empty list, not BOTTOM! */
-    override def getAttributes(node: N): L = ???
+    override def getAttributes(node: N): L = {
+      val (ZipperTree(desc, children), path) = node
+      val attributePath: Set[Path] = latP.getAttributes(path).joinInner
+      children.map(tree => normalize(tree, attributePath)) // normalize throws out subtrees that are not attributes (TODO: check that)
+    }
 
     /** Get the list of children of a given node.
       * Root nodes have a single child, element nodes have an arbitrary number of children.
       * Nodes that don't have children return an empty list, not BOTTOM! */
-    override def getChildren(node: N): L = ???
+    override def getChildren(node: N): L = {
+      val (ZipperTree(desc, children), path) = node
+      val childrenPath: Set[Path] = latP.getChildren(path).joinInner
+      children.map(tree => normalize(tree, childrenPath))// normalize throws out subtrees that are attributes (TODO: check that)
+    }
 
     /** Get the parent of given node. If the node has no parent (root node), BOTTOM is returned. */
     override def getParent(node: N): N = {
@@ -185,7 +193,19 @@ object ZipperXMLDomain {
       * the list (as soon as there are other node types in the list, attributes are ignored) and the second result
       * contains all other nodes.
       */
-    override def partitionAttributes(list: L): (L, L) = ???
+    override def partitionAttributes(list: L): (L, L) = list match {
+      case ZBottom() => (ZBottom(), ZBottom())
+      case ZTop() => (ZTop(), ZTop()) // TODO: this can be more specific using ZUnknownLength
+      case ZUnknownLength(elems) =>
+        (ZUnknownLength(isAttribute(elems)._1), ZUnknownLength(join(List(isElement(elems)._1, isTextNode(elems)._1, isComment(elems)._1))))
+      case ZCons(head, tail) => // TODO: this can be more specific (use ZCons but make first result MaybeNil if there is something that's not an attribute)
+        val elems: N = list.joinInner
+        (ZUnknownLength(isAttribute(elems)._1), ZUnknownLength(join(List(isElement(elems)._1, isTextNode(elems)._1, isComment(elems)._1))))
+      case ZMaybeNil(head, tail) => // TODO: see above
+        val elems: N = list.joinInner
+        (ZUnknownLength(isAttribute(elems)._1), ZUnknownLength(join(List(isElement(elems)._1, isTextNode(elems)._1, isComment(elems)._1))))
+      case ZNil() => (ZNil(), ZNil())
+    }
 
     /** Wraps a list of nodes in a document/root node. Lists that don't have exactly one element evaluate to BOTTOM. */
     override def wrapInRoot(list: L): N = ???
@@ -197,7 +217,20 @@ object ZipperXMLDomain {
     /** Evaluates a function for every element in the given list, providing also the index of each element in the list.
       * The resulting lists are flattened into a single list.
       */
-    override def flatMapWithIndex(list: L, f: (N, V) => L): L = ???
+    override def flatMapWithIndex(list: L, f: (N, V) => L): L = {
+      def flatMapWithIndexInternal(rest: L, currentIndex: V, f: (N, V) => L): L = rest match {
+        case ZBottom() => ZBottom()
+        case ZTop() => ZTop()
+        case ZUnknownLength(elems) => ZUnknownLength(f(elems, xpathDom.topNumber).joinInner)
+        case ZCons(head, tail) =>
+          f(head, currentIndex) ++ flatMapWithIndexInternal(tail, xpathDom.add(currentIndex, xpathDom.liftNumber(1)), f)
+        case ZMaybeNil(head, tail) =>
+          ZNil() | f(head, currentIndex) ++ flatMapWithIndexInternal(tail, xpathDom.add(currentIndex, xpathDom.liftNumber(1)), f)
+        case ZNil() => ZNil()
+      }
+
+      flatMapWithIndexInternal(list, xpathDom.liftNumber(0), f)
+    }
 
     /** Gets the size of a node list */
     override def getNodeListSize(list: L): V = list match {
@@ -210,7 +243,22 @@ object ZipperXMLDomain {
     }
 
     /** Gets the string-value of a node, as specified in the XSLT specification */
-    override def getStringValue(node: N): V = ???
+    override def getStringValue(node: N): V = {
+      def getStringValueFromSubtree(tree: ZipperTree): V = {
+        val ZipperTree(desc, children) = tree
+        desc match {
+          case None => xpathDom.topString
+          case Some(s) => xpathDom.join(s.map {
+            case RootNode => getStringValueFromSubtree(children.first)
+            case ElementNode(name) => xpathDom.topString // TODO: concatenate the string values of all (non-attribute) children
+            case AttributeNode(name, value) => xpathDom.liftLiteral(value)
+            case TextNode(value) => xpathDom.liftLiteral(value)
+            case CommentNode(value) => xpathDom.liftLiteral(value)
+          })
+        }
+      }
+      getStringValueFromSubtree(node._1)
+    }
 
     /** Predicate function that checks whether a node is a root node.
       * The first result is a node that is known to be a root node (this is BOTTOM if the node definitely
@@ -229,28 +277,80 @@ object ZipperXMLDomain {
       * is not an element node), the second result is a node that might not be an element node (this is
       * BOTTOM if the node definitely is an element node). The two results are not necessarily disjoint.
       */
-    override def isElement(node: N): (N, N) = ???
+    override def isElement(node: N): (N, N) = {
+      val (ZipperTree(desc, children), path) = node
+      val (pathYes, pathNo) = latP.isElement(path)
+      val (descYes, descNo) = desc match {
+        case None => (None, None)
+        case Some(s) =>
+          val (y, n) = s.partition {
+            case ElementNode(_) => true
+            case _ => false
+          }
+          (Some(y), Some(n))
+      }
+      (normalize(ZipperTree(descYes, children), pathYes), normalize(ZipperTree(descNo, children), pathNo))
+    }
 
     /** Predicate function that checks whether a node is a text node.
       * The first result is a node that is known to be a text node (this is BOTTOM if the node definitely
       * is not a text node), the second result is a node that might not be a text node (this is
       * BOTTOM if the node definitely is a text node). The two results are not necessarily disjoint.
       */
-    override def isTextNode(node: N): (N, N) = ???
+    override def isTextNode(node: N): (N, N) = {
+      val (ZipperTree(desc, children), path) = node
+      val (pathYes, pathNo) = latP.isTextNode(path)
+      val (descYes, descNo) = desc match {
+        case None => (None, None)
+        case Some(s) =>
+          val (y, n) = s.partition {
+            case TextNode(_) => true
+            case _ => false
+          }
+          (Some(y), Some(n))
+      }
+      (normalize(ZipperTree(descYes, children), pathYes), normalize(ZipperTree(descNo, children), pathNo))
+    }
 
     /** Predicate function that checks whether a node is a comment node.
       * The first result is a node that is known to be a comment node (this is BOTTOM if the node definitely
       * is not a comment node), the second result is a node that might not be a comment node (this is
       * BOTTOM if the node definitely is a comment node). The two results are not necessarily disjoint.
       */
-    override def isComment(node: N): (N, N) = ???
+    override def isComment(node: N): (N, N) = {
+      val (ZipperTree(desc, children), path) = node
+      val (pathYes, pathNo) = latP.isComment(path)
+      val (descYes, descNo) = desc match {
+        case None => (None, None)
+        case Some(s) =>
+          val (y, n) = s.partition {
+            case CommentNode(_) => true
+            case _ => false
+          }
+          (Some(y), Some(n))
+      }
+      (normalize(ZipperTree(descYes, children), pathYes), normalize(ZipperTree(descNo, children), pathNo))
+    }
 
     /** Predicate function that checks whether a node is an attribute node.
       * The first result is a node that is known to be an attribute node (this is BOTTOM if the node definitely
       * is not an attribute node), the second result is a node that might not be an attribute node (this is
       * BOTTOM if the node definitely is an attribute node). The two results are not necessarily disjoint.
       */
-    override def isAttribute(node: N): (N, N) = ???
+    override def isAttribute(node: N): (N, N) = {
+      val (ZipperTree(desc, children), path) = node
+      val (pathYes, pathNo) = latP.isAttribute(path)
+      val (descYes, descNo) = desc match {
+        case None => (None, None)
+        case Some(s) =>
+          val (y, n) = s.partition {
+            case AttributeNode(_, _) => true
+            case _ => false
+          }
+          (Some(y), Some(n))
+      }
+      (normalize(ZipperTree(descYes, children), pathYes), normalize(ZipperTree(descNo, children), pathNo))
+    }
 
     /** Predicate function that checks whether a node has a specified name.
       * The first result is a node that is known to have that name (this is BOTTOM if the node definitely

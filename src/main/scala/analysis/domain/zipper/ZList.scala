@@ -39,7 +39,7 @@ abstract class ZList[T] {
     case (ZNil(), ZNil()) => ZNil()
   }
 
-  protected def joinInner(implicit lat: Lattice[T]): T = this match {
+  def joinInner(implicit lat: Lattice[T]): T = this match {
     case ZTop() => lat.top
     case ZUnknownLength(elems) => elems
     case ZBottom() => lat.bottom

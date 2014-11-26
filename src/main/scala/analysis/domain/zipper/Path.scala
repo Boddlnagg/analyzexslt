@@ -179,5 +179,62 @@ object Path {
         case p => List(p, DescendantStep(AnyElement, p))
       }
     }.flatten)
+
+    def getChildren(path: Set[Path]): ZList[Set[Path]] = ZList.join(path.map {
+      case e@ChildStep(AnyElement, _) => ZUnknownLength(Set[Path](ChildStep(AnyElement, e), ChildStep(AnyTextNode, e), ChildStep(AnyCommentNode, e)))
+      case e@ChildStep(NamedElement(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyElement, e), ChildStep(AnyTextNode, e), ChildStep(AnyCommentNode, e)))
+      case e@DescendantStep(AnyElement, _) => ZUnknownLength(Set[Path](ChildStep(AnyElement, e), ChildStep(AnyTextNode, e), ChildStep(AnyCommentNode, e)))
+      case e@DescendantStep(NamedElement(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyElement, e), ChildStep(AnyTextNode, e), ChildStep(AnyCommentNode, e)))
+      case e@RootPath => ZCons(Set[Path](ChildStep(AnyElement, e)), ZNil())
+      case _ => ZNil[Set[Path]]() // other node types (text, attribute) return empty lists because they don't have children
+    })
+
+    def getAttributes(path: Set[Path]): ZList[Set[Path]] = ZList.join(path.map {
+      case e@ChildStep(AnyElement, _) => ZUnknownLength(Set[Path](ChildStep(AnyAttribute, e)))
+      case e@ChildStep(NamedElement(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyAttribute, e)))
+      case e@DescendantStep(AnyElement, _) => ZUnknownLength(Set[Path](ChildStep(AnyAttribute, e)))
+      case e@DescendantStep(NamedElement(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyAttribute, e)))
+      case _ => ZNil[Set[Path]]() // other node types (text, attribute) return empty lists because they don't have attributes
+    })
+
+    def isElement(node: Set[Path]): (Set[Path], Set[Path]) = {
+      val (yes, no) = node.partition {
+        case ChildStep(NamedElement(_), _) => true
+        case ChildStep(AnyElement, _) => true
+        case DescendantStep(NamedElement(_), _) => true
+        case DescendantStep(AnyElement, _) => true
+        case _ => false
+      }
+      (normalize(yes), normalize(no))
+    }
+
+    def isTextNode(node: Set[Path]): (Set[Path], Set[Path]) = {
+      val (yes, no) = node.partition {
+        case ChildStep(AnyTextNode, _) => true
+        case DescendantStep(AnyTextNode, _) => true
+        case _ => false
+      }
+      (normalize(yes), normalize(no))
+    }
+
+    def isComment(node: Set[Path]): (Set[Path], Set[Path]) = {
+      val (yes, no) = node.partition {
+        case ChildStep(AnyCommentNode, _) => true
+        case DescendantStep(AnyCommentNode, _) => true
+        case _ => false
+      }
+      (normalize(yes), normalize(no))
+    }
+
+    def isAttribute(node: Set[Path]): (Set[Path], Set[Path]) = {
+      val (yes, no) = node.partition {
+        case ChildStep(NamedAttribute(_), _) => true
+        case ChildStep(AnyAttribute, _) => true
+        case DescendantStep(NamedAttribute(_), _) => true
+        case DescendantStep(AnyAttribute, _) => true
+        case _ => false
+      }
+      (normalize(yes), normalize(no))
+    }
   }
 }
