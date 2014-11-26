@@ -207,8 +207,8 @@ object ZipperXMLDomain {
         case ZUnknownLength(elems) => elems
         case ZCons(head, ZNil()) => head // list with exactly one element
         case ZCons(head, _) => bottom // list with more than one element
-        case ZMaybeNil(head, ZNil()) => head // list with 0 or 1 elements (can't know exactly)
-        case ZMaybeNil(head, _) => bottom // list with 0 or more than one element
+        case ZMaybeNil(head, ZCons(_, _)) => bottom // list with 0 or more than one element (at least 2)
+        case ZMaybeNil(head, _) => head // list with 0 or more elements (can't know exactly)
         case ZNil() => bottom // list with 0 elements
       }
       (ZipperTree(Some(Set(RootNode)), ZCons(firstChild, ZNil())), Set(RootPath))
@@ -221,9 +221,10 @@ object ZipperXMLDomain {
         val (root, notRoot) = isRoot(in)
         if (!lessThanOrEqual(root, bottom)) { // isRoot is not BOTTOM -> node might be a root node
           val child = getChildren(in).first
-          join(notRoot, child)
+          val (tree, _) = join(notRoot, child)
+          normalize(tree, latP.top)
         } else {
-          in
+          normalize(ZipperTree(desc, children), latP.top)
         }
     }
 

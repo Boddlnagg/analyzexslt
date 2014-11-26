@@ -3,6 +3,7 @@ package evaluation
 import analysis.domain.XMLParser
 import analysis.domain.zipper.ZipperDomain
 import analysis.domain.zipper.ZipperXMLDomain.N
+import util.EvaluationError
 import scala.xml.Elem
 
 class XSLTZipperReferenceSuite extends XSLTReferenceSuiteBase[N] {
@@ -10,7 +11,12 @@ class XSLTZipperReferenceSuite extends XSLTReferenceSuiteBase[N] {
 
   override def transform(xslt: Elem, data: Elem): N = {
     val parsedData = parser.parseDocument(data)
-    TransformHelper.transformAbstract(xslt, parsedData, ZipperDomain)
+    val result = TransformHelper.transformAbstract(xslt, parsedData, ZipperDomain)
+    if (ZipperDomain.xmlDom.lessThanOrEqual(result, ZipperDomain.xmlDom.bottom)) {
+      throw new EvaluationError("BOTTOM was returned.") // the test suite expects an EvaluationError for any invalid input
+    } else {
+      result
+    }
   }
 
   override def checkMatch(transformed: N, referenceResult: Elem) = {
