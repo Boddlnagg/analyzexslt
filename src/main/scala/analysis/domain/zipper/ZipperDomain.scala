@@ -1,6 +1,6 @@
 package analysis.domain.zipper
 
-import analysis.domain.{XMLDomain, Domain}
+import analysis.domain.Domain
 import analysis.domain.zipper.ZipperXMLDomain.L
 import analysis.domain.powerset.{TypedXPathValue, TypedPowersetXPathDomain}
 import analysis.domain.zipper.ZipperXMLDomain.N
@@ -14,11 +14,11 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
   override val xpathDom = XPATH
 
   protected object XML extends ZipperXMLDomain.D[V] {
-
+    override val xpathDom = XPATH
   }
 
   protected object XPATH extends OuterXPATH.D[N] {
-    override val xmlDom: XMLDomain[N, L, OuterXPATH.V] = XML
+    override val xmlDom = XML
 
     /** A node-set is converted to a string by returning the string-value of the node in the node-set that is
       * first in document order. If the node-set is empty, an empty string is returned.

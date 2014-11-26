@@ -150,6 +150,16 @@ abstract class ZList[T] {
     case ZMaybeNil(head, tail) => lat.join(lat.meet(head, element), tail.contains(element))
     case ZNil() => lat.bottom
   }
+
+  /** Gets the first element of the list. BOTTOM is returned if the list is BOTTOM or empty. */
+  def first(implicit lat: Lattice[T]): T = this match {
+    case ZBottom() => lat.bottom
+    case ZTop() => lat.top
+    case ZUnknownLength(elems) => elems
+    case ZCons(head, tail) => head
+    case ZMaybeNil(head, tail) => head
+    case ZNil() => lat.bottom
+  }
 }
 
 case class ZBottom[T]() extends ZList[T] // single element can not be BOTTOM, only the whole list

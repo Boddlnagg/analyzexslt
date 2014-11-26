@@ -1,6 +1,6 @@
 package analysis.domain.zipper
 
-import analysis.domain.{XMLDomain, Lattice}
+import analysis.domain.{XPathDomain, XMLDomain, Lattice}
 
 /** Just a wrapper for the type aliases */
 object ZipperXMLDomain {
@@ -86,6 +86,8 @@ object ZipperXMLDomain {
 
   /** This is the actual (partial) domain implementation */
   trait D[V] extends XMLDomain[N, L, V] {
+    val xpathDom: XPathDomain[V, N, L]
+
     /** Get the TOP element for XML nodes. */
     override def top: N = NodeLattice.top
 
@@ -206,7 +208,14 @@ object ZipperXMLDomain {
     override def flatMapWithIndex(list: L, f: (N, V) => L): L = ???
 
     /** Gets the size of a node list */
-    override def getNodeListSize(list: L): V = ???
+    override def getNodeListSize(list: L): V = list match {
+      case ZBottom() => xpathDom.bottom
+      case ZTop() => xpathDom.topNumber
+      case ZUnknownLength(elems) => xpathDom.topNumber
+      case ZCons(head, tail) => xpathDom.add(xpathDom.liftNumber(1), getNodeListSize(tail))
+      case ZMaybeNil(head, tail) => xpathDom.join(xpathDom.liftNumber(0), xpathDom.add(xpathDom.liftNumber(1), getNodeListSize(tail)))
+      case ZNil() => xpathDom.liftNumber(0)
+    }
 
     /** Gets the string-value of a node, as specified in the XSLT specification */
     override def getStringValue(node: N): V = ???
@@ -273,6 +282,6 @@ object ZipperXMLDomain {
     override def filter(list: L, predicate: N => (N, N)): L = ???
 
     /** Gets the first node out of a node list. BOTTOM is returned if the list is empty or BOTTOM. */
-    override def getFirst(list: L): N = ???
+    override def getFirst(list: L): N = list.first
   }
 }
