@@ -9,7 +9,7 @@ import xml.XMLRoot
 
 import scala.xml.Elem
 
-abstract class XSLTReferenceSuiteBase extends FunSuite {
+abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
   test("Wikipedia (Java Example)") {
     // taken from http://en.wikipedia.org/wiki/Java_API_for_XML_Processing#Example
     val xslt =
@@ -815,13 +815,16 @@ abstract class XSLTReferenceSuiteBase extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
-  def transform(xslt: Elem, data: Elem): XMLRoot
+  def checkMatch(xslt: Elem, data: Elem, referenceResult: XMLRoot) =
+    assertResult(referenceResult) { transform(xslt, data) }
+
+  def transform(xslt: Elem, data: Elem): T
 
   def assertTransformMatches(xslt: Elem, data: Elem) = {
     try {
       val referenceResult = TransformHelper.transformJava(xslt, data)
       println(referenceResult)
-      assertResult(referenceResult) { transform(xslt, data) }
+      checkMatch(xslt, data, referenceResult)
     } catch {
       case eJava: TransformerException =>
         // if Java throws an exception, we should do the same (because of invalid input)

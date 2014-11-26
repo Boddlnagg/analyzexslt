@@ -148,13 +148,9 @@ object ZipperXMLDomain {
 
     /** Get the root node of a given node */
     override def getRoot(node: N): N = {
-      if (lessThanOrEqual(node, bottom)) {
-        bottom
-      } else {
-        val (ZipperTree(desc, children), path) = node
-        val root: P = Set(RootPath)
-        (ZipperTree(latD.meet(desc, getDescriptorsFromPaths(root)), children), latP.meet(path, root))
-      }
+      val (ZipperTree(desc, children), path) = node
+      val root: P = Set(RootPath)
+      normalize(ZipperTree(latD.meet(desc, getDescriptorsFromPaths(root)), children), latP.meet(path, root))
     }
     // TODO: this might be implementable using getParent() and isRoot()
 
@@ -171,12 +167,8 @@ object ZipperXMLDomain {
     override def getParent(node: N): N = {
       val (ZipperTree(desc, children), path) = node
       val parent = latP.getParent(path)
-      if (latP.lessThanOrEqual(parent, latP.bottom)) {
-        bottom
-      } else {
-        val newChildren: ZList[ZipperTree] = ZTop() // don't know anything about siblings of `node`
-        (ZipperTree(getDescriptorsFromPaths(parent), newChildren), parent)
-      }
+      val newChildren: ZList[ZipperTree] = ZTop() // don't know anything about siblings of `node`
+      normalize(ZipperTree(getDescriptorsFromPaths(parent), newChildren), parent)
     }
 
     /** Predicate function that checks whether a node is in a given list of nodes.
@@ -228,7 +220,7 @@ object ZipperXMLDomain {
     override def isRoot(node: N): (N, N) = {
       val (ZipperTree(desc, children), path) = node
       // TODO: this might be problematic because we don't gain any information about the children
-      val positiveResult: N = (ZipperTree(latD.meet(desc, Some(Set(RootNode))), children), latP.meet(path, Set(RootPath)))
+      val positiveResult: N = normalize(ZipperTree(latD.meet(desc, Some(Set(RootNode))), children), latP.meet(path, Set(RootPath)))
       (positiveResult, node)
     }
 
