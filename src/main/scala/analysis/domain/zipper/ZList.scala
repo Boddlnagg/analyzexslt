@@ -159,6 +159,33 @@ abstract class ZList[T] {
     case ZMaybeNil(head, tail) => head
     case ZNil() => lat.bottom
   }
+
+  override def toString: String = {
+    if (this.isInstanceOf[ZBottom[T]]) return "[BOTTOM]"
+
+    val b = new StringBuilder("[")
+    def appendElement(elem: ZListElement[T]): Unit = elem match {
+      case ZTop() => b.append("TOP]")
+      case ZUnknownLength(elems) => b.append(elems.toString).append("*]")
+      case ZCons(head, ZNil()) => b.append(head.toString).append("]")
+      case ZCons(head, tail: ZMaybeNil[T]) =>
+        b.append(head.toString).append("]?,")
+        appendElement(tail)
+      case ZCons(head, tail) =>
+        b.append(head.toString).append(",")
+        appendElement(tail)
+      case ZMaybeNil(head, ZNil()) => b.append(head.toString).append("]")
+      case ZMaybeNil(head, tail: ZMaybeNil[T]) =>
+        b.append(head.toString).append("]?,")
+        appendElement(tail)
+      case ZMaybeNil(head, tail) =>
+        b.append(head.toString).append(",")
+        appendElement(tail)
+      case ZNil() => b.append("]")
+    }
+    appendElement(this.asInstanceOf[ZListElement[T]])
+    b.toString
+  }
 }
 
 case class ZBottom[T]() extends ZList[T] // single element can not be BOTTOM, only the whole list
