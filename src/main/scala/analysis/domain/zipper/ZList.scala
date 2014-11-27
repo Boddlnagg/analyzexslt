@@ -2,15 +2,13 @@ package analysis.domain.zipper
 
 import analysis.domain.Lattice
 
-// TODO: implement toString [a,b]?,c,d...] (ZUnknownLength -> ..., ZTop -> ???)
-
 abstract class ZList[T] {
   def ++(other: ZList[T])(implicit lat: Lattice[T]): ZList[T] = (this, other) match {
     case (ZBottom(), _) | (_, ZBottom()) => ZBottom()
     case (ZTop(), _) => ZTop()
     case (ZUnknownLength(elem), _) => ZUnknownLength(lat.join(elem, other.joinInner))
-    case (ZCons(head, tail), _) => ZCons(head, (tail ++ other).asInstanceOf[ZListElement[T]])
-    case (ZMaybeNil(head, tail), _) => other | (ZCons(head, tail) ++ other)
+    case (ZCons(first, rest), _) => ZCons(first, (rest ++ other).asInstanceOf[ZListElement[T]])
+    case (ZMaybeNil(first, rest), _) => other | (ZCons(first, rest) ++ other)
     case (ZNil(), _) => other
   }
 
@@ -27,12 +25,12 @@ abstract class ZList[T] {
     }
     case (ZBottom(), _) => other
     case (_, ZBottom()) => this
-    case (ZCons(head1, tail1), ZCons(head2, tail2)) => ZCons(lat.join(head1, head2), (tail1 | tail2).asInstanceOf[ZListElement[T]])
-    case (ZCons(head1, tail1), ZMaybeNil(head2, tail2)) => ZMaybeNil(lat.join(head1, head2), (tail1 | tail2).asInstanceOf[ZListElement[T]])
-    case (ZMaybeNil(head1, tail1), ZCons(head2, tail2)) => ZMaybeNil(lat.join(head1, head2), (tail1 | tail2).asInstanceOf[ZListElement[T]])
-    case (ZCons(head1, tail1), ZNil()) => ZMaybeNil(head1, tail1)
-    case (ZNil(), ZCons(head1, tail1)) => ZMaybeNil(head1, tail1)
-    case (ZMaybeNil(head1, tail1), ZMaybeNil(head2, tail2)) => ZMaybeNil(lat.join(head1, head2), (tail1 | tail2).asInstanceOf[ZListElement[T]])
+    case (ZCons(first1, rest1), ZCons(first2, rest2)) => ZCons(lat.join(first1, first2), (rest1 | rest2).asInstanceOf[ZListElement[T]])
+    case (ZCons(first1, rest1), ZMaybeNil(first2, rest2)) => ZMaybeNil(lat.join(first1, first2), (rest1 | rest2).asInstanceOf[ZListElement[T]])
+    case (ZMaybeNil(first1, rest1), ZCons(first2, rest2)) => ZMaybeNil(lat.join(first1, first2), (rest1 | rest2).asInstanceOf[ZListElement[T]])
+    case (ZCons(first1, rest1), ZNil()) => ZMaybeNil(first1, rest1)
+    case (ZNil(), ZCons(first1, rest1)) => ZMaybeNil(first1, rest1)
+    case (ZMaybeNil(first1, rest1), ZMaybeNil(first2, rest2)) => ZMaybeNil(lat.join(first1, first2), (rest1 | rest2).asInstanceOf[ZListElement[T]])
     case (ZMaybeNil(_, _), ZNil()) => this
     case (ZNil(), ZMaybeNil(_, _)) => other
     case (ZNil(), ZNil()) => ZNil()
@@ -42,8 +40,8 @@ abstract class ZList[T] {
     case ZTop() => lat.top
     case ZUnknownLength(elems) => elems
     case ZBottom() => lat.bottom
-    case ZCons(head, tail) => lat.join(head, tail.joinInner)
-    case ZMaybeNil(head, tail) => lat.join(head, tail.joinInner)
+    case ZCons(first, rest) => lat.join(first, rest.joinInner)
+    case ZMaybeNil(first, rest) => lat.join(first, rest.joinInner)
     case ZNil() => lat.bottom
   }
 
@@ -54,27 +52,27 @@ abstract class ZList[T] {
     case (_, ZTop()) => this
     case (ZUnknownLength(elems), _) => other.meetInner(elems)
     case (_, ZUnknownLength(elems)) => this.meetInner(elems)
-    case (ZCons(head1, tail1), ZCons(head2, tail2)) => (lat.meet(head1, head2), tail1 & tail2) match {
+    case (ZCons(first1, rest1), ZCons(first2, rest2)) => (lat.meet(first1, first2), rest1 & rest2) match {
       case (_, ZBottom()) => ZBottom()
-      case (head, _) if ZList.isBottom(head) => ZBottom()
-      case (head, tail: ZListElement[T]) => ZCons(head, tail)
+      case (first, _) if ZList.isBottom(first) => ZBottom()
+      case (first, rest: ZListElement[T]) => ZCons(first, rest)
     }
-    case (ZCons(head1, tail1), ZMaybeNil(head2, tail2)) => (lat.meet(head1, head2), tail1 & tail2) match {
+    case (ZCons(first1, rest1), ZMaybeNil(first2, rest2)) => (lat.meet(first1, first2), rest1 & rest2) match {
       case (_, ZBottom()) => ZBottom()
-      case (head, _) if ZList.isBottom(head) => ZBottom()
-      case (head, tail: ZListElement[T]) => ZCons(head, tail)
+      case (first, _) if ZList.isBottom(first) => ZBottom()
+      case (first, rest: ZListElement[T]) => ZCons(first, rest)
     }
-    case (ZMaybeNil(head1, tail1), ZCons(head2, tail2)) => (lat.meet(head1, head2), tail1 & tail2) match {
+    case (ZMaybeNil(first1, rest1), ZCons(first2, rest2)) => (lat.meet(first1, first2), rest1 & rest2) match {
       case (_, ZBottom()) => ZBottom()
-      case (head, _) if ZList.isBottom(head) => ZBottom()
-      case (head, tail: ZListElement[T]) => ZCons(head, tail)
+      case (first, _) if ZList.isBottom(first) => ZBottom()
+      case (first, rest: ZListElement[T]) => ZCons(first, rest)
     }
     case (ZCons(_, _), ZNil()) => ZBottom()
     case (ZNil(), ZCons(_, _)) => ZBottom()
-    case (ZMaybeNil(head1, tail1), ZMaybeNil(head2, tail2)) => (lat.meet(head1, head2), tail1 & tail2) match {
+    case (ZMaybeNil(first1, rest1), ZMaybeNil(first2, rest2)) => (lat.meet(first1, first2), rest1 & rest2) match {
       case (_, ZBottom()) => ZBottom()
-      case (head, _) if ZList.isBottom(head) => ZBottom()
-      case (head, tail: ZListElement[T]) => ZMaybeNil(head, tail)
+      case (first, _) if ZList.isBottom(first) => ZBottom()
+      case (first, rest: ZListElement[T]) => ZMaybeNil(first, rest)
     }
     case (ZMaybeNil(_, _), ZNil()) => other
     case (ZNil(), ZMaybeNil(_, _)) => this
@@ -90,13 +88,13 @@ abstract class ZList[T] {
     case ZBottom() => ZBottom()
     case ZCons(h, t) => (lat.meet(h, elems), t.meetInner(elems)) match {
       case (_, ZBottom()) => ZBottom()
-      case (head, _) if ZList.isBottom(head) => ZBottom()
-      case (head, tail: ZListElement[T]) => ZCons(head, tail)
+      case (first, _) if ZList.isBottom(first) => ZBottom()
+      case (first, rest: ZListElement[T]) => ZCons(first, rest)
     }
     case ZMaybeNil(h, t) => (lat.meet(h, elems), t.meetInner(elems)) match {
       case (_, ZBottom()) => ZNil()
-      case (head, _) if ZList.isBottom(head) => ZNil()
-      case (head, tail: ZListElement[T]) => ZMaybeNil(head, tail)
+      case (first, _) if ZList.isBottom(first) => ZNil()
+      case (first, rest: ZListElement[T]) => ZMaybeNil(first, rest)
     }
     case ZNil() => ZNil()
   }
@@ -109,12 +107,12 @@ abstract class ZList[T] {
     case (ZUnknownLength(elems), _) => false // second argument is not TOP because that was handled in the previous case
     case (ZBottom(), _) => true
     case (_, ZBottom()) => false // first argument is not BOTTOM because that was handled in the previous case
-    case (ZCons(head1, tail1), ZCons(head2, tail2)) => lat.lessThanOrEqual(head1, head2) && tail1 <= tail2
-    case (ZCons(head1, tail1), ZMaybeNil(head2, tail2)) => lat.lessThanOrEqual(head1, head2) && tail1 <= tail2
-    case (ZMaybeNil(head1, tail1), ZCons(head2, tail2)) => false
-    case (ZCons(head1, tail1), ZNil()) => false
-    case (ZNil(), ZCons(head1, tail1)) => false
-    case (ZMaybeNil(head1, tail1), ZMaybeNil(head2, tail2)) => lat.lessThanOrEqual(head1, head2) && tail1 <= tail2
+    case (ZCons(first1, rest1), ZCons(first2, rest2)) => lat.lessThanOrEqual(first1, first2) && rest1 <= rest2
+    case (ZCons(first1, rest1), ZMaybeNil(first2, rest2)) => lat.lessThanOrEqual(first1, first2) && rest1 <= rest2
+    case (ZMaybeNil(first1, rest1), ZCons(first2, rest2)) => false
+    case (ZCons(first1, rest1), ZNil()) => false
+    case (ZNil(), ZCons(first1, rest1)) => false
+    case (ZMaybeNil(first1, rest1), ZMaybeNil(first2, rest2)) => lat.lessThanOrEqual(first1, first2) && rest1 <= rest2
     case (ZMaybeNil(_, _), ZNil()) => false
     case (ZNil(), ZMaybeNil(_, _)) => true
     case (ZNil(), ZNil()) => true
@@ -127,12 +125,12 @@ abstract class ZList[T] {
       case ZBottom() => ZBottom()
       case ZTop() => ZTop()
       case ZUnknownLength(elems) => ZUnknownLength(f(elems))
-      case ZCons(head, tail) => (f(head), tail.map(f)) match {
+      case ZCons(first, rest) => (f(first), rest.map(f)) match {
         case (_, ZBottom()) => ZBottom()
         case (h, _) if isBottom(h) => ZBottom()
         case (h, t: ZListElement[R]) => ZCons(h, t)
       }
-      case ZMaybeNil(head, tail) => (f(head), tail.map(f)) match {
+      case ZMaybeNil(first, rest) => (f(first), rest.map(f)) match {
         case (_, ZBottom()) => ZBottom()
         case (h, _) if isBottom(h) => ZBottom()
         case (h, t: ZListElement[R]) => ZMaybeNil(h, t)
@@ -145,8 +143,8 @@ abstract class ZList[T] {
     case ZBottom() => lat.bottom
     case ZTop() => element
     case ZUnknownLength(elems) => lat.meet(element, elems)
-    case ZCons(head, tail) => lat.join(lat.meet(head, element), tail.contains(element))
-    case ZMaybeNil(head, tail) => lat.join(lat.meet(head, element), tail.contains(element))
+    case ZCons(first, rest) => lat.join(lat.meet(first, element), rest.contains(element))
+    case ZMaybeNil(first, rest) => lat.join(lat.meet(first, element), rest.contains(element))
     case ZNil() => lat.bottom
   }
 
@@ -155,8 +153,8 @@ abstract class ZList[T] {
     case ZBottom() => lat.bottom
     case ZTop() => lat.top
     case ZUnknownLength(elems) => elems
-    case ZCons(head, tail) => head
-    case ZMaybeNil(head, tail) => head
+    case ZCons(first, rest) => first
+    case ZMaybeNil(first, rest) => first
     case ZNil() => lat.bottom
   }
 
@@ -167,24 +165,24 @@ abstract class ZList[T] {
     def appendElement(elem: ZListElement[T]): Unit = elem match {
       case ZTop() => b.append("TOP]")
       case ZUnknownLength(elems) => b.append(elems.toString).append("*]")
-      case ZCons(head, ZNil()) => b.append(head.toString).append("]")
-      case ZCons(head, tail: ZMaybeNil[T]) =>
-        b.append(head.toString).append("]?,")
-        appendElement(tail)
-      case ZCons(head, tail) =>
-        b.append(head.toString).append(",")
-        appendElement(tail)
-      case ZMaybeNil(head, ZNil()) => b.append(head.toString).append("]")
-      case ZMaybeNil(head, tail: ZMaybeNil[T]) =>
-        b.append(head.toString).append("]?,")
-        appendElement(tail)
-      case ZMaybeNil(head, tail) =>
-        b.append(head.toString).append(",")
-        appendElement(tail)
+      case ZCons(first, ZNil()) => b.append(first.toString).append("]")
+      case ZCons(first, rest: ZMaybeNil[T]) =>
+        b.append(first.toString).append("]?,")
+        appendElement(rest)
+      case ZCons(first, rest) =>
+        b.append(first.toString).append(",")
+        appendElement(rest)
+      case ZMaybeNil(first, ZNil()) => b.append(first.toString).append("]")
+      case ZMaybeNil(first, rest: ZMaybeNil[T]) =>
+        b.append(first.toString).append("]?,")
+        appendElement(rest)
+      case ZMaybeNil(first, rest) =>
+        b.append(first.toString).append(",")
+        appendElement(rest)
       case ZNil() => b.append("]")
     }
     appendElement(this.asInstanceOf[ZListElement[T]])
-    b.toString
+    b.toString()
   }
 }
 
@@ -192,8 +190,8 @@ case class ZBottom[T]() extends ZList[T] // single element can not be BOTTOM, on
 abstract class ZListElement[T] extends ZList[T]
 case class ZTop[T]() extends ZListElement[T]
 case class ZUnknownLength[T](elems: T) extends ZListElement[T] // elems should never be TOP
-case class ZCons[T](head: T, tail: ZListElement[T]) extends ZListElement[T]
-case class ZMaybeNil[T](head: T, tail: ZListElement[T]) extends ZListElement[T]
+case class ZCons[T](first: T, rest: ZListElement[T]) extends ZListElement[T]
+case class ZMaybeNil[T](first: T, rest: ZListElement[T]) extends ZListElement[T]
 case class ZNil[T]() extends ZListElement[T]
 
 object ZList {
@@ -201,12 +199,12 @@ object ZList {
   private def isTop[T](v: T)(implicit lat: Lattice[T]) = lat.lessThanOrEqual(lat.top, v)
 
   def apply[T](list: List[T])(implicit lat: Lattice[T]): ZList[T] = list match {
-    case head :: rest if isBottom(head) => ZBottom()
-    case head :: rest if isTop(head) => ZTop()
-    case head :: rest => apply(rest) match {
+    case first :: rest if isBottom(first) => ZBottom()
+    case first :: rest if isTop(first) => ZTop()
+    case first :: rest => apply(rest) match {
       case ZBottom() => ZBottom()
       case ZTop() => ZTop()
-      case liftedRest => ZCons(head, liftedRest.asInstanceOf[ZListElement[T]])
+      case liftedRest => ZCons(first, liftedRest.asInstanceOf[ZListElement[T]])
     }
     case Nil => ZNil()
   }

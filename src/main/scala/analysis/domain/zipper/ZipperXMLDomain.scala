@@ -201,10 +201,10 @@ object ZipperXMLDomain {
       case ZTop() => (ZTop(), ZTop()) // TODO: this can be more specific using ZUnknownLength
       case ZUnknownLength(elems) =>
         (ZUnknownLength(isAttribute(elems)._1), ZUnknownLength(join(List(isElement(elems)._1, isTextNode(elems)._1, isComment(elems)._1))))
-      case ZCons(head, tail) => // TODO: this can be more specific (use ZCons but make first result MaybeNil if there is something that's not an attribute)
+      case ZCons(first, rest) => // TODO: this can be more specific (use ZCons but make first result MaybeNil if there is something that's not an attribute)
         val elems: N = list.joinInner
         (ZUnknownLength(isAttribute(elems)._1), ZUnknownLength(join(List(isElement(elems)._1, isTextNode(elems)._1, isComment(elems)._1))))
-      case ZMaybeNil(head, tail) => // TODO: see above
+      case ZMaybeNil(first, rest) => // TODO: see above
         val elems: N = list.joinInner
         (ZUnknownLength(isAttribute(elems)._1), ZUnknownLength(join(List(isElement(elems)._1, isTextNode(elems)._1, isComment(elems)._1))))
       case ZNil() => (ZNil(), ZNil())
@@ -216,10 +216,10 @@ object ZipperXMLDomain {
         case ZTop() => top
         case ZBottom() => bottom
         case ZUnknownLength(elems) => elems
-        case ZCons(head, ZCons(_, _)) => bottom // list with more than one element
-        case ZCons(head, _) => head // list with at least one element
-        case ZMaybeNil(head, ZCons(_, _)) => bottom // list with 0 or more than one element (at least 2)
-        case ZMaybeNil(head, _) => head // list with 0 or more elements (can't know exactly)
+        case ZCons(first, ZCons(_, _)) => bottom // list with more than one element
+        case ZCons(first, _) => first // list with at least one element
+        case ZMaybeNil(first, ZCons(_, _)) => bottom // list with 0 or more than one element (at least 2)
+        case ZMaybeNil(first, _) => first // list with 0 or more elements (can't know exactly)
         case ZNil() => bottom // list with 0 elements
       }
       val (firstChildElement, _) = isElement(firstChild)
@@ -248,10 +248,10 @@ object ZipperXMLDomain {
         case ZBottom() => ZBottom()
         case ZTop() => ZTop()
         case ZUnknownLength(elems) => ZUnknownLength(f(elems, xpathDom.topNumber).joinInner)
-        case ZCons(head, tail) =>
-          f(head, currentIndex) ++ flatMapWithIndexInternal(tail, xpathDom.add(currentIndex, xpathDom.liftNumber(1)), f)
-        case ZMaybeNil(head, tail) =>
-          ZNil() | f(head, currentIndex) ++ flatMapWithIndexInternal(tail, xpathDom.add(currentIndex, xpathDom.liftNumber(1)), f)
+        case ZCons(first, rest) =>
+          f(first, currentIndex) ++ flatMapWithIndexInternal(rest, xpathDom.add(currentIndex, xpathDom.liftNumber(1)), f)
+        case ZMaybeNil(first, rest) =>
+          ZNil() | f(first, currentIndex) ++ flatMapWithIndexInternal(rest, xpathDom.add(currentIndex, xpathDom.liftNumber(1)), f)
         case ZNil() => ZNil()
       }
 
@@ -263,8 +263,8 @@ object ZipperXMLDomain {
       case ZBottom() => xpathDom.bottom
       case ZTop() => xpathDom.topNumber
       case ZUnknownLength(elems) => xpathDom.topNumber
-      case ZCons(head, tail) => xpathDom.add(xpathDom.liftNumber(1), getNodeListSize(tail))
-      case ZMaybeNil(head, tail) => xpathDom.join(xpathDom.liftNumber(0), xpathDom.add(xpathDom.liftNumber(1), getNodeListSize(tail)))
+      case ZCons(first, rest) => xpathDom.add(xpathDom.liftNumber(1), getNodeListSize(rest))
+      case ZMaybeNil(first, rest) => xpathDom.join(xpathDom.liftNumber(0), xpathDom.add(xpathDom.liftNumber(1), getNodeListSize(rest)))
       case ZNil() => xpathDom.liftNumber(0)
     }
 
@@ -432,25 +432,25 @@ object ZipperXMLDomain {
       case ZTop() =>
         ZUnknownLength(predicate(top)._1)
       case ZUnknownLength(elems) => ZUnknownLength(predicate(elems)._1)
-      case ZCons(head, tail) =>
-        val result = predicate(head)._1
-        val tailResult = filter(tail, predicate)
-        if (lessThanOrEqual(head, result)) { // head == result (because predicate application should never yield something greater)
-          ZCons(head, tailResult.asInstanceOf[ZListElement[(S, P)]]) // ... so nothing is filtered out
+      case ZCons(first, rest) =>
+        val result = predicate(first)._1
+        val restResult = filter(rest, predicate)
+        if (lessThanOrEqual(first, result)) { // first == result (because predicate application should never yield something greater)
+          ZCons(first, restResult.asInstanceOf[ZListElement[(S, P)]]) // ... so nothing is filtered out
         } else if (lessThanOrEqual(result, bottom)) { // result == BOTTOM
-          tailResult // current node is filtered out completely
+          restResult // current node is filtered out completely
         } else {
-          tailResult | ZCons(head, tailResult.asInstanceOf[ZListElement[(S, P)]])
+          restResult | ZCons(first, restResult.asInstanceOf[ZListElement[(S, P)]])
         }
-      case ZMaybeNil(head, tail) =>
-        val result = predicate(head)._1
-        val tailResult = filter(tail, predicate)
-        if (lessThanOrEqual(head, result)) { // head == result (because predicate application should never yield something greater)
-          ZMaybeNil(head, tailResult.asInstanceOf[ZListElement[(S, P)]]) // ... so nothing is filtered out
+      case ZMaybeNil(first, rest) =>
+        val result = predicate(first)._1
+        val restResult = filter(rest, predicate)
+        if (lessThanOrEqual(first, result)) { // first == result (because predicate application should never yield something greater)
+          ZMaybeNil(first, restResult.asInstanceOf[ZListElement[(S, P)]]) // ... so nothing is filtered out
         } else if (lessThanOrEqual(result, bottom)) { // result == BOTTOM
-          tailResult // current node is filtered out completely
+          restResult // current node is filtered out completely
         } else {
-          tailResult | ZMaybeNil(head, tailResult.asInstanceOf[ZListElement[(S, P)]])
+          restResult | ZMaybeNil(first, restResult.asInstanceOf[ZListElement[(S, P)]])
         }
       case ZNil() => ZNil()
     }
