@@ -1,0 +1,11 @@
+<html><head><title>Testing XML Example</title></head><body><h1>Persons</h1><ul><li>Smith, John</li><li>Ismincius, Morka</li></ul></body></html>
+
+Subtree(Some(Set(RootNode)),[
+    Subtree(Some(Set(ElementNode(html))),[
+        Subtree(Some(Set(ElementNode(head), ElementNode(body))),[
+            Subtree(Some(Set(ElementNode(title), ElementNode(h1), ElementNode(ul))),[
+                Subtree(Some(Set(TextNode(Testing XML Example), TextNode(Persons), ElementNode(li))),[Subtree(None,[])*])*
+            ])*
+        ])*
+    ])
+])

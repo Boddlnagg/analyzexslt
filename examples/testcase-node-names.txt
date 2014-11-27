@@ -1,0 +1,17 @@
+Result:
+Subtree(Some(Set(RootNode)),[
+    Subtree(Some(Set(ElementNode(result), ElementNode(element))),[
+        Subtree(None,[])*
+    ])
+]);
+
+Expected:
+Subtree(Some(Set(RootNode)),[
+    Subtree(Some(Set(ElementNode(result))),[
+        Subtree(Some(Set(ElementNode(element))),[Subtree(Some(Set(AttributeNode(name,a))),[])]),
+        Subtree(Some(Set(ElementNode(element))),[Subtree(Some(Set(AttributeNode(name,b))),[])]),
+        Subtree(Some(Set(ElementNode(element))),[Subtree(Some(Set(AttributeNode(name,b))),[])]),
+        Subtree(Some(Set(ElementNode(element))),[Subtree(Some(Set(AttributeNode(name,b))),[])]),
+        Subtree(Some(Set(ElementNode(element))),[Subtree(Some(Set(AttributeNode(name,a))),[])])
+    ])
+])

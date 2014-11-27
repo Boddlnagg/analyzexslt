@@ -1,0 +1,24 @@
+Result:
+Subtree(Some(Set(RootNode)),[
+    Subtree(Some(Set(ElementNode(root), ElementNode(result))),[
+        Subtree(
+            Some(Set(ElementNode(elem), AttributeNode(attr1,val1), ElementNode(childaxis), TextNode(Some Text), ElementNode(attributeaxis), AttributeNode(attr2,val2))),
+            [
+                Subtree(Some(Set(TextNode(), ElementNode(elem), TextNode(val1), TextNode(Some Text), TextNode(val2))),[])*
+            ]
+        )*
+    ])
+])
+
+Expected:
+Subtree(Some(Set(RootNode)),[
+    Subtree(Some(Set(ElementNode(result))),[
+        Subtree(Some(Set(ElementNode(childaxis))),[
+            Subtree(Some(Set(ElementNode(elem))),[]),
+            Subtree(Some(Set(TextNode(Some Text))),[])
+        ]),
+        Subtree(Some(Set(ElementNode(attributeaxis))),[
+            Subtree(Some(Set(TextNode(val1val2))),[])
+        ])
+    ])
+])

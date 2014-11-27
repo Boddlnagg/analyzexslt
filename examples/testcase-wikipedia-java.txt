@@ -1,0 +1,17 @@
+Result:
+Subtree(Some(Set(RootNode)),[
+    Subtree(Some(Set(ElementNode(reRoot))),[
+        Subtree(Some(Set(ElementNode(reNode))),[
+            Subtree(Some(Set(TextNode(hello), TextNode(), TextNode( world))),[])*
+        ])*
+    ])
+])
+
+Expected:
+Subtree(Some(Set(RootNode)),[
+    Subtree(Some(Set(ElementNode(reRoot))),[
+        Subtree(Some(Set(ElementNode(reNode))),[
+            Subtree(Some(Set(TextNode(hello world))),[])
+        ])
+    ])
+])
