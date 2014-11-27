@@ -2,6 +2,7 @@ package evaluation
 
 import analysis.domain.zipper.{ZipperXMLDomain, ZipperDomain}
 import analysis.domain.XMLParser
+import data.TestData
 import org.scalatest.FunSuite
 
 import scala.xml.Elem
@@ -34,17 +35,21 @@ class ZipperTransformSuite extends FunSuite {
     assertResult(xmlDom.bottom) { transform(xslt) }
   }
 
-  /*test("No matching templates") {
+  test("No matching template (for /)") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match="/foo"><bar/></xsl:template>
       </xsl:stylesheet>
 
     // no template matches the root node (/), because built-in templates are disabled, so this should evaluate to BOTTOM
-    assertResult(Some(Set())) { transform(xslt) }
+    assertResult(xmlDom.bottom) { transform(xslt) }
+  }
+
+  // TODO: fix this test
+  /*test("Wikipedia (XSLT #2 simplified)") {
+    assertResult(???) { transform(TestData.WikipediaStylesheet2) }
   }*/
 
-  /* TODO: this doesn't currently terminate because of endless recursion
   test("Simple recursive template") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -58,7 +63,6 @@ class ZipperTransformSuite extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    assertResult(Some(Set(XMLParser.parseDocument(<result><child/></result>)))) { transform(xslt) }
+    assertResult(parser.parseDocument(<result><child/></result>)) { transform(xslt) }
   }
-  */
 }
