@@ -2,6 +2,8 @@ package analysis.domain.zipper
 
 import analysis.domain.Lattice
 
+// TODO: implement toString [a,b]?,c,d...] (ZUnknownLength -> ..., ZTop -> ???)
+
 abstract class ZList[T] {
   def ++(other: ZList[T])(implicit lat: Lattice[T]): ZList[T] = (this, other) match {
     case (ZBottom(), _) | (_, ZBottom()) => ZBottom()

@@ -9,13 +9,14 @@ object ZipperXMLDomain {
   type N = (S, P) // a node is a subtree and a path
   type L = ZList[N]
 
-  abstract class NodeDescriptor // TODO: add AnyElementNode (`*`), and similar ...
+  abstract class NodeDescriptor // TODO: add AnyElementNode (`*`), and similar ... (don't need Option[...] any more)
   case object RootNode extends NodeDescriptor
   case class ElementNode(name: String) extends NodeDescriptor
   case class AttributeNode(name: String, value: String) extends NodeDescriptor
   case class TextNode(value: String) extends NodeDescriptor
   case class CommentNode(value: String) extends NodeDescriptor
 
+  // TODO: seperate attributes and children (also while evaluating templates)
   case class ZipperTree(desc: Option[Set[NodeDescriptor]], children: ZList[ZipperTree])
 
   implicit object ZipperTreeLattice extends Lattice[ZipperTree] {
@@ -78,6 +79,7 @@ object ZipperXMLDomain {
   /** Removes impossible elements (where Path and Subtree descriptors don't agree) */
   private def normalize(node: N) = {
     // TODO: further refinements (e.g. if the descriptor only describes nodes that can't have children, set children to ZNil)
+    //       or more general: eliminate all children that can not have the descriptor as their parent (recursively?)
     val (ZipperTree(desc, children), path) = node
     if (children.isInstanceOf[ZBottom[ZipperTree]]) {
       NodeLattice.bottom
