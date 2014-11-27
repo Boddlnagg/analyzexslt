@@ -25,7 +25,7 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
         case None => None // TODO: AnyTextNode node descriptor
         case Some(s) => Some(s.map(text => TextNode(text)))
       }
-      val tree = ZipperTree(desc, ZNil()) // text nodes have no children
+      val tree = Subtree(desc, ZNil()) // text nodes have no children
       val path = Set[Path](DescendantStep(AnyTextNode, RootPath))
       (tree, path)
     }
@@ -38,7 +38,7 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
         case None => None // TODO: AnyAttribute node descriptor
         case Some(s) => Some(s.map(text => AttributeNode(name, text)))
       }
-      val tree = ZipperTree(desc, ZNil()) // attribute nodes have no children
+      val tree = Subtree(desc, ZNil()) // attribute nodes have no children
       val path = Set[Path](DescendantStep(NamedAttribute(name), RootPath))
       (tree, path)
     }
@@ -69,8 +69,8 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
     def getStringValue(node: N): Option[Set[String]] = {
       // TODO: this suffers from code duplication with XMLDomain.getStringValue()
       val lat = Lattice.createFromOptionalSet[String]
-      def getStringValueFromSubtree(tree: ZipperTree): Option[Set[String]] = {
-        val ZipperTree(desc, children) = tree
+      def getStringValueFromSubtree(tree: Subtree): Option[Set[String]] = {
+        val Subtree(desc, children) = tree
         desc match {
           case None => None
           case Some(s) => lat.joinAll(s.map {
