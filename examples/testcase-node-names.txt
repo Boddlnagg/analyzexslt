@@ -1,13 +1,15 @@
 Result:
 Subtree(Some(Set(RootNode)),[
-    Subtree(Some(Set(ElementNode(result), ElementNode(element))),[
+    Subtree(Some(Set(ElementNode(element), ElementNode(result))),[
         Subtree(None,[])*
     ])
-]);
+])
 
 Expected:
 Subtree(Some(Set(RootNode)),[
     Subtree(Some(Set(ElementNode(result))),[
+        Subtree(Some(Set(ElementNode(attribute))),[Subtree(Some(Set(AttributeNode(name,x))),[])]),
+        Subtree(Some(Set(ElementNode(attribute))),[Subtree(Some(Set(AttributeNode(name,y))),[])]),
         Subtree(Some(Set(ElementNode(element))),[Subtree(Some(Set(AttributeNode(name,a))),[])]),
         Subtree(Some(Set(ElementNode(element))),[Subtree(Some(Set(AttributeNode(name,b))),[])]),
         Subtree(Some(Set(ElementNode(element))),[Subtree(Some(Set(AttributeNode(name,b))),[])]),
@@ -15,3 +17,5 @@ Subtree(Some(Set(RootNode)),[
         Subtree(Some(Set(ElementNode(element))),[Subtree(Some(Set(AttributeNode(name,a))),[])])
     ])
 ])
+
+<result><element name="a"/><element name="b"/><element name="b"/><element name="b"/><element name="a"/></result>

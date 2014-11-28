@@ -77,7 +77,7 @@ object ZipperXMLDomain {
   }
 
   /** Removes impossible elements (where Path and Subtree descriptors don't agree) */
-  private def normalize(node: N) = {
+  private def normalize(node: N): N = {
     // TODO: further refinements (e.g. if the descriptor only describes nodes that can't have children, set children to ZNil)
     //       or more general: eliminate all children that can not have the descriptor as their parent (recursively?)
     val (Subtree(desc, children), path) = node
@@ -88,7 +88,12 @@ object ZipperXMLDomain {
       if (meetDesc == Some(Set())) { // BOTTOM
         NodeLattice.bottom // necessary to make children BOTTOM also (which would not happen in the below case)
       } else {
-        (Subtree(meetDesc, children), latP.meet(getPathsFromDescriptors(desc), path))
+        val meetPath = latP.meet(getPathsFromDescriptors(desc), path)
+        if (meetPath == Set()) {
+          NodeLattice.bottom
+        } else {
+          (Subtree(meetDesc, children), meetPath)
+        }
       }
     }
   }
@@ -138,8 +143,9 @@ object ZipperXMLDomain {
       * The output is created bottom-up, so children are always created before their parent nodes.
       */
     override def createElement(name: String, attributes: L, children: L): N = {
-      // TODO: attributes should be a map (name -> value), not a list
+      // TODO: attributes should be a map (name -> value), not a list => completely separate attributes and other children
       // TODO: empty text nodes should be filtered out and multiple consecutive ones should be merged
+      // TODO: map is probably used incorrectly here
       val tree = Subtree(Some(Set(ElementNode(name))), attributes.map(_._1) ++ children.map(_._1))
       val path = Set[Path](DescendantStep(AnyElement, RootPath))
       (tree, path)
@@ -165,8 +171,9 @@ object ZipperXMLDomain {
     override def getAttributes(node: N): L = {
       val (Subtree(desc, children), path) = node
       val attributePath: Set[Path] = latP.getAttributes(path).joinInner
+      // TODO: map is totally incorrect here
       children.map(tree => normalize(tree, attributePath)) // normalize throws out subtrees that are not attributes (TODO: check that)
-    }
+    } // TODO: separate attributes from other children completely
 
     /** Get the list of children of a given node.
       * Root nodes have a single child, element nodes have an arbitrary number of children.
@@ -174,6 +181,7 @@ object ZipperXMLDomain {
     override def getChildren(node: N): L = {
       val (Subtree(desc, children), path) = node
       val childrenPath: Set[Path] = latP.getChildren(path).joinInner
+      // TODO: map is totally incorrect here
       children.map(tree => normalize(tree, childrenPath)) // normalize throws out subtrees that are attributes (TODO: check that)
     }
 

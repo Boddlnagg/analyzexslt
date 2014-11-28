@@ -118,6 +118,9 @@ abstract class ZList[T] {
     case (ZNil(), ZNil()) => true
   }
 
+  /** This maps every node of the list using a given function.
+    * As soon as the function returns BOTTOM for one input node, the resulting list will be BOTTOM. */
+  // TODO: check if this function is only used correctly
   def map[R](f: T => R)(implicit lat: Lattice[R]): ZList[R] = {
     def isBottom(v: R) = lat.lessThanOrEqual(v, lat.bottom)
 
