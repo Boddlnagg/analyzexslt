@@ -1,6 +1,8 @@
 package analysis.domain.powerset
 
 import analysis.domain.{XMLDomain, XPathDomain}
+import analysis.domain.Lattice
+import analysis.domain.Lattice._
 import xpath._
 
 case class TypedXPathValue[L](bool: Set[Boolean], // None represents the infinite set, Some represents finite sets
@@ -15,36 +17,28 @@ class TypedPowersetXPathDomain[L] {
   trait D[N] extends XPathDomain[V, N, L] {
     val xmlDom: XMLDomain[N, L, V]
 
-    override def top: V = TypedXPathValue(Set(true, false), None, None, xmlDom.topList)
-    override def bottom: V = TypedXPathValue(Set(), bottomComponent, bottomComponent, xmlDom.bottomList)
+    private val latBooleans = BooleanSetLattice
+    private val latNumbers = Lattice.createFromOptionalSet[Double]
+    private val latStrings = Lattice.createFromOptionalSet[String]
 
-    protected val BOTTOM_NUM: Option[Set[Double]] = Some(Set())
-    protected val BOTTOM_STR: Option[Set[String]] = Some(Set())
+    override def top: V = TypedXPathValue(latBooleans.top, latNumbers.top, latStrings.top, xmlDom.topList)
+    override def bottom: V = TypedXPathValue(latBooleans.bottom, latNumbers.bottom, latStrings.bottom, xmlDom.bottomList)
 
-    protected def fromBooleans(bool: Set[Boolean]) = TypedXPathValue(bool, bottomComponent[Double], bottomComponent[String], xmlDom.bottomList)
-    protected def fromNumbers(num: Option[Set[Double]]) = TypedXPathValue(Set(), num, bottomComponent[String], xmlDom.bottomList)
-    protected def fromStrings(str: Option[Set[String]]) = TypedXPathValue(Set(), bottomComponent[Double], str, xmlDom.bottomList)
+    // "constants" to use for pattern matching
+    protected val BOTTOM_NUM: Option[Set[Double]] = latNumbers.bottom
+    protected val BOTTOM_STR: Option[Set[String]] = latStrings.bottom
+    protected val TOP_BOOL: Set[Boolean] = latBooleans.top
+
+    protected def fromBooleans(bool: Set[Boolean]) = TypedXPathValue(bool, latNumbers.bottom, latStrings.bottom, xmlDom.bottomList)
+    protected def fromNumbers(num: Option[Set[Double]]) = TypedXPathValue(latBooleans.bottom, num, latStrings.bottom, xmlDom.bottomList)
+    protected def fromStrings(str: Option[Set[String]]) = TypedXPathValue(latBooleans.bottom, latNumbers.bottom, str, xmlDom.bottomList)
 
     override def join(v1: V, v2: V): V = TypedXPathValue(
-      v1.bool | v2.bool,
-      joinComponent(v1.num, v2.num),
-      joinComponent(v1.str, v2.str),
+      latBooleans.join(v1.bool, v2.bool),
+      latNumbers.join(v1.num, v2.num),
+      latStrings.join(v1.str, v2.str),
       xmlDom.joinList(v1.nodeSet, v2.nodeSet) // TODO: need to keep list sorted explicitly?
     )
-
-    protected def bottomComponent[T]: Option[Set[T]] = Some(Set())
-
-    protected def joinComponent[T](lhs: Option[Set[T]], rhs: Option[Set[T]]): Option[Set[T]] = (lhs, rhs) match {
-      case (None, _) => None
-      case (_, None) => None
-      case (Some(s1), Some(s2)) => Some(s1 | s2)
-    }
-
-    protected def lessThanOrEqualComponent[T](lhs: Option[Set[T]], rhs: Option[Set[T]]): Boolean = (lhs, rhs) match {
-      case (_, None) => true
-      case (None, Some(_)) => false
-      case (Some(s1), Some(s2)) => s1.subsetOf(s2)
-    }
 
     /*override def meet(v1: V, v2: V): V = (v1, v2) match {
       case (None, _) => None
@@ -54,14 +48,14 @@ class TypedPowersetXPathDomain[L] {
 
     override def lessThanOrEqual(v1: V, v2: V): Boolean = {
       // lessThanOrEqual must hold for all components
-      v1.bool.subsetOf(v2.bool) &&
-      lessThanOrEqualComponent(v1.num, v2.num) &&
-      lessThanOrEqualComponent(v1.str, v2.str) &&
+      latBooleans.lessThanOrEqual(v1.bool, v2.bool) &&
+      latNumbers.lessThanOrEqual(v1.num, v2.num) &&
+      latStrings.lessThanOrEqual(v1.str, v2.str) &&
       xmlDom.lessThanOrEqualList(v1.nodeSet, v2.nodeSet)
     }
 
-    override def topNumber: V = TypedXPathValue(Set(), None, bottomComponent, xmlDom.topList)
-    override def topString: V = TypedXPathValue(Set(), bottomComponent, None, xmlDom.bottomList)
+    override def topNumber: V = TypedXPathValue(latBooleans.bottom, None, latStrings.bottom, xmlDom.bottomList)
+    override def topString: V = TypedXPathValue(latBooleans.bottom, latNumbers.bottom, None, xmlDom.bottomList)
 
     protected def toNumberValueInternal(v: V): Option[Set[Double]] = {
       def stringToNumber(str: String): Double =
@@ -84,13 +78,13 @@ class TypedPowersetXPathDomain[L] {
     }
 
     protected def toBooleanValueInternal(v: V): Set[Boolean] = {
-      if (v.bool == Set(true, false)) Set(true, false) // boolean part is already TOP
+      if (v.bool == TOP_BOOL) TOP_BOOL // boolean part is already TOP
       val TypedXPathValue(_, nodeListSize, _, _) = xmlDom.getNodeListSize(v.nodeSet)
 
       (v.str, v.num, nodeListSize) match {
-        case (None, _, _) => Set(true, false)
-        case (_, None, _) => Set(true, false)
-        case (_, _, None) => Set(true, false)
+        case (None, _, _) => TOP_BOOL
+        case (_, None, _) => TOP_BOOL
+        case (_, _, None) => TOP_BOOL
         case (Some(str), Some(num), Some(sizes)) =>
           val numComponents = num.map(n => n == 0 || n.isNaN)
           val strComponents = str.map(s => s.length > 0)
@@ -199,7 +193,7 @@ class TypedPowersetXPathDomain[L] {
               compareRelationalBooleans(left.bool, toBooleanValueInternal(fromStrings(right.str))) |
               compareRelationalBooleans(toBooleanValueInternal(fromNumbers(left.num)), right.bool) |
               compareRelationalBooleans(toBooleanValueInternal(fromStrings(left.str)), right.bool) |
-              // compare both as numbers if at least ono of them is a number (and none is a boolean)
+              // compare both as numbers if at least one of them is a number (and none is a boolean)
               compareRelationalNumbers(left.num, right.num, EqualsOperator) |
               compareRelationalNumbers(toNumberValueInternal(fromStrings(left.str)), right.num, EqualsOperator) |
               compareRelationalNumbers(left.num, toNumberValueInternal(fromStrings(right.str)), EqualsOperator) |
@@ -222,21 +216,18 @@ class TypedPowersetXPathDomain[L] {
     override def toNumberValue(v: V): V = fromNumbers(toNumberValueInternal(v))
     override def toBooleanValue(v: V): V = fromBooleans(toBooleanValueInternal(v))
 
-    override def liftLiteral(lit: String): V =
-      TypedXPathValue(Set(), bottomComponent[Double], Some(Set(lit)), xmlDom.bottomList)
+    override def liftLiteral(lit: String): V = fromStrings(Some(Set(lit)))
 
-    override def liftNumber(num: Double): V =
-      TypedXPathValue(Set(), Some(Set(num)), bottomComponent[String], xmlDom.bottomList)
+    override def liftNumber(num: Double): V = fromNumbers(Some(Set(num)))
 
-    override def liftBoolean(bool: Boolean): V =
-      TypedXPathValue(Set(bool), bottomComponent[Double], bottomComponent[String], xmlDom.bottomList)
+    override def liftBoolean(bool: Boolean): V = fromBooleans(Set(bool))
 
     override def nodeSetUnion(left: V, right: V): V = {
       val resultSet = nodeListToSet(xmlDom.concatLists(left.nodeSet, right.nodeSet))
-      TypedXPathValue(Set(), bottomComponent[Double], bottomComponent[String], resultSet)
+      TypedXPathValue(Set(), latNumbers.bottom, latStrings.bottom, resultSet)
     }
 
-    override def toNodeSet(list: L): V = TypedXPathValue(Set(), bottomComponent[Double], bottomComponent[String], nodeListToSet(list))
+    override def toNodeSet(list: L): V = TypedXPathValue(Set(), latNumbers.bottom, latStrings.bottom, nodeListToSet(list))
 
     override def matchNodeSetValues(v: V): (L, V) = (v.nodeSet, TypedXPathValue(v.bool, v.num, v.str, xmlDom.bottomList))
 

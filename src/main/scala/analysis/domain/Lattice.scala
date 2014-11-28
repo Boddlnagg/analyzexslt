@@ -30,6 +30,14 @@ object Lattice {
       case (Some(s1), Some(s2)) => s1.subsetOf(s2)
     }
   }
+
+  implicit object BooleanSetLattice extends Lattice[Set[Boolean]] {
+    override def top: Set[Boolean] = Set(true, false)
+    override def bottom: Set[Boolean] = Set()
+    override def join(left: Set[Boolean], right: Set[Boolean]): Set[Boolean] = left | right
+    override def meet(left: Set[Boolean], right: Set[Boolean]): Set[Boolean] = left & right
+    override def lessThanOrEqual(left: Set[Boolean], right: Set[Boolean]): Boolean = left.subsetOf(right)
+  }
 }
 
 
