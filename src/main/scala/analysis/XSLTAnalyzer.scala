@@ -29,7 +29,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       xmlDom.joinList(templates.map { case (tmpl, specificNode) =>
         val context = AbstractXSLTContext[N, L, V](specificNode, sources, xpathDom.add(index, xpathDom.liftNumber(1)), variables)
         evaluateTemplate(sheet, tmpl, context, params)
-      }.toList)
+      })
     })
   }
 
@@ -130,7 +130,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case ChooseInstruction(branches, otherwise) =>
         val possibleBranches = chooseBranches(branches, otherwise, xsltToXPathContext(context))
         // evaluate all possible branches and join the result lists
-        Left(xmlDom.joinList(possibleBranches.map(br => evaluate(sheet, br, context)).toList))
+        Left(xmlDom.joinList(possibleBranches.map(br => evaluate(sheet, br, context))))
 
     }
   }

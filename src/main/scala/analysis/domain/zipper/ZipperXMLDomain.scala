@@ -105,8 +105,9 @@ object ZipperXMLDomain {
     /** Gets the BOTTOM element for XML nodes. */
     override def bottom: N = NodeLattice.bottom
 
-    /** Get the TOP element for XML node lists.*/
+    /** Get the TOP element for XML node lists. */
     override def topList: L = ZTop()
+
     // TODO: this is currently never used
 
     /** Gets the BOTTOM element for XML node lists. */
@@ -125,11 +126,12 @@ object ZipperXMLDomain {
       * Returns true if n1 < n2 or n1 = n2, false if n1 > n2 or if they are incomparable.
       */
     override def lessThanOrEqual(n1: N, n2: N): Boolean = NodeLattice.lessThanOrEqual(n1, n2)
-    
+
     /** Compares two elements of the lattice of node lists.
       * Returns true if l1 < l2 or l1 = l2, false if l1 > l2 or if they are incomparable.
       */
     override def lessThanOrEqualList(l1: L, l2: L): Boolean = l1 <= l2
+
     // TODO: is this operation really needed (could be replaced with isBottom)?
 
     /** Create an element node with the given name, attributes and children.
@@ -155,6 +157,7 @@ object ZipperXMLDomain {
       val root: P = Set(RootPath)
       normalize(Subtree(latD.meet(desc, getDescriptorsFromPaths(root)), children), latP.meet(path, root))
     }
+
     // TODO: this might be implementable using getParent() and isRoot()
 
     /** Get the list of attributes of a given node.
@@ -171,7 +174,7 @@ object ZipperXMLDomain {
     override def getChildren(node: N): L = {
       val (Subtree(desc, children), path) = node
       val childrenPath: Set[Path] = latP.getChildren(path).joinInner
-      children.map(tree => normalize(tree, childrenPath))// normalize throws out subtrees that are attributes (TODO: check that)
+      children.map(tree => normalize(tree, childrenPath)) // normalize throws out subtrees that are attributes (TODO: check that)
     }
 
     /** Get the parent of given node. If the node has no parent (root node), BOTTOM is returned. */
@@ -196,19 +199,36 @@ object ZipperXMLDomain {
       * the list (as soon as there are other node types in the list, attributes are ignored) and the second result
       * contains all other nodes.
       */
-    override def partitionAttributes(list: L): (L, L) = list match {
+    override def partitionAttributes(list: L): (L, L) = {
+      def createLists(elems: N): (L, L) = {
+        val attrs = isAttribute(elems)._1
+        val children = join(List(isElement(elems)._1, isTextNode(elems)._1, isComment(elems)._1))
+        val attrList: L = if (lessThanOrEqual(attrs, NodeLattice.bottom))
+          ZNil()
+        else if (lessThanOrEqual(NodeLattice.top, attrs))
+          ZTop()
+        else
+          ZUnknownLength(attrs)
+
+        val childList: L = if (lessThanOrEqual(children, NodeLattice.bottom))
+          ZNil()
+        else if (lessThanOrEqual(NodeLattice.top, children))
+          ZTop()
+        else
+          ZUnknownLength(children)
+
+        (attrList, childList)
+    }
+
+    list match {
       case ZBottom() => (ZBottom(), ZBottom())
       case ZTop() => (ZTop(), ZTop()) // TODO: this can be more specific using ZUnknownLength
-      case ZUnknownLength(elems) =>
-        (ZUnknownLength(isAttribute(elems)._1), ZUnknownLength(join(List(isElement(elems)._1, isTextNode(elems)._1, isComment(elems)._1))))
-      case ZCons(first, rest) => // TODO: this can be more specific (use ZCons but make first result MaybeNil if there is something that's not an attribute)
-        val elems: N = list.joinInner
-        (ZUnknownLength(isAttribute(elems)._1), ZUnknownLength(join(List(isElement(elems)._1, isTextNode(elems)._1, isComment(elems)._1))))
-      case ZMaybeNil(first, rest) => // TODO: see above
-        val elems: N = list.joinInner
-        (ZUnknownLength(isAttribute(elems)._1), ZUnknownLength(join(List(isElement(elems)._1, isTextNode(elems)._1, isComment(elems)._1))))
+      case ZUnknownLength(elems) => createLists(elems)
+      case ZCons(first, rest) => createLists(list.joinInner) // TODO: this can be more specific (use ZCons but make first result MaybeNil if there is something that's not an attribute)
+      case ZMaybeNil(first, rest) => createLists(list.joinInner) // TODO: see above
       case ZNil() => (ZNil(), ZNil())
     }
+  }
 
     /** Wraps a list of nodes in a document/root node. Lists that don't have exactly one element evaluate to BOTTOM. */
     override def wrapInRoot(list: L): N = {

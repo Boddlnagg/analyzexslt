@@ -23,11 +23,7 @@ trait XMLDomain[N, L, V] {
   def join(n1: N, n2: N): N
 
   /** Join a list of nodes. The supremum of the empty list is BOTTOM. */
-  def join(nodes: List[N]): N = nodes match {
-    case Nil => bottom
-    case List(node) => node
-    case _ => nodes.reduceLeft(join)
-  }
+  def join(values: Traversable[N]): N = values.fold(bottom)(join)
 
   /** Calculate the meet of two abstract nodes. This is the infimum (greatest lower bound). */
   def meet(n1: N, n2: N): N
@@ -36,11 +32,7 @@ trait XMLDomain[N, L, V] {
   def joinList(l1: L, l2: L): L
 
   /** Join a list of nodes lists. The supremum of the empty list is BOTTOM. */
-  def joinList(lists: List[L]): L = lists match {
-    case Nil => bottomList
-    case List(list) => list
-    case _ => lists.reduceLeft(joinList)
-  }
+  def joinList(lists: Traversable[L]): L = lists.fold(bottomList)(joinList)
 
   /** Compares two elements of the lattice of nodes.
     * TOP is always greater than everything else, BOTTOM is always less than everything else.

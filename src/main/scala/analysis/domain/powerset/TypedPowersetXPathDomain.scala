@@ -61,7 +61,7 @@ class TypedPowersetXPathDomain[L] {
     }
 
     override def topNumber: V = TypedXPathValue(Set(), None, bottomComponent, xmlDom.topList)
-    override def topString: V = TypedXPathValue(Set(), bottomComponent, None, xmlDom.topList)
+    override def topString: V = TypedXPathValue(Set(), bottomComponent, None, xmlDom.bottomList)
 
     protected def toNumberValueInternal(v: V): Option[Set[Double]] = {
       def stringToNumber(str: String): Double =

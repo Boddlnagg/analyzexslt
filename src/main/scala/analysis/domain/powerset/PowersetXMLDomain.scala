@@ -286,7 +286,7 @@ object PowersetXMLDomain {
         val mapped = l.zipWithIndex.map { case (n, i) => f(Some(Set(n)), xpathDom.liftNumber(i)) }
         val flattened = mapped.foldLeft(createEmptyList())((acc, next) => concatLists(acc, next))
         flattened
-      }.toList)
+      })
     }
 
     override def getFirst(list: L): N = list match {
