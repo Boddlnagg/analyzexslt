@@ -132,10 +132,10 @@ object Path {
     protected def meetDescriptor(desc1: PatternStepDescriptor, desc2: PatternStepDescriptor): Option[PatternStepDescriptor] = {
       (desc1, desc2) match {
         case _ if desc1 == desc2 => Some(desc1)
-        case (NamedElement(name), AnyElement) => Some(NamedElement(name))
-        case (AnyElement, NamedElement(name)) => Some(NamedElement(name))
-        case (NamedAttribute(name), AnyAttribute) => Some(NamedAttribute(name))
-        case (AnyAttribute, NamedAttribute(name)) => Some(NamedAttribute(name))
+        case (d@NamedElement(_), AnyElement) => Some(d)
+        case (AnyElement, d@NamedElement(_)) => Some(d)
+        case (d@NamedAttribute(_), AnyAttribute) => Some(d)
+        case (AnyAttribute, d@NamedAttribute(_)) => Some(d)
         case _ => None // represents BOTTOM here
       }
     }
@@ -238,14 +238,14 @@ object Path {
     }
 
     def hasName(node: Set[Path], name: String): (Set[Path], Set[Path]) = (normalize(node.collect {
-      case e@ChildStep(NamedElement(n), _) if name == n => List(e)
-      case ChildStep(AnyElement, p) => List(ChildStep(NamedElement(name), p))
-      case a@ChildStep(NamedAttribute(n), _) if name == n => List(a)
-      case ChildStep(AnyAttribute, p) => List(ChildStep(NamedAttribute(name), p))
-      case e@DescendantStep(NamedElement(n), _) if name == n => List(e)
-      case DescendantStep(AnyElement, p) => List(DescendantStep(NamedElement(name), p))
-      case a@DescendantStep(NamedAttribute(n), _) if name == n => List(a)
-      case DescendantStep(AnyAttribute, p) => List(DescendantStep(NamedAttribute(name), p))
-    }.flatten), node) // TODO: negative result
+      case e@ChildStep(NamedElement(n), _) if name == n => e
+      case ChildStep(AnyElement, p) => ChildStep(NamedElement(name), p)
+      case a@ChildStep(NamedAttribute(n), _) if name == n => a
+      case ChildStep(AnyAttribute, p) => ChildStep(NamedAttribute(name), p)
+      case e@DescendantStep(NamedElement(n), _) if name == n => e
+      case DescendantStep(AnyElement, p) => DescendantStep(NamedElement(name), p)
+      case a@DescendantStep(NamedAttribute(n), _) if name == n => a
+      case DescendantStep(AnyAttribute, p) => DescendantStep(NamedAttribute(name), p)
+    }), node) // TODO: negative result
   }
 }
