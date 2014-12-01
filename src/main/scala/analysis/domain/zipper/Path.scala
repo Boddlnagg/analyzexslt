@@ -2,23 +2,24 @@ package analysis.domain.zipper
 
 import analysis.domain.Lattice
 
-abstract class PatternStepDescriptor
-case object AnyElement extends PatternStepDescriptor {
+abstract class PathStepDescriptor
+
+case object AnyElement extends PathStepDescriptor {
   override def toString = "*"
 }
-case class NamedElement(name: String) extends PatternStepDescriptor {
+case class NamedElement(name: String) extends PathStepDescriptor {
   override def toString = name
 }
-case object AnyAttribute extends PatternStepDescriptor {
+case object AnyAttribute extends PathStepDescriptor {
   override def toString = "@*"
 }
-case class NamedAttribute(name: String) extends PatternStepDescriptor {
+case class NamedAttribute(name: String) extends PathStepDescriptor {
   override def toString = "@" + name
 }
-case object AnyTextNode extends PatternStepDescriptor {
+case object AnyTextNodePath extends PathStepDescriptor {
   override def toString = "text()"
 }
-case object AnyCommentNode extends PatternStepDescriptor {
+case object AnyCommentNodePath extends PathStepDescriptor {
   override def toString = "comment()"
 }
 
@@ -28,14 +29,14 @@ case object RootPath extends Path {
   override def toString = "/"
 }
 
-case class ChildStep(descriptor: PatternStepDescriptor, parent: Path) extends Path {
+case class ChildStep(descriptor: PathStepDescriptor, parent: Path) extends Path {
   override def toString = parent match {
     case RootPath => "/" + descriptor.toString
     case p => p.toString + "/" + descriptor.toString
   }
 }
 
-case class DescendantStep(descriptor: PatternStepDescriptor, ancestor: Path) extends Path {
+case class DescendantStep(descriptor: PathStepDescriptor, ancestor: Path) extends Path {
   override def toString = ancestor match {
     case RootPath => descriptor.toString
     case p => p.toString + "//" + descriptor.toString
@@ -52,8 +53,8 @@ object Path {
 
   private def fromLocationPath(reverseSteps: List[XPathStep], isAbsolute: Boolean): Path = {
     def parseStep(step: XPathStep) = step match {
-      case XPathStep(ChildAxis, CommentNodeTest, Nil) => AnyCommentNode
-      case XPathStep(ChildAxis, TextNodeTest, Nil) => AnyTextNode
+      case XPathStep(ChildAxis, CommentNodeTest, Nil) => AnyCommentNodePath
+      case XPathStep(ChildAxis, TextNodeTest, Nil) => AnyTextNodePath
       case XPathStep(ChildAxis, NameTest("*"), Nil) => AnyElement
       case XPathStep(ChildAxis, NameTest(name), Nil) => NamedElement(name)
       case XPathStep(AttributeAxis, NameTest("*"), Nil) => AnyAttribute
@@ -77,8 +78,8 @@ object Path {
     def top = Set(RootPath,
       DescendantStep(AnyElement, RootPath),
       DescendantStep(AnyAttribute, RootPath),
-      DescendantStep(AnyCommentNode, RootPath),
-      DescendantStep(AnyTextNode, RootPath))
+      DescendantStep(AnyCommentNodePath, RootPath),
+      DescendantStep(AnyTextNodePath, RootPath))
 
     def bottom = Set()
 
@@ -129,7 +130,7 @@ object Path {
       case _ => Set() // mix of Root and Step -> BOTTOM
     }
 
-    protected def meetDescriptor(desc1: PatternStepDescriptor, desc2: PatternStepDescriptor): Option[PatternStepDescriptor] = {
+    protected def meetDescriptor(desc1: PathStepDescriptor, desc2: PathStepDescriptor): Option[PathStepDescriptor] = {
       (desc1, desc2) match {
         case _ if desc1 == desc2 => Some(desc1)
         case (d@NamedElement(_), AnyElement) => Some(d)
@@ -159,7 +160,7 @@ object Path {
       case _ => false // mix of Root and Step
     }
 
-    protected def lessThanOrEqualDescriptor(desc1: PatternStepDescriptor, desc2: PatternStepDescriptor): Boolean = {
+    protected def lessThanOrEqualDescriptor(desc1: PathStepDescriptor, desc2: PathStepDescriptor): Boolean = {
       (desc1, desc2) match {
         case _ if desc1 == desc2 => true // equal
         case (NamedElement(_), AnyElement) => true // less than
@@ -181,10 +182,10 @@ object Path {
     }.flatten)
 
     def getChildren(path: Set[Path]): ZList[Set[Path]] = ZList.join(path.map {
-      case e@ChildStep(AnyElement, _) => ZUnknownLength(Set[Path](ChildStep(AnyElement, e), ChildStep(AnyTextNode, e), ChildStep(AnyCommentNode, e)))
-      case e@ChildStep(NamedElement(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyElement, e), ChildStep(AnyTextNode, e), ChildStep(AnyCommentNode, e)))
-      case e@DescendantStep(AnyElement, _) => ZUnknownLength(Set[Path](ChildStep(AnyElement, e), ChildStep(AnyTextNode, e), ChildStep(AnyCommentNode, e)))
-      case e@DescendantStep(NamedElement(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyElement, e), ChildStep(AnyTextNode, e), ChildStep(AnyCommentNode, e)))
+      case e@ChildStep(AnyElement, _) => ZUnknownLength(Set[Path](ChildStep(AnyElement, e), ChildStep(AnyTextNodePath, e), ChildStep(AnyCommentNodePath, e)))
+      case e@ChildStep(NamedElement(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyElement, e), ChildStep(AnyTextNodePath, e), ChildStep(AnyCommentNodePath, e)))
+      case e@DescendantStep(AnyElement, _) => ZUnknownLength(Set[Path](ChildStep(AnyElement, e), ChildStep(AnyTextNodePath, e), ChildStep(AnyCommentNodePath, e)))
+      case e@DescendantStep(NamedElement(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyElement, e), ChildStep(AnyTextNodePath, e), ChildStep(AnyCommentNodePath, e)))
       case e@RootPath => ZCons(Set[Path](ChildStep(AnyElement, e)), ZNil())
       case _ => ZNil[Set[Path]]() // other node types (text, attribute) return empty lists because they don't have children
     })
@@ -210,8 +211,8 @@ object Path {
 
     def isTextNode(node: Set[Path]): (Set[Path], Set[Path]) = {
       val (yes, no) = node.partition {
-        case ChildStep(AnyTextNode, _) => true
-        case DescendantStep(AnyTextNode, _) => true
+        case ChildStep(AnyTextNodePath, _) => true
+        case DescendantStep(AnyTextNodePath, _) => true
         case _ => false
       }
       (normalize(yes), normalize(no))
@@ -219,8 +220,8 @@ object Path {
 
     def isComment(node: Set[Path]): (Set[Path], Set[Path]) = {
       val (yes, no) = node.partition {
-        case ChildStep(AnyCommentNode, _) => true
-        case DescendantStep(AnyCommentNode, _) => true
+        case ChildStep(AnyCommentNodePath, _) => true
+        case DescendantStep(AnyCommentNodePath, _) => true
         case _ => false
       }
       (normalize(yes), normalize(no))

@@ -22,11 +22,11 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
       */
     override def createTextNode(value: V): N = {
       val desc: Set[NodeDescriptor] = value.str match {
-        case None => Set(AnyTextNodeDesc)
+        case None => Set(AnyTextNode)
         case Some(s) => s.map(text => TextNode(text))
       }
       val tree = Subtree(desc, ZNil(), ZNil()) // text nodes have no children or attributes
-      val path = Set[Path](DescendantStep(AnyTextNode, RootPath))
+      val path = Set[Path](DescendantStep(AnyTextNodePath, RootPath))
       (tree, path)
     }
 
@@ -77,7 +77,7 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
           case AttributeNode(name, value) => Some(Set(value))
           case TextNode(value) => Some(Set(value))
           case CommentNode(value) => Some(Set(value))
-          case AnyElementNode | AnyAttributeNode | AnyTextNodeDesc | AnyCommentNodeDesc => None
+          case AnyElementNode | AnyAttributeNode | AnyTextNode | AnyCommentNode => None
         })
       }
       getStringValueFromSubtree(node._1)
