@@ -121,21 +121,27 @@ abstract class ZList[T] {
   /** This maps every node of the list using a given function.
     * As soon as the function returns BOTTOM for one input node, the resulting list will be BOTTOM. */
   // TODO: check if this function is only used correctly
-  def map[R](f: T => R)(implicit lat: Lattice[R]): ZList[R] = {
-    def isBottom(v: R) = lat.lessThanOrEqual(v, lat.bottom)
-
+  def map[R](f: T => R)(implicit latIn: Lattice[T], latOut: Lattice[R]): ZList[R] = {
     this match {
       case ZBottom() => ZBottom()
-      case ZTop() => ZTop()
-      case ZUnknownLength(elems) => ZUnknownLength(f(elems))
+      case ZTop() => f(latIn.top) match {
+        case h if ZList.isBottom(h) => ZBottom()
+        case h if ZList.isTop(h) => ZTop()
+        case h => ZUnknownLength(h)
+      }
+      case ZUnknownLength(elems) => f(elems) match {
+        case h if ZList.isBottom(h) => ZBottom()
+        case h if ZList.isTop(h) => ZTop()
+        case h => ZUnknownLength(h)
+      }
       case ZCons(first, rest) => (f(first), rest.map(f)) match {
         case (_, ZBottom()) => ZBottom()
-        case (h, _) if isBottom(h) => ZBottom()
+        case (h, _) if ZList.isBottom(h) => ZBottom()
         case (h, t: ZListElement[R]) => ZCons(h, t)
       }
       case ZMaybeNil(first, rest) => (f(first), rest.map(f)) match {
         case (_, ZBottom()) => ZBottom()
-        case (h, _) if isBottom(h) => ZBottom()
+        case (h, _) if ZList.isBottom(h) => ZBottom()
         case (h, t: ZListElement[R]) => ZMaybeNil(h, t)
       }
       case ZNil() => ZNil()
@@ -203,10 +209,8 @@ object ZList {
 
   def apply[T](list: List[T])(implicit lat: Lattice[T]): ZList[T] = list match {
     case first :: rest if isBottom(first) => ZBottom()
-    case first :: rest if isTop(first) => ZTop()
     case first :: rest => apply(rest) match {
       case ZBottom() => ZBottom()
-      case ZTop() => ZTop()
       case liftedRest => ZCons(first, liftedRest.asInstanceOf[ZListElement[T]])
     }
     case Nil => ZNil()

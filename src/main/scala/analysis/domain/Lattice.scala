@@ -12,7 +12,7 @@ trait Lattice[A] {
   def joinAll(seq: Traversable[A]) = seq.fold(bottom)(join)
   def meetAll(seq: Traversable[A]) = seq.fold(top)(meet)
 
-  def compare(left: A, right: A): LatticeOrdering = (lessThanOrEqual(left, right), lessThanOrEqual(left, right)) match {
+  def compare(left: A, right: A): LatticeOrdering = (lessThanOrEqual(left, right), lessThanOrEqual(right, left)) match {
     case (true, true) => Equal
     case (true, false) => Less
     case (false, true) => Greater

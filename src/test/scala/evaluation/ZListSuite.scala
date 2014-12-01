@@ -29,7 +29,7 @@ class ZListSuite extends FunSuite {
     assertResult(l2) { ZBottom() | l2 }
     assertResult(ZTop()) { l1 | ZTop() }
     assertResult(ZTop()) { ZTop() | l2 }
-    assertResult(ZTop()) { ZBottom() | ZTop() }
+    assertResult(ZTop()) { ZBottom[Option[Set[Int]]]() | ZTop() }
 
     assertResult(ZCons(Some(Set(1, 6)),ZMaybeNil(Some(Set(2)),ZCons(Some(Set(3)),ZNil())))) { l1 | l3 }
 
@@ -57,7 +57,7 @@ class ZListSuite extends FunSuite {
     assertResult(l2) { ZTop() & l2 }
     assertResult(ZBottom()) { l2 & ZBottom() }
     assertResult(ZBottom()) { ZBottom() & l1 }
-    assertResult(ZBottom()) { ZBottom() & ZTop() }
+    assertResult(ZBottom()) { ZBottom[Option[Set[Int]]]() & ZTop() }
     assertResult(l1) { l12 & l1 }
     assertResult(l2) { l2 & l12 }
     assertResult(ZBottom()) { l12 & ZNil() }
@@ -107,8 +107,8 @@ class ZListSuite extends FunSuite {
     assertResult(ZTop()) { ZTop() ++ l12 }
     assertResult(ZBottom()) { l12 ++ ZBottom() }
     assertResult(ZBottom()) { ZBottom() ++ l12 }
-    assertResult(ZBottom()) { ZTop() ++ ZBottom() }
-    assertResult(ZBottom()) { ZBottom() ++ ZTop() }
+    assertResult(ZBottom()) { ZTop[Option[Set[Int]]]() ++ ZBottom() }
+    assertResult(ZBottom()) { ZBottom[Option[Set[Int]]]() ++ ZTop() }
 
     assertResult(ZCons(Some(Set(1, 2)), ZTop())) { // result length is at least 1
       ZMaybeNil(lift(1), ZTop()) ++ ZCons(lift(2), ZTop())
