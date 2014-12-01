@@ -15,9 +15,9 @@ class XMLParser[N, L, V](dom: Domain[N, L, V]) {
         if (elem.namespace != null && elem.namespace != "") throw new NotImplementedError("Prefixed names are not implemented")
         val children = elem.child.map(n => parse(n))
         val attributes = elem.attributes.asAttrMap.map { case (name, value) => xml.createAttribute(name, xpath.liftLiteral(value)) }
-        xml.createElement(elem.label, liftList(children), liftList(attributes))
+        xml.createElement(elem.label, liftList(attributes), liftList(children))
       case text: Text => xml.createTextNode(xpath.liftLiteral(text.data))
-      case comment: Comment => ??? // TODO: ???
+      case comment: Comment => ??? // TODO: add createComment to XMLDomain only for the parser?
       case _ => throw new NotImplementedError(f"Unsupported XML node: ${node.getClass} ($node)")
     }
   }
