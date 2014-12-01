@@ -1,6 +1,7 @@
 package evaluation
 
-import analysis.domain.zipper.{ZipperXMLDomain, ZipperDomain}
+import analysis.domain.zipper.ZipperXMLDomain._
+import analysis.domain.zipper._
 import analysis.domain.XMLParser
 import data.TestData
 import org.scalatest.FunSuite
@@ -64,5 +65,28 @@ class ZipperTransformSuite extends FunSuite {
       </xsl:stylesheet>
 
     assertResult(parser.parseDocument(<result><child/></result>)) { transform(xslt) }
+  }
+
+  test("Match attribute") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match ="/">
+            <xsl:apply-templates/>
+        </xsl:template>
+        <xsl:template match="/root">
+          <xsl:apply-templates select="elem/@attr"/>
+        </xsl:template>
+        <xsl:template match="@attr">
+          <result><xsl:value-of select="."/></result>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    assertResult((Subtree(Set(Root),ZNil(),
+      ZCons(Subtree(Set(Element("result")),ZNil(),
+        ZUnknownLength(Subtree(Set(AnyText),ZNil(),ZNil())) // TODO: should actually be ZCons instead of ZUnknownLength
+      ), ZNil())
+    ), Set(RootPath))) {
+      transform(xslt)
+    }
   }
 }
