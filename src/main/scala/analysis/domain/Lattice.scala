@@ -1,5 +1,7 @@
 package analysis.domain
 
+import analysis._
+
 trait Lattice[A] {
   def top: A
   def bottom: A
@@ -9,6 +11,13 @@ trait Lattice[A] {
 
   def joinAll(seq: Traversable[A]) = seq.fold(bottom)(join)
   def meetAll(seq: Traversable[A]) = seq.fold(top)(meet)
+
+  def compare(left: A, right: A): LatticeOrdering = (lessThanOrEqual(left, right), lessThanOrEqual(left, right)) match {
+    case (true, true) => Equal
+    case (true, false) => Less
+    case (false, true) => Greater
+    case (false, false) => Incomparable
+  }
 }
 
 object Lattice {

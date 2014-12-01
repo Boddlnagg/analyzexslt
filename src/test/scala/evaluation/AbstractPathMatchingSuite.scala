@@ -1,22 +1,30 @@
 package evaluation
 
 import analysis._
-import analysis.domain.path._
-import analysis.domain.path.XPathPatternDomain.N
+import analysis.domain.zipper.Path.PathSetLattice
+import analysis.domain.zipper.ZipperXMLDomain.{SubtreeLattice, N}
+import analysis.domain.zipper._
 import org.scalatest.FunSuite
 import xpath.{XPathParser, LocationPath}
 
 class AbstractPathMatchingSuite extends FunSuite {
-  val xmlDom = XPathPatternDomain.D
+  val xmlDom = ZipperDomain.xmlDom
   val matcher = new AbstractXPathMatcher(xmlDom)
+  type P = Set[Path]
+  val latP = PathSetLattice
+  val latS = SubtreeLattice
 
-  def matchTop(path: LocationPath): N = matchIntersect(path, xmlDom.top)
+  def matchTop(path: LocationPath): P = matchIntersect(path, latP.top)
 
-  def matchIntersect(path: LocationPath, start: N): N = matcher.matches(start, path)._1
+  def matchIntersect(path: LocationPath, start: P): P = {
+    val startNode: N = (latS.top, start)
+    val matches = matcher.matches(startNode, path)._1
+    matches._2 // extract path result
+  }
 
   test("/") {
     val pattern = XPathParser.parse("/").asInstanceOf[LocationPath]
-    assertResult(Set(Root)) { matchTop(pattern) }
+    assertResult(Set(RootPath)) { matchTop(pattern) }
   }
 
   test("*") {
@@ -107,7 +115,7 @@ class AbstractPathMatchingSuite extends FunSuite {
     assertResult(Set("a//b"))) { matchTop(pattern).map(_.toString) }
   }*/
 
-  def parse(str: String*): N = str.map(s => XPathPattern.fromString(s)).toSet
+  def parse(str: String*): P = str.map(s => Path.fromString(s)).toSet
 
   test("a//b  starting from {/*/a/b, /*/a/*/b, /a/b/b, /b/b}") {
     val start = parse("/*/a/b", "/*/a/*/b", "/a/b/b", "/b/b")
@@ -168,37 +176,37 @@ class AbstractPathMatchingSuite extends FunSuite {
     val pat9 = parse("/b/a")
     val pat89 = parse("/a/a", "/b/a")
 
-    assertResult(Equal) { xmlDom.compare(xmlDom.top, xmlDom.top) }
-    assertResult(Greater) { xmlDom.compare(xmlDom.top, pat1) }
-    assertResult(Greater) { xmlDom.compare(pat1, pat2) }
-    assertResult(Less) { xmlDom.compare(pat2, pat1) }
-    assertResult(Equal) { xmlDom.compare(pat4, pat4) }
-    assertResult(Incomparable) { xmlDom.compare(pat2, pat4) }
-    assertResult(Greater) { xmlDom.compare(pat1, pat3) }
-    assertResult(Less) { xmlDom.compare(pat5, pat2) }
-    assertResult(Greater) { xmlDom.compare(pat3, pat4) }
-    assertResult(Greater) { xmlDom.compare(pat1, pat4) }
-    assertResult(Greater) { xmlDom.compare(pat1, pat5) }
-    assertResult(Greater) { xmlDom.compare(pat6, pat7) }
-    assertResult(Greater) { xmlDom.compare(pat7, pat8) }
-    assertResult(Greater) { xmlDom.compare(pat6, pat8) }
-    assertResult(Greater) { xmlDom.compare(pat6, pat9) }
-    assertResult(Greater) { xmlDom.compare(pat7, pat9) }
-    assertResult(Incomparable) { xmlDom.compare(pat8, pat9) }
-    assertResult(Less) { xmlDom.compare(pat8, pat89) }
-    assertResult(Less) { xmlDom.compare(pat9, pat89) }
-    assertResult(Greater) { xmlDom.compare(pat7, pat89) }
-    assertResult(Greater) { xmlDom.compare(pat6, pat89) }
-    assertResult(Greater) { xmlDom.compare(pat1, pat89) }
-    assertResult(Incomparable) { xmlDom.compare(pat2, pat89) }
-    assertResult(Greater) { xmlDom.compare(pat3, pat89) } // {"a", "b"} > {"a"} > {"/a/a", "/b/a"}
-    assertResult(Greater) { xmlDom.compare(parse("a//b"), parse("a/b")) }
-    assertResult(Greater) { xmlDom.compare(parse("a//b"), parse("a/*/b")) }
-    assertResult(Greater) { xmlDom.compare(parse("a//b"), parse("a//a/b")) }
-    assertResult(Greater) { xmlDom.compare(parse("a//b"), parse("a//c/b")) }
-    assertResult(Less) { xmlDom.compare(parse("*/a/*"), parse("*//a//*")) }
-    assertResult(Less) { xmlDom.compare(parse("*//a/*//*"), parse("*//a//*")) }
-    assertResult(Incomparable) { xmlDom.compare(parse("*//a/*//*"), parse("*//b//*")) }
+    assertResult(Equal) { latP.compare(latP.top, latP.top) }
+    assertResult(Greater) { latP.compare(latP.top, pat1) }
+    assertResult(Greater) { latP.compare(pat1, pat2) }
+    assertResult(Less) { latP.compare(pat2, pat1) }
+    assertResult(Equal) { latP.compare(pat4, pat4) }
+    assertResult(Incomparable) { latP.compare(pat2, pat4) }
+    assertResult(Greater) { latP.compare(pat1, pat3) }
+    assertResult(Less) { latP.compare(pat5, pat2) }
+    assertResult(Greater) { latP.compare(pat3, pat4) }
+    assertResult(Greater) { latP.compare(pat1, pat4) }
+    assertResult(Greater) { latP.compare(pat1, pat5) }
+    assertResult(Greater) { latP.compare(pat6, pat7) }
+    assertResult(Greater) { latP.compare(pat7, pat8) }
+    assertResult(Greater) { latP.compare(pat6, pat8) }
+    assertResult(Greater) { latP.compare(pat6, pat9) }
+    assertResult(Greater) { latP.compare(pat7, pat9) }
+    assertResult(Incomparable) { latP.compare(pat8, pat9) }
+    assertResult(Less) { latP.compare(pat8, pat89) }
+    assertResult(Less) { latP.compare(pat9, pat89) }
+    assertResult(Greater) { latP.compare(pat7, pat89) }
+    assertResult(Greater) { latP.compare(pat6, pat89) }
+    assertResult(Greater) { latP.compare(pat1, pat89) }
+    assertResult(Incomparable) { latP.compare(pat2, pat89) }
+    assertResult(Greater) { latP.compare(pat3, pat89) } // {"a", "b"} > {"a"} > {"/a/a", "/b/a"}
+    assertResult(Greater) { latP.compare(parse("a//b"), parse("a/b")) }
+    assertResult(Greater) { latP.compare(parse("a//b"), parse("a/*/b")) }
+    assertResult(Greater) { latP.compare(parse("a//b"), parse("a//a/b")) }
+    assertResult(Greater) { latP.compare(parse("a//b"), parse("a//c/b")) }
+    assertResult(Less) { latP.compare(parse("*/a/*"), parse("*//a//*")) }
+    assertResult(Less) { latP.compare(parse("*//a/*//*"), parse("*//a//*")) }
+    assertResult(Incomparable) { latP.compare(parse("*//a/*//*"), parse("*//b//*")) }
   }
 
   test("Join") {
@@ -211,25 +219,25 @@ class AbstractPathMatchingSuite extends FunSuite {
     val pat7 = parse("/*/a")
     val pat8 = parse("/a/*")
     val pat9 = parse("*/*")
-    val pat37 = xmlDom.join(pat3, pat7) // {"/a", "/*/a"}
-    val pat38 = xmlDom.join(pat3, pat8) // {"/a", "/a/*"}
+    val pat37 = latP.join(pat3, pat7) // {"/a", "/*/a"}
+    val pat38 = latP.join(pat3, pat8) // {"/a", "/a/*"}
 
     assertResult(Set("/a", "/*/a")) { pat37.map(_.toString) }
 
-    assertResult(xmlDom.top) {xmlDom.join(pat1, xmlDom.top)}
-    assertResult(pat1) {xmlDom.join(pat1, xmlDom.bottom)}
+    assertResult(latP.top) {latP.join(pat1, latP.top)}
+    assertResult(pat1) {latP.join(pat1, latP.bottom)}
 
-    assertResult(pat1) { xmlDom.join(List(pat1, pat3, pat4)) }
-    assertResult(pat2) { xmlDom.join(pat1, pat2) }
-    assertResult(Set("/*", "a", "b")) { xmlDom.join(pat1, pat5).map(_.toString) }
-    assertResult(pat2) { xmlDom.join(pat2, pat5) }
-    assertResult(Set("a", "b", "c")) { xmlDom.join(pat5, pat6).map(_.toString) }
-    assertResult(pat2) { xmlDom.join(List(pat5, pat6, pat2)) }
-    assertResult(Set("/*", "/*/a")) { xmlDom.join(pat37, pat1).map(_.toString) }
-    assertResult(pat2) { xmlDom.join(pat37, pat2) }
-    assertResult(Set("/a", "*/*")) { xmlDom.join(pat38, pat9).map(_.toString) }
-    assertResult(Set("a", "b")) { xmlDom.join(pat7, pat5).map(_.toString) }
-    assertResult(Set("*")) { xmlDom.join(List(xmlDom.bottom, pat2, pat1)).map(_.toString) }
+    assertResult(pat1) { latP.joinAll(List(pat1, pat3, pat4)) }
+    assertResult(pat2) { latP.join(pat1, pat2) }
+    assertResult(Set("/*", "a", "b")) { latP.join(pat1, pat5).map(_.toString) }
+    assertResult(pat2) { latP.join(pat2, pat5) }
+    assertResult(Set("a", "b", "c")) { latP.join(pat5, pat6).map(_.toString) }
+    assertResult(pat2) { latP.joinAll(List(pat5, pat6, pat2)) }
+    assertResult(Set("/*", "/*/a")) { latP.join(pat37, pat1).map(_.toString) }
+    assertResult(pat2) { latP.join(pat37, pat2) }
+    assertResult(Set("/a", "*/*")) { latP.join(pat38, pat9).map(_.toString) }
+    assertResult(Set("a", "b")) { latP.join(pat7, pat5).map(_.toString) }
+    assertResult(Set("*")) { latP.joinAll(List(latP.bottom, pat2, pat1)).map(_.toString) }
   }
 
   test("Meet") {
@@ -242,30 +250,30 @@ class AbstractPathMatchingSuite extends FunSuite {
     val pat6 = parse("*/a", "*/b")
     val pat7 = parse("a/*")
     val pat8 = parse("*/*")
-    val pat67 = xmlDom.join(pat6, pat7) // {"*/a", "*/b", "a/*"}
+    val pat67 = latP.join(pat6, pat7) // {"*/a", "*/b", "a/*"}
     val pat9 = parse("/*", "@c")
     val pat10 = parse("@c", "/a")
 
-    assertResult(pat1) {xmlDom.meet(pat1, xmlDom.top)}
-    assertResult(xmlDom.bottom) {xmlDom.meet(pat1, xmlDom.bottom)}
+    assertResult(pat1) {latP.meet(pat1, latP.top)}
+    assertResult(latP.bottom) {latP.meet(pat1, latP.bottom)}
 
-    assertResult(Set("/a")) { xmlDom.meet(pat1, pat3).map(_.toString) }
-    assertResult(Set("a")) { xmlDom.meet(pat2, pat4).map(_.toString) }
-    assertResult(Set("/a")) { xmlDom.meet(pat1, pat4).map(_.toString) }
-    assertResult(Set()) { xmlDom.meet(pat4, pat5).map(_.toString) }
-    assertResult(Set("a")) { xmlDom.meet(pat45, pat4).map(_.toString) }
-    assertResult(Set("a/a", "a/b")) { xmlDom.meet(pat6, pat7).map(_.toString) }
-    assertResult(pat67) { xmlDom.meet(pat67, pat8) }
-    assertResult(pat45) { xmlDom.meet(pat2, pat45) }
-    assertResult(pat7) { xmlDom.meet(pat7, pat2) }
-    assertResult(Set("a/a")) { xmlDom.meet(pat7, pat4).map(_.toString) }
-    assertResult(Set("@c", "/a")) { xmlDom.meet(pat9, pat10).map(_.toString) }
-    assertResult(Set("*/b")) { xmlDom.meet(pat8, pat5).map(_.toString) }
+    assertResult(Set("/a")) { latP.meet(pat1, pat3).map(_.toString) }
+    assertResult(Set("a")) { latP.meet(pat2, pat4).map(_.toString) }
+    assertResult(Set("/a")) { latP.meet(pat1, pat4).map(_.toString) }
+    assertResult(Set()) { latP.meet(pat4, pat5).map(_.toString) }
+    assertResult(Set("a")) { latP.meet(pat45, pat4).map(_.toString) }
+    assertResult(Set("a/a", "a/b")) { latP.meet(pat6, pat7).map(_.toString) }
+    assertResult(pat67) { latP.meet(pat67, pat8) }
+    assertResult(pat45) { latP.meet(pat2, pat45) }
+    assertResult(pat7) { latP.meet(pat7, pat2) }
+    assertResult(Set("a/a")) { latP.meet(pat7, pat4).map(_.toString) }
+    assertResult(Set("@c", "/a")) { latP.meet(pat9, pat10).map(_.toString) }
+    assertResult(Set("*/b")) { latP.meet(pat8, pat5).map(_.toString) }
     assertResult(Set("x//a//b//y//*", "a//b//x//y//*", "x//a//y//b//*", "a//x//b//y//*", "a//x//y//b//*", "x//y//a//b//*")) {
-      xmlDom.meet(parse("a//b//*"), parse("x//y//*")).map(_.toString) // creates interleavings
+      latP.meet(parse("a//b//*"), parse("x//y//*")).map(_.toString) // creates interleavings
     }
     assertResult(Set("a//c//b", "c//a//b", "b//c//b", "c//b//b")) {
-      xmlDom.meet(parse("a//b", "b//b"), parse("c//*")).map(_.toString)
+      latP.meet(parse("a//b", "b//b"), parse("c//*")).map(_.toString)
     }
   }
 }
