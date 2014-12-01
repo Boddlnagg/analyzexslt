@@ -9,16 +9,16 @@ object ZipperXMLDomain {
   type N = (S, P) // a node is a subtree and a path
   type L = ZList[N]
 
-  abstract class NodeDescriptor // TODO: add AnyElementNode (`*`), and similar ... (don't need Option[...] any more)
-  case object RootNode extends NodeDescriptor
-  case class ElementNode(name: String) extends NodeDescriptor
-  case object AnyElementNode extends NodeDescriptor
-  case class AttributeNode(name: String, value: String) extends NodeDescriptor
-  case object AnyAttributeNode extends NodeDescriptor
-  case class TextNode(value: String) extends NodeDescriptor
-  case object AnyTextNode extends NodeDescriptor // TODO: rename, but prevent collision with Path object
-  case class CommentNode(value: String) extends NodeDescriptor
-  case object AnyCommentNode extends NodeDescriptor // TODO: rename, but prevent collision with Path object
+  abstract class NodeDescriptor
+  case object Root extends NodeDescriptor
+  case class Element(name: String) extends NodeDescriptor
+  case object AnyElement extends NodeDescriptor
+  case class Attribute(name: String, value: String) extends NodeDescriptor
+  case object AnyAttribute extends NodeDescriptor
+  case class Text(value: String) extends NodeDescriptor
+  case object AnyText extends NodeDescriptor
+  case class Comment(value: String) extends NodeDescriptor
+  case object AnyComment extends NodeDescriptor
 
   // TODO: seperate attributes and children also in the analyzer?
   // TODO: change type of attributes field to ZList[Set[NodeDescriptor]] or similar, because attributes never have children
@@ -43,11 +43,11 @@ object ZipperXMLDomain {
 
   implicit object DescriptorLattice extends Lattice[Set[NodeDescriptor]] {
     def top = Set(
-      RootNode,
-      AnyElementNode,
-      AnyAttributeNode,
-      AnyCommentNode,
-      AnyTextNode
+      Root,
+      AnyElement,
+      AnyAttribute,
+      AnyComment,
+      AnyText
     )
 
     def bottom = Set()
@@ -74,10 +74,10 @@ object ZipperXMLDomain {
     private def lessThanOrEqualSingle(desc1: NodeDescriptor, desc2: NodeDescriptor): Boolean = {
       (desc1, desc2) match {
         case _ if desc1 == desc2 => true // equal
-        case (ElementNode(_), AnyElementNode) => true // less than
-        case (AttributeNode(_, _), AnyAttributeNode) => true // less than
-        case (TextNode(_), AnyTextNode) => true // less than
-        case (CommentNode(_), AnyCommentNode) => true // less than
+        case (Element(_), AnyElement) => true // less than
+        case (Attribute(_, _), AnyAttribute) => true // less than
+        case (Text(_), AnyText) => true // less than
+        case (Comment(_), AnyComment) => true // less than
         case _ => false
       }
     }
@@ -85,14 +85,14 @@ object ZipperXMLDomain {
     private def meetSingle(desc1: NodeDescriptor, desc2: NodeDescriptor): Option[NodeDescriptor] = {
       (desc1, desc2) match {
         case _ if desc1 == desc2 => Some(desc1)
-        case (n@ElementNode(_), AnyElementNode) => Some(n)
-        case (AnyElementNode, n@ElementNode(_)) => Some(n)
-        case (n@AttributeNode(_, _), AnyAttributeNode) => Some(n)
-        case (AnyAttributeNode, n@AttributeNode(_, _)) => Some(n)
-        case (n@TextNode(_), AnyTextNode) => Some(n)
-        case (AnyTextNode, n@TextNode(_)) => Some(n)
-        case (n@CommentNode(_), AnyCommentNode) => Some(n)
-        case (AnyCommentNode, n@CommentNode(_)) => Some(n)
+        case (n@Element(_), AnyElement) => Some(n)
+        case (AnyElement, n@Element(_)) => Some(n)
+        case (n@Attribute(_, _), AnyAttribute) => Some(n)
+        case (AnyAttribute, n@Attribute(_, _)) => Some(n)
+        case (n@Text(_), AnyText) => Some(n)
+        case (AnyText, n@Text(_)) => Some(n)
+        case (n@Comment(_), AnyComment) => Some(n)
+        case (AnyComment, n@Comment(_)) => Some(n)
         case _ => None // represents BOTTOM here
       }
     }
@@ -110,29 +110,29 @@ object ZipperXMLDomain {
 
   private def getDescriptorsFromPaths(path: P): Set[NodeDescriptor] = {
     def getSingle(desc: PathStepDescriptor): NodeDescriptor = desc match {
-      case AnyElement => AnyElementNode
-      case NamedElement(name) => ElementNode(name)
-      case AnyAttribute => AnyAttributeNode
-      case NamedAttribute(name) => AnyAttributeNode // TODO: could be more precise with additional case class
-      case AnyTextNodePath => AnyTextNode
-      case AnyCommentNodePath => AnyCommentNode
+      case AnyElementStep => AnyElement
+      case NamedElementStep(name) => Element(name)
+      case AnyAttributeStep => AnyAttribute
+      case NamedAttributeStep(name) => AnyAttribute // TODO: could be more precise with additional case class
+      case AnyTextNodeStep => AnyText
+      case AnyCommentNodeStep => AnyComment
     }
 
     latD.normalizeDescriptors(path.map {
-      case RootPath => RootNode
+      case RootPath => Root
       case ChildStep(desc, _) => getSingle(desc)
       case DescendantStep(desc, _) => getSingle(desc)
     })
   }
 
   private def getPathsFromDescriptors(descriptors: Set[NodeDescriptor]): P = descriptors.map {
-    case RootNode => RootPath
-    case ElementNode(name) => DescendantStep(NamedElement(name), RootPath)
-    case AnyElementNode => DescendantStep(AnyElement, RootPath)
-    case AttributeNode(name, _) => DescendantStep(NamedAttribute(name), RootPath)
-    case AnyAttributeNode => DescendantStep(AnyAttribute, RootPath)
-    case TextNode(_) | AnyTextNode => DescendantStep(AnyTextNodePath, RootPath)
-    case CommentNode(_) | AnyCommentNode => DescendantStep(AnyCommentNodePath, RootPath)
+    case Root => RootPath
+    case Element(name) => DescendantStep(NamedElementStep(name), RootPath)
+    case AnyElement => DescendantStep(AnyElementStep, RootPath)
+    case Attribute(name, _) => DescendantStep(NamedAttributeStep(name), RootPath)
+    case AnyAttribute => DescendantStep(AnyAttributeStep, RootPath)
+    case Text(_) | AnyText => DescendantStep(AnyTextNodeStep, RootPath)
+    case Comment(_) | AnyComment => DescendantStep(AnyCommentNodeStep, RootPath)
   }
 
   /** Removes impossible elements (where Path and Subtree descriptors don't agree) */
@@ -203,8 +203,8 @@ object ZipperXMLDomain {
     override def createElement(name: String, attributes: L, children: L): N = {
       // TODO: attributes should be a map (name -> value), not a list
       // TODO: empty text nodes should be filtered out and multiple consecutive ones should be merged
-      val tree = Subtree(Set(ElementNode(name)), attributes.map(_._1), children.map(_._1))
-      val path = Set[Path](DescendantStep(AnyElement, RootPath))
+      val tree = Subtree(Set(Element(name)), attributes.map(_._1), children.map(_._1))
+      val path = Set[Path](DescendantStep(AnyElementStep, RootPath))
       (tree, path)
     }
 
@@ -304,7 +304,7 @@ object ZipperXMLDomain {
         case ZNil() => bottom // list with 0 elements
       }
       val (firstChildElement, _) = isElement(firstChild)
-      normalize(Subtree(Set(RootNode), ZNil(), ZList(List(firstChildElement._1))), Set(RootPath))
+      normalize(Subtree(Set(Root), ZNil(), ZList(List(firstChildElement._1))), Set(RootPath))
     }
 
     /** Copies a list of nodes, so that they can be used in the output.
@@ -354,12 +354,12 @@ object ZipperXMLDomain {
       def getStringValueFromSubtree(tree: Subtree): V = {
         val Subtree(desc, attributes, children) = tree
         xpathDom.join(desc.map {
-          case RootNode => getStringValueFromSubtree(children.first)
-          case ElementNode(name) => xpathDom.topString // TODO: concatenate the string values of all (non-attribute) children
-          case AttributeNode(name, value) => xpathDom.liftLiteral(value)
-          case TextNode(value) => xpathDom.liftLiteral(value)
-          case CommentNode(value) => xpathDom.liftLiteral(value)
-          case AnyElementNode | AnyAttributeNode | AnyTextNode | AnyCommentNode => xpathDom.topString
+          case Root => getStringValueFromSubtree(children.first)
+          case Element(name) => xpathDom.topString // TODO: concatenate the string values of all (non-attribute) children
+          case Attribute(name, value) => xpathDom.liftLiteral(value)
+          case Text(value) => xpathDom.liftLiteral(value)
+          case Comment(value) => xpathDom.liftLiteral(value)
+          case AnyElement | AnyAttribute | AnyText | AnyComment => xpathDom.topString
         })
       }
       getStringValueFromSubtree(node._1)
@@ -374,8 +374,8 @@ object ZipperXMLDomain {
       val (Subtree(desc, attributes, children), path) = node
       // TODO: this might be problematic because we don't gain any information about the children
       // NOTE: root node can't have attributes, so we set it to ZNil
-      val positiveResult: N = normalize(Subtree(latD.meet(desc, Set(RootNode)), ZNil(), children), latP.meet(path, Set(RootPath)))
-      val negativeDesc = desc.diff(Set(RootNode))
+      val positiveResult: N = normalize(Subtree(latD.meet(desc, Set(Root)), ZNil(), children), latP.meet(path, Set(RootPath)))
+      val negativeDesc = desc.diff(Set(Root))
       val negativeResult: N = normalize(Subtree(negativeDesc, attributes, children), path.diff(Set(RootPath)))
       (positiveResult, negativeResult)
     }
@@ -389,8 +389,8 @@ object ZipperXMLDomain {
       val (Subtree(desc, attributes, children), path) = node
       val (pathYes, pathNo) = latP.isElement(path)
       val (descYes, descNo) = desc.partition {
-        case ElementNode(_) => true
-        case AnyElementNode => true
+        case Element(_) => true
+        case AnyElement => true
         case _ => false
       }
       // TODO: maybe move normalizeDescriptors call into normalize()
@@ -409,8 +409,8 @@ object ZipperXMLDomain {
       val (Subtree(desc, attributes, children), path) = node
       val (pathYes, pathNo) = latP.isTextNode(path)
       val (descYes, descNo) = desc.partition {
-          case TextNode(_) => true
-          case AnyTextNode => true
+          case Text(_) => true
+          case AnyText => true
           case _ => false
         }
       // NOTE: text nodes cannot have attributes or children, therefore we use ZNil in the positive result
@@ -428,8 +428,8 @@ object ZipperXMLDomain {
       val (Subtree(desc, attributes, children), path) = node
       val (pathYes, pathNo) = latP.isComment(path)
       val (descYes, descNo) = desc.partition {
-          case CommentNode(_) => true
-          case AnyCommentNode => true
+          case Comment(_) => true
+          case AnyComment => true
           case _ => false
         }
       // NOTE: comment nodes cannot have attributes or children, therefore we use ZNil in the positive result
@@ -447,8 +447,8 @@ object ZipperXMLDomain {
       val (Subtree(desc, attributes, children), path) = node
       val (pathYes, pathNo) = latP.isAttribute(path)
       val (descYes, descNo) = desc.partition {
-          case AttributeNode(_, _) => true
-          case AnyAttributeNode => true
+          case Attribute(_, _) => true
+          case AnyAttribute => true
           case _ => false
         }
       // NOTE: attribute nodes cannot have attributes or children, therefore we use ZNil in the positive result
@@ -467,10 +467,10 @@ object ZipperXMLDomain {
       val (Subtree(desc, attributes, children), path) = node
       val (pathYes, pathNo) = latP.hasName(path, name)
       val descYes: Set[NodeDescriptor] = desc.collect {
-        case e@ElementNode(n) if name == n => e
-        case AnyElementNode => ElementNode(name)
-        case a@AttributeNode(n, _) if name == n => a
-        case AnyAttributeNode => AnyAttributeNode // TODO: can't express attribute with known name but unknown value
+        case e@Element(n) if name == n => e
+        case AnyElement => Element(name)
+        case a@Attribute(n, _) if name == n => a
+        case AnyAttribute => AnyAttribute // TODO: can't express attribute with known name but unknown value
       }
 
       val descNo = desc // TODO: negative result
@@ -487,10 +487,10 @@ object ZipperXMLDomain {
     override def getNodeName(node: N): V = {
       val (Subtree(desc, attributes, children), path) = node
       xpathDom.join(desc.map {
-        case ElementNode(name) => xpathDom.liftLiteral(name)
-        case AnyElementNode => xpathDom.topString
-        case AttributeNode(name, _) => xpathDom.liftLiteral(name)
-        case AnyAttributeNode => xpathDom.topString // TODO: named attribute with unknown value
+        case Element(name) => xpathDom.liftLiteral(name)
+        case AnyElement => xpathDom.topString
+        case Attribute(name, _) => xpathDom.liftLiteral(name)
+        case AnyAttribute => xpathDom.topString // TODO: named attribute with unknown value
         case _ => xpathDom.liftLiteral("")
       })
     }

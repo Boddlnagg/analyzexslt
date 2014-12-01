@@ -22,11 +22,11 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
       */
     override def createTextNode(value: V): N = {
       val desc: Set[NodeDescriptor] = value.str match {
-        case None => Set(AnyTextNode)
-        case Some(s) => s.map(text => TextNode(text))
+        case None => Set(AnyText)
+        case Some(s) => s.map(text => Text(text))
       }
       val tree = Subtree(desc, ZNil(), ZNil()) // text nodes have no children or attributes
-      val path = Set[Path](DescendantStep(AnyTextNodePath, RootPath))
+      val path = Set[Path](DescendantStep(AnyTextNodeStep, RootPath))
       (tree, path)
     }
 
@@ -35,11 +35,11 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
       */
     override def createAttribute(name: String, value: V): N = {
       val desc: Set[NodeDescriptor] = value.str match {
-        case None => Set(AnyAttributeNode)
-        case Some(s) => s.map(text => AttributeNode(name, text))
+        case None => Set(AnyAttribute)
+        case Some(s) => s.map(text => Attribute(name, text))
       }
       val tree = Subtree(desc, ZNil(), ZNil()) // attribute nodes have no children or attributes
-      val path = Set[Path](DescendantStep(NamedAttribute(name), RootPath))
+      val path = Set[Path](DescendantStep(NamedAttributeStep(name), RootPath))
       (tree, path)
     }
   }
@@ -72,12 +72,12 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
       def getStringValueFromSubtree(tree: Subtree): Option[Set[String]] = {
         val Subtree(desc, attributes, children) = tree
         lat.joinAll(desc.map {
-          case RootNode => getStringValueFromSubtree(children.first)
-          case ElementNode(name) => None// TODO: concatenate the string values of all (non-attribute) children
-          case AttributeNode(name, value) => Some(Set(value))
-          case TextNode(value) => Some(Set(value))
-          case CommentNode(value) => Some(Set(value))
-          case AnyElementNode | AnyAttributeNode | AnyTextNode | AnyCommentNode => None
+          case Root => getStringValueFromSubtree(children.first)
+          case Element(name) => None// TODO: concatenate the string values of all (non-attribute) children
+          case Attribute(name, value) => Some(Set(value))
+          case Text(value) => Some(Set(value))
+          case Comment(value) => Some(Set(value))
+          case AnyElement | AnyAttribute | AnyText | AnyComment => None
         })
       }
       getStringValueFromSubtree(node._1)
