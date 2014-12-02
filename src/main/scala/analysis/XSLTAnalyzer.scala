@@ -85,11 +85,8 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     val (result, _) = nodes.foldLeft((xmlDom.createEmptyList(), context)) {
       case ((resultNodes, ctx), next) =>
         evaluate(sheet, next, ctx) match {
-          case NodeList(moreResultNodes) => (xmlDom.concatLists(resultNodes, moreResultNodes), ctx)
-          case TextNode(text) => (xmlDom.appendText(resultNodes, text), ctx)
-          case NodeListOrTextNode(list, text) =>
-            (xmlDom.joinList(xmlDom.appendText(resultNodes, text), xmlDom.concatLists(resultNodes, list)), ctx)
-          case VariableAssignment(name, value) =>
+          case Left(moreResultNodes) => (xmlDom.concatLists(resultNodes, moreResultNodes), ctx)
+          case Right((name, value)) =>
             if (scopeVariables.contains(name)) throw new EvaluationError(f"Variable $name is defined multiple times in the same scope")
             scopeVariables += name
             (resultNodes, ctx.addVariable(name, value))
@@ -98,47 +95,42 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     result
   }
 
-  abstract class EvaluationResult
-  case class NodeList(list: L) extends EvaluationResult
-  case class TextNode(text: V) extends EvaluationResult
-  case class NodeListOrTextNode(list: L, text: V) extends EvaluationResult
-  case class VariableAssignment(name: String, value: V) extends EvaluationResult
-
   /** Evaluates a single XSLT instruction in a given XSLT context, resulting in either a list of result nodes
     * or an additional variable binding (if the instruction was a variable definition).
     */
-  private def evaluate(sheet: XSLTStylesheet, node: XSLTInstruction, context: AbstractXSLTContext[N, L, V]): EvaluationResult = {
+  private def evaluate(sheet: XSLTStylesheet, node: XSLTInstruction, context: AbstractXSLTContext[N, L, V]): Either[L, (String, V)] = {
     node match {
       case LiteralElement(name, children) =>
         val innerNodes = evaluate(sheet, children, context)
         val (resultAttributes, resultChildren) = xmlDom.partitionAttributes(innerNodes)
         val result = xmlDom.createElement(name, resultAttributes, resultChildren)
-        NodeList(xmlDom.createSingletonList(result)) // single element
-      case LiteralTextNode(text) => TextNode(xpathDom.liftLiteral(text)) // single text node
+        Left(xmlDom.createSingletonList(result))
+      case LiteralTextNode(text) => Left(xmlDom.createSingletonList(xmlDom.createTextNode(xpathDom.liftLiteral(text))))
       case SetAttributeInstruction(attribute, value) =>
         // merge the content of all text-node children to create the attribute value
         val textResult = xmlDom.getConcatenatedTextNodeValues(evaluate(sheet, value, context))
-        NodeList(xmlDom.createSingletonList(xmlDom.createAttribute(attribute, textResult))) // single attribute node
+        Left(xmlDom.createSingletonList(xmlDom.createAttribute(attribute, textResult)))
       case ApplyTemplatesInstruction(None, params) =>
-        NodeList(transform(sheet, xmlDom.getChildren(context.node), context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
+        Left(transform(sheet, xmlDom.getChildren(context.node), context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case ApplyTemplatesInstruction(Some(expr), params) =>
         val result = xpathAnalyzer.evaluate(expr, xsltToXPathContext(context))
         val (extracted, _) = xpathDom.matchNodeSetValues(result)
-        NodeList(transform(sheet, extracted, context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
+        Left(transform(sheet, extracted, context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case CallTemplatesInstruction(name, params) =>
         // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)
-        NodeList(evaluateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
+        Left(evaluateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case VariableDefinitionInstruction(name, expr) =>
-        VariableAssignment(name, xpathAnalyzer.evaluate(expr, xsltToXPathContext(context)))
+        Right(name, xpathAnalyzer.evaluate(expr, xsltToXPathContext(context)))
       case CopyInstruction(select) =>
         val evaluated = xpathAnalyzer.evaluate(select, xsltToXPathContext(context))
         val (nodeSets, rest) = xpathDom.matchNodeSetValues(evaluated)
         val nodeSetsOutput = xmlDom.copyToOutput(nodeSets)
-        NodeListOrTextNode(nodeSetsOutput, xpathDom.toStringValue(rest))
+        val restOutput = xmlDom.createSingletonList(xmlDom.createTextNode(xpathDom.toStringValue(rest)))
+        Left(xmlDom.joinList(nodeSetsOutput, restOutput))
       case ChooseInstruction(branches, otherwise) =>
         val possibleBranches = chooseBranches(branches, otherwise, xsltToXPathContext(context))
         // evaluate all possible branches and join the result lists
-        NodeList(xmlDom.joinList(possibleBranches.map(br => evaluate(sheet, br, context))))
+        Left(xmlDom.joinList(possibleBranches.map(br => evaluate(sheet, br, context))))
 
     }
   }

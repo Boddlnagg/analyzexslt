@@ -136,7 +136,7 @@ object ZipperXMLDomain {
   }
 
   /** Removes impossible elements (where Path and Subtree descriptors don't agree) */
-  def normalize(node: N): N = {
+  private def normalize(node: N): N = {
     // TODO: further refinements (e.g. if the descriptor only describes nodes that can't have children, set children to ZNil)
     //       or more general: eliminate all children that can not have the descriptor as their parent (recursively?)
     val (Subtree(desc, attributes, children), path) = node

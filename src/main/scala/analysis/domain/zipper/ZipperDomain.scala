@@ -20,12 +20,10 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
     /** Create a text node with the given text value.
       * Values that are not strings evaluate to BOTTOM.
       */
-    override def createTextNode(value: V): N = createTextNodeInternal(value.str)
-
-    private def createTextNodeInternal(text: Option[Set[String]]) = {
-      val desc: Set[NodeDescriptor] = text match {
+    override def createTextNode(value: V): N = {
+      val desc: Set[NodeDescriptor] = value.str match {
         case None => Set(AnyText)
-        case Some(s) => s.map(t => Text(t))
+        case Some(s) => s.map(text => Text(text))
       }
       val tree = Subtree(desc, ZNil(), ZNil()) // text nodes have no children or attributes
       val path = Set[Path](DescendantStep(AnyTextNodeStep, RootPath))
@@ -43,66 +41,6 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
       val tree = Subtree(desc, ZNil(), ZNil()) // attribute nodes have no children or attributes
       val path = Set[Path](DescendantStep(NamedAttributeStep(name), RootPath))
       (tree, path)
-    }
-
-    /** Appends text to a node list.
-      * Empty strings are ignored (return the unmodified list) and text that immediately follows
-      * an existing text node is merged into that text node.
-      */
-    override def appendText(list: L, text: V): L = {
-      // TODO: write unit tests for appendText
-      def appendTextToNode(textNode: N, text: Option[Set[String]]): N = {
-        val (Subtree(desc, attributes, children), paths) = textNode
-        val newDesc : Set[NodeDescriptor] = if (text == None || desc.contains(AnyText)) {
-          Set(AnyText)
-        } else {
-          desc.map {
-            case Text(t) => text.get.map(toAppend =>  Text(t + toAppend))
-          }.flatten
-        }
-        // NOTE: because paths never store the content of text nodes, we can just use the original paths
-        normalize(Subtree(newDesc, attributes, children), paths)
-      }
-
-      def appendTextInternal(list: L, text: Option[Set[String]]): L = list match {
-        case ZTop() => ZTop()
-        case ZUnknownLength(elem) =>
-          val (elemText, elemNotText) = isTextNode(elem)
-          if (lessThanOrEqual(elem, elemText)) // elem is definitely a text node and nothing else (but list might be empty)
-            ZUnknownLength(join(createTextNodeInternal(text), appendTextToNode(elemText, text)))
-          else if (lessThanOrEqual(elemText, bottom)) // elem is definitely not a text node
-            ZUnknownLength(join(createTextNodeInternal(text), elem))
-          else // elem might or might not be a text node
-            ZUnknownLength(join(List(elemNotText, createTextNodeInternal(text), appendTextToNode(elemText, text))))
-        case ZNil() => ZCons(createTextNodeInternal(text), ZNil())
-        case ZMaybeNil(f, r) => // this case can only apply for the original list, because recursive calls aways reduce ZMaybeNil to ZCons
-          ZCons(createTextNodeInternal(text), ZNil()) | appendTextInternal(ZCons(f, r), text)
-        case ZCons(last, ZNil()) =>
-          val (lastText, lastNotText) = isTextNode(last)
-          if (lessThanOrEqual(last, lastText)) // last is definitely a text node and nothing else
-            ZCons(appendTextToNode(lastText, text), ZNil())
-          else if (lessThanOrEqual(lastText, bottom)) // last is definitely not a text node
-            ZCons(last, ZCons(createTextNodeInternal(text), ZNil()))
-          else // last might or might not be a text node
-            ZCons(join(lastNotText, appendTextToNode(lastText, text)), ZMaybeNil(createTextNodeInternal(text), ZNil()))
-        case ZCons(maybeLast, ZMaybeNil(f, r)) =>
-          val (lastText, lastNotText) = isTextNode(maybeLast)
-          val resultIfNotLast = ZCons(maybeLast, appendTextInternal(ZCons(f, r), text).asInstanceOf[ZListElement[N]])
-          if (lessThanOrEqual(maybeLast, lastText)) // maybeLast is definitely a text node and nothing else
-            ZCons(appendTextToNode(lastText, text), ZNil()) | resultIfNotLast
-          else if (lessThanOrEqual(lastText, bottom)) // maybeLast is definitely not a text node
-            ZCons(maybeLast, ZCons(createTextNodeInternal(text), ZNil())) | resultIfNotLast
-          else // maybeLast might or might not be a text node
-            ZCons(join(lastNotText, appendTextToNode(lastText, text)), ZMaybeNil(createTextNodeInternal(text), ZNil())) | resultIfNotLast
-        case ZCons(first, rest) => ZCons(first, appendTextInternal(rest, text).asInstanceOf[ZListElement[N]])
-      }
-
-      if (text.str == Some(Set()) || list.isInstanceOf[ZBottom[N]]) // text or list is BOTTOM
-        ZBottom()
-      else if (text.str == Some(Set(""))) // text is only the empty string -> return original list
-        list
-      else
-        appendTextInternal(list, text.str.map(_.filter(s => s != ""))) // extract string part of value and filter out empty strings
     }
   }
 

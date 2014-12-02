@@ -34,42 +34,6 @@ object PowersetDomain extends Domain[N, L, V] {
         // NOTE: other value types are implicitly evaluated to bottom
       })
     }
-
-    /** Appends text to a node list.
-      * Empty strings are ignored (return the unmodified list) and text that immediately follows
-      * an existing text node is merged into that text node.
-      */
-    override def appendText(list: L, text: V): L = {
-      def appendTextInternal(list: List[XMLNode], text: String): List[XMLNode] = {
-        list match {
-          case Nil => List(XMLTextNode(text))
-          case XMLTextNode(oldValue, parent) :: Nil => List(XMLTextNode(oldValue + text, parent))
-          case last :: Nil => List(last, XMLTextNode(text))
-          case first :: rest => first :: appendTextInternal(rest, text)
-        }
-      }
-
-      val textStrings = text.map(_.collect {
-        case StringValue(str) => str
-      })
-
-      if (textStrings == Some(Set()) || list == Right(Set())) { // text or list is BOTTOM
-        Right(Set())
-      } else if (textStrings == Some(Set(""))) {
-        list // return original list if empty string is appended
-      } else if (textStrings == None) {
-        Left(None) // don't know result list if text to append is TOP
-      } else {
-        val filteredText = textStrings.get.filter(s => s != "")
-        list match {
-          case Left(None) => Left(None)
-          case Left(Some(len)) => Left(None) // length might be len or len+1
-          case Right(s) => Right(s.cross(filteredText).map {
-            case (l, t) => appendTextInternal(l, t)
-          }.toSet)
-        }
-      }
-    }
   }
 
   protected object XPATH extends PowersetXPathDomain.D[N, L] {

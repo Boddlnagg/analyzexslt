@@ -5,8 +5,6 @@ import xml._
 
 /** Just a wrapper for the type aliases */
 object PowersetXMLDomain {
-  // TODO: use L = Option[Set[List[XMLNode]]] again and modify implementation to use Lattice type class
-
   type N = Option[Set[XMLNode]] // None represents the infinite set, Some represents finite sets
   type L = Either[Option[Int], Set[List[XMLNode]]] // Left(Some(n)) is a list with n unknown elements (n > 0)
 

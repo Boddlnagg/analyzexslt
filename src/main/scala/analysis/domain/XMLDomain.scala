@@ -126,12 +126,6 @@ trait XMLDomain[N, L, V] {
   /** Concatenates two lists. */
   def concatLists(list1: L, list2: L): L
 
-  /** Appends text to a node list.
-    * Empty strings are ignored (return the unmodified list) text that immediately follows an existing text node
-    * is merged into that text node.
-    */
-  def appendText(list: L, text: V): L
-
   /** Partitions a node list in such a way that the first result contains all attribute nodes from the beginning of
     * the list (as soon as there are other node types in the list, attributes are ignored) and the second result
     * contains all other nodes.
