@@ -50,9 +50,9 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
       * an existing text node is merged into that text node.
       */
     override def appendText(list: L, text: V): L = {
-      def appendTextToNode(node: N, text: Option[Set[String]]): N = {
-        // NOTE: `text` is guaranteed to not be BOTTOM, the node is guaranteed to be a text node
-        val (Subtree(desc, attributes, children), paths) = node
+      // TODO: write unit tests for appendText
+      def appendTextToNode(textNode: N, text: Option[Set[String]]): N = {
+        val (Subtree(desc, attributes, children), paths) = textNode
         val newDesc : Set[NodeDescriptor] = if (text == None || desc.contains(AnyText)) {
           Set(AnyText)
         } else {
@@ -99,6 +99,8 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
 
       if (text.str == Some(Set()) || list.isInstanceOf[ZBottom[N]]) // text or list is BOTTOM
         ZBottom()
+      else if (text.str == Some(Set(""))) // text is only the empty string -> return original list
+        list
       else
         appendTextInternal(list, text.str.map(_.filter(s => s != ""))) // extract string part of value and filter out empty strings
     }

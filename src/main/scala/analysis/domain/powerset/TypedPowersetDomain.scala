@@ -30,7 +30,33 @@ object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
       case Some(s) => Some(s.map(str => XMLTextNode(str)))
     }
 
-    override def appendText(list: L, text: V): L = ???
+    override def appendText(list: L, text: V): L = {
+      def appendTextInternal(list: List[XMLNode], text: String): List[XMLNode] = {
+        list match {
+          case Nil => List(XMLTextNode(text))
+          case XMLTextNode(oldValue, parent) :: Nil => List(XMLTextNode(oldValue + text, parent))
+          case last :: Nil => List(last, XMLTextNode(text))
+          case first :: rest => first :: appendTextInternal(rest, text)
+        }
+      }
+
+      if (text.str == Some(Set()) || list == Right(Set())) { // text or list is BOTTOM
+        Right(Set())
+      } else if (text.str == Some(Set(""))) {
+        list // return original list if empty string is appended
+      } else if (text.str == None) {
+        Left(None) // don't know result list if text to append is TOP
+      } else {
+        val filteredText = text.str.get.filter(s => s != "")
+        list match {
+          case Left(None) => Left(None)
+          case Left(Some(len)) => Left(None) // length might be len or len+1
+          case Right(s) => Right(s.cross(filteredText).map {
+            case (l, t) => appendTextInternal(l, t)
+          }.toSet)
+        }
+      }
+    }
   }
 
   protected object XPATH extends OuterXPATH.D[N] {
