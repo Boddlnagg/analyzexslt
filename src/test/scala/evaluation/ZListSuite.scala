@@ -8,6 +8,9 @@ class ZListSuite extends FunSuite {
 
   def lift(v: Int*): L = Some(v.toSet)
 
+  // predicate that checks whether a number is > 0
+  def predicate(in: L): L = in.map(_.filter(_ > 0))
+
   test("Lift") {
     assertResult(ZCons(lift(1), ZCons(lift(2), ZCons(lift(3), ZNil())))) {
       ZList(List(lift(1), lift(2), lift(3)))
@@ -175,5 +178,23 @@ class ZListSuite extends FunSuite {
     assertResult(lift()) { l12.contains(lift(4)) }
     assertResult(lift(1,3,4)) { l3.contains(lift(1,3,4)) }
     assertResult(lift(1,3)) { l4.contains(lift(1,3,5)) }
+  }
+
+  test("Filter") {
+    val l1 = ZList(List(lift(-1,0,1), lift(-1), lift(1)))
+    val l2 = ZMaybeNil(lift(-1,0,1), ZNil())
+    val l12 = l1 | l2
+    val l3 = ZCons(lift(1), ZUnknownLength(lift(-1,0,1)))
+    val l4 = l1 ++ l3
+
+    assertResult(ZCons(lift(1), ZMaybeNil(lift(1), ZNil()))) { l1.filter(predicate) } // exactly 1 or 2 times `1`
+    assertResult(ZMaybeNil(lift(1), ZNil())) { l2.filter(predicate) } // exactly 0 or 1 times `1`
+    assertResult(ZMaybeNil(lift(1), ZMaybeNil(lift(1), ZNil()))) { l12.filter(predicate) } // exactly 0, 1 or 2 times `1`
+    assertResult(ZCons(lift(1), ZUnknownLength(lift(1)))) { l3.filter(predicate) } // 1 or more times `1`
+    assertResult(ZCons(lift(1), ZCons(lift(1), ZUnknownLength(lift(1))))) { l4.filter(predicate) } // 2 or more times `1`
+  }
+
+  test("Take while") {
+    assert(false) // TODO
   }
 }

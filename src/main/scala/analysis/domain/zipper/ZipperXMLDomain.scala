@@ -278,15 +278,8 @@ object ZipperXMLDomain {
       * the list (as soon as there are other node types in the list, attributes are ignored) and the second result
       * contains all other nodes.
       */
-    override def partitionAttributes(list: L): (L, L) = {
-      def isNotAttribute(node: N): (N, N) = {
-        val (isAttr, isNotAttr) = isAttribute(node)
-        (isNotAttr, isAttr)
-      }
-
-      // TODO: the first part should use takeWhile instead of filter
-      (filter(list, isAttribute), filter(list, isNotAttribute))
-    }
+    override def partitionAttributes(list: L): (L, L) =
+      (list.takeWhile(n => isAttribute(n)._1), list.filter(n => isAttribute(n)._2))
 
     /** Wraps a list of nodes in a document/root node. Lists that don't have exactly one element evaluate to BOTTOM. */
     override def wrapInRoot(list: L): N = {
@@ -500,39 +493,7 @@ object ZipperXMLDomain {
     /** Filters a list using a given predicate function. The predicate function should never return a node
       * (as its first result) that is less precise than the input node.
       */
-    override def filter(list: L, predicate: N => (N, N)): L = list match {
-      case ZBottom() => ZBottom()
-      case ZTop() =>
-        ZUnknownLength(predicate(top)._1)
-      case ZUnknownLength(elems) =>
-        val result = predicate(elems)._1
-        if (lessThanOrEqual(result, bottom)) { // if result is BOTTOM, return an empty list
-          ZNil()
-        } else {
-          ZUnknownLength(predicate(elems)._1)
-        }
-      case ZCons(first, rest) =>
-        val result = predicate(first)._1
-        val restResult = filter(rest, predicate)
-        if (lessThanOrEqual(first, result)) { // first == result (because predicate application should never yield something greater)
-          ZCons(first, restResult.asInstanceOf[ZListElement[(S, P)]]) // ... so nothing is filtered out
-        } else if (lessThanOrEqual(result, bottom)) { // result == BOTTOM
-          restResult // current node is filtered out completely
-        } else {
-          restResult | ZCons(first, restResult.asInstanceOf[ZListElement[(S, P)]])
-        }
-      case ZMaybeNil(first, rest) =>
-        val result = predicate(first)._1
-        val restResult = filter(rest, predicate)
-        if (lessThanOrEqual(first, result)) { // first == result (because predicate application should never yield something greater)
-          ZMaybeNil(first, restResult.asInstanceOf[ZListElement[(S, P)]]) // ... so nothing is filtered out
-        } else if (lessThanOrEqual(result, bottom)) { // result == BOTTOM
-          restResult // current node is filtered out completely
-        } else {
-          restResult | ZMaybeNil(first, restResult.asInstanceOf[ZListElement[(S, P)]])
-        }
-      case ZNil() => ZNil()
-    }
+    override def filter(list: L, predicate: N => (N, N)): L = list.filter(n => predicate(n)._1)
 
     /** Gets the first node out of a node list. BOTTOM is returned if the list is empty or BOTTOM. */
     override def getFirst(list: L): N = list.first

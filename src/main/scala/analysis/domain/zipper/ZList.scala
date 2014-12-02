@@ -167,6 +167,75 @@ abstract class ZList[T] {
     case ZNil() => lat.bottom
   }
 
+  def filter(predicate: T => T)(implicit lat: Lattice[T]): ZList[T] = this match {
+    case ZBottom() => ZBottom()
+    case ZTop() =>
+      ZUnknownLength(predicate(lat.top))
+    case ZUnknownLength(elems) =>
+      val result = predicate(elems)
+      if (lat.lessThanOrEqual(result, lat.bottom)) {
+        // if result is BOTTOM, return an empty list
+        ZNil()
+      } else {
+        ZUnknownLength(predicate(elems))
+      }
+    case ZCons(first, rest) =>
+      val result = predicate(first)
+      val restResult = rest.filter(predicate)
+      if (lat.lessThanOrEqual(first, result)) { // first == result (because predicate application should never yield something greater)
+        ZCons(first, restResult.asInstanceOf[ZListElement[T]]) // ... so nothing is filtered out
+      } else if (lat.lessThanOrEqual(result, lat.bottom)) { // result == BOTTOM
+        restResult // current node is filtered out completely
+      } else {
+        restResult | ZCons(result, restResult.asInstanceOf[ZListElement[T]])
+      }
+    case ZMaybeNil(first, rest) =>
+      val result = predicate(first)
+      val restResult = rest.filter(predicate)
+      if (lat.lessThanOrEqual(first, result)) { // first == result (because predicate application should never yield something greater)
+        ZMaybeNil(first, restResult.asInstanceOf[ZListElement[T]]) // ... so nothing is filtered out
+      } else if (lat.lessThanOrEqual(result, lat.bottom)) { // result == BOTTOM
+        restResult // current node is filtered out completely
+      } else {
+        restResult | ZMaybeNil(result, restResult.asInstanceOf[ZListElement[T]])
+      }
+    case ZNil() => ZNil()
+  }
+
+  def takeWhile(predicate: T => T)(implicit lat: Lattice[T]): ZList[T] = this match {
+    case ZBottom() => ZBottom()
+    case ZTop() =>
+      ZUnknownLength(predicate(lat.top))
+    case ZUnknownLength(elems) =>
+      val result = predicate(elems)
+      if (lat.lessThanOrEqual(result, lat.bottom)) {
+        // if result is BOTTOM, return an empty list
+        ZNil()
+      } else {
+        ZUnknownLength(predicate(elems))
+      }
+    case ZCons(first, rest) =>
+      val result = predicate(first)
+      val restResult = rest.takeWhile(predicate)
+      if (lat.lessThanOrEqual(first, result)) { // first == result (because predicate application should never yield something greater)
+        ZCons(first, restResult.asInstanceOf[ZListElement[T]]) // ... so nothing is filtered out
+      } else if (lat.lessThanOrEqual(result, lat.bottom)) { // result == BOTTOM
+        ZNil() // predicate definitely doesn't hold for current node, so the result list ends here
+      } else {
+        ZMaybeNil(result, restResult.asInstanceOf[ZListElement[T]])
+      }
+    case ZMaybeNil(first, rest) =>
+      val result = predicate(first)
+      val restResult = rest.takeWhile(predicate)
+      if (lat.lessThanOrEqual(result, lat.bottom)) { // result == BOTTOM
+        ZNil() // predicate definitely doesn't hold for current node, so the result list ends here
+      } else {
+        // we don't know if the predicate holds for the current node, so the result list might or might not end here
+        ZMaybeNil(result, restResult.asInstanceOf[ZListElement[T]])
+      }
+    case ZNil() => ZNil()
+  }
+
   override def toString: String = {
     if (this.isInstanceOf[ZBottom[T]]) return "[BOTTOM]"
 
@@ -175,18 +244,12 @@ abstract class ZList[T] {
       case ZTop() => b.append("TOP]")
       case ZUnknownLength(elems) => b.append(elems.toString).append("*]")
       case ZCons(first, ZNil()) => b.append(first.toString).append("]")
-      case ZCons(first, rest: ZMaybeNil[T]) =>
-        b.append(first.toString).append(",NIL+")
-        appendElement(rest)
       case ZCons(first, rest) =>
         b.append(first.toString).append(",")
         appendElement(rest)
-      case ZMaybeNil(first, ZNil()) => b.append(first.toString).append("]")
-      case ZMaybeNil(first, rest: ZMaybeNil[T]) =>
-        b.append(first.toString).append(",NIL+")
-        appendElement(rest)
+      case ZMaybeNil(first, ZNil()) => b.append("NIL+").append(first.toString).append("]")
       case ZMaybeNil(first, rest) =>
-        b.append(first.toString).append(",")
+        b.append("NIL+").append(first.toString).append(",")
         appendElement(rest)
       case ZNil() => b.append("]")
     }
