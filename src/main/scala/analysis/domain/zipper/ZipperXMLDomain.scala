@@ -15,7 +15,9 @@ object ZipperXMLDomain {
   case object AnyElement extends NodeDescriptor
   case class Attribute(name: String, value: String) extends NodeDescriptor
   case object AnyAttribute extends NodeDescriptor
-  case class Text(value: String) extends NodeDescriptor
+  case class Text(value: String) extends NodeDescriptor {
+    override def toString = f"Text(${value.replace("\n", "\\n")})"
+  }
   case object AnyText extends NodeDescriptor
   case class Comment(value: String) extends NodeDescriptor
   case object AnyComment extends NodeDescriptor
