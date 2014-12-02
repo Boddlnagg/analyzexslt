@@ -35,7 +35,7 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
       */
     override def createAttribute(name: String, value: V): N = {
       val desc: Set[NodeDescriptor] = value.str match {
-        case None => Set(AnyAttribute)
+        case None => Set(NamedAttribute(name))
         case Some(s) => s.map(text => Attribute(name, text))
       }
       val tree = Subtree(desc, ZNil(), ZNil()) // attribute nodes have no children or attributes
@@ -77,7 +77,7 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
           case Attribute(name, value) => Some(Set(value))
           case Text(value) => Some(Set(value))
           case Comment(value) => Some(Set(value))
-          case AnyElement | AnyAttribute | AnyText | AnyComment => None
+          case AnyElement | AnyAttribute | NamedAttribute(_) | AnyText | AnyComment => None
         })
       }
       getStringValueFromSubtree(node._1)

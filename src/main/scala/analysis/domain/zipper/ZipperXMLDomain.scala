@@ -14,6 +14,7 @@ object ZipperXMLDomain {
   case class Element(name: String) extends NodeDescriptor
   case object AnyElement extends NodeDescriptor
   case class Attribute(name: String, value: String) extends NodeDescriptor
+  case class NamedAttribute(name: String) extends NodeDescriptor
   case object AnyAttribute extends NodeDescriptor
   case class Text(value: String) extends NodeDescriptor {
     override def toString = f"Text(${value.replace("\n", "\\n")})"
@@ -78,6 +79,8 @@ object ZipperXMLDomain {
         case _ if desc1 == desc2 => true // equal
         case (Element(_), AnyElement) => true // less than
         case (Attribute(_, _), AnyAttribute) => true // less than
+        case (Attribute(name1, _), NamedAttribute(name2)) if name1 == name2 => true // less than
+        case (NamedAttribute(_), AnyAttribute) => true // less than
         case (Text(_), AnyText) => true // less than
         case (Comment(_), AnyComment) => true // less than
         case _ => false
@@ -91,6 +94,10 @@ object ZipperXMLDomain {
         case (AnyElement, n@Element(_)) => Some(n)
         case (n@Attribute(_, _), AnyAttribute) => Some(n)
         case (AnyAttribute, n@Attribute(_, _)) => Some(n)
+        case (n@Attribute(name1, _), NamedAttribute(name2)) if name1 == name2 => Some(n)
+        case (NamedAttribute(name2), n@Attribute(name1, _)) if name1 == name2 => Some(n)
+        case (n@NamedAttribute(_), AnyAttribute) => Some(n)
+        case (AnyAttribute, n@NamedAttribute(_)) => Some(n)
         case (n@Text(_), AnyText) => Some(n)
         case (AnyText, n@Text(_)) => Some(n)
         case (n@Comment(_), AnyComment) => Some(n)
@@ -115,7 +122,7 @@ object ZipperXMLDomain {
       case AnyElementStep => AnyElement
       case NamedElementStep(name) => Element(name)
       case AnyAttributeStep => AnyAttribute
-      case NamedAttributeStep(name) => AnyAttribute // TODO: could be more precise with additional case class
+      case NamedAttributeStep(name) => NamedAttribute(name)
       case AnyTextNodeStep => AnyText
       case AnyCommentNodeStep => AnyComment
     }
@@ -132,6 +139,7 @@ object ZipperXMLDomain {
     case Element(name) => DescendantStep(NamedElementStep(name), RootPath)
     case AnyElement => DescendantStep(AnyElementStep, RootPath)
     case Attribute(name, _) => DescendantStep(NamedAttributeStep(name), RootPath)
+    case NamedAttribute(name) => DescendantStep(NamedAttributeStep(name), RootPath)
     case AnyAttribute => DescendantStep(AnyAttributeStep, RootPath)
     case Text(_) | AnyText => DescendantStep(AnyTextNodeStep, RootPath)
     case Comment(_) | AnyComment => DescendantStep(AnyCommentNodeStep, RootPath)
@@ -361,7 +369,7 @@ object ZipperXMLDomain {
           case Attribute(name, value) => xpathDom.liftLiteral(value)
           case Text(value) => xpathDom.liftLiteral(value)
           case Comment(value) => xpathDom.liftLiteral(value)
-          case AnyElement | AnyAttribute | AnyText | AnyComment => xpathDom.topString
+          case AnyElement | AnyAttribute | NamedAttribute(_) | AnyText | AnyComment => xpathDom.topString
         })
       }
       getStringValueFromSubtree(node._1)
@@ -450,6 +458,7 @@ object ZipperXMLDomain {
       val (pathYes, pathNo) = latP.isAttribute(path)
       val (descYes, descNo) = desc.partition {
           case Attribute(_, _) => true
+          case NamedAttribute(_) => true
           case AnyAttribute => true
           case _ => false
         }
@@ -472,7 +481,8 @@ object ZipperXMLDomain {
         case e@Element(n) if name == n => e
         case AnyElement => Element(name)
         case a@Attribute(n, _) if name == n => a
-        case AnyAttribute => AnyAttribute // TODO: can't express attribute with known name but unknown value
+        case a@NamedAttribute(n) if name == n => a
+        case AnyAttribute => NamedAttribute(name)
       }
 
       val descNo = desc // TODO: negative result
@@ -492,7 +502,8 @@ object ZipperXMLDomain {
         case Element(name) => xpathDom.liftLiteral(name)
         case AnyElement => xpathDom.topString
         case Attribute(name, _) => xpathDom.liftLiteral(name)
-        case AnyAttribute => xpathDom.topString // TODO: named attribute with unknown value
+        case NamedAttribute(name) => xpathDom.liftLiteral(name)
+        case AnyAttribute => xpathDom.topString
         case _ => xpathDom.liftLiteral("")
       })
     }
