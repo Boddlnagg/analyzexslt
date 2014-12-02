@@ -35,6 +35,29 @@ object ConcreteDomain extends Domain[N, L, V] {
       case Value(StringValue(v)) => Value(XMLTextNode(v))
       case _ => Bottom
     }
+
+    /** Appends text to a node list.
+      * Empty strings are ignored (return the unmodified list) text that immediately follows an existing text node
+      * is merged into that text node.
+      */
+    override def appendText(list: L, text: V): L = {
+      def appendTextInternal(list: List[XMLNode], text: String): List[XMLNode] = {
+        list match {
+          case Nil => List(XMLTextNode(text))
+          case XMLTextNode(oldValue, parent) :: Nil => List(XMLTextNode(oldValue + text, parent))
+          case last :: Nil => List(last, XMLTextNode(text))
+          case first :: rest => first :: appendTextInternal(rest, text)
+        }
+      }
+
+      (list, text) match {
+        case (Bottom, _) | (_, Bottom) => Bottom
+        case (Top, _) | (_, Top) => Top
+        case (Value(_), Value(StringValue(""))) => list // ignore empty text nodes
+        case (Value(l), Value(StringValue(newValue))) => Value(appendTextInternal(l, newValue))
+        case (Value(_), Value(_)) => Bottom // value is not of type StringValue
+      }
+    }
   }
 
   object XPATH extends ConcreteXPathDomain.D[N, L] {

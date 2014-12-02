@@ -29,6 +29,8 @@ object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
       case None => None
       case Some(s) => Some(s.map(str => XMLTextNode(str)))
     }
+
+    override def appendText(list: L, text: V): L = ???
   }
 
   protected object XPATH extends OuterXPATH.D[N] {

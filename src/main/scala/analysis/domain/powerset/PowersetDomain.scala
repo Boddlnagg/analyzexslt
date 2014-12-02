@@ -34,6 +34,12 @@ object PowersetDomain extends Domain[N, L, V] {
         // NOTE: other value types are implicitly evaluated to bottom
       })
     }
+
+    /** Appends text to a node list.
+      * Empty strings are ignored (return the unmodified list) and text that immediately follows
+      * an existing text node is merged into that text node.
+      */
+    override def appendText(list: L, text: V): L = ???
   }
 
   protected object XPATH extends PowersetXPathDomain.D[N, L] {
