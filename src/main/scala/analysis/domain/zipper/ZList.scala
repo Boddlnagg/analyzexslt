@@ -176,14 +176,14 @@ abstract class ZList[T] {
       case ZUnknownLength(elems) => b.append(elems.toString).append("*]")
       case ZCons(first, ZNil()) => b.append(first.toString).append("]")
       case ZCons(first, rest: ZMaybeNil[T]) =>
-        b.append(first.toString).append("]?,")
+        b.append(first.toString).append(",NIL+")
         appendElement(rest)
       case ZCons(first, rest) =>
         b.append(first.toString).append(",")
         appendElement(rest)
       case ZMaybeNil(first, ZNil()) => b.append(first.toString).append("]")
       case ZMaybeNil(first, rest: ZMaybeNil[T]) =>
-        b.append(first.toString).append("]?,")
+        b.append(first.toString).append(",NIL+")
         appendElement(rest)
       case ZMaybeNil(first, rest) =>
         b.append(first.toString).append(",")

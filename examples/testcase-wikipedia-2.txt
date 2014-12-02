@@ -1,11 +1,39 @@
 <html><head><title>Testing XML Example</title></head><body><h1>Persons</h1><ul><li>Smith, John</li><li>Ismincius, Morka</li></ul></body></html>
 
-Subtree(Some(Set(RootNode)),[
-    Subtree(Some(Set(ElementNode(html))),[
-        Subtree(Some(Set(ElementNode(head), ElementNode(body))),[
-            Subtree(Some(Set(ElementNode(title), ElementNode(h1), ElementNode(ul))),[
-                Subtree(Some(Set(TextNode(Testing XML Example), TextNode(Persons), ElementNode(li))),[Subtree(None,[])*])*
-            ])*
-        ])*
+Result: 
+Subtree(Set(Root),[],[
+    Subtree(Set(Element(html)),[],[
+        Subtree(Set(Element(body), Element(head)),[],[
+            Subtree(Set(Element(ul), Element(h1), Element(title)),[],[
+                Subtree(Set(Element(li), Text(Morka), Text(), Text(Ismincius), Text(\n      ), Text(\n        ), Text(Testing XML Example), Text(Persons), Text(John), Text(Smith)),[],[
+                    Subtree(Set(AnyText),[],[]),
+                    Subtree(Set(Text(, )),[],[]),
+                    Subtree(Set(AnyText),[],[])
+                ])*
+            ]),
+            NIL+Subtree(Set(Element(ul)),[],[
+                Subtree(Set(Element(li), Text(Morka), Text(), Text(Ismincius), Text(\n      ), Text(\n        ), Text(John), Text(Smith)),[],[
+                    Subtree(Set(AnyText),[],[]),
+                    Subtree(Set(Text(, )),[],[]),
+                    Subtree(Set(AnyText),[],[])
+                ])*
+            ])
+        ]),
+        NIL+Subtree(Set(Element(body)),[],[
+            Subtree(Set(Element(ul), Element(h1)),[],[
+                Subtree(Set(Element(li), Text(Morka), Text(), Text(Ismincius), Text(\n      ), Text(\n        ), Text(Persons), Text(John), Text(Smith)),[],[
+                    Subtree(Set(AnyText),[],[]),
+                    Subtree(Set(Text(, )),[],[]),
+                    Subtree(Set(AnyText),[],[])
+                ])*
+            ]),
+            NIL+Subtree(Set(Element(ul)),[],[
+                Subtree(Set(Element(li), Text(Morka), Text(), Text(Ismincius), Text(\n      ), Text(\n        ), Text(John), Text(Smith)),[],[
+                    Subtree(Set(AnyText),[],[]),
+                    Subtree(Set(Text(, )),[],[]),
+                    Subtree(Set(AnyText),[],[])
+                ])*
+            ])
+        ])
     ])
 ])

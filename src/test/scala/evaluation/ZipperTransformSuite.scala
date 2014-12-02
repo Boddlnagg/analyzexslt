@@ -83,7 +83,7 @@ class ZipperTransformSuite extends FunSuite {
 
     assertResult((Subtree(Set(Root),ZNil(),
       ZCons(Subtree(Set(Element("result")),ZNil(),
-        ZUnknownLength(Subtree(Set(AnyText),ZNil(),ZNil())) // TODO: should actually be ZCons instead of ZUnknownLength
+        ZCons(Subtree(Set(AnyText),ZNil(),ZNil()), ZNil())
       ), ZNil())
     ), Set(RootPath))) {
       transform(xslt)

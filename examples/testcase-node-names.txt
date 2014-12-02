@@ -1,7 +1,11 @@
 Result:
-Subtree(Some(Set(RootNode)),[
-    Subtree(Some(Set(ElementNode(element), ElementNode(result))),[
-        Subtree(None,[])*
+Subtree(Set(Root),[],[
+    Subtree(Set(Element(element), Element(result)),[Subtree(Set(NamedAttribute(name)),[],[])],[
+        Subtree(
+            Set(Text(), Element(element), Text(\n      ), Text(bar), Text(\n        ), Element(attribute), Text(foo)),
+            [Subtree(Set(NamedAttribute(name)),[],[])],
+            []
+        )*
     ])
 ])
 

@@ -1,17 +1,17 @@
 Result:
-Subtree(Some(Set(RootNode)),[
-    Subtree(Some(Set(ElementNode(reRoot))),[
-        Subtree(Some(Set(ElementNode(reNode))),[
-            Subtree(Some(Set(TextNode(hello), TextNode(), TextNode( world))),[])*
-        ])*
+Subtree(Set(Root),[],[
+    Subtree(Set(Element(reRoot)),[],[
+        Subtree(Set(Element(reNode)),[],[
+            Subtree(Set(AnyText),[],[]),Subtree(Set(Text( world)),[],[])
+        ])
     ])
 ])
 
 Expected:
-Subtree(Some(Set(RootNode)),[
-    Subtree(Some(Set(ElementNode(reRoot))),[
-        Subtree(Some(Set(ElementNode(reNode))),[
-            Subtree(Some(Set(TextNode(hello world))),[])
+Subtree(Set(Root),[],[
+    Subtree(Set(Element(reRoot)),[],[
+        Subtree(Set(Element(reNode)),[],[
+            Subtree(Set(Text(hello world)),[],[])
         ])
     ])
 ])

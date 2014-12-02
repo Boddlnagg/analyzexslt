@@ -55,32 +55,15 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
       case ZBottom() => Some(Set())
       case ZTop() => None
       case ZNil() => Some(Set(""))
-      case ZCons(node, ZNil()) => getStringValue(node)
-      case ZMaybeNil(node, ZNil()) => getStringValue(node) match {
+      case ZCons(node, ZNil()) => xmlDom.getStringValue(node).str
+      case ZMaybeNil(node, ZNil()) => xmlDom.getStringValue(node).str match {
         case None => None
         case Some(s) => Some(s | Set("")) // add empty string because list may be empty
       }
-      case ZUnknownLength(node) => getStringValue(node) match {
+      case ZUnknownLength(node) => xmlDom.getStringValue(node).str match {
         case None => None
         case Some(s) => Some(s | Set("")) // add empty string because list may be empty
       }
-    }
-
-    def getStringValue(node: N): Option[Set[String]] = {
-      // TODO: this suffers from code duplication with XMLDomain.getStringValue()
-      val lat = Lattice.createFromOptionalSet[String]
-      def getStringValueFromSubtree(tree: Subtree): Option[Set[String]] = {
-        val Subtree(desc, attributes, children) = tree
-        lat.joinAll(desc.map {
-          case Root => getStringValueFromSubtree(children.first)
-          case Element(name) => None// TODO: concatenate the string values of all (non-attribute) children
-          case Attribute(name, value) => Some(Set(value))
-          case Text(value) => Some(Set(value))
-          case Comment(value) => Some(Set(value))
-          case AnyElement | AnyAttribute | NamedAttribute(_) | AnyText | AnyComment => None
-        })
-      }
-      getStringValueFromSubtree(node._1)
     }
 
     /** Turn a node list into a set by sorting nodes in document order and removing duplicate nodes */

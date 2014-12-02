@@ -4,9 +4,6 @@ import analysis._
 
 /** An XML domain, providing operations on XML nodes (N) and list of nodes (L). */
 trait XMLDomain[N, L, V] {
-  // TODO: split this domain in two: XMLMatchingDomain with all operations needed by AbstractXPathMatcher
-  // and XMLDomain extending that one with the remaining operations
-
   /** Get the TOP element for XML nodes. */
   def top: N
 
@@ -14,7 +11,7 @@ trait XMLDomain[N, L, V] {
   def bottom: N
 
   /** Get the TOP element for XML node lists.*/
-  def topList: L // TODO: this is currently never used
+  def topList: L
 
   /** Gets the BOTTOM element for XML node lists. */
   def bottomList: L
@@ -67,12 +64,12 @@ trait XMLDomain[N, L, V] {
   /** Create an element node with the given name, attributes and children.
     * The output is created bottom-up, so children are always created before their parent nodes.
     */
-  def createElement(name: String, attributes: L, children: L): N // TODO: in order to support <xsl:element> this would need to take the name as V
+  def createElement(name: String, attributes: L, children: L): N
 
   /** Create an element node with the given name and no children or attributes.
     * The output is created bottom-up, so children are always created before their parent nodes.
     */
-  def createElement(name: String): N = createElement(name, createEmptyList(), createEmptyList()) // TODO: in order to support <xsl:element> this would need to take the name as V
+  def createElement(name: String): N = createElement(name, createEmptyList(), createEmptyList())
 
   /** Create an attribute node with the given name and text value.
     * Values that are not strings evaluate to BOTTOM.

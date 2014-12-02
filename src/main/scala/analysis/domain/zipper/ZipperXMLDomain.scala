@@ -182,8 +182,6 @@ object ZipperXMLDomain {
     /** Get the TOP element for XML node lists. */
     override def topList: L = ZTop()
 
-    // TODO: this is currently never used
-
     /** Gets the BOTTOM element for XML node lists. */
     override def bottomList: L = ZBottom()
 
@@ -205,7 +203,6 @@ object ZipperXMLDomain {
       * Returns true if l1 < l2 or l1 = l2, false if l1 > l2 or if they are incomparable.
       */
     override def lessThanOrEqualList(l1: L, l2: L): Boolean = l1 <= l2
-    // TODO: is this operation really needed (could be replaced with isBottom)?
 
     /** Create an element node with the given name, attributes and children.
       * The output is created bottom-up, so children are always created before their parent nodes.
@@ -255,9 +252,16 @@ object ZipperXMLDomain {
     override def getParent(node: N): N = {
       val (Subtree(desc, attributes, children), path) = node
       val parent = latP.getParent(path)
-      val newChildren: ZList[Subtree] = ZTop() // don't know anything about siblings of `node` (TODO: except that they are not attributes)
-      val newAttributes: ZList[Subtree] = ZTop() // don't know anything about attributes of `node` (TODO: except that they are attributes)
-      normalize(Subtree(getDescriptorsFromPaths(parent), newAttributes, newChildren), parent)
+      if (parent == Set(RootPath)) { // parent must be root node
+        // root has exactly one child, which must be the node itself
+        val newChildren: ZList[Subtree] = ZCons(node._1, ZNil())
+        val newAttributes: ZList[Subtree] = ZNil() // root has no attributes
+        normalize(Subtree(getDescriptorsFromPaths(parent), newAttributes, newChildren), parent)
+      } else { // parent could be any element or root
+        val newChildren: ZList[Subtree] = ZUnknownLength(isAttribute(top)._2._1) // don't know anything about siblings of `node`, except that they are not attributes
+        val newAttributes: ZList[Subtree] = ZUnknownLength(isAttribute(top)._1._1) // don't know anything about attributes of parent, except that they are attributes
+        normalize(Subtree(getDescriptorsFromPaths(parent), newAttributes, newChildren), parent)
+      }
     }
 
     /** Predicate function that checks whether a node is in a given list of nodes.
@@ -275,31 +279,14 @@ object ZipperXMLDomain {
       * contains all other nodes.
       */
     override def partitionAttributes(list: L): (L, L) = {
-      def createLists(elems: N): (L, L) = {
-        val attrs = isAttribute(elems)._1
-        val children = join(List(isElement(elems)._1, isTextNode(elems)._1, isComment(elems)._1))
-        val attrList: L = if (lessThanOrEqual(attrs, NodeLattice.bottom))
-          ZNil()
-        else
-          ZUnknownLength(attrs)
+      def isNotAttribute(node: N): (N, N) = {
+        val (isAttr, isNotAttr) = isAttribute(node)
+        (isNotAttr, isAttr)
+      }
 
-        val childList: L = if (lessThanOrEqual(children, NodeLattice.bottom))
-          ZNil()
-        else
-          ZUnknownLength(children)
-
-        (attrList, childList)
+      // TODO: the first part should use takeWhile instead of filter
+      (filter(list, isAttribute), filter(list, isNotAttribute))
     }
-
-    list match {
-      case ZBottom() => (ZBottom(), ZBottom())
-      case ZTop() => createLists(NodeLattice.top)
-      case ZUnknownLength(elems) => createLists(elems)
-      case ZCons(first, rest) => createLists(list.joinInner) // TODO: this can be more specific (use ZCons but make first result MaybeNil if there is something that's not an attribute)
-      case ZMaybeNil(first, rest) => createLists(list.joinInner) // TODO: see above
-      case ZNil() => (ZNil(), ZNil())
-    }
-  }
 
     /** Wraps a list of nodes in a document/root node. Lists that don't have exactly one element evaluate to BOTTOM. */
     override def wrapInRoot(list: L): N = {
@@ -382,7 +369,6 @@ object ZipperXMLDomain {
       */
     override def isRoot(node: N): (N, N) = {
       val (Subtree(desc, attributes, children), path) = node
-      // TODO: this might be problematic because we don't gain any information about the children
       // NOTE: root node can't have attributes, so we set it to ZNil
       val positiveResult: N = normalize(Subtree(latD.meet(desc, Set(Root)), ZNil(), children), latP.meet(path, Set(RootPath)))
       val negativeDesc = desc.diff(Set(Root))
@@ -509,7 +495,7 @@ object ZipperXMLDomain {
     }
 
     /** Concatenates the values of all text nodes in the list. List elements that are not text nodes are ignored. */
-    override def getConcatenatedTextNodeValues(list: L): V = xpathDom.topString // TODO
+    override def getConcatenatedTextNodeValues(list: L): V = xpathDom.topString // TODO: this is used for attribute values
 
     /** Filters a list using a given predicate function. The predicate function should never return a node
       * (as its first result) that is less precise than the input node.
@@ -518,7 +504,13 @@ object ZipperXMLDomain {
       case ZBottom() => ZBottom()
       case ZTop() =>
         ZUnknownLength(predicate(top)._1)
-      case ZUnknownLength(elems) => ZUnknownLength(predicate(elems)._1)
+      case ZUnknownLength(elems) =>
+        val result = predicate(elems)._1
+        if (lessThanOrEqual(result, bottom)) { // if result is BOTTOM, return an empty list
+          ZNil()
+        } else {
+          ZUnknownLength(predicate(elems)._1)
+        }
       case ZCons(first, rest) =>
         val result = predicate(first)._1
         val restResult = filter(rest, predicate)
