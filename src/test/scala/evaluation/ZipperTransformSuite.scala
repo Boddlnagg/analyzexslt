@@ -81,11 +81,30 @@ class ZipperTransformSuite extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    assertResult((Subtree(Set(Root),ZNil(),
-      ZCons(Subtree(Set(Element("result")),ZNil(),
-        ZCons(Subtree(Set(AnyText),ZNil(),ZNil()), ZNil())
+    assertResult((Subtree(Set(Root),Some(Set()),
+      ZCons(Subtree(Set(Element("result")),Some(Set()),
+        ZCons(Subtree(Set(AnyText),Some(Set()),ZNil()), ZNil())
       ), ZNil())
     ), Set(RootPath))) {
+      transform(xslt)
+    }
+  }
+
+  test("Multiple attributes") {
+    // the output of this stylesheet is completely independent of the input
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match='/'>
+          <result literal1="foo" literal2="bar">
+            <!-- The order of these is not defined in the spec, but Java adds them in reverse order, so we should match that -->
+            <xsl:attribute name="dynamic1">1</xsl:attribute>
+            <xsl:attribute name="dynamic2">2</xsl:attribute>
+            <xsl:attribute name="dynamic3">3</xsl:attribute>
+          </result>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    assertResult(parser.parseDocument(<result literal1="foo" literal2="bar" dynamic1="1" dynamic2="2" dynamic3="3"/>)) {
       transform(xslt)
     }
   }

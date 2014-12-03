@@ -25,7 +25,7 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
         case None => Set(AnyText)
         case Some(s) => s.map(text => Text(text))
       }
-      val tree = Subtree(desc, ZNil(), ZNil()) // text nodes have no children or attributes
+      val tree = Subtree(desc, Some(Set()), ZNil()) // text nodes have no children or attributes
       val path = Set[Path](DescendantStep(AnyTextNodeStep, RootPath))
       (tree, path)
     }
@@ -38,7 +38,7 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
         case None => Set(NamedAttribute(name))
         case Some(s) => s.map(text => Attribute(name, text))
       }
-      val tree = Subtree(desc, ZNil(), ZNil()) // attribute nodes have no children or attributes
+      val tree = Subtree(desc, Some(Set()), ZNil()) // attribute nodes have no children or attributes
       val path = Set[Path](DescendantStep(NamedAttributeStep(name), RootPath))
       (tree, path)
     }
