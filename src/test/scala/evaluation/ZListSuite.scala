@@ -4,7 +4,7 @@ import analysis.domain.zipper._
 import org.scalatest.FunSuite
 
 class ZListSuite extends FunSuite {
-  type L = Option[Set[Int]]
+  type L = Option[Set[Int]] // lattice type used for these tests
 
   def lift(v: Int*): L = Some(v.toSet)
 
@@ -195,6 +195,15 @@ class ZListSuite extends FunSuite {
   }
 
   test("Take while") {
-    assert(false) // TODO
+    val l1 = ZList(List(lift(3), lift(2), lift(1), lift(0), lift(-1), lift(0), lift(1)))
+    val l2 = ZList(List(lift(2), lift(1), lift(0), lift(1)))
+    val l12 = l1 | l2
+    val l3 = ZList(List(lift(0,1), lift(0,1), lift(0,1)))
+    val l4 = ZCons(lift(2), ZMaybeNil(lift(1), ZCons(lift(0, 1), ZUnknownLength(lift(-99, 99)))))
+
+    assertResult(ZList(List(lift(3), lift(2), lift(1)))) { l1.takeWhile(predicate) }
+    assertResult(ZCons(lift(3,2), ZCons(lift(2,1), ZMaybeNil(lift(1), ZMaybeNil(lift(1), ZNil()))))) { l12.takeWhile(predicate) }
+    assertResult(ZMaybeNil(lift(1), ZMaybeNil(lift(1), ZMaybeNil(lift(1), ZNil())))) { l3.takeWhile(predicate) }
+    assertResult(ZCons(lift(2), ZMaybeNil(lift(1), ZMaybeNil(lift(1), ZUnknownLength(lift(99)))))) { l4.takeWhile(predicate) }
   }
 }
