@@ -46,11 +46,6 @@ class ZipperTransformSuite extends FunSuite {
     assertResult(xmlDom.bottom) { transform(xslt) }
   }
 
-  // TODO: fix this test
-  /*test("Wikipedia (XSLT #2 simplified)") {
-    assertResult(???) { transform(TestData.WikipediaStylesheet2) }
-  }*/
-
   test("Simple recursive template") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -81,9 +76,9 @@ class ZipperTransformSuite extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    assertResult((Subtree(Set(Root),Some(Set()),
-      ZCons(Subtree(Set(Element("result")),Some(Set()),
-        ZCons(Subtree(Set(AnyText),Some(Set()),ZNil()), ZNil())
+    assertResult((Subtree(Set(Root),ZNil(),
+      ZCons(Subtree(Set(Element("result")),ZNil(),
+        ZCons(Subtree(Set(AnyText),ZNil(),ZNil()), ZNil())
       ), ZNil())
     ), Set(RootPath))) {
       transform(xslt)
@@ -96,7 +91,6 @@ class ZipperTransformSuite extends FunSuite {
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match='/'>
           <result literal1="foo" literal2="bar">
-            <!-- The order of these is not defined in the spec, but Java adds them in reverse order, so we should match that -->
             <xsl:attribute name="dynamic1">1</xsl:attribute>
             <xsl:attribute name="dynamic2">2</xsl:attribute>
             <xsl:attribute name="dynamic3">3</xsl:attribute>
@@ -107,5 +101,35 @@ class ZipperTransformSuite extends FunSuite {
     assertResult(parser.parseDocument(<result literal1="foo" literal2="bar" dynamic1="1" dynamic2="2" dynamic3="3"/>)) {
       transform(xslt)
     }
+  }
+
+  test("Node names") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/"><xsl:apply-templates/></xsl:template>
+        <xsl:template match="/root">
+          <result>
+            <xsl:apply-templates select="@*"/>
+            <xsl:apply-templates/>
+          </result>
+        </xsl:template>
+        <xsl:template match="text()"/> <!-- Ignore text nodes -->
+        <xsl:template match="@*"> <!-- All attribute nodes -->
+          <attribute><xsl:attribute name="name"><xsl:value-of select="name()"/></xsl:attribute></attribute>
+        </xsl:template>
+        <xsl:template match="*"> <!-- All element nodes -->
+          <element><xsl:attribute name="name"><xsl:value-of select="name()"/></xsl:attribute></element>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    assertResult(
+      Subtree(Set(Root),ZNil(),ZCons(
+        Subtree(Set(Element("result")),
+          ZNil(), // attributes of <result>
+          ZUnknownLength( // children of <result>
+              Subtree(Set(Element("attribute"), Element("element")),ZUnknownLength(Set(NamedAttribute("name"))),ZNil())
+          )
+        ), ZNil()
+      )), Set(RootPath)) { transform(xslt) }
   }
 }

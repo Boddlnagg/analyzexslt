@@ -73,7 +73,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    val data = <foo/>
+    val data = <foo/> // stylesheet is completely independent of input, we just need *some* document
     assertTransformMatches(xslt, data)
   }
 
@@ -85,7 +85,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    val data = <foo/>
+    val data = <foo/> // stylesheet is completely independent of input, we just need *some* document
     assertTransformMatches(xslt, data)
   }
 
@@ -97,7 +97,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    val data = <foo/>
+    val data = <foo/> // stylesheet is completely independent of input, we just need *some* document
     assertTransformMatches(xslt, data)
   }
 
@@ -113,7 +113,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    val data = <foo/>
+    val data = <foo/> // stylesheet is completely independent of input, we just need *some* document
     assertTransformMatches(xslt, data)
   }
 
@@ -144,7 +144,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    val data = <foo/>
+    val data = <foo/> // stylesheet is completely independent of input, we just need *some* document
     assertTransformMatches(xslt, data)
   }
 
@@ -153,7 +153,6 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match='/'>
           <result literal1="foo" literal2="bar">
-            <!-- The order of these is not defined in the spec, but Java adds them in reverse order, so we should match that -->
             <xsl:attribute name="dynamic1">1</xsl:attribute>
             <xsl:attribute name="dynamic2">2</xsl:attribute>
             <xsl:attribute name="dynamic3">3</xsl:attribute>
@@ -161,7 +160,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    val data = <foo/>
+    val data = <foo/> // stylesheet is completely independent of input, we just need *some* document
     assertTransformMatches(xslt, data)
   }
 
@@ -176,7 +175,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    val data = <foo/>
+    val data = <foo/> // stylesheet is completely independent of input, we just need *some* document
     assertTransformMatches(xslt, data)
   }
 
@@ -191,7 +190,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    val data = <foo/>
+    val data = <foo/> // stylesheet is completely independent of input, we just need *some* document
     assertTransformMatches(xslt, data)
   }
 
@@ -230,7 +229,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    val data = <foo/>
+    val data = <foo/> // stylesheet is completely independent of input, we just need *some* document
 
     assertTransformMatches(xslt, data)
   }
@@ -248,7 +247,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    val data = <foo/>
+    val data = <foo/> // stylesheet is completely independent of input, we just need *some* document
 
     assertTransformMatches(xslt, data)
   }
@@ -265,7 +264,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    val data = <foo/>
+    val data = <foo/> // stylesheet is completely independent of input, we just need *some* document
 
     assertTransformMatches(xslt, data)
   }
@@ -283,7 +282,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    val data = <foo/>
+    val data = <foo/> // stylesheet is completely independent of input, we just need *some* document
 
     assertTransformMatches(xslt, data)
   }
@@ -713,7 +712,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
       </xsl:stylesheet>
 
     val data =
-      <root/>
+      <foo/> // stylesheet is completely independent of input, we just need *some* document
 
     assertTransformMatches(xslt, data)
   }
@@ -734,7 +733,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
       </xsl:stylesheet>
 
     val data =
-        <root/>
+        <foo/> // stylesheet is completely independent of input, we just need *some* document
 
     assertTransformMatches(xslt, data)
   }
@@ -778,7 +777,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    val data = <root/>
+    val data = <foo/> // stylesheet is completely independent of input, we just need *some* document
 
     assertTransformMatches(xslt, data)
   }
