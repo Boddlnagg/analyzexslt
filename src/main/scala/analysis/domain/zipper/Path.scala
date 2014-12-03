@@ -238,15 +238,30 @@ object Path {
       (normalize(yes), normalize(no))
     }
 
-    def hasName(node: Set[Path], name: String): (Set[Path], Set[Path]) = (normalize(node.collect {
-      case e@ChildStep(NamedElementStep(n), _) if name == n => e
-      case ChildStep(AnyElementStep, p) => ChildStep(NamedElementStep(name), p)
-      case a@ChildStep(NamedAttributeStep(n), _) if name == n => a
-      case ChildStep(AnyAttributeStep, p) => ChildStep(NamedAttributeStep(name), p)
-      case e@DescendantStep(NamedElementStep(n), _) if name == n => e
-      case DescendantStep(AnyElementStep, p) => DescendantStep(NamedElementStep(name), p)
-      case a@DescendantStep(NamedAttributeStep(n), _) if name == n => a
-      case DescendantStep(AnyAttributeStep, p) => DescendantStep(NamedAttributeStep(name), p)
-    }), node) // TODO: negative result
+    def hasName(node: Set[Path], name: String): (Set[Path], Set[Path]) = {
+      val yes = node.collect {
+        case e@ChildStep(NamedElementStep(n), _) if name == n => e
+        case ChildStep(AnyElementStep, p) => ChildStep(NamedElementStep(name), p)
+        case a@ChildStep(NamedAttributeStep(n), _) if name == n => a
+        case ChildStep(AnyAttributeStep, p) => ChildStep(NamedAttributeStep(name), p)
+        case e@DescendantStep(NamedElementStep(n), _) if name == n => e
+        case DescendantStep(AnyElementStep, p) => DescendantStep(NamedElementStep(name), p)
+        case a@DescendantStep(NamedAttributeStep(n), _) if name == n => a
+        case DescendantStep(AnyAttributeStep, p) => DescendantStep(NamedAttributeStep(name), p)
+      }
+
+      val no = node.collect {
+        case e@ChildStep(NamedElementStep(n), _) if name != n => e
+        case e@ChildStep(AnyElementStep, p) => e // can't express that name is *not* the specified one
+        case a@ChildStep(NamedAttributeStep(n), _) if name != n => a
+        case a@ChildStep(AnyAttributeStep, p) => a // can't express that name is *not* the specified one
+        case e@DescendantStep(NamedElementStep(n), _) if name != n => e
+        case e@DescendantStep(AnyElementStep, p) => e // can't express that name is *not* the specified one
+        case a@DescendantStep(NamedAttributeStep(n), _) if name != n => a
+        case a@DescendantStep(AnyAttributeStep, p) => a // can't express that name is *not* the specified one
+      }
+
+      (normalize(yes), normalize(no))
+    }
   }
 }

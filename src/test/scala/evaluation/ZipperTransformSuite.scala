@@ -106,11 +106,10 @@ class ZipperTransformSuite extends FunSuite {
   test("Node names") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-        <xsl:template match="/"><xsl:apply-templates/></xsl:template>
-        <xsl:template match="/root">
+        <xsl:template match="/">
           <result>
-            <xsl:apply-templates select="@*"/>
-            <xsl:apply-templates/>
+            <xsl:apply-templates select="root/@*"/>
+            <xsl:apply-templates select="root/child::node()"/>
           </result>
         </xsl:template>
         <xsl:template match="text()"/> <!-- Ignore text nodes -->
@@ -123,13 +122,13 @@ class ZipperTransformSuite extends FunSuite {
       </xsl:stylesheet>
 
     assertResult(
-      Subtree(Set(Root),ZNil(),ZCons(
+      (Subtree(Set(Root),ZNil(),ZCons(
         Subtree(Set(Element("result")),
           ZNil(), // attributes of <result>
           ZUnknownLength( // children of <result>
               Subtree(Set(Element("attribute"), Element("element")),ZUnknownLength(Set(NamedAttribute("name"))),ZNil())
           )
         ), ZNil()
-      )), Set(RootPath)) { transform(xslt) }
+      )), Set(RootPath))) { transform(xslt) }
   }
 }

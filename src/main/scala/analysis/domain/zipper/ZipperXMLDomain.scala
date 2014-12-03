@@ -477,7 +477,13 @@ object ZipperXMLDomain {
         case AnyAttribute => NamedAttribute(name)
       }
 
-      val descNo = desc // TODO: negative result
+      val descNo: Set[NodeDescriptor] = desc.collect {
+        case e@Element(n) if name != n => e
+        case AnyElement => AnyElement // can't represent element that does *not* have specified name
+        case a@Attribute(n, _) if name != n => a
+        case a@NamedAttribute(n) if name != n => a
+        case AnyAttribute => AnyAttribute // can't represent attribute that does *not* have specified name
+      }
 
       val yes = normalize(Subtree(latD.normalizeDescriptors(descYes), attributes, children), pathYes)
       val no = normalize(Subtree(latD.normalizeDescriptors(descNo), attributes, children), pathNo)
