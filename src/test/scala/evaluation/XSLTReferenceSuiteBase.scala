@@ -375,6 +375,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
   test("Simple if") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="text()"></xsl:template>
         <xsl:template match="/">
           <result>
             <xsl:apply-templates/>
@@ -538,6 +539,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
   test("position() and last()") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="text()"></xsl:template>
         <xsl:template match="/root">
           <result>
             <unfiltered>
@@ -828,9 +830,15 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     } catch {
       case eJava: TransformerException =>
         // if Java throws an exception, we should do the same (because of invalid input)
-        val eScala = intercept[EvaluationError] (transform(xslt, data))
-        println(f"Scala error: $eScala")
-        println(f"Java error: $eJava")
+        try {
+          val result = transform(xslt, data)
+          println(f"Result: $result")
+          assert(false, f"Expected EvaluationError, Java error: $eJava")
+        } catch {
+          case eScala: EvaluationError =>
+            println(f"Scala error: $eScala")
+            println(f"Java error: $eJava")
+        }
     }
   }
 }

@@ -1,38 +1,52 @@
-<html><head><title>Testing XML Example</title></head><body><h1>Persons</h1><ul><li>Smith, John</li><li>Ismincius, Morka</li></ul></body></html>
+NOTE: with additinal rule to eliminate text copies: <xsl:template match="text()"></xsl:template>
 
-Result: 
+Result:
 Subtree(Set(Root),[],[
     Subtree(Set(Element(html)),[],[
-        Subtree(Set(Element(body), Element(head)),[],[
-            Subtree(Set(Element(ul), Element(h1), Element(title)),[],[
-                Subtree(Set(Element(li), Text(Morka), Text(), Text(Ismincius), Text(\n      ), Text(\n        ), Text(Testing XML Example), Text(Persons), Text(John), Text(Smith)),[],[
+        Subtree(Set(Element(head)),[],[
+            Subtree(Set(Element(title)),[],[
+                Subtree(Set(Text(Testing XML Example)),[],[])
+            ])
+        ]),
+        Subtree(Set(Element(body)),[],[
+            Subtree(Set(Element(h1)),[],[
+                Subtree(Set(Text(Persons)),[],[])
+            ]),
+            Subtree(Set(Element(ul)),[],[
+                Subtree(Set(Element(li)),[],[
                     Subtree(Set(AnyText),[],[]),
                     Subtree(Set(Text(, )),[],[]),
                     Subtree(Set(AnyText),[],[])
-                ])*
-            ]),
-            NIL+Subtree(Set(Element(ul)),[],[
-                Subtree(Set(Element(li), Text(Morka), Text(), Text(Ismincius), Text(\n      ), Text(\n        ), Text(John), Text(Smith)),[],[
+                ]),
+                Subtree(Set(Element(li)),[],[
                     Subtree(Set(AnyText),[],[]),
                     Subtree(Set(Text(, )),[],[]),
                     Subtree(Set(AnyText),[],[])
                 ])*
             ])
+        ])
+    ])
+])
+
+Expected:
+Subtree(Set(Root),[],[
+    Subtree(Set(Element(html)),[],[
+        Subtree(Set(Element(head)),[],[
+            Subtree(Set(Element(title)),[],[
+                Subtree(Set(Text(Testing XML Example)),[],[])
+            ])
         ]),
-        NIL+Subtree(Set(Element(body)),[],[
-            Subtree(Set(Element(ul), Element(h1)),[],[
-                Subtree(Set(Element(li), Text(Morka), Text(), Text(Ismincius), Text(\n      ), Text(\n        ), Text(Persons), Text(John), Text(Smith)),[],[
-                    Subtree(Set(AnyText),[],[]),
-                    Subtree(Set(Text(, )),[],[]),
-                    Subtree(Set(AnyText),[],[])
-                ])*
+        Subtree(Set(Element(body)),[],[
+            Subtree(Set(Element(h1)),[],[
+                Subtree(Set(Text(Persons)),[],[])
             ]),
-            NIL+Subtree(Set(Element(ul)),[],[
-                Subtree(Set(Element(li), Text(Morka), Text(), Text(Ismincius), Text(\n      ), Text(\n        ), Text(John), Text(Smith)),[],[
-                    Subtree(Set(AnyText),[],[]),
-                    Subtree(Set(Text(, )),[],[]),
-                    Subtree(Set(AnyText),[],[])
-                ])*
+            Subtree(Set(Element(ul)),[],[
+                Subtree(Set(Element(li)),[],[
+                    Subtree(Set(Text(Smith, John)),[],[])
+                ]),
+                Subtree(Set(Element(li)),[],[
+                    Subtree(Set(Text(Ismincius, Morka)),[],[])
+                ])
             ])
         ])
     ])

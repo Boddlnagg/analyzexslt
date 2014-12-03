@@ -1,0 +1,19 @@
+<result>
+    <aa>
+        <bb/>
+        <aa>
+            <bb/>
+        </aa>
+    </aa>
+</result>
+
+Subtree(Set(Root),[],[
+    Subtree(Set(Element(result)),[],[
+        NIL+Subtree(Set(Element(aa)),[],[
+            Subtree(Set(Element(bb)),[],[]),
+            NIL+Subtree(Set(Element(aa)),[],[
+                Subtree(Set(Element(bb)),[],[])
+            ])
+        ])
+    ])
+])
