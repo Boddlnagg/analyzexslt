@@ -109,7 +109,7 @@ object ZipperXMLDomain {
   implicit object NodeLattice extends Lattice[N] {
     def top = (latS.top, latP.top)
     def bottom = (latS.bottom, latP.bottom)
-    def join(left: N, right: N): N = normalize(latS.join(left._1, right._1), latP.join(left._2, right._2)) // TODO: normalize is probably not required here
+    def join(left: N, right: N): N = normalize(latS.join(left._1, right._1), latP.join(left._2, right._2))
     def meet(left: N, right: N): N = normalize(latS.meet(left._1, right._1), latP.meet(left._2, right._2))
 
     def lessThanOrEqual(left: N, right: N): Boolean =
@@ -146,8 +146,6 @@ object ZipperXMLDomain {
 
   /** Removes impossible elements (where Path and Subtree descriptors don't agree) */
   private def normalize(node: N): N = {
-    // TODO: further refinements (e.g. if the descriptor only describes nodes that can't have children, set children to ZNil)
-    //       or more general: eliminate all children that can not have the descriptor as their parent (recursively?)
     val (Subtree(desc, attributes, children), path) = node
     if (children.isInstanceOf[ZBottom[Subtree]] || attributes.isInstanceOf[ZBottom[Set[NodeDescriptor]]]) {
       NodeLattice.bottom
@@ -225,7 +223,7 @@ object ZipperXMLDomain {
 
       val tree = Subtree(Set(Element(name)), attrSet, children.map(_._1))
       val path = Set[Path](DescendantStep(AnyElementStep, RootPath))
-      (tree, path)
+      normalize(tree, path)
     }
 
     /** Create an emtpy list containing no nodes */
@@ -238,11 +236,14 @@ object ZipperXMLDomain {
     override def getRoot(node: N): N = {
       val (Subtree(desc, attributes, children), path) = node
       val root: P = Set(RootPath)
-      // NOTE: we use the empty attribute set because root node can't have attributes
-      // TODO: the child could be more precise using information from the path
-      normalize(Subtree(latD.meet(desc, getDescriptorsFromPaths(root)), ZNil(), ZCons(latS.top, ZNil())), latP.meet(path, root))
+      if (path == root) { // if the input node is definitely a root node ...
+        node // ... return the node itself, because it is its one root
+      } else {
+        // TODO: the child could be more precise using information from the path
+        // NOTE: the root node can't have attributes and has only one (element) child
+        normalize(Subtree(Set(Root), ZNil(), ZCons(Subtree(Set(AnyElement), ZUnknownLength(Set(AnyAttribute)), ZTop()), ZNil())), root)
+      }
     }
-    // TODO: this might be implementable using getParent() and isRoot()
 
     /** Get the list of attributes of a given node.
       * Nodes that are not an element (and therefore don't have attributes) return an empty list, not BOTTOM! */
@@ -375,8 +376,14 @@ object ZipperXMLDomain {
       */
     override def isRoot(node: N): (N, N) = {
       val (Subtree(desc, attributes, children), path) = node
-      // NOTE: root node can't have attributes, so we set it to ZNil
-      val positiveResult: N = normalize(Subtree(latD.meet(desc, Set(Root)), ZNil(), children), latP.meet(path, Set(RootPath)))
+      // NOTE: root node can't have attributes, so we set it to ZNil, and it can only have exactly one child
+      val firstChild = children.first
+      val newChildren: ZList[S] = if (latS.lessThanOrEqual(firstChild, latS.bottom)) // if there was no first child ...
+        ZBottom() // return bottom
+      else
+        ZCons(firstChild, ZNil()) // otherwise create a singleton list from that child
+
+      val positiveResult: N = normalize(Subtree(latD.meet(desc, Set(Root)), ZNil(), newChildren), latP.meet(path, Set(RootPath)))
       val negativeDesc = desc.diff(Set(Root))
       val negativeResult: N = normalize(Subtree(negativeDesc, attributes, children), path.diff(Set(RootPath)))
       (positiveResult, negativeResult)
@@ -395,7 +402,6 @@ object ZipperXMLDomain {
         case AnyElement => true
         case _ => false
       }
-      // TODO: maybe move normalizeDescriptors call into normalize()
       val yes = normalize(Subtree(latD.normalizeDescriptors(descYes), attributes, children), pathYes)
       // NOTE: only elements can have attributes, therefore we use the empty attribute set in the negative result
       val no = normalize(Subtree(latD.normalizeDescriptors(descNo), ZNil(), children), pathNo)
@@ -507,7 +513,12 @@ object ZipperXMLDomain {
     }
 
     /** Concatenates the values of all text nodes in the list. List elements that are not text nodes are ignored. */
-    override def getConcatenatedTextNodeValues(list: L): V = xpathDom.topString // TODO: this is used for attribute values
+    override def getConcatenatedTextNodeValues(list: L): V = list match {
+      case ZCons(first, ZNil()) => // TODO: this is only a special case ... get rid of this
+        val (text, _) = isTextNode(first)
+        getStringValue(text)
+      case _ => xpathDom.topString // TODO: implement this (used for attribute values)
+    }
 
     /** Filters a list using a given predicate function. The predicate function should never return a node
       * (as its first result) that is less precise than the input node.

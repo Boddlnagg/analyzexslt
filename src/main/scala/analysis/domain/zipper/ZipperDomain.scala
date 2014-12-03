@@ -70,9 +70,15 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
     override def nodeListToSet(list: L): L = list match {
       case ZBottom() => ZBottom()
       case ZTop() => ZTop()
+      // NOTE: the following two are special cases, as singleton and empty lists don't change when being converted to a sorted set
+      case ZCons(_, ZNil()) => list
+      case ZMaybeNil(_, ZNil()) => list
       case ZUnknownLength(node) => list
-      case ZCons(head, tail) => ZUnknownLength(list.joinInner) // TODO: this could be made more precise
-      case ZMaybeNil(head, tail) => ZUnknownLength(list.joinInner) // TODO: this could be made more precise
+      case ZCons(head, tail) =>
+        val inner = list.joinInner
+        // create a list with at least 1 element
+        ZCons(inner, ZUnknownLength(inner)) // TODO: can this be made more precise?
+      case ZMaybeNil(head, tail) => ZUnknownLength(list.joinInner) // TODO: can this be made more precise?
       case ZNil() => ZNil()
     }
   }

@@ -54,7 +54,7 @@ class ZipperTransformSuite extends FunSuite {
             <xsl:apply-templates/>
           </result>
         </xsl:template>
-        <xsl:template match="/root">
+        <xsl:template match="/*">
           <child/>
         </xsl:template>
       </xsl:stylesheet>
@@ -76,13 +76,16 @@ class ZipperTransformSuite extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    assertResult((Subtree(Set(Root),ZNil(),
-      ZCons(Subtree(Set(Element("result")),ZNil(),
-        ZCons(Subtree(Set(AnyText),ZNil(),ZNil()), ZNil())
-      ), ZNil())
-    ), Set(RootPath))) {
-      transform(xslt)
-    }
+    // The following expected result corresponds to this pseudo-XML-document:
+    // <result>???</result>
+
+    assertResult(
+      Subtree(Set(Root),ZNil(),ZCons(
+        Subtree(Set(Element("result")),ZNil(),ZCons(
+          Subtree(Set(AnyText),ZNil(),ZNil()), ZNil()
+        )), ZNil()
+      )
+    )) { transform(xslt)._1 }
   }
 
   test("Multiple attributes") {
@@ -106,10 +109,11 @@ class ZipperTransformSuite extends FunSuite {
   test("Node names") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-        <xsl:template match="/">
+        <xsl:template match="/"><xsl:apply-templates/></xsl:template>
+        <xsl:template match="/*">
           <result>
-            <xsl:apply-templates select="root/@*"/>
-            <xsl:apply-templates select="root/child::node()"/>
+            <xsl:apply-templates select="@*"/>
+            <xsl:apply-templates/>
           </result>
         </xsl:template>
         <xsl:template match="text()"/> <!-- Ignore text nodes -->
@@ -121,14 +125,104 @@ class ZipperTransformSuite extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
+    // The following expected result corresponds to this pseudo-XML-document:
+    // <result>
+    //  <attribute|element name="???"/>
+    //  ...
+    // </result>
+
     assertResult(
-      (Subtree(Set(Root),ZNil(),ZCons(
+      Subtree(Set(Root),ZNil(),ZCons(
         Subtree(Set(Element("result")),
           ZNil(), // attributes of <result>
           ZUnknownLength( // children of <result>
               Subtree(Set(Element("attribute"), Element("element")),ZUnknownLength(Set(NamedAttribute("name"))),ZNil())
           )
         ), ZNil()
-      )), Set(RootPath))) { transform(xslt) }
+      ))) { transform(xslt)._1 }
+  }
+
+  // TODO: ignored because of non-termination
+  ignore("Replicate n times") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/"><xsl:apply-templates/></xsl:template>
+        <xsl:template match="/*">
+          <result>
+          <xsl:apply-templates select="*">
+            <xsl:with-param name="n" select="number(@n)"/>
+          </xsl:apply-templates>
+        </result>
+        </xsl:template>
+        <xsl:template match="*">
+          <xsl:param name="n" select="0"/>
+          <xsl:call-template name="do-copy">
+            <xsl:with-param name="n" select="$n"/>
+          </xsl:call-template>
+        </xsl:template>
+        <xsl:template name="do-copy">
+          <xsl:param name="n" select="0"/>
+          <xsl:if test="$n > 0">
+            <xsl:copy-of select="."/>
+            <xsl:call-template name="do-copy">
+              <xsl:with-param name="n" select="$n - 1"/>
+            </xsl:call-template>
+          </xsl:if>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    assertResult(???) { transform(xslt)._1 }
+  }
+
+  // TODO: ignored because of text node merging
+  ignore("Wikipedia (Java Example)") {
+    // taken from http://en.wikipedia.org/wiki/Java_API_for_XML_Processing#Example
+    val xslt =
+      <xsl:stylesheet version='1.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>
+        <xsl:template match='/'>
+          <reRoot><reNode><xsl:value-of select='/root/node/@val' /> world</reNode></reRoot>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    assertResult(???) { transform(xslt)._1 }
+  }
+
+  test("Wikipedia (XSLT #1 simplified)") {
+    val xslt =
+      <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+        <xsl:template match="/"><xsl:apply-templates select="persons"/></xsl:template>
+        <xsl:template match="/persons">
+          <root>
+            <xsl:apply-templates select="person"/>
+          </root>
+        </xsl:template>
+        <xsl:template match="person">
+          <name>
+            <xsl:attribute name="username"><xsl:value-of select="@username"/></xsl:attribute>
+            <xsl:value-of select="name" />
+          </name>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    // The following expected result corresponds to this pseudo-XML-document:
+    // <root>
+    //   <name username="???">???</name>
+    //   <name username="???">???</name>
+    //   ...
+    // </root>
+
+    assertResult(
+      Subtree(Set(Root),ZNil(),ZCons(
+        Subtree(Set(Element("root")),ZNil(),ZUnknownLength(
+          Subtree(Set(Element("name")),ZUnknownLength(Set(NamedAttribute("username"))),ZCons(
+            Subtree(Set(AnyText),ZNil(),ZNil()), ZNil()
+          ))
+        )), ZNil()
+      ))) { transform(xslt)._1 }
+  }
+
+  // TODO: ignored because of text node merging
+  ignore("Wikipedia (XSLT #2 simplified)") {
+    assertResult(???) { transform(TestData.WikipediaStylesheet2) }
   }
 }
