@@ -1,0 +1,14 @@
+<result><unfiltered><aa last="11" pos="2"/><aa last="11" pos="10"/></unfiltered><filtered><aa last="2" pos="1"/><aa last="2" pos="2"/></filtered></result>
+
+Subtree(Set(Root),[],[
+    Subtree(Set(Element(result)),[],[
+        Subtree(Set(Element(unfiltered)),[],[
+            Subtree(Set(Element(aa)),[Set(Attribute(pos,2), Attribute(last,11))*],[]),
+            Subtree(Set(Element(aa)),[Set(Attribute(pos,10), Attribute(last,11))*],[])
+        ]),
+        Subtree(Set(Element(filtered)),[],[
+            Subtree(Set(Element(aa)),[Set(Attribute(pos,1), NamedAttribute(last))*],[]),
+            Subtree(Set(Element(aa)),[Set(NamedAttribute(pos), NamedAttribute(last))*],[])*
+        ])
+    ])
+])
