@@ -1,6 +1,6 @@
 package xml
 
-// TODO: remove comments?
+// TODO: remove comments (or allow them to be created in the abstract domain)?
 /** Comment node as defined in XPath spec section 5.6. */
 case class XMLComment(value: String, var parent: XMLNode = null) extends XMLNode {
   override def toString = {

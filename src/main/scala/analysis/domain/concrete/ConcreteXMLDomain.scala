@@ -164,7 +164,7 @@ object ConcreteXMLDomain {
     override def getStringValue(node: N): V = node match {
       case Top => xpathDom.top
       case Bottom => xpathDom.bottom
-      case Value(n) => xpathDom.liftLiteral(n.stringValue)
+      case Value(n) => xpathDom.liftString(n.stringValue)
     }
 
     /** Predicate function that checks whether a node is a root node.
@@ -259,7 +259,7 @@ object ConcreteXMLDomain {
     override def getNodeName(node: N): V = node match {
       case Top => xpathDom.top
       case Bottom => xpathDom.bottom
-      case Value(n) => xpathDom.liftLiteral(n match {
+      case Value(n) => xpathDom.liftString(n match {
         case XMLElement(name, _, _, _) => name
         case XMLAttribute(name, _, _) => name
         case _ => ""
@@ -270,7 +270,7 @@ object ConcreteXMLDomain {
     override def getConcatenatedTextNodeValues(list: L): V = list match {
       case Top => xpathDom.top
       case Bottom => xpathDom.bottom
-      case Value(l) => xpathDom.liftLiteral(l.collect { case XMLTextNode(text, _) => text }.mkString(""))
+      case Value(l) => xpathDom.liftString(l.collect { case XMLTextNode(text, _) => text }.mkString(""))
     }
 
     /** Filters a list using a given predicate function. The predicate function should never return a node

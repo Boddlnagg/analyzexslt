@@ -32,16 +32,6 @@ trait XMLDomain[N, L, V] {
   def joinAllLists(lists: Traversable[L]): L = lists.fold(bottomList)(joinLists)
 
   /** Compares two elements of the lattice of nodes.
-    * TOP is always greater than everything else, BOTTOM is always less than everything else.
-    */
-  def compare(n1: N, n2: N): LatticeOrdering = (lessThanOrEqual(n1, n2), lessThanOrEqual(n2, n1)) match {
-    case (true, true) => Equal
-    case (true, false) => Less
-    case (false, true) => Greater
-    case (false, false) => Incomparable
-  }
-
-  /** Compares two elements of the lattice of nodes.
     * Returns true if n1 < n2 or n1 = n2, false if n1 > n2 or if they are incomparable.
     */
   def lessThanOrEqual(n1: N, n2: N): Boolean

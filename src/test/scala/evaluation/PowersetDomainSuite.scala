@@ -62,7 +62,7 @@ class PowersetDomainSuite extends FunSuite {
   }
 
   test("Lift element with attributes") {
-    val attr = xmlDom.createSingletonList(xmlDom.createAttribute("name", xpathDom.liftLiteral("value")))
+    val attr = xmlDom.createSingletonList(xmlDom.createAttribute("name", xpathDom.liftString("value")))
     assertResult(Some(Set(XMLParser.parse(<e1 name="value"/>)))) {
       xmlDom.createElement("e1", attr, xmlDom.createEmptyList())
     }
@@ -88,9 +88,9 @@ class PowersetDomainSuite extends FunSuite {
     val attr2 = XMLAttribute("attr2", "2")
     val attr3 = XMLAttribute("attr3", "3")
 
-    val l1a = xmlDom.createSingletonList(xmlDom.createAttribute("attr1", xpathDom.liftLiteral("1")))
-    val l2 = xmlDom.createSingletonList(xmlDom.createAttribute("attr2", xpathDom.liftLiteral("2")))
-    val l3 = xmlDom.createSingletonList(xmlDom.createAttribute("attr3", xpathDom.liftLiteral("3")))
+    val l1a = xmlDom.createSingletonList(xmlDom.createAttribute("attr1", xpathDom.liftString("1")))
+    val l2 = xmlDom.createSingletonList(xmlDom.createAttribute("attr2", xpathDom.liftString("2")))
+    val l3 = xmlDom.createSingletonList(xmlDom.createAttribute("attr3", xpathDom.liftString("3")))
 
     val l1ab: L = Right(Set(List(attr1a), List(attr1b)))
     val l12: L = Right(Set(List(attr1a), List(attr1a, attr2)))
@@ -199,7 +199,7 @@ class PowersetDomainSuite extends FunSuite {
   }
 
   test("Compare (with booleans)") {
-    val stringVal = xpathDom.liftLiteral("String")
+    val stringVal = xpathDom.liftString("String")
     val trueVal = xpathDom.liftBoolean(true)
     val falseVal = xpathDom.liftBoolean(false)
     val anyVal = xpathDom.join(xpathDom.join(trueVal, falseVal), stringVal)

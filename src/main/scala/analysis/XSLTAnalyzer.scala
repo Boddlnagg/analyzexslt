@@ -44,8 +44,8 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   private def evaluateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: AbstractXSLTContext[N, L, V], params: Map[String, V]): L = {
     val acceptedParams = params.filter { case (key, _) => tmpl.defaultParams.contains(key) }
     val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key)}.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))
-    // the context for the newly instantiated template contains only global variables and parameters, no local parameters (static scoping)
-    // TODO: insert global variables here, once they are supported
+    // the context for the newly instantiated template contains only global variables and parameters, no local parameters
+    // (static scoping and no nested template definitions); global variables are not supported in this implementation
     evaluate(sheet, tmpl.content, context.replaceVariables(Map()).addVariables(remainingDefaultParams ++ acceptedParams))
   }
 
@@ -53,16 +53,18 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     val result = scala.collection.mutable.Map[XSLTTemplate, N]()
     var currentNode = node
     breakable {
+      // iterate through matchable templates in reverse order (because always the last one always has highest priority/precedence)
       sheet.matchableTemplates.reverse.foreach { case (path, tpl, _, _) =>
         val (matches, notMatches) = xpathMatcher.matches(currentNode, path)
-        if (xmlDom.compare(matches, xmlDom.bottom) == Greater)
-          result.put(tpl, matches)
+        if (!xmlDom.lessThanOrEqual(matches, xmlDom.bottom))
+          result.put(tpl, matches) // template might match, so add it to possible results
         if (xmlDom.lessThanOrEqual(notMatches, xmlDom.bottom))
-          break()
+          break() // there is nothing left did not match, so we can stop the process
         if (xmlDom.lessThanOrEqual(currentNode, matches))
-          break() // the node matched completely
+          break() // the node matched completely, so we can also stop
 
-        currentNode = notMatches
+        currentNode = notMatches // continue with that "part" of the node that did not match
+        // (we already found the correct template for everything that did match so far)
       }
     }
     result.toMap
@@ -103,7 +105,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val (resultAttributes, resultChildren) = xmlDom.partitionAttributes(innerNodes)
         val result = xmlDom.createElement(name, resultAttributes, resultChildren)
         Left(xmlDom.createSingletonList(result))
-      case LiteralTextNode(text) => Left(xmlDom.createSingletonList(xmlDom.createTextNode(xpathDom.liftLiteral(text))))
+      case LiteralTextNode(text) => Left(xmlDom.createSingletonList(xmlDom.createTextNode(xpathDom.liftString(text))))
       case SetAttributeInstruction(attribute, value) =>
         // merge the content of all text-node children to create the attribute value
         val textResult = xmlDom.getConcatenatedTextNodeValues(evaluate(sheet, value, context))

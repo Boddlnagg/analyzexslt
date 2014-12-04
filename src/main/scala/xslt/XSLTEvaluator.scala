@@ -45,8 +45,8 @@ object XSLTEvaluator {
   def evaluateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: XSLTContext, params: Map[String, XPathValue]): List[XMLNode] = {
     val acceptedParams = params.filter { case (key, _) => tmpl.defaultParams.contains(key) }
     val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key)}.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))
-    // the context for the newly instantiated template contains only global variables and parameters, no local parameters (static scoping)
-    // TODO: insert global variables here, once they are supported
+    // the context for the newly instantiated template contains only global variables and parameters, no local parameters
+    // (static scoping and no nested template definitions); global variables are not supported in this implementation
     evaluate(sheet, tmpl.content, context.replaceVariables(Map()).addVariables(remainingDefaultParams ++ acceptedParams))
   }
 

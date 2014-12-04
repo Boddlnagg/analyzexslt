@@ -33,18 +33,13 @@ class TypedPowersetXPathDomain[L] {
     protected def fromNumbers(num: Option[Set[Double]]) = TypedXPathValue(latBooleans.bottom, num, latStrings.bottom, xmlDom.bottomList)
     protected def fromStrings(str: Option[Set[String]]) = TypedXPathValue(latBooleans.bottom, latNumbers.bottom, str, xmlDom.bottomList)
 
+    // NOTE: joining does not uphold any sorted-set property for the node-list/node-set component
     override def join(v1: V, v2: V): V = TypedXPathValue(
       latBooleans.join(v1.bool, v2.bool),
       latNumbers.join(v1.num, v2.num),
       latStrings.join(v1.str, v2.str),
-      xmlDom.joinLists(v1.nodeSet, v2.nodeSet) // TODO: need to keep list sorted explicitly?
+      xmlDom.joinLists(v1.nodeSet, v2.nodeSet)
     )
-
-    /*override def meet(v1: V, v2: V): V = (v1, v2) match {
-      case (None, _) => None
-      case (_, None) => None
-      case (Some(s1), Some(s2)) => Some(s1.intersect(s2))
-    }*/
 
     override def lessThanOrEqual(v1: V, v2: V): Boolean = {
       // lessThanOrEqual must hold for all components
@@ -216,7 +211,7 @@ class TypedPowersetXPathDomain[L] {
     override def toNumberValue(v: V): V = fromNumbers(toNumberValueInternal(v))
     override def toBooleanValue(v: V): V = fromBooleans(toBooleanValueInternal(v))
 
-    override def liftLiteral(lit: String): V = fromStrings(Some(Set(lit)))
+    override def liftString(lit: String): V = fromStrings(Some(Set(lit)))
 
     override def liftNumber(num: Double): V = fromNumbers(Some(Set(num)))
 

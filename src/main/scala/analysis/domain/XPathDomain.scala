@@ -62,7 +62,7 @@ trait XPathDomain[V, N, L] {
   def negateNum(v: V): V
 
   /** Lift a literal string */
-  def liftLiteral(lit: String): V
+  def liftString(lit: String): V
 
   /** Lift a number */
   def liftNumber(num: Double): V

@@ -64,7 +64,7 @@ abstract class XPathValue {
 
   /** Compare two XPath values as specified in the XPath spec section 3.4 */
   def compare(other: XPathValue, relOp: RelationalOperator): Boolean = {
-    // comparing node sets is especially tricky and therefore skipped in this implementation (TODO?)
+    // comparing node sets is especially tricky and therefore skipped in this implementation
     if (this.isInstanceOf[NodeSetValue] || other.isInstanceOf[NodeSetValue]) throw new NotImplementedError("Comparing node sets is not implemented")
     relOp match {
       case EqualsOperator | NotEqualsOperator =>

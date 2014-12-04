@@ -95,7 +95,7 @@ object PowersetXPathDomain {
     override def toNumberValue(v: V): V = v.map(_.map(_.toNumberValue))
     override def toBooleanValue(v: V): V = v.map(_.map(_.toBooleanValue))
 
-    override def liftLiteral(lit: String): V = Some(Set(StringValue(lit)))
+    override def liftString(lit: String): V = Some(Set(StringValue(lit)))
 
     override def liftNumber(num: Double): V = Some(Set(NumberValue(num)))
 

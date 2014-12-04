@@ -61,7 +61,7 @@ object ConcreteXPathDomain {
     override def negateNum(v: V): V = v.map(n => NumberValue(-n.toNumberValue.value))
 
     /** Lift a literal string */
-    override def liftLiteral(lit: String): V = Value(StringValue(lit))
+    override def liftString(lit: String): V = Value(StringValue(lit))
 
     /** Lift a number */
     override def liftNumber(num: Double): V = Value(NumberValue(num))

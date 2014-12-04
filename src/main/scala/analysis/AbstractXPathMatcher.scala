@@ -63,8 +63,8 @@ class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
           var notAncestorMatches = node
           var (root, notRoot) = xmlDom.isRoot(current)
           val nodeStack = MutableList(notRoot)
-          while (xmlDom.compare(notRoot, xmlDom.bottom) == Greater) {
-            // TODO: this may not terminate (make sure that domains can not have infinite chains of parents or add stack?)
+          while (!xmlDom.lessThanOrEqual(notRoot, xmlDom.bottom)) {
+            // TODO: this may not terminate (search for fixed point)
             val parent = xmlDom.getParent(notRoot)
             val (parentMatchesRest, _) = matches(parent, nextRestPath)
             var parentMatches = parentMatchesRest
@@ -77,7 +77,7 @@ class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
 
             val (newParentMatches, newNotParentMatches) = xmlDom.hasParent(nodeStack(0), parentMatches)
             ancestorMatches = xmlDom.join(ancestorMatches, newParentMatches)
-            notAncestorMatches = xmlDom.meet(notAncestorMatches, newNotParentMatches) // TODO: this should probably be MEET instead of JOIN
+            notAncestorMatches = xmlDom.meet(notAncestorMatches, newNotParentMatches)
 
             current = parent
             val (newRoot, newNotRoot) = xmlDom.isRoot(current) // instead of returning two results here, one could add isNotRoot

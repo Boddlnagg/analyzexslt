@@ -69,7 +69,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
 
         xpathDom.join(xpathDom.liftBoolean(true), xpathDom.liftBoolean(false))
       case NegExpr(subexpr) => xpathDom.negateNum(evaluate(subexpr, ctx))
-      case LiteralExpr(literal) => xpathDom.liftLiteral(literal)
+      case LiteralExpr(literal) => xpathDom.liftString(literal)
       case NumberExpr(num) => xpathDom.liftNumber(num)
       case VariableReferenceExpr(name) => try ctx.variables(name) catch {
         // because of static scoping this is an error in the program (no matter what evaluation strategy is used)
@@ -106,7 +106,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
           val result = xmlDom.getNodeName(xmlDom.getFirst(nodeSets))
           if (xmlDom.lessThanOrEqualLists(xmlDom.createEmptyList(), nodeSets)) // may the set be empty?
-            xpathDom.join(result, xpathDom.liftLiteral("")) // ... then include the empty string in the result
+            xpathDom.join(result, xpathDom.liftString("")) // ... then include the empty string in the result
           else
             result
         case (_, evaluatedParams) =>

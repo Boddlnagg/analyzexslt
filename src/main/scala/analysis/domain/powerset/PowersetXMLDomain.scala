@@ -168,7 +168,7 @@ object PowersetXMLDomain {
 
     override def getStringValue(node: N): V = node match {
       case None => xpathDom.topString
-      case Some(s) => xpathDom.joinAll(s.map(n => xpathDom.liftLiteral(n.stringValue)))
+      case Some(s) => xpathDom.joinAll(s.map(n => xpathDom.liftString(n.stringValue)))
     }
 
     override def isRoot(node: N): (N, N) = node match {
@@ -239,16 +239,16 @@ object PowersetXMLDomain {
     override def getNodeName(node: N): V = node match {
       case None => xpathDom.topString
       case Some(s) => xpathDom.joinAll(s.map {
-        case XMLElement(nodeName, _, _, _) => xpathDom.liftLiteral(nodeName)
-        case XMLAttribute(nodeName, _, _) => xpathDom.liftLiteral(nodeName)
-        case _ => xpathDom.liftLiteral("")
+        case XMLElement(nodeName, _, _, _) => xpathDom.liftString(nodeName)
+        case XMLAttribute(nodeName, _, _) => xpathDom.liftString(nodeName)
+        case _ => xpathDom.liftString("")
       })
     }
 
     override def getConcatenatedTextNodeValues(list: L): V = list match {
       case Left(_) => xpathDom.topString
       case Right(s) => xpathDom.joinAll(s.map { l =>
-        xpathDom.liftLiteral(l.collect { case n: XMLTextNode => n.value }.mkString(""))
+        xpathDom.liftString(l.collect { case n: XMLTextNode => n.value }.mkString(""))
       })
     }
 
@@ -257,8 +257,7 @@ object PowersetXMLDomain {
       case Right(s) => Right(s.map(_.filter { n =>
         val node: N = Some(Set(n))
         val (resultTrue, _) = predicate(node)
-        // TODO: this could be made more abstract using compare operations (e.g. assert that resultTrue <= node)
-        assert(resultTrue.isDefined)
+        assert(lessThanOrEqual(resultTrue, node))
         resultTrue.get.toList match {
           case Nil => false // list without elements -> element was filtered out
           case first :: Nil => true // list with one element -> element was not filtered out

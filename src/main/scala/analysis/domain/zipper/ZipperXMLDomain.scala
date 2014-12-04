@@ -280,9 +280,9 @@ object ZipperXMLDomain {
         xpathDom.joinAll(desc.map {
           case Root => getStringValueFromSubtree(children.first)
           case Element(name) => xpathDom.topString // TODO: concatenate the string values of all (non-attribute) children
-          case Attribute(name, value) => xpathDom.liftLiteral(value)
-          case Text(value) => xpathDom.liftLiteral(value)
-          case Comment(value) => xpathDom.liftLiteral(value)
+          case Attribute(name, value) => xpathDom.liftString(value)
+          case Text(value) => xpathDom.liftString(value)
+          case Comment(value) => xpathDom.liftString(value)
           case AnyElement | AnyAttribute | NamedAttribute(_) | AnyText | AnyComment => xpathDom.topString
         })
       }
@@ -424,12 +424,12 @@ object ZipperXMLDomain {
     override def getNodeName(node: N): V = {
       val (Subtree(desc, attributes, children), path) = node
       xpathDom.joinAll(desc.map {
-        case Element(name) => xpathDom.liftLiteral(name)
+        case Element(name) => xpathDom.liftString(name)
         case AnyElement => xpathDom.topString
-        case Attribute(name, _) => xpathDom.liftLiteral(name)
-        case NamedAttribute(name) => xpathDom.liftLiteral(name)
+        case Attribute(name, _) => xpathDom.liftString(name)
+        case NamedAttribute(name) => xpathDom.liftString(name)
         case AnyAttribute => xpathDom.topString
-        case _ => xpathDom.liftLiteral("")
+        case _ => xpathDom.liftString("")
       })
     }
 

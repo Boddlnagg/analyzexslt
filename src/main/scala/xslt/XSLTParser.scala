@@ -51,14 +51,14 @@ object XSLTParser {
     if (cleaned.attribute("version").get.text != "1.0") throw new NotImplementedError("Stylesheet versions other than 1.0 are not supported")
     assert(cleaned.child.forall(n => n.namespace == Namespace && (n.label == "template" || n.label == "variable")), "Top-level elements must either be XSLT templates or variable definitions")
 
-    // TODO: the spec requires us to evaluate top-level variables in an order such that variables can depend on each other
-    // (as long as there are no circular dependencies, which would result in an error), see spec section 11.4
-    // -> don't support top-level variables?
     val globalVariables = cleaned.child
       .filter(isElem(_, "variable"))
       .map(n => n.asInstanceOf[Elem])
       .map(elem => (elem.attribute("name").get.text, XPathParser.parse(elem.attribute("select").map(_.text).getOrElse("''"))))
 
+    // the spec requires us to evaluate top-level variables in an order such that variables can depend on each other
+    // (as long as there are no circular dependencies, which would result in an error),
+    // see spec section 11.4; this has not been implemented.
     if (globalVariables.nonEmpty) throw new NotImplementedError("Top-level variables are not implemented.")
 
     val templates = cleaned.child
