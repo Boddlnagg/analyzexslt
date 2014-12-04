@@ -276,7 +276,7 @@ object ZipperXMLDomain {
     /** Gets the string-value of a node, as specified in the XSLT specification */
     override def getStringValue(node: N): V = {
       def getStringValueFromSubtree(tree: Subtree): V = {
-        val Subtree(desc, attributes, children) = tree
+        val Subtree(desc, _, children) = tree
         xpathDom.joinAll(desc.map {
           case Root => getStringValueFromSubtree(children.first)
           case Element(name) => xpathDom.topString // TODO: concatenate the string values of all (non-attribute) children

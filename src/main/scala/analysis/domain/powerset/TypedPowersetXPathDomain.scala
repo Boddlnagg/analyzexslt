@@ -52,6 +52,17 @@ class TypedPowersetXPathDomain[L] {
     override def topNumber: V = TypedXPathValue(latBooleans.bottom, None, latStrings.bottom, xmlDom.bottomList)
     override def topString: V = TypedXPathValue(latBooleans.bottom, latNumbers.bottom, None, xmlDom.bottomList)
 
+    /** A node-set is converted to a string by returning the string-value of the node in the node-set that is
+      * first in document order. If the node-set is empty, an empty string is returned.
+      */
+    protected def nodeSetToStringValue(nodeSet: L): Option[Set[String]] = {
+      val result = xmlDom.getStringValue(xmlDom.getFirst(nodeSet))
+      if (xmlDom.lessThanOrEqualLists(xmlDom.createEmptyList(), nodeSet))
+        join(result, liftString("")).str
+      else
+        result.str
+    }
+
     protected def toNumberValueInternal(v: V): Option[Set[Double]] = {
       def stringToNumber(str: String): Double =
         try {
@@ -222,14 +233,10 @@ class TypedPowersetXPathDomain[L] {
       TypedXPathValue(Set(), latNumbers.bottom, latStrings.bottom, resultSet)
     }
 
+    // TODO: don't automatically sort/set when creating these values
     override def toNodeSet(list: L): V = TypedXPathValue(Set(), latNumbers.bottom, latStrings.bottom, nodeListToSet(list))
 
     override def matchNodeSetValues(v: V): (L, V) = (v.nodeSet, TypedXPathValue(v.bool, v.num, v.str, xmlDom.bottomList))
-
-    /** A node-set is converted to a string by returning the string-value of the node in the node-set that is
-      * first in document order. If the node-set is empty, an empty string is returned.
-      */
-    def nodeSetToStringValue(nodeSet: L): Option[Set[String]] // TODO: remove this in favor of getFirst and getStringValue?
 
     /** Turn a node list into a set by sorting nodes in document order and removing duplicate nodes */
     def nodeListToSet(list: L): L

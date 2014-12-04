@@ -47,25 +47,6 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
   protected object XPATH extends OuterXPATH.D[N] {
     override val xmlDom = XML
 
-    /** A node-set is converted to a string by returning the string-value of the node in the node-set that is
-      * first in document order. If the node-set is empty, an empty string is returned.
-      */
-    override def nodeSetToStringValue(nodeSet: L): Option[Set[String]] = nodeSet match {
-      // Converting node sets to strings is not implemented for node-sets with more than one element
-      case ZBottom() => Some(Set())
-      case ZTop() => None
-      case ZNil() => Some(Set(""))
-      case ZCons(node, ZNil()) => xmlDom.getStringValue(node).str
-      case ZMaybeNil(node, ZNil()) => xmlDom.getStringValue(node).str match {
-        case None => None
-        case Some(s) => Some(s | Set("")) // add empty string because list may be empty
-      }
-      case ZUnknownLength(node) => xmlDom.getStringValue(node).str match {
-        case None => None
-        case Some(s) => Some(s | Set("")) // add empty string because list may be empty
-      }
-    }
-
     /** Turn a node list into a set by sorting nodes in document order and removing duplicate nodes */
     override def nodeListToSet(list: L): L = list match {
       case ZBottom() => ZBottom()
