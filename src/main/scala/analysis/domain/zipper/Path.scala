@@ -279,7 +279,7 @@ object Path {
         case DescendantStep(_, rest) => getRootChildSingle(rest)
       }
 
-      normalize(path.map(getRootChildSingle(_)))
+      normalize(path.map(getRootChildSingle))
     }
   }
 }

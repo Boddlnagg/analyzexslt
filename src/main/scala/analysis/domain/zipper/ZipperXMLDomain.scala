@@ -2,27 +2,15 @@ package analysis.domain.zipper
 
 import analysis.domain.{XPathDomain, XMLDomain, Lattice}
 
-/** Just a wrapper for the type aliases */
+/** Just a wrapper for the type aliases and helper functions/objects. */
 object ZipperXMLDomain {
   type S = Subtree // type of subtrees
   type P = Set[Path] // type of paths
   type N = (S, P) // a node is a subtree and a path
   type L = ZList[N] // type of node lists
 
-  trait NodeDescriptor
-  case object Root extends NodeDescriptor
-  case class Element(name: String) extends NodeDescriptor
-  case object AnyElement extends NodeDescriptor
-  trait AttributeNodeDescriptor extends NodeDescriptor
-  case class Attribute(name: String, value: String) extends AttributeNodeDescriptor
-  case class NamedAttribute(name: String) extends AttributeNodeDescriptor
-  case object AnyAttribute extends AttributeNodeDescriptor
-  case class Text(value: String) extends NodeDescriptor {
-    override def toString = f"Text(${value.replace("\n", "\\n")})"
-  }
-  case object AnyText extends NodeDescriptor
-  case class Comment(value: String) extends NodeDescriptor
-  case object AnyComment extends NodeDescriptor
+  private val latP = Path.PathSetLattice // lattice for paths
+  private val latD = NodeDescriptor.NodeDescriptorLattice // lattice for descriptors
 
   case class Subtree(desc: Set[NodeDescriptor], attributes: ZList[Set[NodeDescriptor]], children: ZList[Subtree])
 
@@ -39,81 +27,14 @@ object ZipperXMLDomain {
         left.children <= right.children
   }
 
-  private val latS: Lattice[S] = SubtreeLattice // lattice for subtrees
-  private val latP = Path.PathSetLattice // lattice for paths
-  private val latD = DescriptorLattice // lattice for descriptors
-
-  implicit object DescriptorLattice extends Lattice[Set[NodeDescriptor]] {
-    def top = Set(
-      Root,
-      AnyElement,
-      AnyAttribute,
-      AnyComment,
-      AnyText
-    )
-
-    def bottom = Set()
-
-    def join(left: Set[NodeDescriptor], right: Set[NodeDescriptor]): Set[NodeDescriptor] = normalizeDescriptors(left | right)
-    def meet(left: Set[NodeDescriptor], right: Set[NodeDescriptor]): Set[NodeDescriptor] = {
-      val result = left.cross(right).flatMap {
-        case (p1, p2) => meetSingle(p1, p2)
-      }
-      normalizeDescriptors(result.toSet)
-    }
-
-    def lessThanOrEqual(left: Set[NodeDescriptor], right: Set[NodeDescriptor]): Boolean = {
-      left.forall(desc1 => right.exists(desc2 => lessThanOrEqualSingle(desc1, desc2)))
-    }
-
-    def normalizeDescriptors(set: Set[NodeDescriptor]): Set[NodeDescriptor] = set.toList.foldRight(List[NodeDescriptor]()) {
-      case (next, acc) => if (acc.exists(e => lessThanOrEqualSingle(next, e)))
-        acc
-      else
-        next :: acc.filter(e => !lessThanOrEqualSingle(e, next))
-    }.toSet
-
-    def lessThanOrEqualSingle(desc1: NodeDescriptor, desc2: NodeDescriptor): Boolean = {
-      (desc1, desc2) match {
-        case _ if desc1 == desc2 => true // equal
-        case (Element(_), AnyElement) => true // less than
-        case (Attribute(_, _), AnyAttribute) => true // less than
-        case (Attribute(name1, _), NamedAttribute(name2)) if name1 == name2 => true // less than
-        case (NamedAttribute(_), AnyAttribute) => true // less than
-        case (Text(_), AnyText) => true // less than
-        case (Comment(_), AnyComment) => true // less than
-        case _ => false
-      }
-    }
-
-    private def meetSingle(desc1: NodeDescriptor, desc2: NodeDescriptor): Option[NodeDescriptor] = {
-      (desc1, desc2) match {
-        case _ if desc1 == desc2 => Some(desc1)
-        case (n@Element(_), AnyElement) => Some(n)
-        case (AnyElement, n@Element(_)) => Some(n)
-        case (n@Attribute(_, _), AnyAttribute) => Some(n)
-        case (AnyAttribute, n@Attribute(_, _)) => Some(n)
-        case (n@Attribute(name1, _), NamedAttribute(name2)) if name1 == name2 => Some(n)
-        case (NamedAttribute(name2), n@Attribute(name1, _)) if name1 == name2 => Some(n)
-        case (n@NamedAttribute(_), AnyAttribute) => Some(n)
-        case (AnyAttribute, n@NamedAttribute(_)) => Some(n)
-        case (n@Text(_), AnyText) => Some(n)
-        case (AnyText, n@Text(_)) => Some(n)
-        case (n@Comment(_), AnyComment) => Some(n)
-        case (AnyComment, n@Comment(_)) => Some(n)
-        case _ => None // represents BOTTOM here
-      }
-    }
-  }
-
   implicit object NodeLattice extends Lattice[N] {
-    def top = (latS.top, latP.top)
-    def bottom = (latS.bottom, latP.bottom)
-    def join(left: N, right: N): N = normalize(latS.join(left._1, right._1), latP.join(left._2, right._2))
-    def meet(left: N, right: N): N = normalize(latS.meet(left._1, right._1), latP.meet(left._2, right._2))
+    def top = (SubtreeLattice.top, latP.top)
+    def bottom = (SubtreeLattice.bottom, latP.bottom)
+    def join(left: N, right: N): N = normalize(SubtreeLattice.join(left._1, right._1), latP.join(left._2, right._2))
+    def meet(left: N, right: N): N = normalize(SubtreeLattice.meet(left._1, right._1), latP.meet(left._2, right._2))
 
     def lessThanOrEqual(left: N, right: N): Boolean =
-      latS.lessThanOrEqual(left._1, right._1) && latP.lessThanOrEqual(left._2, right._2)
+      SubtreeLattice.lessThanOrEqual(left._1, right._1) && latP.lessThanOrEqual(left._2, right._2)
   }
 
   private def getDescriptorsFromPaths(path: P): Set[NodeDescriptor] = {
@@ -148,11 +69,11 @@ object ZipperXMLDomain {
   private def normalize(node: N): N = {
     val (Subtree(desc, attributes, children), path) = node
     if (children.isInstanceOf[ZBottom[Subtree]] || attributes.isInstanceOf[ZBottom[Set[NodeDescriptor]]]) {
-      NodeLattice.bottom
+      NodeLattice.bottom // return bottom if children or attributes are bottom ...
     } else {
       val meetDesc = latD.meet(getDescriptorsFromPaths(path), desc)
       if (meetDesc == Set()) { // BOTTOM
-        NodeLattice.bottom // necessary to make children BOTTOM also (which would not happen in the below case)
+        NodeLattice.bottom // necessary to make children BOTTOM also (which would not happen in the case below)
       } else {
         val meetPath = latP.meet(getPathsFromDescriptors(desc), path)
         if (meetPath == Set()) {
@@ -163,8 +84,6 @@ object ZipperXMLDomain {
       }
     }
   }
-
-  val topTree = latS.top
 
   /** This is the actual (partial) domain implementation */
   trait D[V] extends XMLDomain[N, L, V] {
@@ -379,10 +298,11 @@ object ZipperXMLDomain {
       val (Subtree(desc, attributes, children), path) = node
       // NOTE: root node can't have attributes, so we set it to ZNil, and it can only have exactly one child
       val firstChild = children.first
-      val newChildren: ZList[S] = if (latS.lessThanOrEqual(firstChild, latS.bottom)) // if there was no first child ...
-        ZBottom() // return bottom
-      else
-        ZCons(firstChild, ZNil()) // otherwise create a singleton list from that child
+      val newChildren: ZList[S] =
+        if (SubtreeLattice.lessThanOrEqual(firstChild, SubtreeLattice.bottom)) // if there was no first child ...
+          ZBottom() // return bottom
+        else
+          ZCons(firstChild, ZNil()) // otherwise create a singleton list from that child
 
       val positiveResult: N = normalize(Subtree(latD.meet(desc, Set(Root)), ZNil(), newChildren), latP.meet(path, Set(RootPath)))
       val negativeDesc = desc.diff(Set(Root))
