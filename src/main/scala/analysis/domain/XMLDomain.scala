@@ -203,6 +203,7 @@ trait XMLDomain[N, L, V] {
   */
   def filter(list: L, predicate: N => (N, N)): L
 
+  // TODO: move this into XSLTAnalyzer or into domain (if that's necessary for termination)
   /** Get a list of all descendants of a node. */
   def getDescendants(node: N): L = {
     val children = getChildren(node)

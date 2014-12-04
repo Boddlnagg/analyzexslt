@@ -235,13 +235,14 @@ object ZipperXMLDomain {
     /** Get the root node of a given node */
     override def getRoot(node: N): N = {
       val (Subtree(desc, attributes, children), path) = node
-      val root: P = Set(RootPath)
-      if (path == root) { // if the input node is definitely a root node ...
-        node // ... return the node itself, because it is its one root
+      val (selfRoot, selfNotRoot) = isRoot(node) // find out if the node itself is a root node
+      if (lessThanOrEqual(selfNotRoot, bottom)) { // if the input node is definitely a root node ...
+        node // ... return it, because it is its own root
       } else {
-        // TODO: the child could be more precise using information from the path
-        // NOTE: the root node can't have attributes and has only one (element) child
-        normalize(Subtree(Set(Root), ZNil(), ZCons(Subtree(Set(AnyElement), ZUnknownLength(Set(AnyAttribute)), ZTop()), ZNil())), root)
+        // NOTE: the root node can't have attributes and has only one (element) child, which is determined by the path
+        val childDescriptor = latD.meet(getDescriptorsFromPaths(latP.getRootChild(selfNotRoot._2)), Set(AnyElement))
+        val restRoot = normalize(Subtree(Set(Root), ZNil(), ZCons(Subtree(childDescriptor, ZUnknownLength(Set(AnyAttribute)), ZTop()), ZNil())), Set(RootPath))
+        join(selfRoot, restRoot)
       }
     }
 

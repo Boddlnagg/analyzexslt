@@ -784,6 +784,35 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("Root selector from non-root context-node") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <result>
+            <xsl:apply-templates select="//a"/> <!-- for every <a> descendant ... -->
+          </result>
+        </xsl:template>
+        <xsl:template match="a">
+          <aa>
+            <xsl:apply-templates select="/root/b"/> <!-- ... create a <bb> for every /root/b -->
+          </aa>
+        </xsl:template>
+        <xsl:template match="b">
+          <bb/>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root>
+        <a><b/></a>
+        <a/>
+        <b/>
+        <b><a/></b>
+      </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
   test("Descendant selector (//) and parent axis") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">

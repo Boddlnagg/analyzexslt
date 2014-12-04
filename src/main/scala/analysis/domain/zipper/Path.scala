@@ -198,6 +198,8 @@ object Path {
       case _ => ZNil[Set[Path]]() // other node types (text, attribute) return empty lists because they don't have attributes
     })
 
+    // TODO: depend on `normalize` for these predicates and remove them here?
+
     def isElement(node: Set[Path]): (Set[Path], Set[Path]) = {
       val (yes, no) = node.partition {
         case ChildStep(NamedElementStep(_), _) => true
@@ -262,6 +264,22 @@ object Path {
       }
 
       (normalize(yes), normalize(no))
+    }
+
+    /** Gets the path of the (only) child of the root node (which is the last step
+      * before RootPath in the path). The input path must not be RootPath itself.
+      * The result is always a ChildStep(_, RootPath).
+      */
+    def getRootChild(path: Set[Path]): Set[Path] = {
+      def getRootChildSingle(path: Path): Path = path match {
+        case RootPath => throw new IllegalArgumentException("path must not be a RootPath")
+        case ChildStep(last, RootPath) => path
+        case DescendantStep(_, RootPath) => ChildStep(AnyElementStep, RootPath)
+        case ChildStep(_, rest) => getRootChildSingle(rest)
+        case DescendantStep(_, rest) => getRootChildSingle(rest)
+      }
+
+      normalize(path.map(getRootChildSingle(_)))
     }
   }
 }
