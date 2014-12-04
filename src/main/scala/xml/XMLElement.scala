@@ -44,9 +44,15 @@ case class XMLElement(name: String,
   }
 
   override def equals(o: Any) = o match {
-    // override equals because we need to ignore the parent to prevent endless recursion
-    // also we need to ignore the order of attributes (by comparing them as sets)
-    case that: XMLElement => that.name == this.name && that.attributes.toSet == this.attributes.toSet && that.children == this.children
+    case that: XMLElement =>
+      if (this.root != null && (this.root eq that.root)) {
+        // if both nodes belong to the same document (and not just a fragment), compare using reference equality
+        this eq that
+      } else {
+        // otherwise we ignore the parent to prevent endless recursion
+        // we also need to ignore the order of attributes (by comparing them as sets)
+        that.name == this.name && that.attributes.toSet == this.attributes.toSet && that.children == this.children
+      }
     case _ => false
   }
 

@@ -168,8 +168,7 @@ class PowersetDomainSuite extends FunSuite {
   }
 
   test("Match patterns") {
-    // TODO: we need the id attributes here, because the <a> nodes would be (illegally) considered equal otherwise -> can this be fixed in a more general way?
-    val doc = XMLParser.parseDocument(<root attr="1" otherattr="foobar"><a id="1"/><b><a id="2"/><a id="3"/></b><b attr="2"/></root>)
+    val doc = XMLParser.parseDocument(<root attr="1" otherattr="foobar"><a/><b><a/><a/></b><b attr="2"/></root>)
     val root = doc.elem
     val attr1 = root.attributes.filter(_.name == "attr")(0)
     val otherattr = root.attributes.filter(_.name == "otherattr")(0)

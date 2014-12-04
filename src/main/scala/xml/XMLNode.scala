@@ -20,8 +20,10 @@ abstract class XMLNode extends Ordered[XMLNode] {
     case XMLTextNode(_, _) => Nil
   }
 
-  /** Returns the root node (parent of parent, and so on, until XMLRoot is reached) */
-  def root: XMLRoot = parent.root // works for all nodes except XMLRoot, where it is therefore overridden
+  /** Returns the root node (parent of parent, and so on, until XMLRoot is reached).
+    * If this is null, the current node belongs to a tree fragment without an enclosing document.
+    */
+  def root: XMLRoot = if (parent != null) parent.root else null // works for all nodes except XMLRoot, where it is therefore overridden
 
   /** Compares two nodes regarding their position in the document order */
   def compare(that: XMLNode) = this.root.nodesInOrder.indexWhere(_ eq this) compare that.root.nodesInOrder.indexWhere(_ eq that)
