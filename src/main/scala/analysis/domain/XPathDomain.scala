@@ -14,8 +14,8 @@ trait XPathDomain[V, N, L] {
   /** Join two values. This calculates their supremum (least upper bound). */
   def join(v1: V, v2: V): V
 
-  /** Joins a list of values. The supremum of the empty list ist BOTTOM. */
-  def join(values: Traversable[V]): V = values.fold(bottom)(join)
+  /** Joins a sequence of values. The supremum of the empty list ist BOTTOM. */
+  def joinAll(values: Traversable[V]): V = values.fold(bottom)(join)
 
   /** Compares two elements of the lattice.
     * Returns true if v1 < v2 or v1 = v2, false if v1 > v2 or if they are incomparable.

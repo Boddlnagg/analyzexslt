@@ -55,7 +55,7 @@ class PowersetDomainSuite extends FunSuite {
       xmlDom.createElement("e1", xmlDom.createEmptyList(), child)
     }
 
-    val children = xmlDom.joinList(xmlDom.concatLists(xmlDom.createSingletonList(xmlDom.createElement("child1")), xmlDom.createSingletonList(xmlDom.createElement("child2"))), child)
+    val children = xmlDom.joinLists(xmlDom.concatLists(xmlDom.createSingletonList(xmlDom.createElement("child1")), xmlDom.createSingletonList(xmlDom.createElement("child2"))), child)
     assertResult(Some(Set(XMLParser.parse(<e1><child/></e1>), XMLParser.parse(<e1><child1/><child2/></e1>)))) {
       xmlDom.createElement("e1", xmlDom.createEmptyList(), children)
     }

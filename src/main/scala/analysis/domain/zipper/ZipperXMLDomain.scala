@@ -108,7 +108,7 @@ object ZipperXMLDomain {
     override def meet(n1: N, n2: N): N = NodeLattice.meet(n1, n2)
 
     /** Join two node lists. This calculates their supremum (least upper bound). */
-    override def joinList(l1: L, l2: L): L = l1 | l2
+    override def joinLists(l1: L, l2: L): L = l1 | l2
 
     /** Compares two elements of the lattice of nodes.
       * Returns true if n1 < n2 or n1 = n2, false if n1 > n2 or if they are incomparable.
@@ -118,7 +118,7 @@ object ZipperXMLDomain {
     /** Compares two elements of the lattice of node lists.
       * Returns true if l1 < l2 or l1 = l2, false if l1 > l2 or if they are incomparable.
       */
-    override def lessThanOrEqualList(l1: L, l2: L): Boolean = l1 <= l2
+    override def lessThanOrEqualLists(l1: L, l2: L): Boolean = l1 <= l2
 
     /** Create an element node with the given name, attributes and children.
       * The output is created bottom-up, so children are always created before their parent nodes.
@@ -277,7 +277,7 @@ object ZipperXMLDomain {
     override def getStringValue(node: N): V = {
       def getStringValueFromSubtree(tree: Subtree): V = {
         val Subtree(desc, attributes, children) = tree
-        xpathDom.join(desc.map {
+        xpathDom.joinAll(desc.map {
           case Root => getStringValueFromSubtree(children.first)
           case Element(name) => xpathDom.topString // TODO: concatenate the string values of all (non-attribute) children
           case Attribute(name, value) => xpathDom.liftLiteral(value)
@@ -423,7 +423,7 @@ object ZipperXMLDomain {
       */
     override def getNodeName(node: N): V = {
       val (Subtree(desc, attributes, children), path) = node
-      xpathDom.join(desc.map {
+      xpathDom.joinAll(desc.map {
         case Element(name) => xpathDom.liftLiteral(name)
         case AnyElement => xpathDom.topString
         case Attribute(name, _) => xpathDom.liftLiteral(name)

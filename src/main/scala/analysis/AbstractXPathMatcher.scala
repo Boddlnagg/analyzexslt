@@ -25,7 +25,7 @@ class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
       val (lastStepMatches, notLastStepMatches) = lastStep match {
         // child::node()
         case XPathStep(ChildAxis, AllNodeTest, Nil) =>
-          val matches = xmlDom.join(List(xmlDom.isElement(node)._1, xmlDom.isTextNode(node)._1, xmlDom.isComment(node)._1))
+          val matches = xmlDom.joinAll(List(xmlDom.isElement(node)._1, xmlDom.isTextNode(node)._1, xmlDom.isComment(node)._1))
           val notMatches = xmlDom.join(xmlDom.isRoot(node)._1, xmlDom.isAttribute(node)._1) // TODO: is this always correct?
           (matches, notMatches)
         // child::comment()

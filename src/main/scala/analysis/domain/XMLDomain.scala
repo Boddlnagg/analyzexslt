@@ -16,20 +16,20 @@ trait XMLDomain[N, L, V] {
   /** Gets the BOTTOM element for XML node lists. */
   def bottomList: L
 
-  /** Calcucate the join of two abstract nodes. This is the supremum (least upper bound). */
+  /** Calculate the join of two abstract nodes. This is the supremum (least upper bound). */
   def join(n1: N, n2: N): N
 
-  /** Join a list of nodes. The supremum of the empty list is BOTTOM. */
-  def join(values: Traversable[N]): N = values.fold(bottom)(join)
+  /** Join a sequence of nodes. The supremum of the empty list is BOTTOM. */
+  def joinAll(values: Traversable[N]): N = values.fold(bottom)(join)
 
   /** Calculate the meet of two abstract nodes. This is the infimum (greatest lower bound). */
   def meet(n1: N, n2: N): N
 
   /** Join two node lists. This calculates their supremum (least upper bound). */
-  def joinList(l1: L, l2: L): L
+  def joinLists(l1: L, l2: L): L
 
-  /** Join a list of nodes lists. The supremum of the empty list is BOTTOM. */
-  def joinList(lists: Traversable[L]): L = lists.fold(bottomList)(joinList)
+  /** Join a sequence of nodes lists. The supremum of the empty list is BOTTOM. */
+  def joinAllLists(lists: Traversable[L]): L = lists.fold(bottomList)(joinLists)
 
   /** Compares two elements of the lattice of nodes.
     * TOP is always greater than everything else, BOTTOM is always less than everything else.
@@ -47,19 +47,9 @@ trait XMLDomain[N, L, V] {
   def lessThanOrEqual(n1: N, n2: N): Boolean
 
   /** Compares two elements of the lattice of node lists.
-    * TOP is always greater than everything else, BOTTOM is always less than everything else.
-    */
-  def compareList(l1: L, l2: L): LatticeOrdering = (lessThanOrEqualList(l1, l2), lessThanOrEqualList(l2, l1)) match {
-    case (true, true) => Equal
-    case (true, false) => Less
-    case (false, true) => Greater
-    case (false, false) => Incomparable
-  }
-
-  /** Compares two elements of the lattice of node lists.
     * Returns true if l1 < l2 or l1 = l2, false if l1 > l2 or if they are incomparable.
     */
-  def lessThanOrEqualList(l1: L, l2: L): Boolean
+  def lessThanOrEqualLists(l1: L, l2: L): Boolean
 
   /** Create an element node with the given name, attributes and children.
     * The output is created bottom-up, so children are always created before their parent nodes.

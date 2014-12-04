@@ -99,13 +99,13 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           xmlDom.getNodeListSize(nodeSets)
         case ("sum", List(arg)) =>
           val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
-          if (xmlDom.lessThanOrEqualList(nodeSets, xmlDom.bottomList)) xpathDom.bottom // return bottom if the input is definitely not a node-set
+          if (xmlDom.lessThanOrEqualLists(nodeSets, xmlDom.bottomList)) xpathDom.bottom // return bottom if the input is definitely not a node-set
           else xpathDom.topNumber // TODO: implement this correctly or remove it completely?
         case ("name"|"local-name", Nil) => xmlDom.getNodeName(ctx.node)
         case ("name"|"local-name", List(arg)) =>
           val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
           val result = xmlDom.getNodeName(xmlDom.getFirst(nodeSets))
-          if (xmlDom.lessThanOrEqualList(xmlDom.createEmptyList(), nodeSets)) // may the set be empty?
+          if (xmlDom.lessThanOrEqualLists(xmlDom.createEmptyList(), nodeSets)) // may the set be empty?
             xpathDom.join(result, xpathDom.liftLiteral("")) // ... then include the empty string in the result
           else
             result
@@ -159,7 +159,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
             val (root, nonRoot) = xmlDom.isRoot(ctxNode)
             val result = xmlDom.createSingletonList(xmlDom.getParent(nonRoot))
             if (!xmlDom.lessThanOrEqual(root, xmlDom.bottom)) // if the context node may be a root node ...
-              xmlDom.joinList(xmlDom.createEmptyList(), result) // ... we need to include the empty list as a result
+              xmlDom.joinLists(xmlDom.createEmptyList(), result) // ... we need to include the empty list as a result
             else
               result
           /*

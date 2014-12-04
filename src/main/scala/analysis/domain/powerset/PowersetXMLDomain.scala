@@ -42,7 +42,7 @@ object PowersetXMLDomain {
       case (Some(s1), Some(s2)) => s1.subsetOf(s2)
     }
 
-    override def lessThanOrEqualList(l1: L, l2: L): Boolean = (l1, l2) match {
+    override def lessThanOrEqualLists(l1: L, l2: L): Boolean = (l1, l2) match {
       case (_, Left(None)) => true
       case (Left(Some(len1)), Left(Some(len2))) => len1 == len2
       case (Left(None), Left(Some(_))) => false
@@ -51,7 +51,7 @@ object PowersetXMLDomain {
       case (Right(s1), Right(s2)) => s1.subsetOf(s2)
     }
 
-    override def joinList(l1: L, l2: L): L = (l1, l2) match {
+    override def joinLists(l1: L, l2: L): L = (l1, l2) match {
       case (Left(Some(len1)), Left(Some(len2))) if len1 == len2 => l1
       case (Left(_), Left(_)) => Left(None)
       case (Left(Some(len1)), Right(s2)) if len1 == s2.size => Left(Some(len1))
@@ -163,12 +163,12 @@ object PowersetXMLDomain {
     override def getNodeListSize(list: L): V = list match {
       case Left(Some(len)) => xpathDom.liftNumber(len)
       case Left(None) => xpathDom.topNumber
-      case Right(s) => xpathDom.join(s.map(l => xpathDom.liftNumber(l.size)))
+      case Right(s) => xpathDom.joinAll(s.map(l => xpathDom.liftNumber(l.size)))
     }
 
     override def getStringValue(node: N): V = node match {
       case None => xpathDom.topString
-      case Some(s) => xpathDom.join(s.map(n => xpathDom.liftLiteral(n.stringValue)))
+      case Some(s) => xpathDom.joinAll(s.map(n => xpathDom.liftLiteral(n.stringValue)))
     }
 
     override def isRoot(node: N): (N, N) = node match {
@@ -238,7 +238,7 @@ object PowersetXMLDomain {
     // return empty string if node has no name
     override def getNodeName(node: N): V = node match {
       case None => xpathDom.topString
-      case Some(s) => xpathDom.join(s.map {
+      case Some(s) => xpathDom.joinAll(s.map {
         case XMLElement(nodeName, _, _, _) => xpathDom.liftLiteral(nodeName)
         case XMLAttribute(nodeName, _, _) => xpathDom.liftLiteral(nodeName)
         case _ => xpathDom.liftLiteral("")
@@ -247,7 +247,7 @@ object PowersetXMLDomain {
 
     override def getConcatenatedTextNodeValues(list: L): V = list match {
       case Left(_) => xpathDom.topString
-      case Right(s) => xpathDom.join(s.map { l =>
+      case Right(s) => xpathDom.joinAll(s.map { l =>
         xpathDom.liftLiteral(l.collect { case n: XMLTextNode => n.value }.mkString(""))
       })
     }
@@ -284,7 +284,7 @@ object PowersetXMLDomain {
         val mapped = List.range(0, len).map { i => f(None, xpathDom.liftNumber(i)) }
         val flattened = mapped.foldLeft(createEmptyList())((acc, next) => concatLists(acc, next))
         flattened
-      case Right(s) => joinList(s.map { l =>
+      case Right(s) => joinAllLists(s.map { l =>
         val mapped = l.zipWithIndex.map { case (n, i) => f(Some(Set(n)), xpathDom.liftNumber(i)) }
         val flattened = mapped.foldLeft(createEmptyList())((acc, next) => concatLists(acc, next))
         flattened

@@ -37,7 +37,7 @@ class TypedPowersetXPathDomain[L] {
       latBooleans.join(v1.bool, v2.bool),
       latNumbers.join(v1.num, v2.num),
       latStrings.join(v1.str, v2.str),
-      xmlDom.joinList(v1.nodeSet, v2.nodeSet) // TODO: need to keep list sorted explicitly?
+      xmlDom.joinLists(v1.nodeSet, v2.nodeSet) // TODO: need to keep list sorted explicitly?
     )
 
     /*override def meet(v1: V, v2: V): V = (v1, v2) match {
@@ -51,7 +51,7 @@ class TypedPowersetXPathDomain[L] {
       latBooleans.lessThanOrEqual(v1.bool, v2.bool) &&
       latNumbers.lessThanOrEqual(v1.num, v2.num) &&
       latStrings.lessThanOrEqual(v1.str, v2.str) &&
-      xmlDom.lessThanOrEqualList(v1.nodeSet, v2.nodeSet)
+      xmlDom.lessThanOrEqualLists(v1.nodeSet, v2.nodeSet)
     }
 
     override def topNumber: V = TypedXPathValue(latBooleans.bottom, None, latStrings.bottom, xmlDom.bottomList)
@@ -178,8 +178,8 @@ class TypedPowersetXPathDomain[L] {
         case _ => Set(true, false) // return TOP
       }
 
-      if (!xmlDom.lessThanOrEqualList(left.nodeSet, xmlDom.bottomList) || // if left node-set part is not BOTTOM ...
-          !xmlDom.lessThanOrEqualList(right.nodeSet, xmlDom.bottomList)) { // ... or right node-set part is not BOTTOM ...
+      if (!xmlDom.lessThanOrEqualLists(left.nodeSet, xmlDom.bottomList) || // if left node-set part is not BOTTOM ...
+          !xmlDom.lessThanOrEqualLists(right.nodeSet, xmlDom.bottomList)) { // ... or right node-set part is not BOTTOM ...
         // .. then we don't know the result because node-set comparisons are not implemented
         fromBooleans(Set(true, false))
       } else {

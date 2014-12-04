@@ -26,7 +26,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     xmlDom.flatMapWithIndex(sources, (node, index) => {
       val templates = chooseTemplates(sheet, node)
 
-      xmlDom.joinList(templates.map { case (tmpl, specificNode) =>
+      xmlDom.joinAllLists(templates.map { case (tmpl, specificNode) =>
         val context = AbstractXSLTContext[N, L, V](specificNode, sources, xpathDom.add(index, xpathDom.liftNumber(1)), variables)
         evaluateTemplate(sheet, tmpl, context, params)
       })
@@ -124,11 +124,11 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val (nodeSets, rest) = xpathDom.matchNodeSetValues(evaluated)
         val nodeSetsOutput = xmlDom.copyToOutput(nodeSets)
         val restOutput = xmlDom.createSingletonList(xmlDom.createTextNode(xpathDom.toStringValue(rest)))
-        Left(xmlDom.joinList(nodeSetsOutput, restOutput))
+        Left(xmlDom.joinLists(nodeSetsOutput, restOutput))
       case ChooseInstruction(branches, otherwise) =>
         val possibleBranches = chooseBranches(branches, otherwise, xsltToXPathContext(context))
         // evaluate all possible branches and join the result lists
-        Left(xmlDom.joinList(possibleBranches.map(br => evaluate(sheet, br, context))))
+        Left(xmlDom.joinAllLists(possibleBranches.map(br => evaluate(sheet, br, context))))
 
     }
   }
