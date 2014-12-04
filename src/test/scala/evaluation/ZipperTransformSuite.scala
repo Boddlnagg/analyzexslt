@@ -54,7 +54,7 @@ class ZipperTransformSuite extends FunSuite {
             <xsl:apply-templates/>
           </result>
         </xsl:template>
-        <xsl:template match="/*">
+        <xsl:template match="/root">
           <child/>
         </xsl:template>
       </xsl:stylesheet>
