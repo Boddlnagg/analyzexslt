@@ -46,11 +46,6 @@ trait XMLDomain[N, L, V] {
     */
   def createElement(name: String, attributes: L, children: L): N
 
-  /** Create an element node with the given name and no children or attributes.
-    * The output is created bottom-up, so children are always created before their parent nodes.
-    */
-  def createElement(name: String): N = createElement(name, createEmptyList(), createEmptyList())
-
   /** Create an attribute node with the given name and text value.
     * Values that are not strings evaluate to BOTTOM.
     */

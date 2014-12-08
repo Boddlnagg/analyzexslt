@@ -28,6 +28,9 @@ class PowersetDomainSuite extends FunSuite {
   val e1 = XMLParser.parse(<e1/>).asInstanceOf[XMLElement]
   val e2 = XMLParser.parse(<e2/>).asInstanceOf[XMLElement]
 
+  /** Helper function to create an element with no children or attributes */
+  def createElement(name: String): N = xmlDom.createElement(name, xmlDom.createEmptyList(), xmlDom.createEmptyList())
+
   test("Get root") {
     assertResult(Some(Set(root))) { xmlDom.getRoot(Some(Set(a))) }
     assertResult(Some(Set(root))) { xmlDom.getRoot(Some(Set(a, b, c))) }
@@ -40,8 +43,8 @@ class PowersetDomainSuite extends FunSuite {
     val out2 = XMLParser.parse(<out2/>).asInstanceOf[XMLElement]
     val out3 = XMLParser.parse(<out3/>).asInstanceOf[XMLElement]
 
-    assertResult(Right(Set(List(out1)))) { xmlDom.createSingletonList(xmlDom.createElement("out1")) }
-    assertResult(Left(Some(2))) { xmlDom.concatLists(xmlDom.createSingletonList(xmlDom.createElement("out1")), xmlDom.createSingletonList(xmlDom.top))} // this is true for this domain
+    assertResult(Right(Set(List(out1)))) { xmlDom.createSingletonList(createElement("out1")) }
+    assertResult(Left(Some(2))) { xmlDom.concatLists(xmlDom.createSingletonList(createElement("out1")), xmlDom.createSingletonList(xmlDom.top))} // this is true for this domain
     assertResult(Right(Set(List(out1, out3), List(out2, out3)))) { xmlDom.concatLists(xmlDom.createSingletonList(Some(Set(out1, out2))), xmlDom.createSingletonList(Some(Set(out3)))) }
     // this is true for all domains (if one of the elements is bottom, the resulting list must be bottom)
     assertResult(xmlDom.bottomList) { xmlDom.concatLists(xmlDom.createSingletonList(Some(Set(out1, out2))), xmlDom.createSingletonList(xmlDom.bottom)) }
@@ -50,12 +53,12 @@ class PowersetDomainSuite extends FunSuite {
   }
 
   test("Lift element with children") {
-    val child = xmlDom.createSingletonList(xmlDom.createElement("child"))
+    val child = xmlDom.createSingletonList(createElement("child"))
     assertResult(Some(Set(XMLParser.parse(<e1><child/></e1>)))) {
       xmlDom.createElement("e1", xmlDom.createEmptyList(), child)
     }
 
-    val children = xmlDom.joinLists(xmlDom.concatLists(xmlDom.createSingletonList(xmlDom.createElement("child1")), xmlDom.createSingletonList(xmlDom.createElement("child2"))), child)
+    val children = xmlDom.joinLists(xmlDom.concatLists(xmlDom.createSingletonList(createElement("child1")), xmlDom.createSingletonList(createElement("child2"))), child)
     assertResult(Some(Set(XMLParser.parse(<e1><child/></e1>), XMLParser.parse(<e1><child1/><child2/></e1>)))) {
       xmlDom.createElement("e1", xmlDom.createEmptyList(), children)
     }
