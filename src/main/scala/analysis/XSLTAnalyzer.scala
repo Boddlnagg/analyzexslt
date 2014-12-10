@@ -105,7 +105,11 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val (resultAttributes, resultChildren) = xmlDom.partitionAttributes(innerNodes)
         val result = xmlDom.createElement(name, resultAttributes, resultChildren)
         Left(xmlDom.createSingletonList(result))
-      case LiteralTextNode(text) => Left(xmlDom.createSingletonList(xmlDom.createTextNode(xpathDom.liftString(text))))
+      case LiteralTextNode(text) =>
+        if (text == "")
+          Left(xmlDom.createEmptyList())
+        else
+          Left(xmlDom.createSingletonList(xmlDom.createTextNode(xpathDom.liftString(text))))
       case SetAttributeInstruction(attribute, value) =>
         // merge the content of all text-node children to create the attribute value
         val textResult = xmlDom.getConcatenatedTextNodeValues(evaluate(sheet, value, context))
@@ -125,7 +129,13 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val evaluated = xpathAnalyzer.evaluate(select, xsltToXPathContext(context))
         val (nodeSets, rest) = xpathDom.matchNodeSetValues(evaluated)
         val nodeSetsOutput = xmlDom.copyToOutput(nodeSets)
-        val restOutput = xmlDom.createSingletonList(xmlDom.createTextNode(xpathDom.toStringValue(rest)))
+        val restAsString = xpathDom.toStringValue(rest)
+        var restOutput = xmlDom.createSingletonList(xmlDom.createTextNode(restAsString))
+        if (xpathDom.lessThanOrEqual(xpathDom.liftString(""), restAsString)) {
+          // if the empty string is a possible value, include the empty list in the result
+          // (because empty strings don't create any text node and therefore create an empty result list)
+          restOutput = xmlDom.joinLists(restOutput, xmlDom.createEmptyList())
+        }
         Left(xmlDom.joinLists(nodeSetsOutput, restOutput))
       case ChooseInstruction(branches, otherwise) =>
         val possibleBranches = chooseBranches(branches, otherwise, xsltToXPathContext(context))

@@ -30,7 +30,7 @@ object PowersetDomain extends Domain[N, L, V] {
     override def createTextNode(value: V): N = value match {
       case None => None
       case Some(s) => Some(s.collect {
-        case StringValue(str) => XMLTextNode(str)
+        case StringValue(str) if str != "" => XMLTextNode(str)
         // NOTE: other value types are implicitly evaluated to bottom
       })
     }

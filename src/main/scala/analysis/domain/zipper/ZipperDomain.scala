@@ -17,13 +17,15 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
   protected object XML extends ZipperXMLDomain.D[V] {
     override val xpathDom = XPATH
 
-    /** Create a text node with the given text value.
-      * Values that are not strings evaluate to BOTTOM.
+    /** Create a text node with the given text value. Values that are not strings evaluate to BOTTOM.
+      * The empty string also evaluates to BOTTOM, because text nodes with no content are not allowed.
       */
     override def createTextNode(value: V): N = {
       val desc: Set[NodeDescriptor] = value.str match {
         case None => Set(AnyText)
-        case Some(s) => s.map(text => Text(text))
+        case Some(s) => s.collect {
+          case str if str != "" => Text(str)
+        }
       }
       val tree = Subtree(desc, ZNil(), ZNil()) // text nodes have no children or attributes
       val path = Set[Path](DescendantStep(AnyTextNodeStep, RootPath))

@@ -2,6 +2,8 @@ package xml
 
 /** Text node as defined in XPath spec section 5.7. */
 case class XMLTextNode(value: String, var parent: XMLNode = null) extends XMLNode {
+  require(value != "")
+
   override def toString = {
     value
   }

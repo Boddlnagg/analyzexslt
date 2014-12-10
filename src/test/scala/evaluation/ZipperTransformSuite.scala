@@ -81,7 +81,7 @@ class ZipperTransformSuite extends FunSuite {
 
     assertResult(
       Subtree(Set(Root),ZNil(),ZCons(
-        Subtree(Set(Element("result")),ZNil(),ZCons(
+        Subtree(Set(Element("result")),ZNil(),ZMaybeNil(
           Subtree(Set(AnyText),ZNil(),ZNil()), ZNil()
         )), ZNil()
       )
@@ -225,7 +225,7 @@ class ZipperTransformSuite extends FunSuite {
     assertResult(
       Subtree(Set(Root),ZNil(),ZCons(
         Subtree(Set(Element("root")),ZNil(),ZUnknownLength(
-          Subtree(Set(Element("name")),ZUnknownLength(Set(NamedAttribute("username"))),ZCons(
+          Subtree(Set(Element("name")),ZUnknownLength(Set(NamedAttribute("username"))),ZMaybeNil(
             Subtree(Set(AnyText),ZNil(),ZNil()), ZNil()
           ))
         )), ZNil()

@@ -65,6 +65,19 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("No empty text node") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <!-- This copies the empty value of the @empty attribute to the result, which is then discarded -->
+          <result><xsl:value-of select="/root/@empty"/></result>
+        </xsl:template>
+      </xsl:stylesheet>
+    val data = <root empty=""/>
+
+    assertTransformMatches(xslt, data)
+  }
+
   test("Simple transform (input = output)") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">

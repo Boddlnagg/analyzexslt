@@ -27,7 +27,9 @@ object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
 
     override def createTextNode(value: V): N = value.str match {
       case None => None
-      case Some(s) => Some(s.map(str => XMLTextNode(str)))
+      case Some(s) => Some(s.collect {
+        case str if str != "" => XMLTextNode(str)
+      })
     }
   }
 

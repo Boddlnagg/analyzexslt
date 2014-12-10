@@ -27,12 +27,12 @@ object ConcreteDomain extends Domain[N, L, V] {
       case _ => Bottom
     }
 
-    /** Create a text node with the given text value.
-      * Values that are not strings evaluate to BOTTOM.
+    /** Create a text node with the given text value. Values that are not strings evaluate to BOTTOM.
+      * The empty string also evaluates to BOTTOM, because text nodes with no content are not allowed.
       */
     override def createTextNode(value: V): N = value match {
       case Top => Top
-      case Value(StringValue(v)) => Value(XMLTextNode(v))
+      case Value(StringValue(str)) if str != ""  => Value(XMLTextNode(str))
       case _ => Bottom
     }
   }

@@ -122,10 +122,10 @@ object ZipperXMLDomain {
 
     /** Create an element node with the given name, attributes and children.
       * The output is created bottom-up, so children are always created before their parent nodes.
+      * Consecutive text node children must be merged into a single text node by this method.
       */
     override def createElement(name: String, attributes: L, children: L): N = {
-      // TODO: filter out empty text nodes in a previous step already (in interpreter)?
-
+      
       /** This helper function merges consecutive text nodes in the given list into single text nodes.
         * The first result is the list with consecutive text nodes merged, the second is a boolean that
         * is true iff the first element of input list might be a text node.

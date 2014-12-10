@@ -86,7 +86,11 @@ object XSLTEvaluator {
         val resultAttributes = resultNodes.takeWhile(n => n.isInstanceOf[XMLAttribute]).map(n => n.asInstanceOf[XMLAttribute])
         val resultChildren = resultNodes.filter(n => !n.isInstanceOf[XMLAttribute])
         Left(List(XMLElement(name, resultAttributes, resultChildren)))
-      case LiteralTextNode(text) => Left(List(XMLTextNode(text)))
+      case LiteralTextNode(text) =>
+        if (text != "")
+          Left(List(XMLTextNode(text)))
+        else
+          Left(List()) // no text node will be created for the empty string
       case SetAttributeInstruction(attribute, value) =>
         // merge the content of all text-node children to create the attribute value (non-text-node children are wrong and can be ignored according to spec)
         val textResult = evaluate(sheet, value, context)
@@ -116,7 +120,12 @@ object XSLTEvaluator {
             case XMLRoot(elem) => elem.copy // "a root node is copied by copying its children" according to spec
             case node => node.copy
           })
-          case value => Left(List(XMLTextNode(value.toStringValue.value)))
+          case value =>
+            val textValue = value.toStringValue.value
+            if (textValue != "")
+              Left(List(XMLTextNode(value.toStringValue.value)))
+            else
+              Left(List()) // text nodes with empty content are not allowed
         }
       case ChooseInstruction(branches, otherwise) =>
         Left(evaluate(sheet, chooseBranch(branches, otherwise, context.toXPathContext), context))
