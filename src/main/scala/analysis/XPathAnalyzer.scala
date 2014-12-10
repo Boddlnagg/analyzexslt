@@ -142,7 +142,6 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     * @return an ordered set of nodes resulting from the location path, ordered in document order
     */
   def evaluateLocationPathSingle(ctxNode: N, steps: List[XPathStep], isAbsolute: Boolean): L = {
-    // TODO: implement more axes WITH TESTS!
     // evaluate steps from left to right, keep nodes in document order (not required by XPath, but by XSLT)
     (steps, isAbsolute) match {
       case (Nil, true) => xmlDom.createSingletonList(xmlDom.getRoot(ctxNode))
@@ -162,39 +161,21 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
               xmlDom.joinLists(xmlDom.createEmptyList(), result) // ... we need to include the empty list as a result
             else
               result
-          /*
           // the ancestor axis contains the ancestors of the context node
           // the ancestors of the context node consist of the parent of context node and the parent's parent and so on
-          case AncestorAxis => TreeSet[XMLNode]() ++ ctxNode.ancestors
+          case AncestorAxis => throw new NotImplementedError("The `ancestor` axis is not implemented.")
           // the following-sibling axis contains all the following siblings of the context node
           // if the context node is an attribute node or namespace node, the following-sibling axis is empty
-          case FollowingSiblingAxis => ctxNode match {
-            case XMLAttribute(_, _, _) => TreeSet()
-            case _ => ctxNode.parent match {
-              case XMLRoot(_) => TreeSet() // if parent is root, there are no siblings
-              case XMLElement(_, _, children, _) => TreeSet[XMLNode]() ++ children.filter(_ > ctxNode)
-            }
-          }
+          case FollowingSiblingAxis => throw new NotImplementedError("The `following-sibling` axis is not implemented.")
           // the preceding-sibling axis contains all the preceding siblings of the context node
           // if the context node is an attribute node or namespace node, the preceding-sibling axis is empty
-          case PrecedingSiblingAxis => ctxNode match {
-            case XMLAttribute(_, _, _) => TreeSet()
-            case _ => ctxNode.parent match {
-              case XMLRoot(_) => TreeSet() // if parent is root, there are no siblings
-              case XMLElement(_, _, children, _) => TreeSet[XMLNode]() ++ children.filter(_ < ctxNode)
-            }
-          }
+          case PrecedingSiblingAxis => throw new NotImplementedError("The `preceding-sibling` axis is not implemented.")
           // the following axis contains all nodes in the same document as the context node that are after the context
           // node in document order, excluding any descendants and excluding attribute nodes and namespace nodes
-          case FollowingAxis =>
-            val descendants = ctxNode.descendants
-            TreeSet[XMLNode]() ++ ctxNode.root.nodesInOrder.filter(n => !n.isInstanceOf[XMLAttribute] && n > ctxNode && !descendants.contains(n))
+          case FollowingAxis => throw new NotImplementedError("The `following` axis is not implemented.")
           // the preceding axis contains all nodes in the same document as the context node that are before the context
           // node in document order, excluding any ancestors and excluding attribute nodes and namespace nodes
-          case PrecedingAxis =>
-            val ancestors = ctxNode.ancestors
-            TreeSet[XMLNode]() ++ ctxNode.root.nodesInOrder.filter(n => !n.isInstanceOf[XMLAttribute] && n < ctxNode && !ancestors.contains(n))
-          */
+          case PrecedingAxis => throw new NotImplementedError("The `preceding` axis is not implemented.")
           // the attribute axis contains the attributes of the context node; the axis will be empty
           // unless the context node is an element
           case AttributeAxis => xmlDom.getAttributes(ctxNode)
@@ -205,11 +186,9 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           case SelfAxis => xmlDom.createSingletonList(ctxNode)
           // the descendant-or-self axis contains the context node and the descendants of the context node
           case DescendantOrSelfAxis => xmlDom.concatLists(xmlDom.createSingletonList(ctxNode), xmlDom.getDescendants(ctxNode))
-          /*
           // the ancestor-or-self axis contains the context node and the ancestors of the context node
           // thus, the ancestor axis will always include the root node
-          case AncestorOrSelfAxis => TreeSet(ctxNode) ++ ctxNode.ancestors
-          */
+          case AncestorOrSelfAxis => throw new NotImplementedError("The `ancestor-or-self` axis is not implemented.")
         }
         val testedNodes = xmlDom.filter(nodes, node => {
           first.test match {
