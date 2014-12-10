@@ -13,14 +13,14 @@ class ZListSuite extends FunSuite {
 
   test("Lift") {
     assertResult(ZCons(lift(1), ZCons(lift(2), ZCons(lift(3), ZNil())))) {
-      ZList(List(lift(1), lift(2), lift(3)))
+      ZList(lift(1), lift(2), lift(3))
     }
   }
 
   test("Join") {
-    val l1 = ZList(List(lift(1), lift(2), lift(3)))
-    val l2 = ZList(List(lift(4), lift(5)))
-    val l3 = ZList(List(lift(6)))
+    val l1 = ZList(lift(1), lift(2), lift(3))
+    val l2 = ZList(lift(4), lift(5))
+    val l3 = ZList(lift(6))
     val l4 = ZCons(lift(4), ZCons(lift(5), ZTop()))
     val l5 = ZCons(lift(1), ZUnknownLength(lift(4,5,6)))
 
@@ -37,7 +37,7 @@ class ZListSuite extends FunSuite {
     assertResult(ZCons(Some(Set(1, 6)),ZMaybeNil(Some(Set(2)),ZCons(Some(Set(3)),ZNil())))) { l1 | l3 }
 
     assertResult(ZCons(lift(1, 4, 6),ZMaybeNil(lift(2, 5),ZMaybeNil(lift(3),ZNil())))) {
-      ZList.join(List(l1, l2, l3))
+      ZList.joinAll(List(l1, l2, l3))
     }
 
     assertResult(ZCons(lift(1, 4), ZCons(lift(2, 5), ZTop()))) { l1 | l4 }
@@ -45,12 +45,12 @@ class ZListSuite extends FunSuite {
   }
 
   test("Meet") {
-    val l1 = ZList(List(lift(1), lift(2), lift(3)))
-    val l2 = ZList(List(lift(4), lift(5)))
-    val l3 = ZList(List(lift(6)))
+    val l1 = ZList(lift(1), lift(2), lift(3))
+    val l2 = ZList(lift(4), lift(5))
+    val l3 = ZList(lift(6))
     val l12 = l1 | l2
     val l12Nil = l1 | l2 | ZNil()
-    val l1b = ZList(List(lift(1), lift(2), lift(4)))
+    val l1b = ZList(lift(1), lift(2), lift(4))
     val l13 = l1 | l3
     val l4 = ZCons(lift(1,4), ZUnknownLength(lift(2,3)))
     val l5 = ZCons(lift(1,4), ZUnknownLength(lift(5)))
@@ -69,7 +69,7 @@ class ZListSuite extends FunSuite {
     assertResult(ZBottom()) { l1 & l1b }
     assertResult(l1) { l13 & l1 }
     assertResult(l3) { l13 & l3 }
-    assertResult(ZBottom()) { l13 & ZList(List(lift(1), lift(2))) }
+    assertResult(ZBottom()) { l13 & ZList(lift(1), lift(2)) }
     assertResult(ZCons(lift(1, 4), ZCons(lift(2), ZMaybeNil(lift(3), ZNil())))) { l12 & l4 }
     assertResult(ZCons(lift(1, 4), ZCons(lift(5), ZNil()))) { l12 & l5 }
     assertResult(ZMaybeNil(lift(1), ZUnknownLength(lift(1)))) {
@@ -82,9 +82,9 @@ class ZListSuite extends FunSuite {
   }
 
   test("Concat") {
-    val l1 = ZList(List(lift(1), lift(2), lift(3)))
-    val l2 = ZList(List(lift(1), lift(2)))
-    val l3 = ZList(List(lift(1)))
+    val l1 = ZList(lift(1), lift(2), lift(3))
+    val l2 = ZList(lift(1), lift(2))
+    val l3 = ZList(lift(1))
 
     val l12 = l1 | l2
     val l13 = l1 | l3
@@ -131,8 +131,8 @@ class ZListSuite extends FunSuite {
   }
 
   test("Compare (<=)") {
-    val l1 = ZList(List(lift(1), lift(2), lift(3)))
-    val l2 = ZList(List(lift(1), lift(2)))
+    val l1 = ZList(lift(1), lift(2), lift(3))
+    val l2 = ZList(lift(1), lift(2))
     val l12 = l1 | l2
     val l123 = l1 | l2 | ZNil()
 
@@ -157,8 +157,8 @@ class ZListSuite extends FunSuite {
   }
 
   test("Map") {
-    val l1 = ZList(List(lift(1), lift(2), lift(3)))
-    val l2 = ZList(List(lift(1), lift(2)))
+    val l1 = ZList(lift(1), lift(2), lift(3))
+    val l2 = ZList(lift(1), lift(2))
     val l12 = l1 | l2
     val l3 = l2 ++ ZTop()
 
@@ -167,8 +167,8 @@ class ZListSuite extends FunSuite {
   }
 
   test("Contains") {
-    val l1 = ZList(List(lift(1), lift(2), lift(3)))
-    val l2 = ZList(List(lift(1), lift(2)))
+    val l1 = ZList(lift(1), lift(2), lift(3))
+    val l2 = ZList(lift(1), lift(2))
     val l12 = l1 | l2
     val l3 = l2 ++ ZTop()
     val l4 = l2 ++ ZUnknownLength(lift(3,4))
@@ -181,7 +181,7 @@ class ZListSuite extends FunSuite {
   }
 
   test("Filter") {
-    val l1 = ZList(List(lift(-1,0,1), lift(-1), lift(1)))
+    val l1 = ZList(lift(-1,0,1), lift(-1), lift(1))
     val l2 = ZMaybeNil(lift(-1,0,1), ZNil())
     val l12 = l1 | l2
     val l3 = ZCons(lift(1), ZUnknownLength(lift(-1,0,1)))
@@ -195,13 +195,13 @@ class ZListSuite extends FunSuite {
   }
 
   test("Take while") {
-    val l1 = ZList(List(lift(3), lift(2), lift(1), lift(0), lift(-1), lift(0), lift(1)))
-    val l2 = ZList(List(lift(2), lift(1), lift(0), lift(1)))
+    val l1 = ZList(lift(3), lift(2), lift(1), lift(0), lift(-1), lift(0), lift(1))
+    val l2 = ZList(lift(2), lift(1), lift(0), lift(1))
     val l12 = l1 | l2
-    val l3 = ZList(List(lift(0,1), lift(0,1), lift(0,1)))
+    val l3 = ZList(lift(0,1), lift(0,1), lift(0,1))
     val l4 = ZCons(lift(2), ZMaybeNil(lift(1), ZCons(lift(0, 1), ZUnknownLength(lift(-99, 99)))))
 
-    assertResult(ZList(List(lift(3), lift(2), lift(1)))) { l1.takeWhile(predicate) }
+    assertResult(ZList(lift(3), lift(2), lift(1))) { l1.takeWhile(predicate) }
     assertResult(ZCons(lift(3,2), ZCons(lift(2,1), ZMaybeNil(lift(1), ZMaybeNil(lift(1), ZNil()))))) { l12.takeWhile(predicate) }
     assertResult(ZMaybeNil(lift(1), ZMaybeNil(lift(1), ZMaybeNil(lift(1), ZNil())))) { l3.takeWhile(predicate) }
     assertResult(ZCons(lift(2), ZMaybeNil(lift(1), ZMaybeNil(lift(1), ZUnknownLength(lift(99)))))) { l4.takeWhile(predicate) }

@@ -232,8 +232,25 @@ class ZipperTransformSuite extends FunSuite {
       ))) { transform(xslt)._1 }
   }
 
-  // TODO: ignored because of text node merging
-  ignore("Wikipedia (XSLT #2 simplified)") {
-    assertResult(???) { transform(TestData.WikipediaStylesheet2) }
+  test("Wikipedia (XSLT #2 simplified)") {
+    assertResult(
+      Subtree(Set(Root),ZNil(),ZList(
+        Subtree(Set(Element("li"), Element("html")),ZNil(),ZCons(
+          Subtree(Set(AnyText, Element("head")),ZNil(),ZMaybeNil(
+            Subtree(Set(Element("title")),ZNil(),ZList(
+              Subtree(Set(Text("Testing XML Example")),ZNil(),ZNil())
+            )), ZNil()
+          )),
+          ZMaybeNil(Subtree(Set(Element("body")),ZNil(),ZList(
+            Subtree(Set(Element("h1")),ZNil(),ZList(Subtree(Set(Text("Persons")),ZNil(),ZNil()))),
+            Subtree(Set(Element("ul")),ZNil(),ZUnknownLength(
+              Subtree(Set(Element("li")),ZNil(),ZList(
+                Subtree(Set(AnyText),ZNil(),ZNil())
+              ))
+            ))
+          )),ZNil())
+        ))
+      ))
+    ) { transform(TestData.WikipediaStylesheet2)._1 }
   }
 }

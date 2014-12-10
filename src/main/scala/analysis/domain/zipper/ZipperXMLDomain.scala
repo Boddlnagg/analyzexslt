@@ -125,7 +125,7 @@ object ZipperXMLDomain {
       * Consecutive text node children must be merged into a single text node by this method.
       */
     override def createElement(name: String, attributes: L, children: L): N = {
-      
+
       /** This helper function merges consecutive text nodes in the given list into single text nodes.
         * The first result is the list with consecutive text nodes merged, the second is a boolean that
         * is true iff the first element of input list might be a text node.
@@ -284,7 +284,7 @@ object ZipperXMLDomain {
         case ZNil() => bottom // list with 0 elements
       }
       val (firstChildElement, _) = isElement(firstChild)
-      normalize(Subtree(Set(Root), ZNil(), ZList(List(firstChildElement._1))), Set(RootPath))
+      normalize(Subtree(Set(Root), ZNil(), ZList(firstChildElement._1)), Set(RootPath))
     }
 
     /** Copies a list of nodes, so that they can be used in the output.

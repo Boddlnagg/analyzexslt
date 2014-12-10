@@ -181,7 +181,7 @@ object Path {
       }
     }.flatten)
 
-    def getChildren(path: Set[Path]): ZList[Set[Path]] = ZList.join(path.map {
+    def getChildren(path: Set[Path]): ZList[Set[Path]] = ZList.joinAll(path.map {
       case e@ChildStep(AnyElementStep, _) => ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
       case e@ChildStep(NamedElementStep(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
       case e@DescendantStep(AnyElementStep, _) => ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
@@ -190,7 +190,7 @@ object Path {
       case _ => ZNil[Set[Path]]() // other node types (text, attribute) return empty lists because they don't have children
     })
 
-    def getAttributes(path: Set[Path]): ZList[Set[Path]] = ZList.join(path.map {
+    def getAttributes(path: Set[Path]): ZList[Set[Path]] = ZList.joinAll(path.map {
       case e@ChildStep(AnyElementStep, _) => ZUnknownLength(Set[Path](ChildStep(AnyAttributeStep, e)))
       case e@ChildStep(NamedElementStep(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyAttributeStep, e)))
       case e@DescendantStep(AnyElementStep, _) => ZUnknownLength(Set[Path](ChildStep(AnyAttributeStep, e)))

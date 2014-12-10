@@ -279,9 +279,11 @@ object ZList {
     case Nil => ZNil()
   }
 
-  def join[T](lists: Traversable[ZList[T]])(implicit lat: Lattice[T]): ZList[T] =
+  def apply[T](elems: T*)(implicit lat: Lattice[T]): ZList[T] = apply(elems.toList)
+
+  def joinAll[T](lists: Traversable[ZList[T]])(implicit lat: Lattice[T]): ZList[T] =
     lists.fold(ZBottom[T]())(_ | _)
 
-  def meet[T](lists: Traversable[ZList[T]])(implicit lat: Lattice[T]): ZList[T] =
+  def meetAll[T](lists: Traversable[ZList[T]])(implicit lat: Lattice[T]): ZList[T] =
     lists.fold(ZTop[T]())(_ & _)
 }

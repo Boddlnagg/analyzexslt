@@ -34,7 +34,9 @@ object TestData {
 
   val WikipediaStylesheet2 =
     <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
-      <!--<xsl:template match="text()"></xsl:template>-->
+      <!-- The following line is added so it will work without built-in rules -->
+      <xsl:template match="/"><xsl:apply-templates/></xsl:template>
+
       <xsl:template match="/persons">
         <html>
           <head>
