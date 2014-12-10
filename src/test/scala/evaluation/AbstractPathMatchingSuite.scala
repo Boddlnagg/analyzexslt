@@ -13,162 +13,167 @@ class AbstractPathMatchingSuite extends FunSuite {
   type P = Set[Path]
   val latP = PathSetLattice
   val latS = SubtreeLattice
+  val TOP = latP.top
 
-  def matchTop(path: LocationPath): P = matchIntersect(path, latP.top)
-
-  def matchIntersect(path: LocationPath, start: P): P = {
+  def matches(path: LocationPath, start: P): P = {
     val startNode: N = (latS.top, start)
     val matches = matcher.matches(startNode, path)._1
     matches._2 // extract path result
   }
 
+  def parse(str: String*): P = str.map(s => Path.fromString(s)).toSet
+
   test("/") {
     val pattern = XPathParser.parse("/").asInstanceOf[LocationPath]
-    assertResult(Set(RootPath)) { matchTop(pattern) }
+    assertResult(Set(RootPath)) { matches(pattern, TOP) }
   }
 
   test("*") {
     val pattern = XPathParser.parse("*").asInstanceOf[LocationPath]
-    assertResult(Set("*/*", "/*")) { matchTop(pattern).map(_.toString) }
+    assertResult(Set("*/*", "/*")) { matches(pattern, TOP).map(_.toString) }
   }
 
   test("/a") {
     val pattern = XPathParser.parse("/a").asInstanceOf[LocationPath]
-    assertResult(Set("/a")) { matchTop(pattern).map(_.toString) }
+    assertResult(Set("/a")) { matches(pattern, TOP).map(_.toString) }
   }
 
   test("/a/b/c") {
     val pattern = XPathParser.parse("/a/b/c").asInstanceOf[LocationPath]
-    assertResult(Set("/a/b/c")) { matchTop(pattern).map(_.toString) }
+    assertResult(Set("/a/b/c")) { matches(pattern, TOP).map(_.toString) }
   }
 
   test("a") {
     val pattern = XPathParser.parse("a").asInstanceOf[LocationPath]
-    assertResult(Set("*/a", "/a")) { matchTop(pattern).map(_.toString) }
+    assertResult(Set("*/a", "/a")) { matches(pattern, TOP).map(_.toString) }
   }
 
   test("a/b/c") {
     val pattern = XPathParser.parse("a/b/c").asInstanceOf[LocationPath]
-    assertResult(Set("*/a/b/c", "/a/b/c")) { matchTop(pattern).map(_.toString) }
+    assertResult(Set("*/a/b/c", "/a/b/c")) { matches(pattern, TOP).map(_.toString) }
   }
 
   test("a/@b/c") {
     // this path never matches, because attributes can't have children.
     val pattern = XPathParser.parse("a/@b/c").asInstanceOf[LocationPath]
-    assertResult(Set()) { matchTop(pattern).map(_.toString) }
+    assertResult(Set()) { matches(pattern, TOP).map(_.toString) }
   }
 
   test("a/b/@c") {
     val pattern = XPathParser.parse("a/b/@c").asInstanceOf[LocationPath]
-    assertResult(Set("*/a/b/@c", "/a/b/@c")) { matchTop(pattern).map(_.toString) }
+    assertResult(Set("*/a/b/@c", "/a/b/@c")) { matches(pattern, TOP).map(_.toString) }
   }
 
   test("/@c") {
     // this path never matches, because the root node can not have attributes
     val pattern = XPathParser.parse("/@c").asInstanceOf[LocationPath]
-    assertResult(Set()) { matchTop(pattern).map(_.toString) }
+    assertResult(Set()) { matches(pattern, TOP).map(_.toString) }
   }
 
   test("a/text()/c") {
     // this path never matches, because text nodes can't have children.
     val pattern = XPathParser.parse("a/text()/c").asInstanceOf[LocationPath]
-    assertResult(Set()) { matchTop(pattern).map(_.toString) }
+    assertResult(Set()) { matches(pattern, TOP).map(_.toString) }
   }
 
   test("a/b/text()") {
     val pattern = XPathParser.parse("a/b/text()").asInstanceOf[LocationPath]
-    assertResult(Set("*/a/b/text()", "/a/b/text()")) { matchTop(pattern).map(_.toString) }
+    assertResult(Set("*/a/b/text()", "/a/b/text()")) { matches(pattern, TOP).map(_.toString) }
   }
 
   test("/text()") {
     // this path never matches, because the root node only has an element node child
     val pattern = XPathParser.parse("/text()").asInstanceOf[LocationPath]
-    assertResult(Set()) { matchTop(pattern).map(_.toString) }
+    assertResult(Set()) { matches(pattern, TOP).map(_.toString) }
   }
 
   test("a/comment()/c") {
     // this path never matches, because comment nodes can't have children.
     val pattern = XPathParser.parse("a/comment()/c").asInstanceOf[LocationPath]
-    assertResult(Set()) { matchTop(pattern).map(_.toString) }
+    assertResult(Set()) { matches(pattern, TOP).map(_.toString) }
   }
 
   test("a/b/comment()") {
     val pattern = XPathParser.parse("a/b/comment()").asInstanceOf[LocationPath]
-    assertResult(Set("*/a/b/comment()", "/a/b/comment()")) { matchTop(pattern).map(_.toString) }
+    assertResult(Set("*/a/b/comment()", "/a/b/comment()")) { matches(pattern, TOP).map(_.toString) }
   }
 
   test("a/b/node()") {
     val pattern = XPathParser.parse("a/b/node()").asInstanceOf[LocationPath]
     assertResult(Set("*/a/b/text()", "/a/b/text()", "*/a/b/comment()", "/a/b/comment()", "*/a/b/*", "/a/b/*")) {
-      matchTop(pattern).map(_.toString)
+      matches(pattern, TOP).map(_.toString)
     }
   }
 
   test("*/*/@*") {
     val pattern = XPathParser.parse("*/*/@*").asInstanceOf[LocationPath]
-    assertResult(Set("*/*/*/@*", "/*/*/@*")) { matchTop(pattern).map(_.toString) }
+    assertResult(Set("*/*/*/@*", "/*/*/@*")) { matches(pattern, TOP).map(_.toString) }
   }
 
   // TODO: disabled because of non-termination
   ignore("a//b") {
     val pattern = XPathParser.parse("a//b").asInstanceOf[LocationPath]
-    assertResult(Set("a//b")) { matchTop(pattern).map(_.toString) }
+    assertResult(Set("a//b")) { matches(pattern, TOP).map(_.toString) }
   }
 
   // TODO: disabled because of non-termination
   ignore("a//b starting from /a/b//b") {
     val start = parse("/a/b//b")
     val pattern = XPathParser.parse("a//b").asInstanceOf[LocationPath]
-    assertResult(Set("a//b")) { matchIntersect(pattern, start).map(_.toString) }
+    assertResult(Set("a//b")) { matches(pattern, start).map(_.toString) }
   }
 
-  def parse(str: String*): P = str.map(s => Path.fromString(s)).toSet
+  test("/a/*/b starting from //c/b") {
+    val start = parse("//c/b")
+    val pattern = XPathParser.parse("/a/*/b").asInstanceOf[LocationPath]
+    assertResult(Set("/a/c/b")) { matches(pattern, start).map(_.toString) }
+  }
 
   test("a//b  starting from {/*/a/b, /*/a/*/b, /a/b/b, /b/b}") {
     val start = parse("/*/a/b", "/*/a/*/b", "/a/b/b", "/b/b")
     val pattern = XPathParser.parse("a//b").asInstanceOf[LocationPath]
-    assertResult(Set("/*/a/b", "/*/a/*/b", "/a/b/b")) { matchIntersect(pattern, start).map(_.toString) }
+    assertResult(Set("/*/a/b", "/*/a/*/b", "/a/b/b")) { matches(pattern, start).map(_.toString) }
   }
 
   test("/* starting from *") {
     val pattern = XPathParser.parse("/*").asInstanceOf[LocationPath]
-    assertResult(Set("/*")) { matchIntersect(pattern, parse("*")).map(_.toString) }
+    assertResult(Set("/*")) { matches(pattern, parse("*")).map(_.toString) }
   }
 
   test("a starting from /*") {
     val pattern = XPathParser.parse("a").asInstanceOf[LocationPath]
-    assertResult(Set("/a")) { matchIntersect(pattern, parse("/*")).map(_.toString) }
+    assertResult(Set("/a")) { matches(pattern, parse("/*")).map(_.toString) }
   }
 
   test("/* starting from a") {
     val pattern = XPathParser.parse("/*").asInstanceOf[LocationPath]
-    assertResult(Set("/a")) { matchIntersect(pattern, parse("a")).map(_.toString) }
+    assertResult(Set("/a")) { matches(pattern, parse("a")).map(_.toString) }
   }
 
   test("*/b starting from a/*") {
     val pattern = XPathParser.parse("*/b").asInstanceOf[LocationPath]
-    assertResult(Set("/a/b", "*/a/b")) { matchIntersect(pattern, parse("a/*")).map(_.toString) }
+    assertResult(Set("/a/b", "*/a/b")) { matches(pattern, parse("a/*")).map(_.toString) }
   }
 
   test("*/b starting from /a/*") {
     val pattern = XPathParser.parse("*/b").asInstanceOf[LocationPath]
-    assertResult(Set("/a/b")) { matchIntersect(pattern, parse("/a/*")).map(_.toString) }
+    assertResult(Set("/a/b")) { matches(pattern, parse("/a/*")).map(_.toString) }
   }
 
   test("b/* starting from /*/a") {
     val pattern = XPathParser.parse("b/*").asInstanceOf[LocationPath]
-    assertResult(Set("/b/a")) { matchIntersect(pattern, parse("/*/a")).map(_.toString) }
+    assertResult(Set("/b/a")) { matches(pattern, parse("/*/a")).map(_.toString) }
   }
 
   test("/*/b starting from a/*") {
     val pattern = XPathParser.parse("/*/b").asInstanceOf[LocationPath]
-    assertResult(Set("/a/b")) { matchIntersect(pattern, parse("a/*")).map(_.toString) }
+    assertResult(Set("/a/b")) { matches(pattern, parse("a/*")).map(_.toString) }
   }
 
   test("a//b//c starting from {/*/b/*/*/c, /a/b/c}") {
     val start = parse("/*/b/*/*/c", "/a/b/c")
     val pattern = XPathParser.parse("a//b//c").asInstanceOf[LocationPath]
-    assertResult(Set("/a/b/*/*/c", "/*/b/a/b/c", "/a/b/c")) { matchIntersect(pattern, start).map(_.toString) }
+    assertResult(Set("/a/b/*/*/c", "/*/b/a/b/c", "/a/b/c")) { matches(pattern, start).map(_.toString) }
   }
 
   test("Compare") {
