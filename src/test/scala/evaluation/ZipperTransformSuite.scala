@@ -328,13 +328,13 @@ class ZipperTransformSuite extends FunSuite {
   }
 
   test("Descendant selector (//) and parent axis") {
-    // TODO: could use //a as selector for the second template, but currently this does not terminate
+    // TODO: could use //b/a as selector for the second template, but currently this does not terminate
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match="/">
           <result><xsl:apply-templates select="//a"/></result>
         </xsl:template>
-        <xsl:template match="a">
+        <xsl:template match="b/a">
           <a>
             <xsl:attribute name="parent">
               <xsl:value-of select="name(..)"/>
@@ -345,14 +345,14 @@ class ZipperTransformSuite extends FunSuite {
 
     // The following expected result corresponds to this pseudo-XML-document:
     // <result>
-    // <a parent="???"/>
+    // <a parent="b"/>
     // ... (more <a>s)
     // </result>
 
     assertResult(
       Subtree(Set(Root),ZNil(),ZList(
         Subtree(Set(Element("result")),ZNil(),ZUnknownLength(
-          Subtree(Set(Element("a")),ZUnknownLength(Set(NamedAttribute("parent"))),ZNil())
+          Subtree(Set(Element("a")),ZUnknownLength(Set(Attribute("parent", "b"))),ZNil())
         ))
       ))
     ) { transform(xslt)._1 }
