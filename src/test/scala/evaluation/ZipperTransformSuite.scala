@@ -174,8 +174,7 @@ class ZipperTransformSuite extends FunSuite {
     assertResult(???) { transform(xslt)._1 }
   }
 
-  // TODO: ignored because of text node merging
-  ignore("Wikipedia (Java Example)") {
+  test("Wikipedia (Java Example)") {
     // taken from http://en.wikipedia.org/wiki/Java_API_for_XML_Processing#Example
     val xslt =
       <xsl:stylesheet version='1.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>
@@ -184,7 +183,19 @@ class ZipperTransformSuite extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    assertResult(???) { transform(xslt)._1 }
+    // The following expected result corresponds to this pseudo-XML-document:
+    // <reRoot>
+    //   <reNode>???</reNode>
+    // </reRoot>
+
+    assertResult(
+      Subtree(Set(Root),ZNil(),ZCons(
+        Subtree(Set(Element("reRoot")),ZNil(),ZCons(
+          Subtree(Set(Element("reNode")),ZNil(),ZCons(
+            Subtree(Set(AnyText),ZNil(),ZNil()),ZNil()
+          )), ZNil()
+        )), ZNil()))
+    ) { transform(xslt)._1 }
   }
 
   test("Wikipedia (XSLT #1 simplified)") {

@@ -124,7 +124,58 @@ object ZipperXMLDomain {
       * The output is created bottom-up, so children are always created before their parent nodes.
       */
     override def createElement(name: String, attributes: L, children: L): N = {
-      // TODO: empty text nodes should be filtered out and multiple consecutive ones should be merged
+      // TODO: filter out empty text nodes in a previous step already (in interpreter)?
+
+      /** This helper function merges consecutive text nodes in the given list into single text nodes.
+        * The first result is the list with consecutive text nodes merged, the second is a boolean that
+        * is true iff the first element of input list might be a text node.
+        * By returning ZUnknownLength in many cases, it is less precise than it could be, but doing it
+        * right would require a LOT of work.
+        */
+      def mergeConsecutiveTextNodes(list: ZListElement[N]): (ZListElement[N], Boolean) = {
+        // a node that represents any text node
+        val anyTextNode: N = normalize((Subtree(Set(AnyText), ZNil(), ZNil()), Set(DescendantStep(AnyTextNodeStep, RootPath))))
+
+        list match {
+          case ZNil() => (ZNil(), false)
+          case ZCons(first, rest) =>
+            val (restResult, restContainsText) = mergeConsecutiveTextNodes(rest)
+            val (text, _) = isTextNode(first)
+            val firstContainsText = !lessThanOrEqual(text, bottom)
+            if (firstContainsText && restContainsText) {
+              // there are two consecutive list elements that might be text nodes and must be merged
+              val joined = joinAll(List(anyTextNode, first, restResult.joinInner))
+              if (lessThanOrEqual(joined, anyTextNode)) // joined == anyTextNode, because joined is already <= anyTextNode
+                (ZCons(anyTextNode, ZNil()), true)
+              else
+                (ZUnknownLength(joined), true)
+            } else {
+              (ZCons(first, restResult), firstContainsText)
+            }
+          case ZMaybeNil(first, rest) =>
+            val (restResult, restContainsText) = mergeConsecutiveTextNodes(rest)
+            val (text, _) = isTextNode(first)
+            val firstContainsText = !lessThanOrEqual(text, bottom)
+            if (firstContainsText && restContainsText) {
+              // there are two consecutive list elements that might be text nodes and must be merged
+              val joined = joinAll(List(anyTextNode, first, restResult.joinInner))
+              if (lessThanOrEqual(joined, anyTextNode)) // joined == anyTextNode, because joined is already <= anyTextNode
+                (ZMaybeNil(anyTextNode, ZNil()), true)
+              else
+                (ZUnknownLength(joined), true)
+            } else {
+              (ZMaybeNil(first, restResult), firstContainsText)
+            }
+          case ZUnknownLength(elems) =>
+            val (text, _) = isTextNode(elems)
+            val elemsContainText = !lessThanOrEqual(text, bottom)
+            if (elemsContainText)
+              (ZUnknownLength(join(anyTextNode, elems)), elemsContainText)
+            else
+              (ZUnknownLength(elems), elemsContainText)
+          case ZTop() => (ZTop(), true)
+        }
+      }
 
       val attrList = attributes.map(_._1.desc) // get a ZList of attribute descriptors
 
@@ -140,7 +191,12 @@ object ZipperXMLDomain {
             ZUnknownLength(allPossibleAttributes)
       }
 
-      val tree = Subtree(Set(Element(name)), attrSet, children.map(_._1))
+      val newChildren: L = children match {
+        case ZBottom() => ZBottom()
+        case res => mergeConsecutiveTextNodes(res.asInstanceOf[ZListElement[N]])._1
+      }
+
+      val tree = Subtree(Set(Element(name)), attrSet, newChildren.map(_._1))
       val path = Set[Path](DescendantStep(AnyElementStep, RootPath))
       normalize(tree, path)
     }

@@ -1,15 +1,13 @@
 Result:
 Subtree(Set(Root),[],[
-    Subtree(
-        Set(Element(elem), Element(root), Element(result)),
-        [Subtree(Set(Attribute(attr1,val1)),[],[]),Subtree(Set(Attribute(attr2,val2)),[],[])],
-        [Subtree(Set(Element(attributeaxis), Element(childaxis), Element(elem)),[],[
-            Subtree(Set(Text(), Element(elem), Text(val1), Text(Some Text), Text(val2)),[],[])*
+    Subtree(Set(Element(result)),[],[
+        Subtree(Set(Element(childaxis)),[],[
+            Subtree(Set(AnyText, Element(elem)),[],[])*
         ]),
-        NIL+Subtree(Set(Element(attributeaxis), Text(Some Text)),[],[
-            Subtree(Set(Text(val1), Text(val2), Text()),[],[])*
-        ])]
-    )
+        Subtree(Set(Element(attributeaxis)),[],[
+            Subtree(Set(AnyText),[],[])*
+        ])
+    ])
 ])
 
 Expected:
