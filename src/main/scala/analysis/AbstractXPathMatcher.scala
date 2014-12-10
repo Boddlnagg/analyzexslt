@@ -71,11 +71,11 @@ class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
 
             for (d <- (nodeStack.size - 1) to 1 by -1) {
               // go down in the tree, back to the original level
-              val (newParentMatches, _) = xmlDom.hasParent(nodeStack(d), parentMatches)
+              val (newParentMatches, _) = hasParent(nodeStack(d), parentMatches)
               parentMatches = newParentMatches
             }
 
-            val (newParentMatches, newNotParentMatches) = xmlDom.hasParent(nodeStack(0), parentMatches)
+            val (newParentMatches, newNotParentMatches) = hasParent(nodeStack(0), parentMatches)
             ancestorMatches = xmlDom.join(ancestorMatches, newParentMatches)
             notAncestorMatches = xmlDom.meet(notAncestorMatches, newNotParentMatches)
 
@@ -91,11 +91,22 @@ class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
           // does the parent match the rest of the path?
           val parent = xmlDom.getParent(lastStepMatches)
           val (parentMatchesRest, _) = matches(parent, restPath)
-          val (parentMatches, notParentMatches) = xmlDom.hasParent(lastStepMatches, parentMatchesRest)
+          val (parentMatches, notParentMatches) = hasParent(lastStepMatches, parentMatchesRest)
           (parentMatches, xmlDom.join(notParentMatches, notLastStepMatches))
         }
       }
     }
+  }
+
+  /** Predicate function that checks whether a node has a specified node as its parent.
+    * The first result is a node that is known to have that parent (this is BOTTOM if the node definitely
+    * doesn't have that parent), the second result is a node that might not have that parent (this is
+    * BOTTOM if the node definitely does have that parent). The two results are not necessarily disjoint.
+    */
+  private def hasParent(node: N, parent: N): (N, N) = {
+    val (isChild, isNotChild) = xmlDom.isContainedIn(node, xmlDom.getChildren(parent))
+    val (isAttribute, isNeither) = xmlDom.isContainedIn(isNotChild, xmlDom.getAttributes(parent))
+    (xmlDom.join(isChild, isAttribute), isNeither)
   }
 }
 

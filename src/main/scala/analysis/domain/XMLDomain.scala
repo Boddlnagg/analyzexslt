@@ -78,17 +78,6 @@ trait XMLDomain[N, L, V] {
   /** Get the parent of given node. If the node has no parent (root node), BOTTOM is returned. */
   def getParent(node: N): N
 
-  /** Predicate function that checks whether a node has a specified node as its parent.
-    * The first result is a node that is known to have that parent (this is BOTTOM if the node definitely
-    * doesn't have that parent), the second result is a node that might not have that parent (this is
-    * BOTTOM if the node definitely does have that parent). The two results are not necessarily disjoint.
-    */
-  def hasParent(node: N, parent: N): (N, N) = {
-    val (isChild, isNotChild) = isContainedIn(node, getChildren(parent))
-    val (isAttribute, isNeither) = isContainedIn(isNotChild, getAttributes(parent))
-    (join(isChild, isAttribute), isNeither)
-  }
-
   /** Predicate function that checks whether a node is in a given list of nodes.
     * The first result is a node that is known to be in that list (this is BOTTOM if the node definitely
     * is not in the list), the second result is a node that might not be in the list (this is
