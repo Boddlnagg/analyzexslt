@@ -253,4 +253,77 @@ class ZipperTransformSuite extends FunSuite {
       ))
     ) { transform(TestData.WikipediaStylesheet2)._1 }
   }
+
+  test("XSLT book example (recursive descend)") {
+    val xslt =
+      <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+        <xsl:template match="/"><xsl:apply-templates select="books"/></xsl:template>
+        <xsl:template match="books">
+          <html>
+            <body>
+              <h1>A list of books</h1>
+              <table>
+                <tr>
+                  <th>Title</th>
+                  <th>Author</th>
+                  <th>Price</th>
+                </tr>
+                <xsl:apply-templates select="book"/>
+              </table>
+            </body>
+          </html>
+        </xsl:template>
+        <xsl:template match="book">
+          <tr>
+            <xsl:apply-templates select="title"/>
+            <xsl:apply-templates select="author"/>
+            <xsl:apply-templates select="price"/>
+          </tr>
+        </xsl:template>
+        <xsl:template match="author | title | price">
+          <td><xsl:value-of select="."/></td>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    // The following expected result corresponds to this pseudo-XML-document:
+    // <html>
+    //   <body>
+    //     <h1>A list of books</h1>
+    //     <table>
+    //       <tr>
+    //         <th>Title</th>
+    //         <th>Author</th>
+    //         <th>Price</th>
+    //       </tr>
+    //       <tr>
+    //         <td>???</td>
+    //         ... (more <td>s -> there could be multiple <title> elements, ...)
+    //       </tr>
+    //       ... (more <tr>s of the same form as before)
+    //     </table>
+    //   </body>
+    // </html>
+
+    assertResult(
+      Subtree(Set(Root),ZNil(),ZList(
+        Subtree(Set(Element("html")),ZNil(),ZList(
+          Subtree(Set(Element("body")),ZNil(),ZList(
+            Subtree(Set(Element("h1")),ZNil(),ZList(
+              Subtree(Set(Text("A list of books")),ZNil(),ZNil())
+            )),
+            Subtree(Set(Element("table")),ZNil(),ZCons(
+              Subtree(Set(Element("tr")),ZNil(),ZList(
+                Subtree(Set(Element("th")),ZNil(),ZList(Subtree(Set(Text("Title")),ZNil(),ZNil()))),
+                Subtree(Set(Element("th")),ZNil(),ZList(Subtree(Set(Text("Author")),ZNil(),ZNil()))),
+                Subtree(Set(Element("th")),ZNil(),ZList(Subtree(Set(Text("Price")),ZNil(),ZNil())))
+              )),
+              ZUnknownLength(Subtree(Set(Element("tr")),ZNil(),ZUnknownLength(
+                Subtree(Set(Element("td")),ZNil(),ZMaybeNil(Subtree(Set(AnyText),ZNil(),ZNil()),ZNil()))
+              )))
+            ))
+          ))
+        ))
+      ))
+    ) { transform(xslt)._1 }
+  }
 }
