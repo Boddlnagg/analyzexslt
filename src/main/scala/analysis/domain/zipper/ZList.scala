@@ -270,6 +270,9 @@ object ZList {
   private def isBottom[T](v: T)(implicit lat: Lattice[T]) = lat.lessThanOrEqual(v, lat.bottom)
   private def isTop[T](v: T)(implicit lat: Lattice[T]) = lat.lessThanOrEqual(lat.top, v)
 
+  /** Creates a ZList from the given list of elements. Whenever one of the elements is BOTTOM,
+    * the whole list will be ZBottom.
+    */
   def apply[T](list: List[T])(implicit lat: Lattice[T]): ZList[T] = list match {
     case first :: rest if isBottom(first) => ZBottom()
     case first :: rest => apply(rest) match {
@@ -279,6 +282,9 @@ object ZList {
     case Nil => ZNil()
   }
 
+  /** Creates a ZList from the given elements. Whenever one of the elements is BOTTOM,
+    * the whole list will be ZBottom.
+    */
   def apply[T](elems: T*)(implicit lat: Lattice[T]): ZList[T] = apply(elems.toList)
 
   def joinAll[T](lists: Traversable[ZList[T]])(implicit lat: Lattice[T]): ZList[T] =

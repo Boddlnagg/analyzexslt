@@ -109,11 +109,18 @@ class AbstractPathMatchingSuite extends FunSuite {
     assertResult(Set("*/*/*/@*", "/*/*/@*")) { matchTop(pattern).map(_.toString) }
   }
 
-  /* TODO: This currently doesn't terminate
-  test("a//b") {
+  // TODO: disabled because of non-termination
+  ignore("a//b") {
     val pattern = XPathParser.parse("a//b").asInstanceOf[LocationPath]
-    assertResult(Set("a//b"))) { matchTop(pattern).map(_.toString) }
-  }*/
+    assertResult(Set("a//b")) { matchTop(pattern).map(_.toString) }
+  }
+
+  // TODO: disabled because of non-termination
+  ignore("a//b starting from /a/b//b") {
+    val start = parse("/a/b//b")
+    val pattern = XPathParser.parse("a//b").asInstanceOf[LocationPath]
+    assertResult(Set("a//b")) { matchIntersect(pattern, start).map(_.toString) }
+  }
 
   def parse(str: String*): P = str.map(s => Path.fromString(s)).toSet
 
