@@ -238,6 +238,22 @@ object ZipperXMLDomain {
       children.map(tree => normalize(tree, childrenPath))
     }
 
+    /** Get a list of all descendants of a node. */
+    override def getDescendants(node: N): L = {
+      val (Subtree(_, _, children), path) = node
+      if (children == ZTop()) {
+        val descendantPath: Set[Path] = latP.getDescendants(path).joinInner
+        // don't know anything about the subtree, only the path
+        ZUnknownLength(normalize((SubtreeLattice.top, descendantPath)))
+      } else {
+        val childrenPath: Set[Path] = latP.getChildren(path).joinInner
+        val normalizedChildren = children.map(tree => normalize(tree, childrenPath))
+        flatMapWithIndex(normalizedChildren, {
+          case (n, _) => concatLists(createSingletonList(n), getDescendants(n))
+        })
+      }
+    }
+
     /** Get the parent of given node. If the node has no parent (root node), BOTTOM is returned. */
     override def getParent(node: N): N = {
       val (Subtree(desc, attributes, children), path) = node

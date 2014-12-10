@@ -128,7 +128,7 @@ class ZipperTransformSuite extends FunSuite {
     // The following expected result corresponds to this pseudo-XML-document:
     // <result>
     //  <attribute|element name="???"/>
-    //  ...
+    //  ... (more of the same form as above)
     // </result>
 
     assertResult(
@@ -219,7 +219,7 @@ class ZipperTransformSuite extends FunSuite {
     // <root>
     //   <name username="???">???</name>
     //   <name username="???">???</name>
-    //   ...
+    //   ... (more <name>s)
     // </root>
 
     assertResult(
@@ -322,6 +322,37 @@ class ZipperTransformSuite extends FunSuite {
               )))
             ))
           ))
+        ))
+      ))
+    ) { transform(xslt)._1 }
+  }
+
+  test("Descendant selector (//) and parent axis") {
+    // TODO: could use //a as selector for the second template, but currently this does not terminate
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <result><xsl:apply-templates select="//a"/></result>
+        </xsl:template>
+        <xsl:template match="a">
+          <a>
+            <xsl:attribute name="parent">
+              <xsl:value-of select="name(..)"/>
+            </xsl:attribute>
+          </a>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    // The following expected result corresponds to this pseudo-XML-document:
+    // <result>
+    // <a parent="???"/>
+    // ... (more <a>s)
+    // </result>
+
+    assertResult(
+      Subtree(Set(Root),ZNil(),ZList(
+        Subtree(Set(Element("result")),ZNil(),ZUnknownLength(
+          Subtree(Set(Element("a")),ZUnknownLength(Set(NamedAttribute("parent"))),ZNil())
         ))
       ))
     ) { transform(xslt)._1 }

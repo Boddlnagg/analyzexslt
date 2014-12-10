@@ -182,19 +182,22 @@ object Path {
     }.flatten)
 
     def getChildren(path: Set[Path]): ZList[Set[Path]] = ZList.joinAll(path.map {
-      case e@ChildStep(AnyElementStep, _) => ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
-      case e@ChildStep(NamedElementStep(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
-      case e@DescendantStep(AnyElementStep, _) => ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
-      case e@DescendantStep(NamedElementStep(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
+      case e@ChildStep(AnyElementStep | NamedElementStep(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
+      case e@DescendantStep(AnyElementStep | NamedElementStep(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
       case e@RootPath => ZCons(Set[Path](ChildStep(AnyElementStep, e)), ZNil())
       case _ => ZNil[Set[Path]]() // other node types (text, attribute) return empty lists because they don't have children
     })
 
+    def getDescendants(path: Set[Path]): ZList[Set[Path]] = ZList.joinAll(path.map {
+      case e@ChildStep(AnyElementStep | NamedElementStep(_), _) => ZUnknownLength(Set[Path](DescendantStep(AnyElementStep, e), DescendantStep(AnyTextNodeStep, e), DescendantStep(AnyCommentNodeStep, e)))
+      case e@DescendantStep(AnyElementStep | NamedElementStep(_), _) => ZUnknownLength(Set[Path](DescendantStep(AnyElementStep, e), DescendantStep(AnyTextNodeStep, e), DescendantStep(AnyCommentNodeStep, e)))
+      case e@RootPath => ZCons(Set[Path](DescendantStep(AnyElementStep, e)), ZNil())
+      case _ => ZNil[Set[Path]]() // other node types (text, attribute) return empty lists because they don't have children/descendants
+    })
+
     def getAttributes(path: Set[Path]): ZList[Set[Path]] = ZList.joinAll(path.map {
-      case e@ChildStep(AnyElementStep, _) => ZUnknownLength(Set[Path](ChildStep(AnyAttributeStep, e)))
-      case e@ChildStep(NamedElementStep(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyAttributeStep, e)))
-      case e@DescendantStep(AnyElementStep, _) => ZUnknownLength(Set[Path](ChildStep(AnyAttributeStep, e)))
-      case e@DescendantStep(NamedElementStep(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyAttributeStep, e)))
+      case e@ChildStep(AnyElementStep | NamedElementStep(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyAttributeStep, e)))
+      case e@DescendantStep(AnyElementStep | NamedElementStep(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyAttributeStep, e)))
       case _ => ZNil[Set[Path]]() // other node types (text, attribute) return empty lists because they don't have attributes
     })
 
@@ -202,10 +205,8 @@ object Path {
 
     def isElement(node: Set[Path]): (Set[Path], Set[Path]) = {
       val (yes, no) = node.partition {
-        case ChildStep(NamedElementStep(_), _) => true
-        case ChildStep(AnyElementStep, _) => true
-        case DescendantStep(NamedElementStep(_), _) => true
-        case DescendantStep(AnyElementStep, _) => true
+        case ChildStep(AnyElementStep | NamedElementStep(_), _) => true
+        case DescendantStep(AnyElementStep | NamedElementStep(_), _) => true
         case _ => false
       }
       (normalize(yes), normalize(no))
@@ -231,10 +232,8 @@ object Path {
 
     def isAttribute(node: Set[Path]): (Set[Path], Set[Path]) = {
       val (yes, no) = node.partition {
-        case ChildStep(NamedAttributeStep(_), _) => true
-        case ChildStep(AnyAttributeStep, _) => true
-        case DescendantStep(NamedAttributeStep(_), _) => true
-        case DescendantStep(AnyAttributeStep, _) => true
+        case ChildStep(AnyAttributeStep | NamedAttributeStep(_), _) => true
+        case DescendantStep(AnyAttributeStep | NamedAttributeStep(_), _) => true
         case _ => false
       }
       (normalize(yes), normalize(no))
