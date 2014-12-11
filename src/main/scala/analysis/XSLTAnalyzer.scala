@@ -100,12 +100,12 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     */
   private def evaluate(sheet: XSLTStylesheet, node: XSLTInstruction, context: AbstractXSLTContext[N, L, V]): Either[L, (String, V)] = {
     node match {
-      case LiteralElement(name, children) =>
+      case CreateElementInstruction(name, children) =>
         val innerNodes = evaluate(sheet, children, context)
         val (resultAttributes, resultChildren) = xmlDom.partitionAttributes(innerNodes)
         val result = xmlDom.createElement(name, resultAttributes, resultChildren)
         Left(xmlDom.createSingletonList(result))
-      case LiteralTextNode(text) =>
+      case CreateTextInstruction(text) =>
         if (text == "")
           Left(xmlDom.createEmptyList())
         else

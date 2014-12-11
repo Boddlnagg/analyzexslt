@@ -2,25 +2,21 @@ package xslt
 
 import xpath.XPathExpr
 
-// TODO: update documentation comments to reflect actual meaning
-
 /** Base class for XSLT instructions */
 abstract class XSLTInstruction
 
-/** Literal result elements (see XSLT spec section 7.1.1)
+/** Instruction to create an element node (see XSLT spec section 7.1.1 and 7.1.2)
   *
   * @param name the name of the element (namespaces are not implemented)
   * @param children the instructions used to generate the children of the element
   */
-case class LiteralElement(name: String, children: Seq[XSLTInstruction]) extends XSLTInstruction
-// TODO: rename CreateElementInstruction
+case class CreateElementInstruction(name: String, children: Seq[XSLTInstruction]) extends XSLTInstruction
 
-/** Literal text nodes (see XSLT spec section 7.2)
+/** Instruction to create a text node (see XSLT spec section 7.2)
   *
   * @param text the text of the text node
   */
-case class LiteralTextNode(text: String) extends XSLTInstruction
-// TODO: rename CreateTextInstruction
+case class CreateTextInstruction(text: String) extends XSLTInstruction
 
 /** Create an XML comment in the output (see XSLT spec section 7.4)
   *

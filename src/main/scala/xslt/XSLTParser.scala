@@ -92,7 +92,7 @@ object XSLTParser {
 
   /** Parses a single [[scala.xml.Node]] as an XSLT instruction */
   def parseInstruction(node: Node): XSLTInstruction = node match {
-    case text: Text => LiteralTextNode(text.data)
+    case text: Text => CreateTextInstruction(text.data)
     case elem: Elem => elem.namespace match {
       case Namespace => elem.label match {
         // spec section 11.2
@@ -121,7 +121,7 @@ object XSLTParser {
           // NOTE: attribute value templates are not supported
           val name = elem.attribute("name").get.text
           if (elem.attribute("namespace").isDefined) throw new NotImplementedError("The 'namespace' attribute on xsl:attribute is not supported.")
-          LiteralElement(name, parseTemplate(elem.child))
+          CreateElementInstruction(name, parseTemplate(elem.child))
 
         // spec section 7.1.3
         case "attribute" =>
@@ -160,14 +160,14 @@ object XSLTParser {
 
         // spec section 7.2 and 3.4 (whitespace stripping)
         case "text" =>
-          LiteralTextNode(elem.text)
+          CreateTextInstruction(elem.text)
 
         case _ => throw new NotImplementedError(f"Unsupported XSLT instruction: ${elem.label}")
       }
       case null | "" =>
         // element without namespace
-        val literalAttributes: Seq[XSLTInstruction] = node.attributes.asAttrMap.map{ case (name, value) => SetAttributeInstruction(name, Seq(LiteralTextNode(value))) }.toSeq
-        LiteralElement(node.label, literalAttributes ++ parseTemplate(node.child))
+        val literalAttributes: Seq[XSLTInstruction] = node.attributes.asAttrMap.map{ case (name, value) => SetAttributeInstruction(name, Seq(CreateTextInstruction(value))) }.toSeq
+        CreateElementInstruction(node.label, literalAttributes ++ parseTemplate(node.child))
       case _ => throw new NotImplementedError("Namespaces other than the XSLT namespace are not supported.")
     }
     case _ => throw new NotImplementedError(f"Unsupported XML instruction $node")
