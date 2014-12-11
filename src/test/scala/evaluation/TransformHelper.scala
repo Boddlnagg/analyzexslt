@@ -31,6 +31,8 @@ object TransformHelper {
     xmlTransformer.transform(
       new StreamSource(new StringReader(data.toString())), new StreamResult(xmlResultResource)
     )
+    // NOTE: XML.loadString ignores XML comments completely, therefore transformations that
+    //       use <xsl:comment> won't return the correct result here
     XML.loadString(xmlResultResource.getBuffer.toString)
   }
 

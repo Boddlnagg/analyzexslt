@@ -90,11 +90,14 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
-  test("Literal elements") {
+  test("Creating elements") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match='/'>
-          <outer><inner attr="test"/></outer>
+          <outer>
+            <inner attr="test"/>
+            <xsl:element name="inner2"><innermost/></xsl:element>
+          </outer>
         </xsl:template>
       </xsl:stylesheet>
 
