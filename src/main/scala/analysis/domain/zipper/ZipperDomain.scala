@@ -72,9 +72,10 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
       case ZUnknownLength(node) => list
       case ZCons(head, tail) =>
         val inner = list.joinInner
-        // create a list with at least 1 element
-        ZCons(inner, ZUnknownLength(inner)) // TODO: can this be made more precise?
-      case ZMaybeNil(head, tail) => ZUnknownLength(list.joinInner) // TODO: can this be made more precise?
+        // create a list with at least 1 element (we don't know their order, because they must be in document order
+        // and we can't reconstruct the original order from the information we have in this domain)
+        ZCons(inner, ZUnknownLength(inner))
+      case ZMaybeNil(head, tail) => ZUnknownLength(list.joinInner)
       case ZNil() => ZNil()
     }
   }

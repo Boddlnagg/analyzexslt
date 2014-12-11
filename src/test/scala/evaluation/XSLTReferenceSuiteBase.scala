@@ -200,7 +200,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match='/'>
           <p attr="OLD">
-            <element/> <!-- This element invalidates the the following xsl:attribute, so that will be ignored -->
+            <element/> <!-- This element invalidates the following xsl:attribute, so that will be ignored -->
             <xsl:attribute name="attr">NEW</xsl:attribute>
           </p>
         </xsl:template>
@@ -774,7 +774,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
         </xsl:template>
       </xsl:stylesheet>
 
-    // The handling of comment nodes is weird, therefore we don't test them here (TODO: remove comment nodes completely?)
+    // Comment nodes are handled incorrectly in the Java reference processor, therefore we don't test them here
     val data =
         <root attr1="val1" attr2="val2"><elem/>Some Text</root>
 
