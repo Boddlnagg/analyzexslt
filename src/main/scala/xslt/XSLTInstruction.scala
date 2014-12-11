@@ -2,6 +2,8 @@ package xslt
 
 import xpath.XPathExpr
 
+// TODO: update documentation comments to reflect actual meaning
+
 /** Base class for XSLT instructions */
 abstract class XSLTInstruction
 
@@ -11,12 +13,20 @@ abstract class XSLTInstruction
   * @param children the instructions used to generate the children of the element
   */
 case class LiteralElement(name: String, children: Seq[XSLTInstruction]) extends XSLTInstruction
+// TODO: rename CreateElementInstruction
 
 /** Literal text nodes (see XSLT spec section 7.2)
   *
   * @param text the text of the text node
   */
 case class LiteralTextNode(text: String) extends XSLTInstruction
+// TODO: rename CreateTextInstruction
+
+/** Create an XML comment in the output (see XSLT spec section 7.4)
+  *
+  * @param content the template that is instantiated to generate the content of the comment
+  */
+case class CreateCommentInstruction(content: Seq[XSLTInstruction]) extends XSLTInstruction
 
 /** Variable definitions, created using the &lt;xsl:variable&gt; element (see XSLT spec section 11)
   *

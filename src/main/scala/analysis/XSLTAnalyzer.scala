@@ -110,6 +110,10 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           Left(xmlDom.createEmptyList())
         else
           Left(xmlDom.createSingletonList(xmlDom.createTextNode(xpathDom.liftString(text))))
+      case CreateCommentInstruction(value) =>
+        // merge the content of all text-node children to create the attribute value
+        val textResult = xmlDom.getConcatenatedTextNodeValues(evaluate(sheet, value, context))
+        Left(xmlDom.createSingletonList(xmlDom.createComment(textResult)))
       case SetAttributeInstruction(attribute, value) =>
         // merge the content of all text-node children to create the attribute value
         val textResult = xmlDom.getConcatenatedTextNodeValues(evaluate(sheet, value, context))

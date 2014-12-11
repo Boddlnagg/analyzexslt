@@ -2,7 +2,7 @@ package analysis.domain.powerset
 
 import analysis.domain.{XMLDomain, Domain}
 import analysis.domain.powerset.PowersetXMLDomain.{L, N}
-import xml.{XMLAttribute, XMLTextNode, XMLNode}
+import xml.{XMLComment, XMLAttribute, XMLTextNode, XMLNode}
 
 import scala.collection.immutable.TreeSet
 
@@ -29,6 +29,13 @@ object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
       case None => None
       case Some(s) => Some(s.collect {
         case str if str != "" => XMLTextNode(str)
+      })
+    }
+
+    override def createComment(value: V): N = value.str match {
+      case None => None
+      case Some(s) => Some(s.collect {
+        case str => XMLComment(str)
       })
     }
   }

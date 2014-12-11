@@ -32,6 +32,19 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
       (tree, path)
     }
 
+    /** Create a comment node with the given text value. Values that are not strings evaluate to BOTTOM. */
+    override def createComment(value: V): N = {
+      val desc: Set[NodeDescriptor] = value.str match {
+        case None => Set(AnyComment)
+        case Some(s) => s.collect {
+          case str => Comment(str)
+        }
+      }
+      val tree = Subtree(desc, ZNil(), ZNil()) // comment nodes have no children or attributes
+      val path = Set[Path](DescendantStep(AnyCommentNodeStep, RootPath))
+      (tree, path)
+    }
+
     /** Create an attribute node with the given name and text value.
       * Values that are not strings evaluate to BOTTOM.
       */

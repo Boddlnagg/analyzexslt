@@ -91,6 +91,12 @@ object XSLTEvaluator {
           Left(List(XMLTextNode(text)))
         else
           Left(List()) // no text node will be created for the empty string
+      case CreateCommentInstruction(value) =>
+        // merge the content of all text-node children to create the comment value (non-text-node children are wrong and can be ignored according to spec)
+        val textResult = evaluate(sheet, value, context)
+          .collect { case n: XMLTextNode => n.value }
+          .mkString("")
+        Left(List(XMLComment(textResult)))
       case SetAttributeInstruction(attribute, value) =>
         // merge the content of all text-node children to create the attribute value (non-text-node children are wrong and can be ignored according to spec)
         val textResult = evaluate(sheet, value, context)

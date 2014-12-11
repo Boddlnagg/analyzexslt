@@ -47,9 +47,11 @@ object XSLTParser {
   def parseStylesheet(source: Elem, disableBuiltinTemplates: Boolean = false): XSLTStylesheet = {
     val cleaned = clean(source).asInstanceOf[Elem]
 
-    if (cleaned.namespace != Namespace) throw new NotImplementedError(f"Root element must be 'stylesheet' with namespace $Namespace (a literal result element is not supported as root node)")
+    if (cleaned.namespace != Namespace) throw new NotImplementedError(f"Root element must be 'stylesheet' with namespace $Namespace (a literal result element is not supported as root node)") // TODO?
     if (cleaned.attribute("version").get.text != "1.0") throw new NotImplementedError("Stylesheet versions other than 1.0 are not supported")
-    assert(cleaned.child.forall(n => n.namespace == Namespace && (n.label == "template" || n.label == "variable")), "Top-level elements must either be XSLT templates or variable definitions")
+    cleaned.child.foreach {
+      n => require(n.namespace == Namespace && (n.label == "template" || n.label == "variable"), f"Top-level elements must either be XSLT templates or variable definitions, got $n")
+    }
 
     val globalVariables = cleaned.child
       .filter(isElem(_, "variable"))
@@ -114,12 +116,23 @@ object XSLTParser {
             throw new NotImplementedError("children of 'call-templates' element must only be 'with-param'")
           CallTemplatesInstruction(name, parseParams(elem.child, "with-param"))
 
+        // spec section 7.1.2
+        case "element" =>
+          // NOTE: attribute value templates are not supported
+          val name = elem.attribute("name").get.text
+          if (elem.attribute("namespace").isDefined) throw new NotImplementedError("The 'namespace' attribute on xsl:attribute is not supported.")
+          LiteralElement(name, parseTemplate(elem.child))
+
         // spec section 7.1.3
         case "attribute" =>
           // NOTE: attribute value templates are not supported
           val name = elem.attribute("name").get.text
           if (elem.attribute("namespace").isDefined) throw new NotImplementedError("The 'namespace' attribute on xsl:attribute is not supported.")
           SetAttributeInstruction(name, parseTemplate(elem.child)) // NOTE: only text nodes are allowed in the instantiation of this template
+
+        // spec section 7.4
+        case "comment" =>
+          CreateCommentInstruction(parseTemplate(elem.child))
 
         // spec section 7.6.1
         case "value-of" =>
@@ -149,7 +162,7 @@ object XSLTParser {
         case "text" =>
           LiteralTextNode(elem.text)
 
-        case _ => throw new NotImplementedError(f"Unsupported XSLT element: ${elem.label}")
+        case _ => throw new NotImplementedError(f"Unsupported XSLT instruction: ${elem.label}")
       }
       case null | "" =>
         // element without namespace
@@ -157,7 +170,7 @@ object XSLTParser {
         LiteralElement(node.label, literalAttributes ++ parseTemplate(node.child))
       case _ => throw new NotImplementedError("Namespaces other than the XSLT namespace are not supported.")
     }
-    case _ => throw new NotImplementedError(f"Unsupported XML node $node")
+    case _ => throw new NotImplementedError(f"Unsupported XML instruction $node")
   }
 
   /** Parses &lt;xsl:param&gt; and &lt;xsl:with-param&gt; nodes */
@@ -166,8 +179,8 @@ object XSLTParser {
       .map(n => n.asInstanceOf[Elem])
       .map(elem => (elem.attribute("name"), elem.attribute("select")) match {
         case (Some(name), Some(select)) => (name.text, XPathParser.parse(select.text))
-        case (None, _) => throw new AssertionError("Parameter nodes must have a `name` attribute")
-        case (_, None) => throw new NotImplementedError("Parameter nodes must have a `select` attribute specifying their (default) value. The ability to provide a content template (result tree fragment) is not implemented.")
+        case (None, _) => throw new AssertionError("Parameter instructions must have a `name` attribute")
+        case (_, None) => throw new NotImplementedError("Parameter instructions must have a `select` attribute specifying their (default) value. The ability to provide a content template (result tree fragment) is not implemented.")
     })
     Map() ++ params
   }

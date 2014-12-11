@@ -17,7 +17,7 @@ class XMLParser[N, L, V](dom: Domain[N, L, V]) {
         val attributes = elem.attributes.asAttrMap.map { case (name, value) => xml.createAttribute(name, xpath.liftString(value)) }
         xml.createElement(elem.label, liftList(attributes), liftList(children))
       case text: Text => xml.createTextNode(xpath.liftString(text.data))
-      case comment: Comment => ??? // TODO: add createComment to XMLDomain only for the parser?
+      case comment: Comment => xml.createComment(xpath.liftString(comment.commentText))
       case _ => throw new NotImplementedError(f"Unsupported XML node: ${node.getClass} ($node)")
     }
   }

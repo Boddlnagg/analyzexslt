@@ -3,7 +3,7 @@ package analysis.domain.concrete
 import analysis.domain.Domain
 import analysis.domain.concrete.ConcreteXMLDomain.{L, N}
 import analysis.domain.concrete.ConcreteXPathDomain.V
-import xml.{XMLAttribute, XMLTextNode, XMLNode}
+import xml.{XMLComment, XMLAttribute, XMLTextNode, XMLNode}
 import xpath._
 
 import scala.collection.immutable.TreeSet
@@ -33,6 +33,13 @@ object ConcreteDomain extends Domain[N, L, V] {
     override def createTextNode(value: V): N = value match {
       case Top => Top
       case Value(StringValue(str)) if str != ""  => Value(XMLTextNode(str))
+      case _ => Bottom
+    }
+
+    /** Create a comment node with the given text value. Values that are not strings evaluate to BOTTOM. */
+    override def createComment(value: V): N = value match {
+      case Top => Top
+      case Value(StringValue(str)) => Value(XMLComment(str))
       case _ => Bottom
     }
   }

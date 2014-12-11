@@ -510,7 +510,7 @@ object ZipperXMLDomain {
       case ZCons(first, ZNil()) => // TODO: this is only a special case ... get rid of this
         val (text, _) = isTextNode(first)
         getStringValue(text)
-      case _ => xpathDom.topString // TODO: implement this (used for attribute values)
+      case _ => xpathDom.topString // TODO: implement this (used for attribute and comment values)
     }
 
     /** Filters a list using a given predicate function. The predicate function should never return a node

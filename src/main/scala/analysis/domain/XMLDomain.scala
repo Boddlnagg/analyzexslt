@@ -57,6 +57,9 @@ trait XMLDomain[N, L, V] {
     */
   def createTextNode(value: V): N
 
+  /** Create a comment node with the given text value. Values that are not strings evaluate to BOTTOM. */
+  def createComment(value: V): N
+
   /** Create an emtpy list containing no nodes */
   def createEmptyList(): L
 
