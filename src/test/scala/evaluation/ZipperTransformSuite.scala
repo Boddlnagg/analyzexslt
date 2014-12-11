@@ -280,8 +280,11 @@ class ZipperTransformSuite extends FunSuite {
             <xsl:apply-templates select="price"/>
           </tr>
         </xsl:template>
-        <xsl:template match="author | title | price">
+        <xsl:template match="author | price">
           <td><xsl:value-of select="."/></td>
+        </xsl:template>
+        <xsl:template match="title">
+          <td><b><xsl:value-of select="."/></b></td>
         </xsl:template>
       </xsl:stylesheet>
 
@@ -296,7 +299,7 @@ class ZipperTransformSuite extends FunSuite {
     //         <th>Price</th>
     //       </tr>
     //       <tr>
-    //         <td>???</td>
+    //         <td><b>???</b></td> (where <b> is optional)
     //         ... (more <td>s -> there could be multiple <title> elements, ...)
     //       </tr>
     //       ... (more <tr>s of the same form as before)
@@ -318,7 +321,9 @@ class ZipperTransformSuite extends FunSuite {
                 Subtree(Set(Element("th")),ZNil(),ZList(Subtree(Set(Text("Price")),ZNil(),ZNil())))
               )),
               ZUnknownLength(Subtree(Set(Element("tr")),ZNil(),ZUnknownLength(
-                Subtree(Set(Element("td")),ZNil(),ZMaybeNil(Subtree(Set(AnyText),ZNil(),ZNil()),ZNil()))
+                Subtree(Set(Element("td")),ZNil(),ZMaybeNil(
+                  Subtree(Set(Element("b"), AnyText),ZNil(),ZMaybeNil(Subtree(Set(AnyText),ZNil(),ZNil()), ZNil())),ZNil()
+                ))
               )))
             ))
           ))
