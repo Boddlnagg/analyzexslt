@@ -48,7 +48,6 @@ object XPathEvaluator {
           case ("last", Nil) => NumberValue(ctx.size)
           case ("position", Nil) => NumberValue(ctx.position)
           case ("count", List(NodeSetValue(nodes))) => NumberValue(nodes.size)
-          case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
           case ("name"|"local-name", Nil) => ctx.node match {
             // get name of current node (or empty string)
             case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
@@ -63,6 +62,13 @@ object XPathEvaluator {
               case _ => StringValue("")
             }
           }
+          case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
+          case ("concat", in@(first :: second :: rest)) => StringValue(in.map { // NOTE: takes 2 or more arguments
+            case StringValue(str) => str
+            case _ => throw new EvaluationError("The function concat only accepts string parameters.")
+          }.mkString(""))
+          case ("string-length", Nil) => NumberValue(ctx.node.stringValue.length)
+          case ("string-length", List(StringValue(str))) => NumberValue(str.length)
           case (_, evaluatedParams) =>
             throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
         }
