@@ -829,6 +829,29 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("Descendant attributes") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <result><xsl:apply-templates select="/foo//@*"/></result>
+        </xsl:template>
+        <xsl:template match="foo//@*">
+          <attr>
+            <xsl:attribute name="name">
+              <xsl:value-of select="name(.)"/>
+            </xsl:attribute>
+          </attr>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <foo foo1="1" foo2="2">
+        <bar bar1="1" bar2="2"/>
+      </foo>
+
+    assertTransformMatches(xslt, data)
+  }
+
   test("Descendant selector (//) and parent axis") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
