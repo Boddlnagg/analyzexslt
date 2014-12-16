@@ -2,7 +2,8 @@ package evaluation
 
 import analysis._
 import analysis.domain.zipper.Path.PathSetLattice
-import analysis.domain.zipper.ZipperXMLDomain.{SubtreeLattice, N}
+import analysis.domain.zipper.Subtree.SubtreeLattice
+import analysis.domain.zipper.ZipperXMLDomain.N
 import analysis.domain.zipper._
 import org.scalatest.FunSuite
 import xpath.{XPathParser, LocationPath}

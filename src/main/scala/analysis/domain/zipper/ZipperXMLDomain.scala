@@ -11,30 +11,17 @@ object ZipperXMLDomain {
 
   private val latP = Path.PathSetLattice // lattice for paths
   private val latD = NodeDescriptor.NodeDescriptorLattice // lattice for descriptors
+  private val latS = Subtree.SubtreeLattice
 
-  case class Subtree(desc: Set[NodeDescriptor], attributes: ZList[Set[NodeDescriptor]], children: ZList[Subtree])
-
-  implicit object SubtreeLattice extends Lattice[Subtree] {
-    def top = Subtree(latD.top, ZUnknownLength(Set(AnyAttribute)), ZTop())
-    def bottom = Subtree(latD.bottom, ZBottom(), ZBottom())
-    def join(left: Subtree, right: Subtree): Subtree =
-      Subtree(latD.join(left.desc, right.desc), left.attributes | right.attributes, left.children | right.children)
-    def meet(left: Subtree, right: Subtree): Subtree =
-      Subtree(latD.meet(left.desc, right.desc), left.attributes & right.attributes, left.children & right.children)
-    def lessThanOrEqual(left: Subtree, right: Subtree): Boolean =
-      latD.lessThanOrEqual(left.desc, right.desc) &&
-        left.attributes <= right.attributes &&
-        left.children <= right.children
-  }
 
   implicit object NodeLattice extends Lattice[N] {
-    def top = (SubtreeLattice.top, latP.top)
-    def bottom = (SubtreeLattice.bottom, latP.bottom)
-    def join(left: N, right: N): N = normalize(SubtreeLattice.join(left._1, right._1), latP.join(left._2, right._2))
-    def meet(left: N, right: N): N = normalize(SubtreeLattice.meet(left._1, right._1), latP.meet(left._2, right._2))
+    def top = (latS.top, latP.top)
+    def bottom = (latS.bottom, latP.bottom)
+    def join(left: N, right: N): N = normalize(latS.join(left._1, right._1), latP.join(left._2, right._2))
+    def meet(left: N, right: N): N = normalize(latS.meet(left._1, right._1), latP.meet(left._2, right._2))
 
     def lessThanOrEqual(left: N, right: N): Boolean =
-      SubtreeLattice.lessThanOrEqual(left._1, right._1) && latP.lessThanOrEqual(left._2, right._2)
+      latS.lessThanOrEqual(left._1, right._1) && latP.lessThanOrEqual(left._2, right._2)
   }
 
   private def getDescriptorsFromPaths(path: P): Set[NodeDescriptor] = {
@@ -244,7 +231,7 @@ object ZipperXMLDomain {
       if (children == ZTop()) {
         val descendantPath: Set[Path] = latP.getDescendants(path).joinInner
         // don't know anything about the subtree, only the path
-        ZUnknownLength(normalize((SubtreeLattice.top, descendantPath)))
+        ZUnknownLength(normalize((latS.top, descendantPath)))
       } else {
         val childrenPath: Set[Path] = latP.getChildren(path).joinInner
         val normalizedChildren = children.map(tree => normalize(tree, childrenPath))
@@ -371,7 +358,7 @@ object ZipperXMLDomain {
       // NOTE: root node can't have attributes, so we set it to ZNil, and it can only have exactly one child
       val firstChild = children.first
       val newChildren: ZList[S] =
-        if (SubtreeLattice.lessThanOrEqual(firstChild, SubtreeLattice.bottom)) // if there was no first child ...
+        if (latS.lessThanOrEqual(firstChild, latS.bottom)) // if there was no first child ...
           ZBottom() // return bottom
         else
           ZCons(firstChild, ZNil()) // otherwise create a singleton list from that child
