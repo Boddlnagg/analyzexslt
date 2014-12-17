@@ -106,13 +106,13 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
             xpathDom.join(result, xpathDom.liftString("")) // ... then include the empty string in the result
           else
             result
+        case ("concat", list@(first :: second :: rest)) => list.reduce(xpathDom.concatStrings) // NOTE: takes 2 or more arguments
           // NOTE: the following functions are more or less stubbed out; implementing them correctly would
           // require adding more methods to the XPath domain interface.
         case ("sum", List(arg)) =>
           val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
           if (xmlDom.lessThanOrEqualLists(nodeSets, xmlDom.bottomList)) xpathDom.bottom // return bottom if the input is definitely not a node-set
           else xpathDom.topNumber
-        case ("concat", first :: second :: rest) => xpathDom.topString // NOTE: takes 2 or more arguments
         case ("string-length", _) => xpathDom.topNumber
         case ("normalize-space", _) => xpathDom.topString
         case (_, evaluatedParams) =>

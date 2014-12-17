@@ -31,6 +31,19 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     assertTransformMatches(TestData.WikipediaStylesheet2, TestData.WikipediaData)
   }
 
+  test("Wikipedia (Java Example) using concat") {
+    // taken from http://en.wikipedia.org/wiki/Java_API_for_XML_Processing#Example
+    val xslt =
+      <xsl:stylesheet version='1.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>
+        <xsl:template match='/'>
+          <reRoot><reNode><xsl:value-of select='concat(string(/root/node/@val), " ", "world")'/></reNode></reRoot>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data = <root><node val='hello'/></root>
+    assertTransformMatches(xslt, data)
+  }
+
   test("Match attribute #1") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">

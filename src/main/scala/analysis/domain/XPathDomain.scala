@@ -61,6 +61,9 @@ trait XPathDomain[V, N, L] {
   /** The numeric negation operation (unary minus). Must convert its operand to a number if it isn't. */
   def negateNum(v: V): V
 
+  /** Concatenate two strings. Operands that are not string values are evaluated to BOTTOM. */
+  def concatStrings(left: V, right: V): V
+
   /** Lift a literal string */
   def liftString(lit: String): V
 

@@ -95,6 +95,16 @@ object PowersetXPathDomain {
     override def toNumberValue(v: V): V = v.map(_.map(_.toNumberValue))
     override def toBooleanValue(v: V): V = v.map(_.map(_.toBooleanValue))
 
+    /** Concatenate two strings. Operands that are not string values are evaluated to BOTTOM. */
+    override def concatStrings(left: V, right: V): V = (left, right) match {
+      case (BOT, _) | (_, BOT) => BOT
+      case (Some(s1), Some(s2)) => Some(s1.cross(s2)
+        .collect { case (StringValue(str1), StringValue(str2)) => StringValue(str1 + str2) }
+        .toSet
+      )
+      case _ => None // in this case, one parameter is TOP and the other is not BOTTOM
+    }
+
     override def liftString(lit: String): V = Some(Set(StringValue(lit)))
 
     override def liftNumber(num: Double): V = Some(Set(NumberValue(num)))

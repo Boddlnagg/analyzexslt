@@ -60,6 +60,17 @@ object ConcreteXPathDomain {
     /** The numeric negation operation (unary minus). Must convert its operand to a number if it isn't. */
     override def negateNum(v: V): V = v.map(n => NumberValue(-n.toNumberValue.value))
 
+    /** Concatenate two strings. Operands that are not string values are evaluated to BOTTOM. */
+    override def concatStrings(left: V, right: V): V = (left, right) match {
+      case (Value(v1), Value(v2)) => (v1, v2) match {
+        case (StringValue(str1), StringValue(str2)) => Value(StringValue(str1 + str2))
+        case _ => Bottom // wrong argument types
+      }
+      case (Bottom, _) => Bottom
+      case (_, Bottom) => Bottom
+      case _ => Top
+    }
+
     /** Lift a literal string */
     override def liftString(lit: String): V = Value(StringValue(lit))
 

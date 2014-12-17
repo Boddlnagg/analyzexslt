@@ -218,6 +218,14 @@ class TypedPowersetXPathDomain[L] {
       fromNumbers(toNumberValueInternal(v).map(_.map(num => -num)))
     }
 
+    override def concatStrings(left: V, right: V): V = (left.str, right.str) match {
+      case (BOTTOM_STR, _) | (_, BOTTOM_STR) => bottom
+      case (Some(s1), Some(s2)) => fromStrings(Some(s1.cross(s2).map {
+        case (str1, str2) => str1 + str2
+      }.toSet))
+      case _ => topString // in this case, one parameter is TOP and the other is not BOTTOM
+    }
+
     override def toStringValue(v: V): V = fromStrings(toStringValueInternal(v))
     override def toNumberValue(v: V): V = fromNumbers(toNumberValueInternal(v))
     override def toBooleanValue(v: V): V = fromBooleans(toBooleanValueInternal(v))
