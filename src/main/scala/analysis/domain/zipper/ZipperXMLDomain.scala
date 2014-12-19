@@ -213,7 +213,7 @@ object ZipperXMLDomain {
     override def getAttributes(node: N): L = {
       val (Subtree(desc, attributes, children), path) = node
       val attributePath: Set[Path] = latP.getAttributes(path).joinInner
-      attributes.map(a => normalize(Subtree(a, ZNil(), ZNil()),attributePath))
+      attributes.map(a => normalize(Subtree(a, ZNil(), ZNil()), attributePath))
     }
 
     /** Get the list of children of a given node.
@@ -397,10 +397,10 @@ object ZipperXMLDomain {
       val (Subtree(desc, attributes, children), path) = node
       val (pathYes, pathNo) = latP.isTextNode(path)
       val (descYes, descNo) = desc.partition {
-          case Text(_) => true
-          case AnyText => true
-          case _ => false
-        }
+        case Text(_) => true
+        case AnyText => true
+        case _ => false
+      }
       // NOTE: text nodes cannot have attributes or children, therefore we use the empty attribute set in the positive result
       val yes = normalize(Subtree(latD.normalizeDescriptors(descYes), ZNil(), ZNil()), pathYes)
       val no = normalize(Subtree(latD.normalizeDescriptors(descNo), attributes, children), pathNo)
@@ -416,10 +416,10 @@ object ZipperXMLDomain {
       val (Subtree(desc, attributes, children), path) = node
       val (pathYes, pathNo) = latP.isComment(path)
       val (descYes, descNo) = desc.partition {
-          case Comment(_) => true
-          case AnyComment => true
-          case _ => false
-        }
+        case Comment(_) => true
+        case AnyComment => true
+        case _ => false
+      }
       // NOTE: comment nodes cannot have attributes or children, therefore we use the empty attribute set in the positive result
       val yes = normalize(Subtree(latD.normalizeDescriptors(descYes), ZNil(), ZNil()), pathYes)
       val no = normalize(Subtree(latD.normalizeDescriptors(descNo), attributes, children), pathNo)
@@ -435,11 +435,11 @@ object ZipperXMLDomain {
       val (Subtree(desc, attributes, children), path) = node
       val (pathYes, pathNo) = latP.isAttribute(path)
       val (descYes, descNo) = desc.partition {
-          case Attribute(_, _) => true
-          case NamedAttribute(_) => true
-          case AnyAttribute => true
-          case _ => false
-        }
+        case Attribute(_, _) => true
+        case NamedAttribute(_) => true
+        case AnyAttribute => true
+        case _ => false
+      }
       // NOTE: attribute nodes cannot have attributes or children, therefore we use the empty attribute set in the positive result
       val yes = normalize(Subtree(latD.normalizeDescriptors(descYes), ZNil(), ZNil()), pathYes)
       val no = normalize(Subtree(latD.normalizeDescriptors(descNo), attributes, children), pathNo)
@@ -493,11 +493,35 @@ object ZipperXMLDomain {
     }
 
     /** Concatenates the values of all text nodes in the list. List elements that are not text nodes are ignored. */
-    override def getConcatenatedTextNodeValues(list: L): V = list match {
-      case ZCons(first, ZNil()) => // TODO: this is only a special case ... get rid of this
-        val (text, _) = isTextNode(first)
-        getStringValue(text)
-      case _ => xpathDom.topString // TODO: implement this (used for attribute and comment values)
+    override def getConcatenatedTextNodeValues(list: L): V = {
+      /** Helper function to get the string value of a single node.
+        * Nodes that are not text nodes are ignored (evaluate to empty string). */
+      def getTextNodeValue(node: N): V = {
+        if (lessThanOrEqual(node, bottom)) {
+          xpathDom.bottom
+        } else {
+          val (text, notText) = isTextNode(node)
+          val result = getStringValue(text)
+          if (!lessThanOrEqual(notText, bottom)) {
+            // there is something that is not a text node -> add empty string to result
+            xpathDom.join(result, xpathDom.liftString(""))
+          } else {
+            result
+          }
+        }
+      }
+
+      list match {
+        case ZBottom() => xpathDom.bottom
+        case ZTop() => xpathDom.topString
+        case ZUnknownLength(_) =>
+          xpathDom.topString // text content could be repeated an unknown number of time, so we can only return TOP
+        case ZCons(first, rest) =>
+          xpathDom.concatStrings(getTextNodeValue(first), getConcatenatedTextNodeValues(rest))
+        case ZMaybeNil(first, rest) =>
+          xpathDom.join(xpathDom.liftString(""), xpathDom.concatStrings(getTextNodeValue(first), getConcatenatedTextNodeValues(rest)))
+        case ZNil() => xpathDom.liftString("")
+      }
     }
 
     /** Filters a list using a given predicate function. The predicate function should never return a node
