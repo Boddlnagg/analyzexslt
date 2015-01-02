@@ -10,7 +10,7 @@ import analysis.domain.powerset.{TypedPowersetDomain, PowersetXMLDomain, Powerse
 import analysis.XSLTAnalyzer
 import util.EvaluationError
 import xml.{XMLParser, XMLRoot}
-import xslt.{XSLTEvaluator, XSLTParser}
+import xslt.{XSLTProcessor, XSLTParser}
 
 import scala.xml.{XML, Elem}
 
@@ -18,7 +18,7 @@ import scala.xml.{XML, Elem}
 object TransformHelper {
   def transformScala(xslt: Elem, data: Elem): XMLRoot = {
     val stylesheet = XSLTParser.parseStylesheet(xslt)
-    XSLTEvaluator.transform(stylesheet, XMLParser.parseDocument(data))
+    XSLTProcessor.transform(stylesheet, XMLParser.parseDocument(data))
   }
 
   def transformJava(xslt: Elem, data: Elem): Elem = {

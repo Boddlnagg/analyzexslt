@@ -1,7 +1,7 @@
 package evaluation
 
 import xml.{XMLParser, XMLRoot}
-import xslt.{XSLTEvaluator, XSLTParser}
+import xslt.{XSLTProcessor, XSLTParser}
 
 import scala.xml.Elem
 
