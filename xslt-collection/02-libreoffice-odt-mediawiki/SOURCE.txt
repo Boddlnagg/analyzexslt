@@ -1,5 +1,0 @@
-LibreOffice MediaWiki export filter
-
-https://gitorious.org/libreoffice/core/source/df5fa4082cfb17c5d5be6678995689485df6d429:swext/mediawiki/src/filter/odt2mediawiki.xsl
-
-Accessed 2015-01-05
