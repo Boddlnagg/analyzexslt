@@ -170,7 +170,7 @@ object XSLTParser {
         CreateElementInstruction(node.label, literalAttributes ++ parseTemplate(node.child))
       case _ => throw new NotImplementedError("Namespaces other than the XSLT namespace are not supported.")
     }
-    case _ => throw new NotImplementedError(f"Unsupported XML instruction $node")
+    case _ => throw new NotImplementedError(f"Unsupported XML node $node")
   }
 
   /** Parses &lt;xsl:param&gt; and &lt;xsl:with-param&gt; nodes */

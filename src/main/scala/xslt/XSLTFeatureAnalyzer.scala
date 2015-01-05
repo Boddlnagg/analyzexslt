@@ -81,6 +81,7 @@ object XSLTFeatureAnalyzer {
         // content contains only <xsl:attribute> nodes, but we can analyze them as if they were a template
         analyzeTemplate(n.child, f)
       } else if (isElem(n)) {
+        // could be <xsl:decimal-format>, <xsl:preserve-space>, <xsl:strip-space>, <xsl:namespace-alias>, <xsl:key>
         f += OtherTopLevelElement(n.asInstanceOf[Elem].label)
       }
     }
@@ -213,7 +214,7 @@ object XSLTFeatureAnalyzer {
           case "number" =>
             f += OtherInstruction("number")
 
-          case _ => throw new NotImplementedError(f"Unsupported XSLT instruction: ${elem.label}")
+          case _ => throw new UnsupportedFeatureException(f"Unsupported XSLT instruction: ${elem.label}")
         }
         case null | "" =>
           // literal element without namespace
@@ -225,7 +226,7 @@ object XSLTFeatureAnalyzer {
           f += LiteralElements
           analyzeTemplate(elem.child, f)
       }
-      case _ => throw new UnsupportedFeatureException(f"Unsupported XML instruction $node")
+      case _ => throw new UnsupportedFeatureException(f"Unsupported XML node $node")
     }
   }
 
