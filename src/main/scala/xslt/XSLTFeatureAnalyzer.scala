@@ -2,6 +2,7 @@ package xslt
 
 import scala.xml.{Text, Node, Elem}
 import scala.collection.mutable.{Set => MutSet}
+import xpath._
 
 class UnsupportedFeatureException(message: String = null, cause: Throwable = null) extends Exception(message, cause)
 
@@ -26,8 +27,14 @@ case object ElementCreation extends XSLTFeature // <xsl:element>
 case object AttributeCreation extends XSLTFeature // <xsl:attribute>
 case object ProcessingInstructionCreation extends XSLTFeature // <xsl:processing-instruction>
 case object Conditionals extends XSLTFeature // <xsl:if> and <xsl:choose>
+case object ForEach extends XSLTFeature // <xsl:for-each>
 case class OtherInstruction(v: String) extends XSLTFeature
-case object ForEach extends XSLTFeature
+case object UnionPatterns extends XSLTFeature // union patterns (with '|' operator)
+case class DescendantPatterns(trivial: Boolean) extends XSLTFeature // '//' in patterns (trivial if first step)
+case object LiteralPositionPredicateInPatterns extends XSLTFeature// predicate of the form [<number>] in patterns
+case object AttributeExistencePredicateInPatterns extends XSLTFeature // predicate of the form [@foo] in patterns
+case object AttributeLiteralValuePredicateInPatterns extends XSLTFeature // predicate of the form [@foo = 'bar'] in patterns
+case object ArbitraryExpressionPredicateInPatterns extends XSLTFeature // any other predicate in patterns
 
 object XSLTFeatureAnalyzer {
   // borrow some functionality from XSLTParser
@@ -59,7 +66,7 @@ object XSLTFeatureAnalyzer {
           f += NamedTemplates
         }
         if (elem.attribute("match").isDefined) {
-          analyzeXPathPattern(elem.attribute("match").get.text, f)
+          analyzeXPathPattern(XPathParser.parse(elem.attribute("match").get.text), f)
         }
         val (params, rest) = elem.child.partition(isElem(_, "param"))
         analyzeTemplate(rest, f)
@@ -105,7 +112,7 @@ object XSLTFeatureAnalyzer {
             if (elem.child.exists(isElem(_, "sort"))) {
               f += SortInstruction
             }
-            elem.attribute("select").foreach { a => analyzeXPathExpression(a.text, f) }
+            elem.attribute("select").foreach { a => parseAndAnalyzeXPath(a.text, f) }
             elem.child.filter(n => isElem(n, "with-param")).map(_.asInstanceOf[Elem]).foreach(analyzeVariableOrParamDefinition(_, f))
 
           // spec section 6
@@ -153,17 +160,17 @@ object XSLTFeatureAnalyzer {
           // spec section 9.2
           case "choose" =>
             val xsltChildren = elem.child.filter(isElem).map(_.asInstanceOf[Elem])
-            val whenBranches = xsltChildren.filter(n => n.label == "when")
+            xsltChildren.filter(n => n.label == "when")
               .foreach { n =>
-                analyzeXPathExpression(n.attribute("test").get.text, f)
+              parseAndAnalyzeXPath(n.attribute("test").get.text, f)
                 analyzeTemplate(n.child, f)
               }
-            val otherwiseBranch = xsltChildren.filter(n => n.label == "otherwise")
+            xsltChildren.filter(n => n.label == "otherwise")
               .foreach { n => analyzeTemplate(n.child, f) }
 
           // spec section 9.1
           case "if" =>
-            analyzeXPathExpression(elem.attribute("test").get.text, f)
+            parseAndAnalyzeXPath(elem.attribute("test").get.text, f)
             analyzeTemplate(elem.child, f)
 
           // spec section 7.2 and 3.4 (whitespace stripping)
@@ -174,12 +181,12 @@ object XSLTFeatureAnalyzer {
           case "value-of" =>
             // <xsl:value-of select="."> is equivalent to <xsl:copy-of select="string(.)">
             f += OtherInstruction("value-of")
-            analyzeXPathExpression(elem.attribute("select").get.text, f)
+            parseAndAnalyzeXPath(elem.attribute("select").get.text, f)
 
           // spec section 11.3
           case "copy-of" =>
             f += OtherInstruction("copy-of")
-            analyzeXPathExpression(elem.attribute("select").get.text, f)
+            parseAndAnalyzeXPath(elem.attribute("select").get.text, f)
 
           // spec section 7.5
           case "copy" =>
@@ -189,7 +196,7 @@ object XSLTFeatureAnalyzer {
           // spec section 8
           case "for-each" =>
             f += ForEach
-            elem.attribute("select").foreach { a => analyzeXPathExpression(a.text, f) }
+            elem.attribute("select").foreach { a => parseAndAnalyzeXPath(a.text, f) }
 
             if (elem.child.exists(isElem(_, "sort"))) {
               f += SortInstruction
@@ -222,21 +229,58 @@ object XSLTFeatureAnalyzer {
     }
   }
 
-  private def analyzeXPathExpression(expr: String, f: MutSet[XSLTFeature]): Unit = {
-    // TODO: implement analysis and handle prefixes in parser
-    try {
-      xpath.XPathParser.parse(expr)
-    } catch {
-      case e: NotImplementedError => ()
-    }
+  private def parseAndAnalyzeXPath(str: String, f: MutSet[XSLTFeature]): Unit = {
+    analyzeXPathExpression(XPathParser.parse(str), f)
   }
 
-  private def analyzeXPathPattern(expr: String, f: MutSet[XSLTFeature]): Unit = {
-    // TODO: implement analysis and handle prefixes in parser
-    try {
-      xpath.XPathParser.parse(expr)
-    } catch {
-      case e: NotImplementedError => ()
+  private def analyzeXPathExpression(expr: XPathExpr, f: MutSet[XSLTFeature]): Unit = {
+    // TODO: implement analysis
+  }
+
+  private def analyzeXPathPattern(expr: XPathExpr, f: MutSet[XSLTFeature]): Unit = {
+    def analyzeSinglePattern(path: LocationPath) = {
+      path.steps.take(1).foreach(analyzeSingleStep(_, true))
+      path.steps.drop(1).foreach(analyzeSingleStep(_, false))
     }
+
+    def analyzeSingleStep(step: XPathStep, isFirst: Boolean) = {
+      step match {
+        case XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil) => f += DescendantPatterns(isFirst)
+        case _ => ()
+      }
+      step.predicates.foreach(analyzePredicate)
+    }
+
+    def analyzePredicate(pred: XPathExpr) = {
+      def isAttributePath(expr: XPathExpr) = expr match {
+        case LocationPath(XPathStep(AttributeAxis, NameTest(_, _), Nil) :: Nil, false) => true
+        case _ => false
+      }
+
+      def isLiteralAttributeValue(expr: XPathExpr) = expr match {
+        case LiteralExpr(_) => true
+        case NumberExpr(_) => true
+        case _ => false
+      }
+
+      pred match {
+        case NumberExpr(_) => f += LiteralPositionPredicateInPatterns // predicate of the form [0]
+        case _ if isAttributePath(pred) => f += AttributeExistencePredicateInPatterns // predicate of the form [@foobar]
+        case RelationalExpr(lhs, rhs, EqualsOperator) => // predicate of the form [@foo = 'bar']
+          if ((isAttributePath(lhs) && isLiteralAttributeValue(rhs)) ||
+            (isAttributePath(rhs) && isLiteralAttributeValue(lhs))) {
+            f += AttributeLiteralValuePredicateInPatterns
+          }
+        case _ =>
+          f += ArbitraryExpressionPredicateInPatterns
+          analyzeXPathExpression(pred, f)
+      }
+    }
+
+    if (expr.isInstanceOf[UnionExpr]) {
+        f += UnionPatterns
+    }
+
+    XPathExpr.splitUnionPattern(expr).foreach(analyzeSinglePattern)
   }
 }
