@@ -1,0 +1,7 @@
+LibreOffice import filter for Spreadsheet ML (Excel 2003 format)
+
+https://gitorious.org/libreoffice/core/source/df5fa4082cfb17c5d5be6678995689485df6d429:filter/source/xslt/import/spreadsheetml/spreadsheetml2ooo.xsl
+
+Imported file for measure conversion: https://gitorious.org/libreoffice/core/source/df5fa4082cfb17c5d5be6678995689485df6d429:filter/source/xslt/common/measure_conversion.xsl
+
+Accessed 2015-01-05

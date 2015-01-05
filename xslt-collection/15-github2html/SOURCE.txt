@@ -1,0 +1,5 @@
+Extract content of a GitHub wiki page to stand-alone HTML.
+
+https://github.com/lindenb/xslt-sandbox/blob/0f2de9364beddd6361d38625bb8e4b274dc0a6ca/stylesheets/github/github2html.xsl
+
+Accessed 2015-01-05

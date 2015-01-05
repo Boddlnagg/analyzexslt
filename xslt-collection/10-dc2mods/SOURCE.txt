@@ -1,0 +1,13 @@
+This stylesheet will transform simple Dublin Core (DC) expressed in either OAI DC [1] or SRU DC [2] schemata to MODS (Metadata Object Description Schema) version 3.2.
+
+http://www.loc.gov/standards/mods/simpleDC2MODS.xsl
+
+With included files:
+http://www.loc.gov/standards/mods/inc/dcmiType.xsl
+http://www.loc.gov/standards/mods/inc/mimeType.xsl
+http://www.loc.gov/standards/mods/inc/csdgm.xsl
+http://www.loc.gov/standards/mods/inc/forms.xsl
+http://www.loc.gov/standards/mods/inc/iso3166-1.xsl
+http://www.loc.gov/standards/mods/inc/iso639-2.xsl
+
+Accessed 2015-01-05

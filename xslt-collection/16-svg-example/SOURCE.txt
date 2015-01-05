@@ -1,0 +1,5 @@
+Example file from an article that explains how to use client-side XSLT for image generation with SVG (Scalable Vector Graphics)
+
+http://surguy.net/articles/client-side-svg.xml
+
+Accessed 2015-01-05

@@ -1,0 +1,7 @@
+XSLT Helpers for Umbraco 7: Helper file for rendering media from the media section
+Umbraco is an open-source Content Management System that uses XSLT, but makes heavy use of its extensibility/customization (custom XPath functions defined in C# or JavaScript, etc)
+Also see http://our.umbraco.org/wiki/reference/xslt
+
+https://github.com/sebastiandammark/umbraco7-xslt-helpers/blob/cdb8db0c67e305afe6ff5e888e795977b8bfb04e/MediaHelper/_MediaHelper.xslt
+
+Accessed 2015-01-05

@@ -1,0 +1,6 @@
+XSLT Stylesheets and related tools for working with Encoded Archival Description (2002) (http://saa-ead-roundtable.github.io/ead-stylesheets/)
+ead2002-to-wordml: proof-of-concept stylesheet to transform to EAD to WordML
+
+https://github.com/saa-ead-roundtable/ead-stylesheets/blob/14d937a237e449874947dcf4b96a9d10ffc6c942/ead2002-to-wordml/ead2WordML.xsl
+
+Accessed 2015-01-05

@@ -1,0 +1,6 @@
+XSLT to create the basic naviagational documents for an epub 3.0 file.
+This XSLT is designed to take in an XML file that contains the inforation about a particular epub 3.0 project and return the toc.xhtml, toc.ncx, and content.opf documents
+
+https://github.com/TomMcCluskey/EpubNav_xslt/blob/873e74457764b43353a3a8edfd721e1d5d4c75dc/items.xsl
+
+Accessed 2015-01-05

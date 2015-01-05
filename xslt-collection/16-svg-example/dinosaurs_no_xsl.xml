@@ -1,0 +1,51 @@
+<!-- 
+    Commented out, so you can see the actual XML
+<?xml-stylesheet type="text/xsl" href="dinosaurgraphs.xsl" alternate="no" ?>
+-->
+<dinosaurs>
+    <dinosaur name="Triceratops">
+	<description>
+	    A Triceratops has three big pointy tusks.
+	</description>
+	<weight>70</weight>
+	<length>30</length>
+	<color>Green</color>
+	<discoverer>Crispin Thripple</discoverer>
+    </dinosaur>
+    <dinosaur name="Pterodactyl">
+	<description>
+	    A Pterodactyl can fly round at high speeds.
+	</description>
+	<weight>0.05</weight>
+	<length>2</length>
+	<color>Gray</color>
+	<discoverer>Betty Welforth</discoverer>
+    </dinosaur>
+    <dinosaur name="Brontosaurus">
+	<description>
+	    A Brontosaurus is big and scary.
+	</description>
+	<weight>200</weight>
+	<length>90</length>
+	<color>Blue</color>
+	<discoverer>Primrose McFadden</discoverer>
+    </dinosaur>
+    <dinosaur name="Tyrannosaurus Rex">
+	<description>
+	    A Tyrannosaurus Rex would eat you.
+	</description>
+	<weight>50</weight>
+	<length>20</length>
+	<color>Red</color>
+	<discoverer>George Grimble</discoverer>
+    </dinosaur>
+    <dinosaur name="Stegosaurus">
+	<description>
+	    A Stegosaurus has lots of spiny plates.
+	</description>
+	<weight>25</weight>
+	<length>20</length>
+	<color>Green</color>
+	<discoverer>Charles Degramy</discoverer>
+    </dinosaur>
+</dinosaurs>

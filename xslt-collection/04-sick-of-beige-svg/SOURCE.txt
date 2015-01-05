@@ -1,0 +1,5 @@
+XSLT-based generator for SVG drawings of Sick of Beige PCB layouts 
+
+https://github.com/psmay/sick-of-beige-svg/blob/2bd0e3f58b64e1a759beadcac4da3fdf8c4b67ca/dp.xsl
+
+Accessed 2015-01-05

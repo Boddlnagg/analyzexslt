@@ -1,0 +1,5 @@
+Zefania Bible Reader is used to display Zefania XML Bibles through XSL transformation in browsers.
+
+https://github.com/fcidau/Zefania-Bible-Reader/blob/dd1a44b1d0f49f5ab928d43e12ad72702f0dbab7/xsl/zefania2html-ltr.xsl
+
+Accessed 2015-01-05

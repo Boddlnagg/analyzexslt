@@ -1,0 +1,5 @@
+XSL Template for Sphinx XML output to Re:VIEW format 
+
+https://github.com/turky/sphinx-xml2review-xslt/blob/ce909406a9ad55a6c46a4ba02e883c507e61aeed/sphinxxml2review.xslt
+
+Accessed 2015-01-05

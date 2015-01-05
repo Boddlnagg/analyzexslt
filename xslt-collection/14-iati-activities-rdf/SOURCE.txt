@@ -1,0 +1,5 @@
+These XSLT stylesheets are being developed to support the creation of an RDF Linked Data version of IATI (International Aid Transparency Initiative, http://iatistandard.org/).
+
+https://github.com/IATI/IATI-XSLT/blob/1f9c31134d22819ce8de9af1f45ff62234575df1/templates/rdf/iati-activities-rdf.xsl
+
+Accessed 2015-01-05

@@ -1,0 +1,5 @@
+XSLT for converting pocket-xml files into keepass-xml files (Pocket and KeePass are passwort managers)
+
+https://github.com/jhelberg/pocket2keepass/blob/241fcdc0f674d8c5fa9e802f5476da8823f727a8/src/p2k.xsl
+
+Accessed 2015-01-05
