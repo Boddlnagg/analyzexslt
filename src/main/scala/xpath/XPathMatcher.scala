@@ -24,13 +24,13 @@ object XPathMatcher {
         // child::text()
         case XPathStep(ChildAxis, TextNodeTest, Nil) => node.isInstanceOf[XMLTextNode]
         // child::*
-        case XPathStep(ChildAxis, NameTest("*"), Nil) => node.isInstanceOf[XMLElement]
+        case XPathStep(ChildAxis, NameTest(None, "*"), Nil) => node.isInstanceOf[XMLElement]
         // child::name
-        case XPathStep(ChildAxis, NameTest(name), Nil) => node.isInstanceOf[XMLElement] && node.asInstanceOf[XMLElement].name == name
+        case XPathStep(ChildAxis, NameTest(None, name), Nil) => node.isInstanceOf[XMLElement] && node.asInstanceOf[XMLElement].name == name
         // attribute::*
-        case XPathStep(AttributeAxis, NameTest("*") | AllNodeTest, Nil) => node.isInstanceOf[XMLAttribute]
+        case XPathStep(AttributeAxis, NameTest(None, "*") | AllNodeTest, Nil) => node.isInstanceOf[XMLAttribute]
         // attribute::name
-        case XPathStep(AttributeAxis, NameTest(name), Nil) => node.isInstanceOf[XMLAttribute] && node.asInstanceOf[XMLAttribute].name == name
+        case XPathStep(AttributeAxis, NameTest(None, name), Nil) => node.isInstanceOf[XMLAttribute] && node.asInstanceOf[XMLAttribute].name == name
         // attribute::comment() OR attribute::text()
         // these can never match anything
         case XPathStep(AttributeAxis, CommentNodeTest | TextNodeTest, _) => false

@@ -75,8 +75,8 @@ object XPathParser {
         filterExpr.getPredicates.map(p => parse(p.asInstanceOf[Predicate].getExpr)).toList
       )
       case callExpr: JFunctionCallExpr =>
-        if (callExpr.getPrefix != null && callExpr.getPrefix.length > 0) throw new NotImplementedError("Prefixed functions are not supported")
-        FunctionCallExpr(callExpr.getFunctionName, callExpr.getParameters.map(p => parse(p.asInstanceOf[Expr])).toList)
+        val prefix = if (callExpr.getPrefix != null && callExpr.getPrefix.length > 0) Some(callExpr.getPrefix) else None
+        FunctionCallExpr(prefix, callExpr.getFunctionName, callExpr.getParameters.map(p => parse(p.asInstanceOf[Expr])).toList)
       case litExpr: JLiteralExpr => LiteralExpr(litExpr.getLiteral)
       case numExpr: JNumberExpr => NumberExpr(numExpr.getNumber.doubleValue())
       case varRefExpr: JVariableReferenceExpr =>
@@ -106,10 +106,12 @@ object XPathParser {
       case textNode: JTextNodeStep => TextNodeTest
       // any name (might also be '*')
       case nameStep: JNameStep =>
-        if (nameStep.getPrefix != null && nameStep.getPrefix.length > 0) throw new NotImplementedError("Prefixed names are not supported")
-        NameTest(nameStep.getLocalName)
+        val prefix = if (nameStep.getPrefix != null && nameStep.getPrefix.length > 0) Some(nameStep.getPrefix) else None
+        NameTest(prefix, nameStep.getLocalName)
       // ::processing-instruction() OR ::processing-instruction('name')
-      case piNode: JProcessingInstructionNodeStep => throw new NotImplementedError("Processing instructions are not implemented")
+      case piNode: JProcessingInstructionNodeStep =>
+        val name = if (piNode.getName != null && piNode.getName.length > 0) Some(piNode.getName) else None
+        ProcessingInstructionTest(name)
     }
     XPathStep(axis, nodeTest, predicates)
   }

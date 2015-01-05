@@ -20,7 +20,7 @@ case class OrExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
 case class UnionExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
 case class NegExpr(expr: XPathExpr) extends XPathExpr
 case class FilterExpr(expr: XPathExpr, predicates: List[XPathExpr]) extends XPathExpr
-case class FunctionCallExpr(name: String, params: List[XPathExpr]) extends XPathExpr
+case class FunctionCallExpr(prefix: Option[String], name: String, params: List[XPathExpr]) extends XPathExpr
 case class LiteralExpr(literal: String) extends XPathExpr
 case class NumberExpr(num: Double) extends XPathExpr
 case class VariableReferenceExpr(name: String) extends XPathExpr
@@ -47,7 +47,7 @@ object XPathExpr {
     expr match {
       case LocationPath(steps, _) => steps.forall {
         // plain '//' operator is allowed and equivalent to descendant-or-self::node()/
-        case XPathStep(DescendantOrSelfAxis, AllNodeTest, List()) => true
+        case XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil) => true
         // otherwise only child:: and attribute:: axes are allowed
         case XPathStep(AttributeAxis | ChildAxis, _, _) => true
         // all other axes are forbidden
@@ -71,19 +71,18 @@ object XPathExpr {
 
   /** Returns the default priority of a location path pattern according to the XSLT spec section 5.5
     * and the table at http://www.lenzconsulting.com/how-xslt-works/
-    *
-    * NOTE: prefixed names are not implemented (they would have a default priority of -0.25),
-    *       processing instruction node tests are also not implemented (they would have a default priority
-    *       of -0.5 or 0 depending on whether they match a specific name)
     */
   def getDefaultPriority(pattern: LocationPath): Double = {
     if (pattern.steps.size != 1 || pattern.isAbsolute)
       0.5 // more complex patterns or absolute patterns (also matches just '/' which has no steps)
     else pattern.steps.head match {
-      case XPathStep(_, NameTest("*"), Nil) => -0.5
-      case XPathStep(_, NameTest(_), Nil) => 0
+      case XPathStep(_, NameTest(None, "*"), Nil) => -0.5
+      case XPathStep(_, NameTest(Some(_), "*"), Nil) => -0.25
+      case XPathStep(_, NameTest(_, _), Nil)
+           | XPathStep(_, ProcessingInstructionTest(Some(_)), Nil) => 0
       case XPathStep(ChildAxis | AttributeAxis, AllNodeTest, _)
-           | XPathStep(_, CommentNodeTest | TextNodeTest, _) => -0.5
+           | XPathStep(_, CommentNodeTest | TextNodeTest, _)
+           | XPathStep(_, ProcessingInstructionTest(None), Nil) => -0.5
       case _ => 0.5
     }
   }

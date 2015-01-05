@@ -8,4 +8,5 @@ abstract class NodeTest
 case object AllNodeTest extends NodeTest
 case object CommentNodeTest extends NodeTest
 case object TextNodeTest extends NodeTest
-case class NameTest(name: String) extends NodeTest
+case class NameTest(prefix: Option[String], name: String) extends NodeTest
+case class ProcessingInstructionTest(name: Option[String]) extends NodeTest

@@ -76,7 +76,12 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         case e: java.util.NoSuchElementException => throw new EvaluationError(f"Variable $name is not defined")
       }
       case UnionExpr(lhs, rhs) => xpathDom.nodeSetUnion(process(lhs, ctx), process(rhs, ctx))
-      case FunctionCallExpr(name, params) => (name, params.map(p => process(p, ctx))) match {
+      case FunctionCallExpr(prefix, name, params) =>
+        val qname = prefix match {
+          case Some(pre) => pre+":"+name
+          case None => name
+        }
+        (qname, params.map(p => process(p, ctx))) match {
         case ("true", Nil) => xpathDom.liftBoolean(true)
         case ("false", Nil) => xpathDom.liftBoolean(false)
         case ("not", List(arg)) =>
@@ -116,7 +121,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         case ("string-length", _) => xpathDom.topNumber
         case ("normalize-space", _) => xpathDom.topString
         case (_, evaluatedParams) =>
-          throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
+          throw new EvaluationError(f"Unknown function '$qname' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
       }
       case LocationPath(steps, isAbsolute) => xpathDom.toNodeSet(processLocationPathSingle(ctx.node, steps, isAbsolute))
       case PathExpr(filter, locationPath) =>
@@ -198,8 +203,9 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         }
         val testedNodes = xmlDom.filter(nodes, node => {
           first.test match {
-            case NameTest("*") => isPrincipalNodeType(first.axis, node)
-            case NameTest(testName) =>
+            case NameTest(Some(_), _) => throw new NotImplementedError("Prefixed names are not implemented.")
+            case NameTest(None, "*") => isPrincipalNodeType(first.axis, node)
+            case NameTest(None, testName) =>
               val (correctType, _) = isPrincipalNodeType(first.axis, node)
               xmlDom.hasName(correctType, testName)
             case TextNodeTest => xmlDom.isTextNode(node)

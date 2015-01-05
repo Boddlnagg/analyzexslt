@@ -55,10 +55,10 @@ object Path {
     def parseStep(step: XPathStep) = step match {
       case XPathStep(ChildAxis, CommentNodeTest, Nil) => AnyCommentNodeStep
       case XPathStep(ChildAxis, TextNodeTest, Nil) => AnyTextNodeStep
-      case XPathStep(ChildAxis, NameTest("*"), Nil) => AnyElementStep
-      case XPathStep(ChildAxis, NameTest(name), Nil) => NamedElementStep(name)
-      case XPathStep(AttributeAxis, NameTest("*"), Nil) => AnyAttributeStep
-      case XPathStep(AttributeAxis, NameTest(name), Nil) => NamedAttributeStep(name)
+      case XPathStep(ChildAxis, NameTest(None, "*"), Nil) => AnyElementStep
+      case XPathStep(ChildAxis, NameTest(None, name), Nil) => NamedElementStep(name)
+      case XPathStep(AttributeAxis, NameTest(None, "*"), Nil) => AnyAttributeStep
+      case XPathStep(AttributeAxis, NameTest(None, name), Nil) => NamedAttributeStep(name)
       case _ => throw new UnsupportedOperationException(f"Step $step can not be translated to this domain.")
     }
 

@@ -35,9 +35,13 @@ object XPathProcessor {
         case (NodeSetValue(left), NodeSetValue(right)) => NodeSetValue((TreeSet[XMLNode]()++ left ++ right).toList)
         case (left, right) => throw new EvaluationError(f"Wrong types for union expression, must be node-sets ($left | $right)")
       }
-      case FunctionCallExpr(name, params) =>
+      case FunctionCallExpr(prefix, name, params) =>
         // See XPath spec section 3.2
-        (name, params.map(p => process(p, ctx))) match {
+        val qname = prefix match {
+          case Some(pre) => pre+":"+name
+          case None => name
+        }
+        (qname, params.map(p => process(p, ctx))) match {
           // arguments are casted to string, number, boolean as required, but if a function expects a node-set, it must be a node-set
           case ("true", Nil) => BooleanValue(true)
           case ("false", Nil) => BooleanValue(false)
@@ -70,7 +74,7 @@ object XPathProcessor {
           case ("string-length", Nil) => NumberValue(ctx.node.stringValue.length)
           case ("string-length", List(StringValue(str))) => NumberValue(str.length)
           case (_, evaluatedParams) =>
-            throw new EvaluationError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
+            throw new EvaluationError(f"Unknown function '$qname' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
         }
       case LocationPath(steps, isAbsolute) => NodeSetValue(processLocationPathSingle(ctx.node, steps, isAbsolute).toList)
       case PathExpr(filter, locationPath) =>
@@ -173,8 +177,9 @@ object XPathProcessor {
           case AncestorOrSelfAxis => TreeSet(ctxNode) ++ ctxNode.ancestors
         }
         val testedNodes = nodes.filter {node => first.test match {
-          case NameTest("*") => XPathAxis.isPrincipalNodeType(first.axis, node)
-          case NameTest(testName) => XPathAxis.isPrincipalNodeType(first.axis, node) && (node match {
+          case NameTest(Some(_), _) => throw new NotImplementedError("Prefixed names are not implemented.")
+          case NameTest(None, "*") => XPathAxis.isPrincipalNodeType(first.axis, node)
+          case NameTest(None, testName) => XPathAxis.isPrincipalNodeType(first.axis, node) && (node match {
             case XMLElement(name, _, _, _) => name == testName
             case XMLAttribute(name, _, _) => name == testName
             case _ => false
