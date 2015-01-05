@@ -18,7 +18,7 @@ object XSLTParser {
     isElem(node) && node.label == name
   }
 
-  /** Preprocesses a [[scala.xml.Node]] by removing whitespace-only text-nodes (except inside &lt;xslt:text&gt;) and comment nodes. */
+  /** Preprocesses a [[scala.xml.Node]] by removing whitespace-only text-nodes (except inside &lt;xsl:text&gt;) and comment nodes. */
   def clean(x: Node): Node = x match {
     // This implementation is based on scala.xml.Utility.trim
     case Elem(pre, lab, md, scp, child@_*) =>
@@ -47,7 +47,7 @@ object XSLTParser {
   def parseStylesheet(source: Elem, disableBuiltinTemplates: Boolean = false): XSLTStylesheet = {
     val cleaned = clean(source).asInstanceOf[Elem]
 
-    if (cleaned.namespace != Namespace) throw new NotImplementedError(f"Root element must be 'stylesheet' with namespace $Namespace (a literal result element is not supported as root node)") // TODO?
+    if (!isElem(cleaned, "stylesheet") && !isElem(cleaned, "transform")) throw new NotImplementedError(f"Root element must be 'stylesheet' or 'transform' with namespace $Namespace (a literal result element is not supported as root node)") // TODO?
     if (cleaned.attribute("version").get.text != "1.0") throw new NotImplementedError("Stylesheet versions other than 1.0 are not supported")
     cleaned.child.foreach {
       n => require(n.namespace == Namespace && (n.label == "template" || n.label == "variable"), f"Top-level elements must either be XSLT templates or variable definitions, got $n")
@@ -120,7 +120,7 @@ object XSLTParser {
         case "element" =>
           // NOTE: attribute value templates are not supported
           val name = elem.attribute("name").get.text
-          if (elem.attribute("namespace").isDefined) throw new NotImplementedError("The 'namespace' attribute on xsl:attribute is not supported.")
+          if (elem.attribute("namespace").isDefined) throw new NotImplementedError("The 'namespace' attribute on xsl:element is not supported.")
           CreateElementInstruction(name, parseTemplate(elem.child))
 
         // spec section 7.1.3
