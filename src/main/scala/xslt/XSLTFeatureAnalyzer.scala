@@ -1,18 +1,20 @@
 package xslt
 
 import scala.xml.{Text, Node, Elem}
-import scala.collection.mutable.{Set => MutSet}
+import scala.collection.mutable.{Set => MutSet, Map => MutMap}
 import xpath._
 
 class UnsupportedFeatureException(message: String = null, cause: Throwable = null) extends Exception(message, cause)
 
 abstract class XSLTFeature
+abstract class CollectableXSLTFeature extends XSLTFeature
+
 case class Version(version: String) extends XSLTFeature
 case object TopLevelVariables extends XSLTFeature
 case object TopLevelParams extends XSLTFeature
 case object ResultTreeFragments extends XSLTFeature
 case class OutputMethod(method: String) extends XSLTFeature // <xsl:output method="...">
-case class OtherTopLevelElement(name: String) extends XSLTFeature
+case class OtherTopLevelElement(name: String) extends CollectableXSLTFeature
 case object TemplateModes extends XSLTFeature // <xsl:template mode="...">
 case object NamedTemplates extends XSLTFeature // <xsl:template name="...">
 case object LiteralText extends XSLTFeature
@@ -28,7 +30,7 @@ case object AttributeCreation extends XSLTFeature // <xsl:attribute>
 case object ProcessingInstructionCreation extends XSLTFeature // <xsl:processing-instruction>
 case object Conditionals extends XSLTFeature // <xsl:if> and <xsl:choose>
 case object ForEach extends XSLTFeature // <xsl:for-each>
-case class OtherInstruction(name: String) extends XSLTFeature
+case class OtherInstruction(name: String) extends CollectableXSLTFeature
 case object UnionPatterns extends XSLTFeature // union patterns (with '|' operator)
 case class DescendantPatterns(trivial: Boolean) extends XSLTFeature // '//' in patterns (trivial if first step)
 case class LiteralPositionPredicate(inPatterns: Boolean) extends XSLTFeature// predicate of the form [<number>]
@@ -40,9 +42,9 @@ case object BooleanXPathExpressions extends XSLTFeature
 case object UnionSelectors extends XSLTFeature // union selectors (with '|' operator)
 case object Variables extends XSLTFeature // usage of variables in expressions ($ prefix)
 case object TemplateParameters extends XSLTFeature // passing parameters to templates using <xsl:with-param>
-case class XPathFunction(name: String) extends XSLTFeature // usage of an XPath function with given name
+case class XPathFunction(name: String) extends CollectableXSLTFeature // usage of an XPath function with given name
 case object AbsolutePathSelectors extends XSLTFeature // selectors where path starts with '/'
-case class AxisUsedInSelectors(axis: XPathAxis) extends XSLTFeature
+case class AxisUsedInSelectors(axis: XPathAxis) extends CollectableXSLTFeature
 
 object XSLTFeatureAnalyzer {
   // borrow some functionality from XSLTParser
@@ -50,6 +52,27 @@ object XSLTFeatureAnalyzer {
   def isElem(node: Node): Boolean = XSLTParser.isElem(node)
   def isElem(node: Node, name: String): Boolean = XSLTParser.isElem(node, name)
 
+  /** Similar to analyzeFeatures, but collects the output as a map with string keys and values. */
+  def collectFeatures(source: Elem): Map[String, String] = {
+    val (collectable, nonCollectable) = analyzeFeatures(source).partition(_.isInstanceOf[CollectableXSLTFeature])
+    val result: MutMap[String, String] = MutMap() // map to store features of this file
+
+
+    nonCollectable.foreach {
+      case Version(version) => result += ("Version" -> version)
+      case OutputMethod(method) => result += ("OutputMethod" -> method)
+      case feature => result += (feature.toString -> "true")
+    }
+
+    result += "AxesUsedInSelectors" -> collectable.collect { case AxisUsedInSelectors(axis) => XPathAxis.getName(axis) }.mkString(", ")
+    result += "OtherInstructions" -> collectable.collect { case OtherInstruction(name) => name }.mkString(", ")
+    result += "OtherTopLevelElements" -> collectable.collect { case OtherTopLevelElement(name) => name }.mkString(", ")
+    result += "XPathFunctions" -> collectable.collect { case XPathFunction(name) => name }.mkString(", ")
+
+    result.toMap
+  }
+
+  /** Analyze an XSLT stylesheet and return a set of features. */
   def analyzeFeatures(source: Elem): Set[XSLTFeature] = {
     var f = MutSet[XSLTFeature]()
     val cleaned = XSLTParser.clean(source).asInstanceOf[Elem]
@@ -174,6 +197,7 @@ object XSLTFeatureAnalyzer {
 
           // spec section 9.2
           case "choose" =>
+            f += Conditionals
             val xsltChildren = elem.child.filter(isElem).map(_.asInstanceOf[Elem])
             xsltChildren.filter(n => n.label == "when")
               .foreach { n =>
@@ -185,6 +209,7 @@ object XSLTFeatureAnalyzer {
 
           // spec section 9.1
           case "if" =>
+            f += Conditionals
             parseAndAnalyzeXPath(elem.attribute("test").get.text, f)
             analyzeTemplate(elem.child, f)
 

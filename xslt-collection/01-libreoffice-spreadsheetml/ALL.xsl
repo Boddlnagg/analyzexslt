@@ -20,6 +20,7 @@
     <xsl:output indent="no" version="1.0" encoding="UTF-8" method="xml"/>
 	<!--+++++ INCLUDED XSL MODULES +++++-->
 	<!-- helper collection, to convert measures (e.g. inch to pixel using DPI (dots per inch) parameter)-->
+    <!-- <xsl:import href="../../common/measure_conversion.xsl"/> -->
 	<!-- DPI (dots per inch) the standard resolution of given pictures (necessary for the conversion of 'cm' into 'pixel')
 		 Although many pictures have a 96 dpi resolution, a higher resoltion give better results for common browsers -->
 	<xsl:param name="dpi" select="111"/>

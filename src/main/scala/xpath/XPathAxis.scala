@@ -28,4 +28,21 @@ object XPathAxis {
       case _ => node.isInstanceOf[XMLElement]
     }
   }
+
+  /** Returns the official name of the axis */
+  def getName(axis: XPathAxis): String = axis match {
+    case ChildAxis => "child"
+    case DescendantAxis => "descendant"
+    case ParentAxis => "parent"
+    case FollowingSiblingAxis => "following-sibling"
+    case PrecedingSiblingAxis => "preceding-sibling"
+    case FollowingAxis => "following"
+    case PrecedingAxis => "preceding"
+    case AttributeAxis => "attribute"
+    case NamespaceAxis => "namespace"
+    case SelfAxis => "self"
+    case DescendantOrSelfAxis => "descendant-or-self"
+    case AncestorOrSelfAxis => "ancestor-or-self"
+    case AncestorAxis => "ancestor"
+  }
 }
