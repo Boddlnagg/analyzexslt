@@ -7,12 +7,12 @@ import xpath._
 class UnsupportedFeatureException(message: String = null, cause: Throwable = null) extends Exception(message, cause)
 
 abstract class XSLTFeature
-case class Version(v: String) extends XSLTFeature
+case class Version(version: String) extends XSLTFeature
 case object TopLevelVariables extends XSLTFeature
 case object TopLevelParams extends XSLTFeature
 case object ResultTreeFragments extends XSLTFeature
-case class OutputMethod(v: String) extends XSLTFeature // <xsl:output method="...">
-case class OtherTopLevelElement(v: String) extends XSLTFeature
+case class OutputMethod(method: String) extends XSLTFeature // <xsl:output method="...">
+case class OtherTopLevelElement(name: String) extends XSLTFeature
 case object TemplateModes extends XSLTFeature // <xsl:template mode="...">
 case object NamedTemplates extends XSLTFeature // <xsl:template name="...">
 case object LiteralText extends XSLTFeature
@@ -28,13 +28,21 @@ case object AttributeCreation extends XSLTFeature // <xsl:attribute>
 case object ProcessingInstructionCreation extends XSLTFeature // <xsl:processing-instruction>
 case object Conditionals extends XSLTFeature // <xsl:if> and <xsl:choose>
 case object ForEach extends XSLTFeature // <xsl:for-each>
-case class OtherInstruction(v: String) extends XSLTFeature
+case class OtherInstruction(name: String) extends XSLTFeature
 case object UnionPatterns extends XSLTFeature // union patterns (with '|' operator)
 case class DescendantPatterns(trivial: Boolean) extends XSLTFeature // '//' in patterns (trivial if first step)
-case object LiteralPositionPredicateInPatterns extends XSLTFeature// predicate of the form [<number>] in patterns
-case object AttributeExistencePredicateInPatterns extends XSLTFeature // predicate of the form [@foo] in patterns
-case object AttributeLiteralValuePredicateInPatterns extends XSLTFeature // predicate of the form [@foo = 'bar'] in patterns
-case object ArbitraryExpressionPredicateInPatterns extends XSLTFeature // any other predicate in patterns
+case class LiteralPositionPredicate(inPatterns: Boolean) extends XSLTFeature// predicate of the form [<number>]
+case class AttributeExistencePredicate(inPatterns: Boolean) extends XSLTFeature // predicate of the form [@foo]
+case class AttributeLiteralValuePredicate(inPatterns: Boolean) extends XSLTFeature // predicate of the form [@foo = 'bar']
+case class ArbitraryExpressionPredicate(inPatterns: Boolean) extends XSLTFeature // any other predicate
+case object ArithmeticXPathExpressions extends XSLTFeature
+case object BooleanXPathExpressions extends XSLTFeature
+case object UnionSelectors extends XSLTFeature // union selectors (with '|' operator)
+case object Variables extends XSLTFeature // usage of variables in expressions ($ prefix)
+case object TemplateParameters extends XSLTFeature // passing parameters to templates using <xsl:with-param>
+case class XPathFunction(name: String) extends XSLTFeature // usage of an XPath function with given name
+case object AbsolutePathSelectors extends XSLTFeature // selectors where path starts with '/'
+case class AxisUsedInSelectors(axis: XPathAxis) extends XSLTFeature
 
 object XSLTFeatureAnalyzer {
   // borrow some functionality from XSLTParser
@@ -114,11 +122,17 @@ object XSLTFeatureAnalyzer {
               f += SortInstruction
             }
             elem.attribute("select").foreach { a => parseAndAnalyzeXPath(a.text, f) }
-            elem.child.filter(n => isElem(n, "with-param")).map(_.asInstanceOf[Elem]).foreach(analyzeVariableOrParamDefinition(_, f))
+            elem.child.filter(n => isElem(n, "with-param")).map(_.asInstanceOf[Elem]).foreach {
+              f += TemplateParameters
+              analyzeVariableOrParamDefinition(_, f)
+            }
 
           // spec section 6
           case "call-template" =>
-            elem.child.filter(n => isElem(n, "with-param")).map(_.asInstanceOf[Elem]).foreach(analyzeVariableOrParamDefinition(_, f))
+            elem.child.filter(n => isElem(n, "with-param")).map(_.asInstanceOf[Elem]).foreach {
+              f += TemplateParameters
+              analyzeVariableOrParamDefinition(_, f)
+            }
 
           // spec section 7.1.2
           case "element" =>
@@ -235,7 +249,42 @@ object XSLTFeatureAnalyzer {
   }
 
   private def analyzeXPathExpression(expr: XPathExpr, f: MutSet[XSLTFeature]): Unit = {
-    // TODO: implement analysis
+    expr match {
+      case binExpr: BinaryExpr =>
+        analyzeXPathExpression(binExpr.lhs, f)
+        analyzeXPathExpression(binExpr.rhs, f)
+        binExpr match {
+          case PlusExpr(_, _) | MinusExpr(_, _) | MultiplyExpr(_, _) | DivExpr(_, _) | ModExpr(_, _) =>
+            f += ArithmeticXPathExpressions
+          case RelationalExpr(_, _, _) => ()
+          case AndExpr(_, _) | OrExpr(_, _) => f += BooleanXPathExpressions
+          case UnionExpr(_, _) => f += UnionSelectors
+        }
+      case NegExpr(subexpr) =>
+        f += ArithmeticXPathExpressions
+        analyzeXPathExpression(subexpr, f)
+      case LiteralExpr(_) | NumberExpr(_) => ()
+      case VariableReferenceExpr(name) => f += Variables
+      case FunctionCallExpr(prefix, name, params) =>
+        val qname = prefix match {
+          case Some(pre) => pre+":"+name
+          case None => name
+        }
+        params.foreach(analyzeXPathExpression(_, f))
+        f += XPathFunction(qname)
+      case LocationPath(steps, isAbsolute) =>
+        if (isAbsolute) f += AbsolutePathSelectors
+        steps.foreach { s =>
+          f += AxisUsedInSelectors(s.axis)
+          s.predicates.foreach(analyzePredicate(_, false, f))
+        }
+      case PathExpr(filter, locationPath) =>
+        analyzeXPathExpression(filter, f)
+        analyzeXPathExpression(locationPath, f)
+      case FilterExpr(subexpr, predicates) =>
+        analyzeXPathExpression(subexpr, f)
+        predicates.foreach(analyzePredicate(_, false, f))
+    }
   }
 
   private def analyzeXPathPattern(expr: XPathExpr, f: MutSet[XSLTFeature]): Unit = {
@@ -249,33 +298,7 @@ object XSLTFeatureAnalyzer {
         case XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil) => f += DescendantPatterns(isFirst)
         case _ => ()
       }
-      step.predicates.foreach(analyzePredicate)
-    }
-
-    def analyzePredicate(pred: XPathExpr) = {
-      def isAttributePath(expr: XPathExpr) = expr match {
-        case LocationPath(XPathStep(AttributeAxis, NameTest(_, _), Nil) :: Nil, false) => true
-        case _ => false
-      }
-
-      def isLiteralAttributeValue(expr: XPathExpr) = expr match {
-        case LiteralExpr(_) => true
-        case NumberExpr(_) => true
-        case _ => false
-      }
-
-      pred match {
-        case NumberExpr(_) => f += LiteralPositionPredicateInPatterns // predicate of the form [0]
-        case _ if isAttributePath(pred) => f += AttributeExistencePredicateInPatterns // predicate of the form [@foobar]
-        case RelationalExpr(lhs, rhs, EqualsOperator) => // predicate of the form [@foo = 'bar']
-          if ((isAttributePath(lhs) && isLiteralAttributeValue(rhs)) ||
-            (isAttributePath(rhs) && isLiteralAttributeValue(lhs))) {
-            f += AttributeLiteralValuePredicateInPatterns
-          }
-        case _ =>
-          f += ArbitraryExpressionPredicateInPatterns
-          analyzeXPathExpression(pred, f)
-      }
+      step.predicates.foreach(analyzePredicate(_, true, f))
     }
 
     if (expr.isInstanceOf[UnionExpr]) {
@@ -283,5 +306,31 @@ object XSLTFeatureAnalyzer {
     }
 
     XPathExpr.splitUnionPattern(expr).foreach(analyzeSinglePattern)
+  }
+
+  private def analyzePredicate(pred: XPathExpr, inPatterns: Boolean, f: MutSet[XSLTFeature]) = {
+    def isAttributePath(expr: XPathExpr) = expr match {
+      case LocationPath(XPathStep(AttributeAxis, NameTest(_, _), Nil) :: Nil, false) => true
+      case _ => false
+    }
+
+    def isLiteralAttributeValue(expr: XPathExpr) = expr match {
+      case LiteralExpr(_) => true
+      case NumberExpr(_) => true
+      case _ => false
+    }
+
+    pred match {
+      case NumberExpr(_) => f += LiteralPositionPredicate(inPatterns) // predicate of the form [0]
+      case _ if isAttributePath(pred) => f += AttributeExistencePredicate(inPatterns) // predicate of the form [@foobar]
+      case RelationalExpr(lhs, rhs, EqualsOperator) => // predicate of the form [@foo = 'bar']
+        if ((isAttributePath(lhs) && isLiteralAttributeValue(rhs)) ||
+          (isAttributePath(rhs) && isLiteralAttributeValue(lhs))) {
+          f += AttributeLiteralValuePredicate(inPatterns)
+        }
+      case _ =>
+        f += ArbitraryExpressionPredicate(inPatterns)
+        analyzeXPathExpression(pred, f)
+    }
   }
 }
