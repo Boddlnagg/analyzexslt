@@ -45,6 +45,7 @@ case object TemplateParameters extends XSLTFeature // passing parameters to temp
 case class XPathFunction(name: String) extends CollectableXSLTFeature // usage of an XPath function with given name
 case object AbsolutePathSelectors extends XSLTFeature // selectors where path starts with '/'
 case class AxisUsedInSelectors(axis: XPathAxis) extends CollectableXSLTFeature
+case object CustomTemplatePriorities extends XSLTFeature // <xsl:template priority="...">
 
 object XSLTFeatureAnalyzer {
   // borrow some functionality from XSLTParser
@@ -93,6 +94,9 @@ object XSLTFeatureAnalyzer {
         val elem = n.asInstanceOf[Elem]
         if (elem.attribute("mode").isDefined) {
           f += TemplateModes
+        }
+        if (elem.attribute("priority").isDefined) {
+          f += CustomTemplatePriorities
         }
         if (elem.attribute("match").isDefined) {
           analyzeXPathPattern(XPathParser.parse(elem.attribute("match").get.text), f)
