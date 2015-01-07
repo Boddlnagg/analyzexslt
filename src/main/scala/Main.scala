@@ -56,7 +56,7 @@ object Main {
     // Output as CSV ('files' contains the columns of the output table; 'map(file)' contains the rows)
     println(f"'',${files.map("'" + _.getParentFile.getName + "'").mkString(",")}") // print header
     for (feature <- keys) {
-      println(f"'$feature',${files.map("'" + map(_).getOrElse(feature, "false") + "'").mkString(",")}")
+      println(f"'$feature',${files.map("'" + map(_).getOrElse(feature, "-") + "'").mkString(",")}")
     }
   }
 }

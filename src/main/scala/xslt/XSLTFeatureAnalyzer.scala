@@ -16,7 +16,7 @@ case object ResultTreeFragments extends XSLTFeature
 case class OutputMethod(method: String) extends XSLTFeature // <xsl:output method="...">
 case class OtherTopLevelElement(name: String) extends CollectableXSLTFeature
 case object TemplateModes extends XSLTFeature // <xsl:template mode="...">
-case object NamedTemplates extends XSLTFeature // <xsl:template name="...">
+case object NamedTemplates extends XSLTFeature // <xsl:call-template>
 case object LiteralText extends XSLTFeature
 case object LiteralElements extends XSLTFeature
 case object SortInstruction extends XSLTFeature // <xsl:sort>
@@ -57,11 +57,12 @@ object XSLTFeatureAnalyzer {
     val (collectable, nonCollectable) = analyzeFeatures(source).partition(_.isInstanceOf[CollectableXSLTFeature])
     val result: MutMap[String, String] = MutMap() // map to store features of this file
 
+    result += ("OutputMethod" -> "default") // can be overwritten later
 
     nonCollectable.foreach {
       case Version(version) => result += ("Version" -> version)
       case OutputMethod(method) => result += ("OutputMethod" -> method)
-      case feature => result += (feature.toString -> "true")
+      case feature => result += (feature.toString -> "X")
     }
 
     result += "AxesUsedInSelectors" -> collectable.collect { case AxisUsedInSelectors(axis) => XPathAxis.getName(axis) }.mkString(", ")
@@ -92,9 +93,6 @@ object XSLTFeatureAnalyzer {
         val elem = n.asInstanceOf[Elem]
         if (elem.attribute("mode").isDefined) {
           f += TemplateModes
-        }
-        if (elem.attribute("name").isDefined) {
-          f += NamedTemplates
         }
         if (elem.attribute("match").isDefined) {
           analyzeXPathPattern(XPathParser.parse(elem.attribute("match").get.text), f)
@@ -152,6 +150,7 @@ object XSLTFeatureAnalyzer {
 
           // spec section 6
           case "call-template" =>
+            f += NamedTemplates
             elem.child.filter(n => isElem(n, "with-param")).map(_.asInstanceOf[Elem]).foreach {
               f += TemplateParameters
               analyzeVariableOrParamDefinition(_, f)
