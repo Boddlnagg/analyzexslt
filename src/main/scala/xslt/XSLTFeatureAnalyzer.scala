@@ -288,9 +288,9 @@ object XSLTFeatureAnalyzer {
           case AndExpr(_, _) | OrExpr(_, _) => f += BooleanXPathExpressions
           case UnionExpr(_, _) => f += UnionSelectors
         }
-      case NegExpr(subexpr) =>
+      case NegExpr(inner) =>
         f += ArithmeticXPathExpressions
-        analyzeXPathExpression(subexpr, f)
+        analyzeXPathExpression(inner, f)
       case LiteralExpr(_) | NumberExpr(_) => ()
       case VariableReferenceExpr(name) => f += Variables
       case FunctionCallExpr(prefix, name, params) =>
@@ -309,8 +309,8 @@ object XSLTFeatureAnalyzer {
       case PathExpr(filter, locationPath) =>
         analyzeXPathExpression(filter, f)
         analyzeXPathExpression(locationPath, f)
-      case FilterExpr(subexpr, predicates) =>
-        analyzeXPathExpression(subexpr, f)
+      case FilterExpr(inner, predicates) =>
+        analyzeXPathExpression(inner, f)
         predicates.foreach(analyzePredicate(_, false, f))
     }
   }

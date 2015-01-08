@@ -68,7 +68,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           return xpathDom.liftBoolean(false)
 
         xpathDom.join(xpathDom.liftBoolean(true), xpathDom.liftBoolean(false))
-      case NegExpr(subexpr) => xpathDom.negateNum(process(subexpr, ctx))
+      case NegExpr(inner) => xpathDom.negateNum(process(inner, ctx))
       case LiteralExpr(literal) => xpathDom.liftString(literal)
       case NumberExpr(num) => xpathDom.liftNumber(num)
       case VariableReferenceExpr(name) => try ctx.variables(name) catch {
@@ -127,9 +127,9 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case PathExpr(filter, locationPath) =>
         val (startNodeSet, _) = xpathDom.matchNodeSetValues(process(filter, ctx))
         xpathDom.toNodeSet(processLocationPath(startNodeSet, locationPath.steps, locationPath.isAbsolute))
-      case FilterExpr(subexpr, predicates) =>
+      case FilterExpr(inner, predicates) =>
         if (predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported")
-        process(subexpr, ctx)
+        process(inner, ctx)
     }
   }
 

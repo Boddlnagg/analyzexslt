@@ -33,22 +33,24 @@ class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
         // child::text()
         case XPathStep(ChildAxis, TextNodeTest, Nil) => xmlDom.isTextNode(node)
         // child::*
-        case XPathStep(ChildAxis, NameTest("*"), Nil) => xmlDom.isElement(node)
+        case XPathStep(ChildAxis, NameTest(None, "*"), Nil) => xmlDom.isElement(node)
         // child::name
-        case XPathStep(ChildAxis, NameTest(name), Nil) =>
+        case XPathStep(ChildAxis, NameTest(None, name), Nil) =>
           val (element, notElement) = xmlDom.isElement(node)
           val (hasName, notHasName) = xmlDom.hasName(element, name)
           (hasName, xmlDom.join(notElement, notHasName))
         // attribute::* OR attribute::node()
-        case XPathStep(AttributeAxis, NameTest("*") | AllNodeTest, Nil) => xmlDom.isAttribute(node)
+        case XPathStep(AttributeAxis, NameTest(None, "*") | AllNodeTest, Nil) => xmlDom.isAttribute(node)
         // attribute::name
-        case XPathStep(AttributeAxis, NameTest(name), Nil) =>
+        case XPathStep(AttributeAxis, NameTest(None, name), Nil) =>
           val (attr, notAttr) = xmlDom.isAttribute(node)
           val (hasName, notHasName) = xmlDom.hasName(attr, name)
           (hasName, xmlDom.join(notAttr, notHasName))
         // attribute::comment() OR attribute::text()
         // these can never match anything
         case XPathStep(AttributeAxis, CommentNodeTest | TextNodeTest, _) => (xmlDom.bottom, node)
+        // any step using a name test with a prefixed name
+        case XPathStep(_, NameTest(Some(_), _), Nil) => throw new NotImplementedError("Prefixed names are not implemented")
       }
 
       if (xmlDom.lessThanOrEqual(lastStepMatches, xmlDom.bottom)) {

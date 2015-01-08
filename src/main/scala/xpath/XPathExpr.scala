@@ -18,8 +18,8 @@ case class RelationalExpr(lhs: XPathExpr, rhs: XPathExpr, relOp: RelationalOpera
 case class AndExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
 case class OrExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
 case class UnionExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
-case class NegExpr(expr: XPathExpr) extends XPathExpr
-case class FilterExpr(expr: XPathExpr, predicates: List[XPathExpr]) extends XPathExpr
+case class NegExpr(inner: XPathExpr) extends XPathExpr
+case class FilterExpr(inner: XPathExpr, predicates: List[XPathExpr]) extends XPathExpr
 case class FunctionCallExpr(prefix: Option[String], name: String, params: List[XPathExpr]) extends XPathExpr
 case class LiteralExpr(literal: String) extends XPathExpr
 case class NumberExpr(num: Double) extends XPathExpr

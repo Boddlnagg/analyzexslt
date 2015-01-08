@@ -25,7 +25,7 @@ object XPathProcessor {
       // XPath spec section 3.4, shortcut evaluation!
       case OrExpr(lhs, rhs) => BooleanValue(process(lhs, ctx).toBooleanValue.value || process(rhs, ctx).toBooleanValue.value)
 
-      case NegExpr(subexpr) => NumberValue(- process(subexpr, ctx).toNumberValue.value)
+      case NegExpr(inner) => NumberValue(- process(inner, ctx).toNumberValue.value)
       case LiteralExpr(literal) => StringValue(literal)
       case NumberExpr(num) => NumberValue(num)
       case VariableReferenceExpr(name) => try ctx.variables(name) catch {
@@ -82,9 +82,9 @@ object XPathProcessor {
           case nodes@NodeSetValue(_) => NodeSetValue(processLocationPath(TreeSet[XMLNode]() ++ nodes.nodes, locationPath.steps, locationPath.isAbsolute).toList)
           case value => throw new EvaluationError(f"Filter expression must return a node-set (returned: $value)")
         }
-      case FilterExpr(subexpr, predicates) =>
+      case FilterExpr(inner, predicates) =>
         if (predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported")
-        process(subexpr, ctx)
+        process(inner, ctx)
     }
   }
 
