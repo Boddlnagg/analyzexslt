@@ -1,19 +1,19 @@
 package xml
 
-import scala.collection.mutable
+import scala.collection.mutable.{MutableList => MutList}
 
 /** Element node as defined in XPath spec section 5.2. */
 case class XMLElement(name: String,
-                      var attributes: mutable.MutableList[XMLAttribute],
-                      var children: mutable.MutableList[XMLNode],
+                      var attributes: MutList[XMLAttribute],
+                      var children: MutList[XMLNode],
                       var parent: XMLNode) extends XMLNode {
 
   /** Appends a new child node to this element (must not be an attribute node) */
   def appendChild(child: XMLNode): Unit = {
-    if(child.isInstanceOf[XMLAttribute]) throw new IllegalArgumentException("Children must not be attribute nodes.")
-    if(child.isInstanceOf[XMLRoot]) throw new IllegalArgumentException("Children must not be root nodes.")
+    if (child.isInstanceOf[XMLAttribute]) throw new IllegalArgumentException("Children must not be attribute nodes.")
+    if (child.isInstanceOf[XMLRoot]) throw new IllegalArgumentException("Children must not be root nodes.")
     if (child.isInstanceOf[XMLTextNode] && children.nonEmpty && children.last.isInstanceOf[XMLTextNode]) {
-      //merge text nodes with adjacent text nodes (at least xsl:value-of requires this (see XSLT spec section 7.6.1))
+      //merge text nodes with adjacent text nodes (see XSLT spec section 7.2)
       val previousText = children.last.asInstanceOf[XMLTextNode].value
       val newText = child.asInstanceOf[XMLTextNode].value
       children.update(children.size - 1, XMLTextNode(previousText + newText, this))
@@ -67,7 +67,7 @@ case class XMLElement(name: String,
 object XMLElement {
   /** Creates an element from a name as well as optional lists of attributes and children. */
   def apply(name: String, attributes: Seq[XMLAttribute] = Nil, children: Seq[XMLNode] = Nil): XMLElement = {
-    val result = new XMLElement(name, mutable.MutableList(), mutable.MutableList(), null)
+    val result = new XMLElement(name, MutList(), MutList(), null)
     attributes.foreach(attr => result.addAttribute(attr))
     children.foreach(child => result.appendChild(child))
     result
