@@ -2,6 +2,8 @@ package xpath
 
 import xml.XMLNode
 
+import scala.collection.immutable.TreeSet
+
 /** Base class for XPath values.
   *
   * An XPath value can either be a node-set, a boolean, a number or a string (see XPath spec section 1).
@@ -56,9 +58,11 @@ abstract class XPathValue {
         else if (num.isValidInt) num.toInt.toString
         else num.toString
       )
-      case NodeSetValue(Nil) => StringValue("")
-      case NodeSetValue(List(node)) => StringValue(node.stringValue)
-      case NodeSetValue(_) => throw new NotImplementedError("Converting node sets to strings is not implemented for node-sets with more than one element")
+      case NodeSetValue(set) => set.toList match {
+        case Nil => StringValue("")
+        case List(node) => StringValue(node.stringValue)
+        case _ => throw new NotImplementedError("Converting node sets to strings is not implemented for node-sets with more than one element")
+      }
     }
   }
 
@@ -97,5 +101,5 @@ abstract class XPathValue {
 case class StringValue(value: String) extends XPathValue
 case class NumberValue(value: Double) extends XPathValue
 case class BooleanValue(value: Boolean) extends XPathValue
-case class NodeSetValue(nodes: List[XMLNode]) extends XPathValue
+case class NodeSetValue(nodes: TreeSet[XMLNode]) extends XPathValue
 

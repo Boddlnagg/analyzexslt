@@ -4,6 +4,8 @@ import org.scalatest.FunSuite
 import xpath._
 import xml.{XMLNode, XMLElement, XMLParser}
 
+import scala.collection.immutable.TreeSet
+
 abstract class XPathEvalSuiteBase extends FunSuite {
   def eval(expr: String, ctxNode: XMLNode = null): XPathValue
 
@@ -47,18 +49,18 @@ abstract class XPathEvalSuiteBase extends FunSuite {
     val c = b.children(0).asInstanceOf[XMLElement]
     val a3 = b.children(1).asInstanceOf[XMLElement]
 
-    assertResult(NodeSetValue(List(node.inner))) { eval("/root", node) }
-    assertResult(NodeSetValue(List(a1, a2))) { eval("/root/a", node) }
-    assertResult(NodeSetValue(List())) { eval("/a", node) }
-    assertResult(NodeSetValue(List(a1, a2, a3))) { eval("//a", node) }
-    assertResult(NodeSetValue(List(a1, a2))) { eval("a", node.inner) }
-    assertResult(NodeSetValue(List(a1, a2, a3))) { eval("descendant::a", node) }
-    assertResult(NodeSetValue(List(b))) { eval("descendant::b", node) }
-    assertResult(NodeSetValue(List(b))) { eval("/root/b", node) }
-    assertResult(NodeSetValue(List(c))) { eval("descendant::c", node) }
-    assertResult(NodeSetValue(List(c))) { eval("/root/b/c", node) }
-    assertResult(NodeSetValue(List(c))) { eval("/root/*/c", node) }
-    assertResult(NodeSetValue(List(c))) { eval("/root//c", node) }
-    assertResult(NodeSetValue(List())) { eval("/*/c", node) }
+    assertResult(NodeSetValue(TreeSet(node.inner))) { eval("/root", node) }
+    assertResult(NodeSetValue(TreeSet(a1, a2))) { eval("/root/a", node) }
+    assertResult(NodeSetValue(TreeSet())) { eval("/a", node) }
+    assertResult(NodeSetValue(TreeSet(a1, a2, a3))) { eval("//a", node) }
+    assertResult(NodeSetValue(TreeSet(a1, a2))) { eval("a", node.inner) }
+    assertResult(NodeSetValue(TreeSet(a1, a2, a3))) { eval("descendant::a", node) }
+    assertResult(NodeSetValue(TreeSet(b))) { eval("descendant::b", node) }
+    assertResult(NodeSetValue(TreeSet(b))) { eval("/root/b", node) }
+    assertResult(NodeSetValue(TreeSet(c))) { eval("descendant::c", node) }
+    assertResult(NodeSetValue(TreeSet(c))) { eval("/root/b/c", node) }
+    assertResult(NodeSetValue(TreeSet(c))) { eval("/root/*/c", node) }
+    assertResult(NodeSetValue(TreeSet(c))) { eval("/root//c", node) }
+    assertResult(NodeSetValue(TreeSet())) { eval("/*/c", node) }
   }
 }

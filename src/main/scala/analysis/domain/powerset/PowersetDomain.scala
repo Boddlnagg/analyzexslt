@@ -48,14 +48,14 @@ object PowersetDomain extends Domain[N, L, V] {
 
     override def toNodeSet(list: L): V = list match {
       case Left(_) => None
-      case Right(s) => Some(s.map(nodes => NodeSetValue((TreeSet[XMLNode]() ++ nodes).toList)))
+      case Right(s) => Some(s.map(nodes => NodeSetValue(nodes.to[TreeSet])))
     }
 
     override def matchNodeSetValues(v: V): (L, V) = v match {
       case None => (Left(None), None)
       case Some(s) =>
         val nodeSetContents = s.collect {
-          case NodeSetValue(nodes) => nodes
+          case NodeSetValue(nodes) => nodes.toList
         }
         val rest = s.collect {
           case v@(NumberValue(_) | StringValue(_) | BooleanValue(_)) => v

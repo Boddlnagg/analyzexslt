@@ -48,7 +48,7 @@ object ConcreteDomain extends Domain[N, L, V] {
     /** Converts a list of nodes to a node-set value.
       * This has to order the nodes in document order and remove duplicates.
       */
-    override def toNodeSet(list: L): V = list.map(nodes => NodeSetValue((TreeSet[XMLNode]() ++ nodes).toList))
+    override def toNodeSet(list: L): V = list.map(nodes => NodeSetValue(nodes.to[TreeSet]))
 
     /** Match on a value to find out whether it is a node-set value.
       * The part of the value that is a node-set value is returned as a node list in the first result value,
@@ -57,7 +57,7 @@ object ConcreteDomain extends Domain[N, L, V] {
     override def matchNodeSetValues(v: V): (L, V) = v match {
       case Top => (Top, Top)
       case Bottom => (Bottom, Bottom)
-      case Value(NodeSetValue(nodes)) => (Value(nodes), Bottom)
+      case Value(NodeSetValue(nodes)) => (Value(nodes.toList), Bottom)
       case Value(other) => (Bottom, Value(other))
     }
   }

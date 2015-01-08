@@ -9,6 +9,8 @@ import PowersetXMLDomain.N
 import PowersetXMLDomain.L
 import PowersetXPathDomain.V
 
+import scala.collection.immutable.TreeSet
+
 class PowersetDomainSuite extends FunSuite {
   val xmlDom = PowersetDomain.xmlDom
   val xpathDom = PowersetDomain.xpathDom
@@ -120,7 +122,7 @@ class PowersetDomainSuite extends FunSuite {
 
     val input = xmlDom.concatLists(l1, xmlDom.concatLists(l2, l3))
 
-    assertResult(Some(Set(NodeSetValue(List(a, b, c))))) {
+    assertResult(Some(Set(NodeSetValue(TreeSet(a, b, c))))) {
       xpathDom.toNodeSet(input)
     }
   }
@@ -132,11 +134,11 @@ class PowersetDomainSuite extends FunSuite {
 
     val input = xmlDom.concatLists(l1, xmlDom.concatLists(l2, l3))
     val expected = Some(Set(
-      NodeSetValue(List(b, d)),
-      NodeSetValue(List(a, b, d)),
-      NodeSetValue(List(b, c, d)),
-      NodeSetValue(List(a, d)),
-      NodeSetValue(List(a, c, d))
+      NodeSetValue(TreeSet(b, d)),
+      NodeSetValue(TreeSet(a, b, d)),
+      NodeSetValue(TreeSet(b, c, d)),
+      NodeSetValue(TreeSet(a, d)),
+      NodeSetValue(TreeSet(a, c, d))
     ))
 
     assertResult(expected) {

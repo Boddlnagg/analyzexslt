@@ -111,7 +111,7 @@ object XSLTProcessor {
         }
       case ApplyTemplatesInstruction(Some(expr), params) =>
         XPathProcessor.process(expr, context.toXPathContext) match {
-          case NodeSetValue(nodes) => Left(transform(sheet, nodes, context.variables, params.mapValues(v => XPathProcessor.process(v, context.toXPathContext))))
+          case NodeSetValue(nodes) => Left(transform(sheet, nodes.toList, context.variables, params.mapValues(v => XPathProcessor.process(v, context.toXPathContext))))
           case value => throw new EvaluationError(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")
         }
       case CallTemplatesInstruction(name, params) =>
@@ -122,7 +122,7 @@ object XSLTProcessor {
       case CopyInstruction(select) =>
         XPathProcessor.process(select, context.toXPathContext) match {
           // NOTE: result tree fragments are generally not supported
-          case NodeSetValue(nodes) => Left(nodes.map {
+          case NodeSetValue(nodes) => Left(nodes.toList.map {
             case XMLRoot(inner) => inner.copy // "a root node is copied by copying its children" according to spec
             case node => node.copy
           })

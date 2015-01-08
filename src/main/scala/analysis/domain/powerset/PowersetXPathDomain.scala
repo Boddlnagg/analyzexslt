@@ -112,7 +112,7 @@ object PowersetXPathDomain {
     override def liftBoolean(bool: Boolean): V = Some(Set(BooleanValue(bool)))
 
     override def nodeSetUnion(left: V, right: V): V = liftBinaryOp(left, right, {
-      case (NodeSetValue(lVal), NodeSetValue(rVal)) => NodeSetValue((TreeSet[XMLNode]() ++ lVal ++ rVal).toList)
+      case (NodeSetValue(lVal), NodeSetValue(rVal)) => NodeSetValue(lVal ++ rVal)
       // NOTE: ignore values that are not node-sets by not including them in the result (essentially evaluating them to bottom)
     })
   }

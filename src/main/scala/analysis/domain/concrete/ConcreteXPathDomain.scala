@@ -83,7 +83,7 @@ object ConcreteXPathDomain {
     /** The union operator for node-sets. If one of the operands is not a node-set, return BOTTOM. */
     override def nodeSetUnion(left: V, right: V): V = (left, right) match {
       case (Value(NodeSetValue(lVal)), Value(NodeSetValue(rVal))) =>
-        Value(NodeSetValue((TreeSet[XMLNode]() ++ lVal ++ rVal).toList))
+        Value(NodeSetValue(lVal ++ rVal))
       case (Value(_), Value(_)) => Bottom // values of incompatible type -> error/bottom
       case (Bottom, _) => Bottom
       case (_, Bottom) => Bottom
