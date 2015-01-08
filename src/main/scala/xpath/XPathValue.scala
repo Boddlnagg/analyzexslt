@@ -94,7 +94,8 @@ abstract class XPathValue {
   }
 }
 
-case class NodeSetValue(nodes: List[XMLNode]) extends XPathValue
-case class BooleanValue(value: Boolean) extends XPathValue
-case class NumberValue(value: Double) extends XPathValue
 case class StringValue(value: String) extends XPathValue
+case class NumberValue(value: Double) extends XPathValue
+case class BooleanValue(value: Boolean) extends XPathValue
+case class NodeSetValue(nodes: List[XMLNode]) extends XPathValue
+

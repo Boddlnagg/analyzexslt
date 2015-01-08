@@ -278,7 +278,7 @@ object XSLTFeatureAnalyzer {
 
   private def analyzeXPathExpression(expr: XPathExpr, f: MutSet[XSLTFeature]): Unit = {
     expr match {
-      case binExpr: BinaryExpr =>
+      case binExpr: BinaryXPathExpr =>
         analyzeXPathExpression(binExpr.lhs, f)
         analyzeXPathExpression(binExpr.rhs, f)
         binExpr match {
@@ -288,11 +288,11 @@ object XSLTFeatureAnalyzer {
           case AndExpr(_, _) | OrExpr(_, _) => f += BooleanXPathExpressions
           case UnionExpr(_, _) => f += UnionSelectors
         }
-      case NegExpr(inner) =>
+      case UnaryMinusExpr(inner) =>
         f += ArithmeticXPathExpressions
         analyzeXPathExpression(inner, f)
-      case LiteralExpr(_) | NumberExpr(_) => ()
-      case VariableReferenceExpr(name) => f += Variables
+      case StringLiteralExpr(_) | NumLiteralExpr(_) => ()
+      case VarReferenceExpr(name) => f += Variables
       case FunctionCallExpr(prefix, name, params) =>
         val qname = prefix match {
           case Some(pre) => pre+":"+name
@@ -343,13 +343,13 @@ object XSLTFeatureAnalyzer {
     }
 
     def isLiteralAttributeValue(expr: XPathExpr) = expr match {
-      case LiteralExpr(_) => true
-      case NumberExpr(_) => true
+      case StringLiteralExpr(_) => true
+      case NumLiteralExpr(_) => true
       case _ => false
     }
 
     pred match {
-      case NumberExpr(_) => f += LiteralPositionPredicate(inPatterns) // predicate of the form [0]
+      case NumLiteralExpr(_) => f += LiteralPositionPredicate(inPatterns) // predicate of the form [0]
       case _ if isAttributePath(pred) => f += AttributeExistencePredicate(inPatterns) // predicate of the form [@foobar]
       case RelationalExpr(lhs, rhs, EqualsOperator) => // predicate of the form [@foo = 'bar']
         if ((isAttributePath(lhs) && isLiteralAttributeValue(rhs)) ||

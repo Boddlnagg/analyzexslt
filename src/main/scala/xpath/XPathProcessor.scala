@@ -25,10 +25,10 @@ object XPathProcessor {
       // XPath spec section 3.4, shortcut evaluation!
       case OrExpr(lhs, rhs) => BooleanValue(process(lhs, ctx).toBooleanValue.value || process(rhs, ctx).toBooleanValue.value)
 
-      case NegExpr(inner) => NumberValue(- process(inner, ctx).toNumberValue.value)
-      case LiteralExpr(literal) => StringValue(literal)
-      case NumberExpr(num) => NumberValue(num)
-      case VariableReferenceExpr(name) => try ctx.variables(name) catch {
+      case UnaryMinusExpr(inner) => NumberValue(- process(inner, ctx).toNumberValue.value)
+      case StringLiteralExpr(literal) => StringValue(literal)
+      case NumLiteralExpr(num) => NumberValue(num)
+      case VarReferenceExpr(name) => try ctx.variables(name) catch {
         case e: java.util.NoSuchElementException => throw new EvaluationError(f"Variable $name is not defined")
       }
       case UnionExpr(lhs, rhs) => (process(lhs, ctx), process(rhs, ctx)) match {

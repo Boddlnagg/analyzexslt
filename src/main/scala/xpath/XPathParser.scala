@@ -69,7 +69,7 @@ object XPathParser {
           case "or" => OrExpr(parse(logExpr.getLHS), parse(logExpr.getRHS))
         }
       case unionExpr: JUnionExpr => UnionExpr(parse(unionExpr.getLHS), parse(unionExpr.getRHS))
-      case unaryExpr: JUnaryExpr => NegExpr(parse(unaryExpr.getExpr))
+      case unaryExpr: JUnaryExpr => UnaryMinusExpr(parse(unaryExpr.getExpr))
       case filterExpr: JFilterExpr => FilterExpr(
         parse(filterExpr.getExpr),
         filterExpr.getPredicates.map(p => parse(p.asInstanceOf[Predicate].getExpr)).toList
@@ -77,11 +77,11 @@ object XPathParser {
       case callExpr: JFunctionCallExpr =>
         val prefix = if (callExpr.getPrefix != null && callExpr.getPrefix.length > 0) Some(callExpr.getPrefix) else None
         FunctionCallExpr(prefix, callExpr.getFunctionName, callExpr.getParameters.map(p => parse(p.asInstanceOf[Expr])).toList)
-      case litExpr: JLiteralExpr => LiteralExpr(litExpr.getLiteral)
-      case numExpr: JNumberExpr => NumberExpr(numExpr.getNumber.doubleValue())
+      case litExpr: JLiteralExpr => StringLiteralExpr(litExpr.getLiteral)
+      case numExpr: JNumberExpr => NumLiteralExpr(numExpr.getNumber.doubleValue())
       case varRefExpr: JVariableReferenceExpr =>
         if (varRefExpr.getPrefix != null && varRefExpr.getPrefix.length > 0) throw new NotImplementedError("Prefixed variables are not supported")
-        VariableReferenceExpr(varRefExpr.getVariableName)
+        VarReferenceExpr(varRefExpr.getVariableName)
       case pathExpr: JPathExpr =>
         var filter = parse(pathExpr.getFilterExpr)
         if (!filter.isInstanceOf[FilterExpr]) { filter = FilterExpr(filter, Nil) }

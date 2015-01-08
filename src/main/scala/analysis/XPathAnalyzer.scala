@@ -68,10 +68,10 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           return xpathDom.liftBoolean(false)
 
         xpathDom.join(xpathDom.liftBoolean(true), xpathDom.liftBoolean(false))
-      case NegExpr(inner) => xpathDom.negateNum(process(inner, ctx))
-      case LiteralExpr(literal) => xpathDom.liftString(literal)
-      case NumberExpr(num) => xpathDom.liftNumber(num)
-      case VariableReferenceExpr(name) => try ctx.variables(name) catch {
+      case UnaryMinusExpr(inner) => xpathDom.negateNum(process(inner, ctx))
+      case StringLiteralExpr(literal) => xpathDom.liftString(literal)
+      case NumLiteralExpr(num) => xpathDom.liftNumber(num)
+      case VarReferenceExpr(name) => try ctx.variables(name) catch {
         // because of static scoping this is an error in the program (no matter what evaluation strategy is used)
         case e: java.util.NoSuchElementException => throw new EvaluationError(f"Variable $name is not defined")
       }

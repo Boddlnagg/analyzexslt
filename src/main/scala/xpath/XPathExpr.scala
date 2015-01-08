@@ -4,28 +4,28 @@ package xpath
 abstract class XPathExpr
 
 /** Base class for binary XPath expressions */
-abstract class BinaryExpr extends XPathExpr {
+abstract class BinaryXPathExpr extends XPathExpr {
   def lhs: XPathExpr
   def rhs: XPathExpr
 }
 
-case class PlusExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
-case class MinusExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
-case class MultiplyExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
-case class DivExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
-case class ModExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
-case class RelationalExpr(lhs: XPathExpr, rhs: XPathExpr, relOp: RelationalOperator) extends BinaryExpr
-case class AndExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
-case class OrExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
-case class UnionExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryExpr
-case class NegExpr(inner: XPathExpr) extends XPathExpr
-case class FilterExpr(inner: XPathExpr, predicates: List[XPathExpr]) extends XPathExpr
+case class PlusExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryXPathExpr
+case class MinusExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryXPathExpr
+case class MultiplyExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryXPathExpr
+case class DivExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryXPathExpr
+case class ModExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryXPathExpr
+case class RelationalExpr(lhs: XPathExpr, rhs: XPathExpr, relOp: RelationalOperator) extends BinaryXPathExpr
+case class AndExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryXPathExpr
+case class OrExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryXPathExpr
+case class UnionExpr(lhs: XPathExpr, rhs: XPathExpr) extends BinaryXPathExpr
+case class UnaryMinusExpr(inner: XPathExpr) extends XPathExpr
 case class FunctionCallExpr(prefix: Option[String], name: String, params: List[XPathExpr]) extends XPathExpr
-case class LiteralExpr(literal: String) extends XPathExpr
-case class NumberExpr(num: Double) extends XPathExpr
-case class VariableReferenceExpr(name: String) extends XPathExpr
+case class StringLiteralExpr(literal: String) extends XPathExpr
+case class NumLiteralExpr(num: Double) extends XPathExpr
+case class VarReferenceExpr(name: String) extends XPathExpr
 case class PathExpr(filter: FilterExpr, locationPath: LocationPath) extends XPathExpr
 case class LocationPath(steps: List[XPathStep], isAbsolute: Boolean) extends XPathExpr
+case class FilterExpr(inner: XPathExpr, predicates: List[XPathExpr]) extends XPathExpr
 
 /** Base class for relational operators in XPath (=, !=, <, >, <=, >=) */
 abstract class RelationalOperator
