@@ -4,8 +4,8 @@ import scala.collection.mutable.{MutableList => MutList}
 
 /** Element node as defined in XPath spec section 5.2. */
 case class XMLElement(name: String,
-                      var attributes: MutList[XMLAttribute],
-                      var children: MutList[XMLNode],
+                      attributes: MutList[XMLAttribute],
+                      children: MutList[XMLNode],
                       var parent: XMLNode) extends XMLNode {
 
   /** Appends a new child node to this element (must not be an attribute node) */
