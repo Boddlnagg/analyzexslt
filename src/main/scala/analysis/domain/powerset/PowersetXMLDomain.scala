@@ -94,7 +94,7 @@ object PowersetXMLDomain {
     override def getChildren(node: PowersetXMLDomain.N): L = node match {
       case None => Left(None)
       case Some(s) => Right(s.map {
-        case XMLRoot(elem) => List(elem)
+        case XMLRoot(inner) => List(inner)
         case XMLElement(_, _, children, _) => children.toList
         case _ => Nil // NOTE: other node types have no children, but this must NOT evaluate to BOTTOM
       })
@@ -155,7 +155,7 @@ object PowersetXMLDomain {
     override def copyToOutput(list: L): L = list match {
       case Left(_) => list // list with same number of elements (if known)
       case Right(s) => Right(s.map(_.map {
-        case XMLRoot(elem) => elem.copy // "a root node is copied by copying its children" according to spec
+        case XMLRoot(inner) => inner.copy // "a root node is copied by copying its children" according to spec
         case node => node.copy
       }))
     }

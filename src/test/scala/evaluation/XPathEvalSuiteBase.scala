@@ -41,17 +41,17 @@ abstract class XPathEvalSuiteBase extends FunSuite {
 
   test("Location paths") {
     val node = XMLParser.parseDocument(<root><a/><a/><b><c/><a/></b></root>)
-    val a1 = node.elem.children(0).asInstanceOf[XMLElement]
-    val a2 = node.elem.children(1).asInstanceOf[XMLElement]
-    val b = node.elem.children(2).asInstanceOf[XMLElement]
+    val a1 = node.inner.children(0).asInstanceOf[XMLElement]
+    val a2 = node.inner.children(1).asInstanceOf[XMLElement]
+    val b = node.inner.children(2).asInstanceOf[XMLElement]
     val c = b.children(0).asInstanceOf[XMLElement]
     val a3 = b.children(1).asInstanceOf[XMLElement]
 
-    assertResult(NodeSetValue(List(node.elem))) { eval("/root", node) }
+    assertResult(NodeSetValue(List(node.inner))) { eval("/root", node) }
     assertResult(NodeSetValue(List(a1, a2))) { eval("/root/a", node) }
     assertResult(NodeSetValue(List())) { eval("/a", node) }
     assertResult(NodeSetValue(List(a1, a2, a3))) { eval("//a", node) }
-    assertResult(NodeSetValue(List(a1, a2))) { eval("a", node.elem) }
+    assertResult(NodeSetValue(List(a1, a2))) { eval("a", node.inner) }
     assertResult(NodeSetValue(List(a1, a2, a3))) { eval("descendant::a", node) }
     assertResult(NodeSetValue(List(b))) { eval("descendant::b", node) }
     assertResult(NodeSetValue(List(b))) { eval("/root/b", node) }

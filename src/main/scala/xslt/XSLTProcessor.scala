@@ -10,7 +10,7 @@ object XSLTProcessor {
   def transform(sheet: XSLTStylesheet, source: XMLRoot): XMLRoot = {
     // process according to XSLT spec section 5.1
     transform(sheet, List(source), Map(), Map()) match {
-      case List(elem@XMLElement(_, _, _, _)) => XMLRoot(elem)
+      case List(inner@XMLElement(_, _, _, _)) => XMLRoot(inner)
       case _ => throw new IllegalStateException("Transformation result must be a single XMLElement")
     }
   }
@@ -105,7 +105,7 @@ object XSLTProcessor {
         Left(List(XMLAttribute(attribute, textResult)))
       case ApplyTemplatesInstruction(None, params) =>
         context.node match {
-          case root: XMLRoot => Left(transform(sheet, List(root.elem), context.variables, params.mapValues(v => XPathProcessor.process(v, context.toXPathContext))))
+          case XMLRoot(inner) => Left(transform(sheet, List(inner), context.variables, params.mapValues(v => XPathProcessor.process(v, context.toXPathContext))))
           case elem: XMLElement => Left(transform(sheet, elem.children.toList, context.variables, params.mapValues(v => XPathProcessor.process(v, context.toXPathContext))))
           case _ => Left(Nil) // other node types don't have children and return an empty result
         }
@@ -123,7 +123,7 @@ object XSLTProcessor {
         XPathProcessor.process(select, context.toXPathContext) match {
           // NOTE: result tree fragments are generally not supported
           case NodeSetValue(nodes) => Left(nodes.map {
-            case XMLRoot(elem) => elem.copy // "a root node is copied by copying its children" according to spec
+            case XMLRoot(inner) => inner.copy // "a root node is copied by copying its children" according to spec
             case node => node.copy
           })
           case value =>

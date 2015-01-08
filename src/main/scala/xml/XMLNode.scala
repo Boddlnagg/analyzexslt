@@ -14,7 +14,7 @@ abstract class XMLNode extends Ordered[XMLNode] {
 
   /** Returns a list of all descendants of this node */
   def descendants: List[XMLNode] = this match {
-    case XMLRoot(elem) => elem :: elem.descendants
+    case XMLRoot(inner) => inner :: inner.descendants
     case XMLElement(_, _, children, _) => children.flatMap { ch => ch :: ch.descendants}.toList
     case XMLAttribute(_, _, _) => Nil
     case XMLTextNode(_, _) => Nil
@@ -40,7 +40,7 @@ object XMLNode {
   /** Returns a list of nodes in document order, starting from a given node */
   def nodesInOrder(start: XMLNode): List[XMLNode] = {
     start match {
-      case XMLRoot(elem) => List(start) ++ nodesInOrder(elem)
+      case XMLRoot(inner) => List(start) ++ nodesInOrder(inner)
       case XMLElement(_, attr, children, _) => List(start) ++ attr ++ children.flatMap(ch => nodesInOrder(ch))
       case XMLTextNode(_, _) => List(start)
       case XMLComment(_, _) => List(start)
@@ -50,7 +50,7 @@ object XMLNode {
   /** Formats the path where a node can be reached (pseudo XPath syntax) */
   def formatPath(node: XMLNode): String = {
     def internal(n: XMLNode) = n match {
-      case XMLRoot(elem) => "/"
+      case XMLRoot(_) => "/"
       case XMLElement(name, _, _, parent) => formatPath(parent) + "name/"
       case XMLTextNode(_, parent) => formatPath(parent) + "<text>"
       case XMLComment(_, parent) => formatPath(parent) + "<comment>"

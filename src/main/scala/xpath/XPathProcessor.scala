@@ -116,7 +116,7 @@ object XPathProcessor {
         val nodes: TreeSet[XMLNode] = first.axis match {
           // the child axis contains the children of the context node
           case ChildAxis => ctxNode match {
-            case XMLRoot(elem) => TreeSet(elem)
+            case XMLRoot(inner) => TreeSet(inner)
             case XMLElement(_, _, children, _) => TreeSet[XMLNode]() ++ children
             case _ => TreeSet()
           }
