@@ -53,7 +53,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     val result = scala.collection.mutable.Map[XSLTTemplate, N]()
     var currentNode = node
     breakable {
-      // iterate through matchable templates in reverse order (because always the last one always has highest priority/precedence)
+      // iterate through matchable templates in reverse order (because the last one always has highest priority/precedence)
       sheet.matchableTemplates.reverse.foreach { case (path, tpl, _, _) =>
         val (matches, notMatches) = xpathMatcher.matches(currentNode, path)
         if (!xmlDom.lessThanOrEqual(matches, xmlDom.bottom))

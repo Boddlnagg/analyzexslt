@@ -4,6 +4,7 @@ import xpath.{XPathExpr, XPathParser, LocationPath}
 
 /** An XSLT stylesheet */
 class XSLTStylesheet(templates: List[(XSLTTemplate, Option[String], Option[XPathExpr], ImportPrecedence)], disableBuiltinTemplates: Boolean) {
+  // perform some sanity checks
   templates.foreach  {
     case (_, None, None, _) => assert(false, "Templates must have either 'name' or 'match' attribute defined")
     case (_, _, Some(pattern), _) => assert(XPathExpr.isPattern(pattern), "Template 'match' attribute must be a pattern.")
@@ -14,13 +15,12 @@ class XSLTStylesheet(templates: List[(XSLTTemplate, Option[String], Option[XPath
   // templates and a List[(LocationPath, Double, XSLTTemplate)] ordered by priority for those with 'match' attribute.
   // Union patterns are split so that every template is matched by exactly one location path.
 
-  val namedTemplates: Map[String, XSLTTemplate] = Map() ++ templates.flatMap {
-    case (tmpl, Some(name), _, _) => Some((name, tmpl))
-    case _ => None
+  val namedTemplates: Map[String, XSLTTemplate] = Map() ++ templates.collect {
+    case (tmpl, Some(name), _, _) => (name, tmpl)
   }
 
   // add built-in templates (see spec section 5.8)
-  val builtinTemplates =
+  private val builtinTemplates: List[(XSLTTemplate, Option[String], Option[XPathExpr], ImportPrecedence)] =
     if (disableBuiltinTemplates)
       Nil
     else

@@ -157,7 +157,7 @@ object XPathEvaluator {
           // "the attribute axis contains the attributes of the context node; the axis will be
           // empty unless the context node is an element"
           case AttributeAxis => node match {
-            case XMLElement(_, attr, _, _) => TreeSet[XMLNode]() ++ attr
+            case XMLElement(_, attrs, _, _) => TreeSet[XMLNode]() ++ attrs
             case _ => TreeSet[XMLNode]()
           }
           // "the namespace axis contains the namespace nodes of the context node
