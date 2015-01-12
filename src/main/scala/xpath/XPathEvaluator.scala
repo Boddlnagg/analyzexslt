@@ -16,9 +16,7 @@ object XPathEvaluator {
     case ModExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value % evaluate(rhs, ctx).toNumberValue.value)
     case RelationalExpr(lhs, rhs, relOp) =>
       // evaluation is specified in the XPath spec section 3.4
-      val lhsVal = evaluate(lhs, ctx)
-      val rhsVal = evaluate(rhs, ctx)
-      BooleanValue(lhsVal.compare(rhsVal, relOp))
+      BooleanValue(evaluate(lhs, ctx).compare(evaluate(rhs, ctx), relOp))
     // XPath spec section 3.4, shortcut evaluation!
     case AndExpr(lhs, rhs) => BooleanValue(evaluate(lhs, ctx).toBooleanValue.value && evaluate(rhs, ctx).toBooleanValue.value)
     // XPath spec section 3.4, shortcut evaluation!
@@ -34,17 +32,14 @@ object XPathEvaluator {
       case (NodeSetValue(left), NodeSetValue(right)) => NodeSetValue(left ++ right)
       case (left, right) => throw new ProcessingError(f"Wrong types for union expression, must be node-sets ($left | $right)")
     }
-    case FunctionCallExpr(prefix, name, params) =>
-      if (prefix != None) throw new NotImplementedError("Prefixed functions are not supported.")
-      evaluateFunctionCall(name, params.map(p => evaluate(p, ctx)), ctx)
+    case FunctionCallExpr(None, name, params) => evaluateFunctionCall(name, params.map(p => evaluate(p, ctx)), ctx)
+    case FunctionCallExpr(Some(_), _, _) => throw new NotImplementedError("Prefixed functions are not supported")
     case LocationPath(steps, isAbsolute) => NodeSetValue(evaluateLocationPath(ctx.node, steps, isAbsolute))
     case PathExpr(filter, locationPath) =>
       evaluate(filter, ctx) match {
-        case startNodeSet@NodeSetValue(_) => NodeSetValue(
-          startNodeSet.nodes.flatMap {
-            n => evaluateLocationPath(n, locationPath.steps, locationPath.isAbsolute)
-          }
-        )
+        case NodeSetValue(startNodes) => NodeSetValue(startNodes.flatMap {
+          n => evaluateLocationPath(n, locationPath.steps, locationPath.isAbsolute)
+        })
         case value => throw new ProcessingError(f"Filter expression must return a node-set (returned: $value)")
       }
     case FilterExpr(inner, predicates) =>

@@ -75,9 +75,8 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case e: java.util.NoSuchElementException => throw new ProcessingError(f"Variable $name is not defined")
     }
     case UnionExpr(lhs, rhs) => xpathDom.nodeSetUnion(evaluate(lhs, ctx), evaluate(rhs, ctx))
-    case FunctionCallExpr(prefix, name, params) =>
-      if (prefix != None) throw new NotImplementedError("Prefixed functions are not supported.")
-      evaluateFunctionCall(name, params.map(p => evaluate(p, ctx)), ctx)
+    case FunctionCallExpr(None, name, params) => evaluateFunctionCall(name, params.map(p => evaluate(p, ctx)), ctx)
+    case FunctionCallExpr(Some(_), _, _) => throw new NotImplementedError("Prefixed functions are not supported")
     case LocationPath(steps, isAbsolute) => xpathDom.toNodeSet(evaluateLocationPath(ctx.node, steps, isAbsolute))
     case PathExpr(filter, locationPath) =>
       val (startNodeSet, _) = xpathDom.matchNodeSetValues(evaluate(filter, ctx))
