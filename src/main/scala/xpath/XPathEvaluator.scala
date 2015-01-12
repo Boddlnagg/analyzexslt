@@ -29,7 +29,7 @@ object XPathEvaluator {
       case e: java.util.NoSuchElementException => throw new ProcessingError(f"Variable $name is not defined")
     }
     case UnionExpr(lhs, rhs) => (evaluate(lhs, ctx), evaluate(rhs, ctx)) match {
-      case (NodeSetValue(left), NodeSetValue(right)) => NodeSetValue(left ++ right)
+      case (NodeSetValue(left), NodeSetValue(right)) => NodeSetValue(left | right)
       case (left, right) => throw new ProcessingError(f"Wrong types for union expression, must be node-sets ($left | $right)")
     }
     case FunctionCallExpr(None, name, params) => evaluateFunctionCall(name, params.map(p => evaluate(p, ctx)), ctx)
@@ -105,25 +105,25 @@ object XPathEvaluator {
       case (Nil, false) => TreeSet(node) // no steps left -> just return input node
       case (first :: rest, false) =>
         val nodes: TreeSet[XMLNode] = first.axis match {
-          // the child axis contains the children of the context node
+          // "the child axis contains the children of the context node"
           case ChildAxis => node match {
             case XMLRoot(inner) => TreeSet(inner)
             case XMLElement(_, _, children, _) => children.to[TreeSet]
             case _ => TreeSet()
           }
-          // the descendant axis contains the descendants of the context node
-          // a descendant is a child or a child of a child and so on
+          // "the descendant axis contains the descendants of the context node
+          // a descendant is a child or a child of a child and so on"
           case DescendantAxis => node.descendants.to[TreeSet]
-          // the parent axis contains the parent of the context node, if there is one
+          // "the parent axis contains the parent of the context node, if there is one"
           case ParentAxis => node match {
             case XMLRoot(_) => TreeSet() // root does not have a parent
             case n => TreeSet(n.parent)
           }
-          // the ancestor axis contains the ancestors of the context node
-          // the ancestors of the context node consist of the parent of context node and the parent's parent and so on
+          // "the ancestor axis contains the ancestors of the context node
+          // the ancestors of the context node consist of the parent of context node and the parent's parent and so on"
           case AncestorAxis => node.ancestors.to[TreeSet]
-          // the following-sibling axis contains all the following siblings of the context node
-          // if the context node is an attribute node or namespace node, the following-sibling axis is empty
+          // "the following-sibling axis contains all the following siblings of the context node
+          // if the context node is an attribute node or namespace node, the following-sibling axis is empty"
           case FollowingSiblingAxis => node match {
             case XMLAttribute(_, _, _) => TreeSet()
             case _ => node.parent match {
@@ -131,8 +131,8 @@ object XPathEvaluator {
               case XMLElement(_, _, children, _) => children.filter(_ > node).to[TreeSet]
             }
           }
-          // the preceding-sibling axis contains all the preceding siblings of the context node
-          // if the context node is an attribute node or namespace node, the preceding-sibling axis is empty
+          // "the preceding-sibling axis contains all the preceding siblings of the context node
+          // if the context node is an attribute node or namespace node, the preceding-sibling axis is empty"
           case PrecedingSiblingAxis => node match {
             case XMLAttribute(_, _, _) => TreeSet()
             case _ => node.parent match {
@@ -140,35 +140,35 @@ object XPathEvaluator {
               case XMLElement(_, _, children, _) => children.filter(_ < node).to[TreeSet]
             }
           }
-          // the following axis contains all nodes in the same document as the context node that are after the context
-          // node in document order, excluding any descendants and excluding attribute nodes and namespace nodes
+          // "the following axis contains all nodes in the same document as the context node that are after the context
+          // node in document order, excluding any descendants and excluding attribute nodes and namespace nodes"
           case FollowingAxis =>
             val descendants = node.descendants
             node.root.nodesInOrder
               .filter(n => !n.isInstanceOf[XMLAttribute] && n > node && !descendants.contains(n))
               .to[TreeSet]
-          // the preceding axis contains all nodes in the same document as the context node that are before the context
-          // node in document order, excluding any ancestors and excluding attribute nodes and namespace nodes
+          // "the preceding axis contains all nodes in the same document as the context node that are before the context
+          // node in document order, excluding any ancestors and excluding attribute nodes and namespace nodes"
           case PrecedingAxis =>
             val ancestors = node.ancestors
             node.root.nodesInOrder
               .filter(n => !n.isInstanceOf[XMLAttribute] && n < node && !ancestors.contains(n))
               .to[TreeSet]
-          // the attribute axis contains the attributes of the context node; the axis will be
-          // empty unless the context node is an element
+          // "the attribute axis contains the attributes of the context node; the axis will be
+          // empty unless the context node is an element"
           case AttributeAxis => node match {
             case XMLElement(_, attr, _, _) => TreeSet[XMLNode]() ++ attr
             case _ => TreeSet[XMLNode]()
           }
-          // the namespace axis contains the namespace nodes of the context node
-          // the axis will be empty unless the context node is an element
+          // "the namespace axis contains the namespace nodes of the context node
+          // the axis will be empty unless the context node is an element"
           case NamespaceAxis => throw new NotImplementedError("Namespace nodes are not implemented, therefore the namespace axis is not supported")
-          // the self axis contains just the context node itself
+          // "the self axis contains just the context node itself"
           case SelfAxis => TreeSet(node)
-          // the descendant-or-self axis contains the context node and the descendants of the context node
+          // "the descendant-or-self axis contains the context node and the descendants of the context node"
           case DescendantOrSelfAxis => TreeSet(node) ++ node.descendants
-          // the ancestor-or-self axis contains the context node and the ancestors of the context node
-          // thus, the ancestor axis will always include the root node
+          // "the ancestor-or-self axis contains the context node and the ancestors of the context node
+          // thus, the ancestor axis will always include the root node"
           case AncestorOrSelfAxis => TreeSet(node) ++ node.ancestors
         }
         val testedNodes = nodes.filter { n => first.test match {

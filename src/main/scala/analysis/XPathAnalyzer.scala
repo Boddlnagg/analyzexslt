@@ -154,12 +154,12 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case (Nil, false) => xmlDom.createSingletonList(node)
       case (first :: rest, false) =>
         val nodes: L = first.axis match {
-          // the child axis contains the children of the context node
+          // "the child axis contains the children of the context node"
           case ChildAxis => xmlDom.getChildren(node)
-          // the descendant axis contains the descendants of the context node
-          // a descendant is a child or a child of a child and so on
+          // "the descendant axis contains the descendants of the context node
+          // a descendant is a child or a child of a child and so on"
           case DescendantAxis => xmlDom.getDescendants(node)
-          // the parent axis contains the parent of the context node, if there is one
+          // "the parent axis contains the parent of the context node, if there is one"
           case ParentAxis =>
             val (root, nonRoot) = xmlDom.isRoot(node)
             val result = xmlDom.createSingletonList(xmlDom.getParent(nonRoot))
@@ -167,33 +167,33 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
               xmlDom.joinLists(xmlDom.createEmptyList(), result) // ... we need to include the empty list as a result
             else
               result
-          // the ancestor axis contains the ancestors of the context node
-          // the ancestors of the context node consist of the parent of context node and the parent's parent and so on
+          // "the ancestor axis contains the ancestors of the context node
+          // the ancestors of the context node consist of the parent of context node and the parent's parent and so on"
           case AncestorAxis => throw new NotImplementedError("The `ancestor` axis is not implemented.")
-          // the following-sibling axis contains all the following siblings of the context node
-          // if the context node is an attribute node or namespace node, the following-sibling axis is empty
+          // "the following-sibling axis contains all the following siblings of the context node
+          // if the context node is an attribute node or namespace node, the following-sibling axis is empty"
           case FollowingSiblingAxis => throw new NotImplementedError("The `following-sibling` axis is not implemented.")
-          // the preceding-sibling axis contains all the preceding siblings of the context node
-          // if the context node is an attribute node or namespace node, the preceding-sibling axis is empty
+          // "the preceding-sibling axis contains all the preceding siblings of the context node
+          // if the context node is an attribute node or namespace node, the preceding-sibling axis is empty"
           case PrecedingSiblingAxis => throw new NotImplementedError("The `preceding-sibling` axis is not implemented.")
-          // the following axis contains all nodes in the same document as the context node that are after the context
-          // node in document order, excluding any descendants and excluding attribute nodes and namespace nodes
+          // "the following axis contains all nodes in the same document as the context node that are after the context
+          // node in document order, excluding any descendants and excluding attribute nodes and namespace nodes"
           case FollowingAxis => throw new NotImplementedError("The `following` axis is not implemented.")
-          // the preceding axis contains all nodes in the same document as the context node that are before the context
-          // node in document order, excluding any ancestors and excluding attribute nodes and namespace nodes
+          // "the preceding axis contains all nodes in the same document as the context node that are before the context
+          // node in document order, excluding any ancestors and excluding attribute nodes and namespace nodes"
           case PrecedingAxis => throw new NotImplementedError("The `preceding` axis is not implemented.")
-          // the attribute axis contains the attributes of the context node; the axis will be empty
-          // unless the context node is an element
+          // "the attribute axis contains the attributes of the context node; the axis will be
+          // empty unless the context node is an element"
           case AttributeAxis => xmlDom.getAttributes(node)
-          // the namespace axis contains the namespace nodes of the context node
-          // the axis will be empty unless the context node is an element
+          // "the namespace axis contains the namespace nodes of the context node
+          // the axis will be empty unless the context node is an element"
           case NamespaceAxis => throw new NotImplementedError("Namespace nodes are not implemented, therefore the namespace axis is not supported")
-          // the self axis contains just the context node itself
+          // "the self axis contains just the context node itself"
           case SelfAxis => xmlDom.createSingletonList(node)
-          // the descendant-or-self axis contains the context node and the descendants of the context node
+          // "the descendant-or-self axis contains the context node and the descendants of the context node"
           case DescendantOrSelfAxis => xmlDom.concatLists(xmlDom.createSingletonList(node), xmlDom.getDescendants(node))
-          // the ancestor-or-self axis contains the context node and the ancestors of the context node
-          // thus, the ancestor axis will always include the root node
+          // "the ancestor-or-self axis contains the context node and the ancestors of the context node
+          // thus, the ancestor axis will always include the root node"
           case AncestorOrSelfAxis => throw new NotImplementedError("The `ancestor-or-self` axis is not implemented.")
         }
         val testedNodes = xmlDom.filter(nodes, n => {
