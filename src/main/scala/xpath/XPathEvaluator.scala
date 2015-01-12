@@ -54,7 +54,7 @@ object XPathEvaluator {
     * @param ctx The current XPath evaluation context.
     * @return The value that results from evaluating the function.
     */
-  private def evaluateFunctionCall(name: String, params: List[XPathValue], ctx: XPathContext) : XPathValue = (name, params) match {
+  private def evaluateFunctionCall(name: String, params: List[XPathValue], ctx: XPathContext): XPathValue = (name, params) match {
     // See XPath spec section 3.2
     // arguments are casted to string, number, boolean as required, but if a function expects a node-set, it must be a node-set
     case ("true", Nil) => BooleanValue(true)
@@ -93,70 +93,70 @@ object XPathEvaluator {
 
   /** Evaluates the steps of a location path for a single starting node.
     *
-    * @param ctxNode the context node
+    * @param node the context node
     * @param steps the list of remaining steps to evaluate, the leftmost step being the first one
     * @param isAbsolute a value indicating whether the location path is absolute (or relative)
     * @return an ordered set of nodes resulting from the location path, ordered in document order
     */
-  private def evaluateLocationPath(ctxNode: XMLNode, steps: List[XPathStep], isAbsolute: Boolean): TreeSet[XMLNode] = {
+  private def evaluateLocationPath(node: XMLNode, steps: List[XPathStep], isAbsolute: Boolean): TreeSet[XMLNode] = {
     // evaluate steps from left to right, keep nodes in document order (not required by XPath, but by XSLT)
     (steps, isAbsolute) match {
-      case (Nil, true) => TreeSet(ctxNode.root) // absolute path with no steps -> just the root node
-      case (_, true) => evaluateLocationPath(ctxNode.root, steps, false)
+      case (_, true) => evaluateLocationPath(node.root, steps, false) // absolute path -> handle as relative but start with root node
+      case (Nil, false) => TreeSet(node) // no steps left -> just return input node
       case (first :: rest, false) =>
         val nodes: TreeSet[XMLNode] = first.axis match {
           // the child axis contains the children of the context node
-          case ChildAxis => ctxNode match {
+          case ChildAxis => node match {
             case XMLRoot(inner) => TreeSet(inner)
             case XMLElement(_, _, children, _) => children.to[TreeSet]
             case _ => TreeSet()
           }
           // the descendant axis contains the descendants of the context node
           // a descendant is a child or a child of a child and so on
-          case DescendantAxis => ctxNode.descendants.to[TreeSet]
+          case DescendantAxis => node.descendants.to[TreeSet]
           // the parent axis contains the parent of the context node, if there is one
-          case ParentAxis => ctxNode match {
+          case ParentAxis => node match {
             case XMLRoot(_) => TreeSet() // root does not have a parent
-            case node => TreeSet(node.parent)
+            case n => TreeSet(n.parent)
           }
           // the ancestor axis contains the ancestors of the context node
           // the ancestors of the context node consist of the parent of context node and the parent's parent and so on
-          case AncestorAxis => ctxNode.ancestors.to[TreeSet]
+          case AncestorAxis => node.ancestors.to[TreeSet]
           // the following-sibling axis contains all the following siblings of the context node
           // if the context node is an attribute node or namespace node, the following-sibling axis is empty
-          case FollowingSiblingAxis => ctxNode match {
+          case FollowingSiblingAxis => node match {
             case XMLAttribute(_, _, _) => TreeSet()
-            case _ => ctxNode.parent match {
+            case _ => node.parent match {
               case XMLRoot(_) => TreeSet() // if parent is root, there are no siblings
-              case XMLElement(_, _, children, _) => children.filter(_ > ctxNode).to[TreeSet]
+              case XMLElement(_, _, children, _) => children.filter(_ > node).to[TreeSet]
             }
           }
           // the preceding-sibling axis contains all the preceding siblings of the context node
           // if the context node is an attribute node or namespace node, the preceding-sibling axis is empty
-          case PrecedingSiblingAxis => ctxNode match {
+          case PrecedingSiblingAxis => node match {
             case XMLAttribute(_, _, _) => TreeSet()
-            case _ => ctxNode.parent match {
+            case _ => node.parent match {
               case XMLRoot(_) => TreeSet() // if parent is root, there are no siblings
-              case XMLElement(_, _, children, _) => children.filter(_ < ctxNode).to[TreeSet]
+              case XMLElement(_, _, children, _) => children.filter(_ < node).to[TreeSet]
             }
           }
           // the following axis contains all nodes in the same document as the context node that are after the context
           // node in document order, excluding any descendants and excluding attribute nodes and namespace nodes
           case FollowingAxis =>
-            val descendants = ctxNode.descendants
-            ctxNode.root.nodesInOrder
-              .filter(n => !n.isInstanceOf[XMLAttribute] && n > ctxNode && !descendants.contains(n))
+            val descendants = node.descendants
+            node.root.nodesInOrder
+              .filter(n => !n.isInstanceOf[XMLAttribute] && n > node && !descendants.contains(n))
               .to[TreeSet]
           // the preceding axis contains all nodes in the same document as the context node that are before the context
           // node in document order, excluding any ancestors and excluding attribute nodes and namespace nodes
           case PrecedingAxis =>
-            val ancestors = ctxNode.ancestors
-            ctxNode.root.nodesInOrder
-              .filter(n => !n.isInstanceOf[XMLAttribute] && n < ctxNode && !ancestors.contains(n))
+            val ancestors = node.ancestors
+            node.root.nodesInOrder
+              .filter(n => !n.isInstanceOf[XMLAttribute] && n < node && !ancestors.contains(n))
               .to[TreeSet]
-          // the attribute axis contains the attributes of the context node; the axis will be empty
-          // unless the context node is an element
-          case AttributeAxis => ctxNode match {
+          // the attribute axis contains the attributes of the context node; the axis will be
+          // empty unless the context node is an element
+          case AttributeAxis => node match {
             case XMLElement(_, attr, _, _) => TreeSet[XMLNode]() ++ attr
             case _ => TreeSet[XMLNode]()
           }
@@ -164,28 +164,27 @@ object XPathEvaluator {
           // the axis will be empty unless the context node is an element
           case NamespaceAxis => throw new NotImplementedError("Namespace nodes are not implemented, therefore the namespace axis is not supported")
           // the self axis contains just the context node itself
-          case SelfAxis => TreeSet(ctxNode)
+          case SelfAxis => TreeSet(node)
           // the descendant-or-self axis contains the context node and the descendants of the context node
-          case DescendantOrSelfAxis => TreeSet(ctxNode) ++ ctxNode.descendants
+          case DescendantOrSelfAxis => TreeSet(node) ++ node.descendants
           // the ancestor-or-self axis contains the context node and the ancestors of the context node
           // thus, the ancestor axis will always include the root node
-          case AncestorOrSelfAxis => TreeSet(ctxNode) ++ ctxNode.ancestors
+          case AncestorOrSelfAxis => TreeSet(node) ++ node.ancestors
         }
-        val testedNodes = nodes.filter {node => first.test match {
+        val testedNodes = nodes.filter { n => first.test match {
           case NameTest(Some(_), _) => throw new NotImplementedError("Prefixed names are not implemented.")
-          case NameTest(None, "*") => XPathAxis.isPrincipalNodeType(first.axis, node)
-          case NameTest(None, testName) => XPathAxis.isPrincipalNodeType(first.axis, node) && (node match {
+          case NameTest(None, "*") => XPathAxis.isPrincipalNodeType(first.axis, n)
+          case NameTest(None, testName) => XPathAxis.isPrincipalNodeType(first.axis, n) && (n match {
             case XMLElement(name, _, _, _) => name == testName
             case XMLAttribute(name, _, _) => name == testName
             case _ => false
           })
-          case TextNodeTest => node.isInstanceOf[XMLTextNode]
-          case CommentNodeTest => node.isInstanceOf[XMLComment]
+          case TextNodeTest => n.isInstanceOf[XMLTextNode]
+          case CommentNodeTest => n.isInstanceOf[XMLComment]
           case AllNodeTest => true
         }}
         if (first.predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported") // NOTE: see XPath spec section 2.4 to implement these
         testedNodes.flatMap { n => evaluateLocationPath(n, rest, false)}
-      case (Nil, false) => TreeSet(ctxNode)
     }
   }
 }
