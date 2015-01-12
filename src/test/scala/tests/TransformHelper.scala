@@ -8,7 +8,7 @@ import analysis.domain.Domain
 import analysis.domain.concrete._
 import analysis.domain.powerset.{TypedPowersetDomain, PowersetXMLDomain, PowersetDomain}
 import analysis.XSLTAnalyzer
-import util.EvaluationError
+import util.ProcessingError
 import xml.{XMLParser, XMLRoot}
 import xslt.{XSLTProcessor, XSLTParser}
 
@@ -55,7 +55,7 @@ object TransformHelper {
     result match {
       case None => throw new AssertionError("Expected single result root element, but got infinite result (TOP)")
       case Some(List(r: XMLRoot)) => r
-      case Some(Nil) => throw new EvaluationError("Expected single result root element, but got no result (BOTTOM)")
+      case Some(Nil) => throw new ProcessingError("Expected single result root element, but got no result (BOTTOM)")
       case _ => throw new AssertionError(f"Expected single result root element, but got $result")
     }
   }
@@ -72,7 +72,7 @@ object TransformHelper {
     result match {
       case None => throw new AssertionError("Expected single result root element, but got infinite result (TOP)")
       case Some(List(r: XMLRoot)) => r
-      case Some(Nil) => throw new EvaluationError("Expected single result root element, but got no result (BOTTOM)")
+      case Some(Nil) => throw new ProcessingError("Expected single result root element, but got no result (BOTTOM)")
       case _ => throw new AssertionError(f"Expected single result root element, but got $result")
     }
   }
@@ -89,7 +89,7 @@ object TransformHelper {
     result match {
       case Top => throw new AssertionError("Expected single result root element, but got infinite result (TOP)")
       case Value(r: XMLRoot) => r
-      case Bottom => throw new EvaluationError("Expected single result root element, but got no result (BOTTOM)")
+      case Bottom => throw new ProcessingError("Expected single result root element, but got no result (BOTTOM)")
       case _ => throw new AssertionError(f"Expected single result root element, but got $result")
     }
   }

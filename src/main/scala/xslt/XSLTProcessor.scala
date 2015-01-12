@@ -1,6 +1,6 @@
 package xslt
 
-import util.EvaluationError
+import util.ProcessingError
 import xml._
 import xpath._
 
@@ -29,7 +29,7 @@ object XSLTProcessor {
   def chooseTemplate(sheet: XSLTStylesheet, node: XMLNode): XSLTTemplate = {
     val allMatching = sheet.matchableTemplates.filter { case (tmpl, _, _, _) => XPathMatcher.matches(node, tmpl)}
     if (allMatching.isEmpty)
-      throw new EvaluationError(f"Found no matching template for input node `${XMLNode.formatPath(node)}` [NOTE: this can only happen when builtin templates are disabled]")
+      throw new ProcessingError(f"Found no matching template for input node `${XMLNode.formatPath(node)}` [NOTE: this can only happen when builtin templates are disabled]")
     val (_, template, _, _) = allMatching.last // this one will have highest precedence and priority, because the templates are sorted
     template
   }
@@ -67,7 +67,7 @@ object XSLTProcessor {
         process(sheet, next, ctx) match {
           case Left(moreResultNodes) => (resultNodes ++ moreResultNodes, ctx)
           case Right((name, value)) =>
-            if (scopeVariables.contains(name)) throw new EvaluationError(f"Variable $name is defined multiple times in the same scope")
+            if (scopeVariables.contains(name)) throw new ProcessingError(f"Variable $name is defined multiple times in the same scope")
             scopeVariables += name
             (resultNodes, ctx.addVariable(name, value))
         }
@@ -112,7 +112,7 @@ object XSLTProcessor {
       case ApplyTemplatesInstruction(Some(expr), params) =>
         XPathProcessor.process(expr, context.toXPathContext) match {
           case NodeSetValue(nodes) => Left(transform(sheet, nodes.toList, context.variables, params.mapValues(v => XPathProcessor.process(v, context.toXPathContext))))
-          case value => throw new EvaluationError(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")
+          case value => throw new ProcessingError(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")
         }
       case CallTemplatesInstruction(name, params) =>
         // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)

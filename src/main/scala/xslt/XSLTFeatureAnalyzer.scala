@@ -282,7 +282,9 @@ object XSLTFeatureAnalyzer {
         analyzeXPathExpression(binExpr.lhs, f)
         analyzeXPathExpression(binExpr.rhs, f)
         binExpr match {
-          case PlusExpr(_, _) | MinusExpr(_, _) | MultiplyExpr(_, _) | DivExpr(_, _) | ModExpr(_, _) =>
+          case PlusExpr(_, _) | MinusExpr(_, _) =>
+            f += ArithmeticXPathExpressions
+          case MultiplyExpr(_, _) | DivExpr(_, _) | ModExpr(_, _) =>
             f += ArithmeticXPathExpressions
           case RelationalExpr(_, _, _) => ()
           case AndExpr(_, _) | OrExpr(_, _) => f += BooleanXPathExpressions

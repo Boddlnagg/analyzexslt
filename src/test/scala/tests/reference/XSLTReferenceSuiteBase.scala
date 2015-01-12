@@ -5,7 +5,7 @@ import javax.xml.transform.TransformerException
 import data.TestData
 import org.scalatest.FunSuite
 import tests.TransformHelper
-import util.EvaluationError
+import util.ProcessingError
 import xml.XMLParser
 
 import scala.xml.Elem
@@ -899,7 +899,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
-  def checkMatch(transformed: Either[T, EvaluationError], referenceResult: Either[Elem, TransformerException]) = {
+  def checkMatch(transformed: Either[T, ProcessingError], referenceResult: Either[Elem, TransformerException]) = {
     // if Java throws an exception, we should do the same (because of invalid input)
     (referenceResult, transformed) match {
       case (Left(ref), Left(trans)) => assertResult(XMLParser.parseDocument(ref)) { trans }
@@ -923,7 +923,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     val testResult = try {
       Left(transform(xslt, data))
     } catch {
-      case eScala: EvaluationError => Right(eScala)
+      case eScala: ProcessingError => Right(eScala)
     }
 
     println(f"Result: $testResult")

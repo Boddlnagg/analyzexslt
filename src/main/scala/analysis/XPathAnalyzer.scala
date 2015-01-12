@@ -1,7 +1,7 @@
 package analysis
 
 import analysis.domain.Domain
-import util.EvaluationError
+import util.ProcessingError
 import xpath._
 
 /** Class to analyze XPath expressions using abstract interpretation */
@@ -73,7 +73,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case NumLiteralExpr(num) => xpathDom.liftNumber(num)
       case VarReferenceExpr(name) => try ctx.variables(name) catch {
         // because of static scoping this is an error in the program (no matter what evaluation strategy is used)
-        case e: java.util.NoSuchElementException => throw new EvaluationError(f"Variable $name is not defined")
+        case e: java.util.NoSuchElementException => throw new ProcessingError(f"Variable $name is not defined")
       }
       case UnionExpr(lhs, rhs) => xpathDom.nodeSetUnion(process(lhs, ctx), process(rhs, ctx))
       case FunctionCallExpr(prefix, name, params) =>
@@ -121,7 +121,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         case ("string-length", _) => xpathDom.topNumber
         case ("normalize-space", _) => xpathDom.topString
         case (_, evaluatedParams) =>
-          throw new EvaluationError(f"Unknown function '$qname' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
+          throw new ProcessingError(f"Unknown function '$qname' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
       }
       case LocationPath(steps, isAbsolute) => xpathDom.toNodeSet(processLocationPathSingle(ctx.node, steps, isAbsolute))
       case PathExpr(filter, locationPath) =>

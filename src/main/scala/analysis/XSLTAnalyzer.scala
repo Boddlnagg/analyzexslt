@@ -2,7 +2,7 @@ package analysis
 
 import xpath.XPathExpr
 import xslt._
-import util.EvaluationError
+import util.ProcessingError
 import analysis.domain.Domain
 import scala.util.control.Breaks._
 
@@ -87,7 +87,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         process(sheet, next, ctx) match {
           case Left(moreResultNodes) => (xmlDom.concatLists(resultNodes, moreResultNodes), ctx)
           case Right((name, value)) =>
-            if (scopeVariables.contains(name)) throw new EvaluationError(f"Variable $name is defined multiple times in the same scope")
+            if (scopeVariables.contains(name)) throw new ProcessingError(f"Variable $name is defined multiple times in the same scope")
             scopeVariables += name
             (resultNodes, ctx.addVariable(name, value))
         }

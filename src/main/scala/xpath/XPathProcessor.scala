@@ -1,6 +1,6 @@
 package xpath
 
-import util.EvaluationError
+import util.ProcessingError
 import xml._
 
 import scala.collection.immutable.TreeSet
@@ -29,11 +29,11 @@ object XPathProcessor {
       case StringLiteralExpr(literal) => StringValue(literal)
       case NumLiteralExpr(num) => NumberValue(num)
       case VarReferenceExpr(name) => try ctx.variables(name) catch {
-        case e: java.util.NoSuchElementException => throw new EvaluationError(f"Variable $name is not defined")
+        case e: java.util.NoSuchElementException => throw new ProcessingError(f"Variable $name is not defined")
       }
       case UnionExpr(lhs, rhs) => (process(lhs, ctx), process(rhs, ctx)) match {
         case (NodeSetValue(left), NodeSetValue(right)) => NodeSetValue(left ++ right)
-        case (left, right) => throw new EvaluationError(f"Wrong types for union expression, must be node-sets ($left | $right)")
+        case (left, right) => throw new ProcessingError(f"Wrong types for union expression, must be node-sets ($left | $right)")
       }
       case FunctionCallExpr(prefix, name, params) =>
         // See XPath spec section 3.2
@@ -68,19 +68,19 @@ object XPathProcessor {
           }
           case ("concat", in@(first :: second :: rest)) => StringValue(in.map { // NOTE: takes 2 or more arguments
             case StringValue(str) => str
-            case _ => throw new EvaluationError("The function concat only accepts string parameters.")
+            case _ => throw new ProcessingError("The function concat only accepts string parameters.")
           }.mkString(""))
           case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.toList.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
           case ("string-length", Nil) => NumberValue(ctx.node.stringValue.length)
           case ("string-length", List(StringValue(str))) => NumberValue(str.length)
           case (_, evaluatedParams) =>
-            throw new EvaluationError(f"Unknown function '$qname' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
+            throw new ProcessingError(f"Unknown function '$qname' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
         }
           case LocationPath(steps, isAbsolute) => NodeSetValue(processLocationPathSingle(ctx.node, steps, isAbsolute))
       case PathExpr(filter, locationPath) =>
         process(filter, ctx) match {
           case nodes@NodeSetValue(_) => NodeSetValue(processLocationPath(nodes.nodes, locationPath.steps, locationPath.isAbsolute))
-          case value => throw new EvaluationError(f"Filter expression must return a node-set (returned: $value)")
+          case value => throw new ProcessingError(f"Filter expression must return a node-set (returned: $value)")
         }
       case FilterExpr(inner, predicates) =>
         if (predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported")
