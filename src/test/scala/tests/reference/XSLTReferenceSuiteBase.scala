@@ -899,28 +899,35 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
-  def checkMatch(transformed: T, referenceResult: Elem) =
-    assertResult(XMLParser.parseDocument(referenceResult)) { transformed }
+  def checkMatch(transformed: Either[T, EvaluationError], referenceResult: Either[Elem, TransformerException]) = {
+    // if Java throws an exception, we should do the same (because of invalid input)
+    (referenceResult, transformed) match {
+      case (Left(ref), Left(trans)) => assertResult(XMLParser.parseDocument(ref)) { trans }
+      case (Right(eScala), Right(eJava)) =>
+        println(f"Scala error: $eScala")
+        println(f"Java error: $eJava")
+      case _ => assertResult(referenceResult) { transformed } // one side threw an error while the other didn't
+    }
+  }
 
   def transform(xslt: Elem, data: Elem): T
 
   def assertTransformMatches(xslt: Elem, data: Elem) = {
-    try {
-      val referenceResult = TransformHelper.transformJava(xslt, data)
-      println(referenceResult)
-      checkMatch(transform(xslt, data), referenceResult)
+    val referenceResult = try {
+      Left(TransformHelper.transformJava(xslt, data))
     } catch {
-      case eJava: TransformerException =>
-        // if Java throws an exception, we should do the same (because of invalid input)
-        try {
-          val result = transform(xslt, data)
-          println(f"Result: $result")
-          assert(false, f"Expected EvaluationError, Java error: $eJava")
-        } catch {
-          case eScala: EvaluationError =>
-            println(f"Scala error: $eScala")
-            println(f"Java error: $eJava")
-        }
+      case eJava: TransformerException => Right(eJava)
     }
+    println(referenceResult)
+
+    val testResult = try {
+      Left(transform(xslt, data))
+    } catch {
+      case eScala: EvaluationError => Right(eScala)
+    }
+
+    println(f"Result: $testResult")
+
+    checkMatch(testResult, referenceResult)
   }
 }

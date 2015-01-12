@@ -8,6 +8,9 @@ import analysis.domain.powerset.{TypedXPathValue, TypedPowersetXPathDomain}
 
 protected object OuterXPATH extends TypedPowersetXPathDomain[L]
 
+/** This glues together the ZipperXMLDomain and the TypedPowersetXPathDomain and provides
+  * the remaining method implementations.
+  */
 object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
   type V = TypedXPathValue[L]
 

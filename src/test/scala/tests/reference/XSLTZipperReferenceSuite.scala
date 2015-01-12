@@ -1,5 +1,7 @@
 package tests.reference
 
+import javax.xml.transform.TransformerException
+
 import analysis.domain.XMLParser
 import analysis.domain.zipper.ZipperDomain
 import analysis.domain.zipper.ZipperXMLDomain.N
@@ -13,17 +15,24 @@ class XSLTZipperReferenceSuite extends XSLTReferenceSuiteBase[N] {
 
   override def transform(xslt: Elem, data: Elem): N = {
     val parsedData = parser.parseDocument(data)
-    val result = TransformHelper.transformAbstract(xslt, parsedData, ZipperDomain)
-    if (ZipperDomain.xmlDom.lessThanOrEqual(result, ZipperDomain.xmlDom.bottom)) {
-      throw new EvaluationError("BOTTOM was returned.") // the test suite expects an EvaluationError for any invalid input
-    } else {
-      result
-    }
+    TransformHelper.transformAbstract(xslt, parsedData, ZipperDomain)
   }
 
-  override def checkMatch(transformed: N, referenceResult: Elem) = {
-    val parsedReference = parser.parseDocument(referenceResult)
-    assert(ZipperDomain.xmlDom.lessThanOrEqual(parsedReference, transformed), f"Result: ${transformed._1}; Expected: ${parsedReference._1}")
-    println(transformed._1)
+  override def checkMatch(transformed: Either[N, EvaluationError], referenceResult: Either[Elem, TransformerException]) = {
+    // use BOTTOM instead of exceptions
+    val parsedReference: N = referenceResult match {
+      case Left(res) => parser.parseDocument(res)
+      case Right(_) => ZipperDomain.xmlDom.bottom
+    }
+
+    val transformedResult: N = transformed match {
+      case Left(res) => res
+      case Right(res) => ZipperDomain.xmlDom.bottom
+    }
+
+    // this checks only that the actual result is a superset of the expected reference result, not an exact match
+    // because our domain is too coarse to guarantee that
+    assert(ZipperDomain.xmlDom.lessThanOrEqual(parsedReference, transformedResult), f"Result: ${transformedResult._1}; Expected: ${parsedReference._1}")
+    println(transformedResult._1)
   }
 }

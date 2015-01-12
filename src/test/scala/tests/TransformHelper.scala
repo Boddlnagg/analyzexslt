@@ -15,11 +15,19 @@ import xslt.{XSLTProcessor, XSLTParser}
 import scala.xml.{XML, Elem}
 
 object TransformHelper {
+  /** This is a helper function for transforming a concrete document
+    * with our implementation of a concrete interpreter.
+    * The abstract interpreter is not involed.
+    */
   def transformScala(xslt: Elem, data: Elem): XMLRoot = {
     val stylesheet = XSLTParser.parseStylesheet(xslt)
     XSLTProcessor.transform(stylesheet, XMLParser.parseDocument(data))
   }
 
+  /** This is a helper function for transforming a concrete document
+    * with the Java built-in transformer.
+    * It is used to generate reference results for tests.
+    */
   def transformJava(xslt: Elem, data: Elem): Elem = {
     // this is a wrapper around the javax.xml.transform interface
     val xmlResultResource = new StringWriter()
@@ -35,6 +43,9 @@ object TransformHelper {
     XML.loadString(xmlResultResource.getBuffer.toString)
   }
 
+  /** This is a helper function for transforming a concrete document
+    * with the abstract interpreter, using the powerset domain.
+    */
   def transformAbstractPowerset(xslt: Elem, data: Elem): XMLRoot = {
     val stylesheet = XSLTParser.parseStylesheet(xslt)
     val analyzer = new XSLTAnalyzer(PowersetDomain)
@@ -49,6 +60,9 @@ object TransformHelper {
     }
   }
 
+  /** This is a helper function for transforming a concrete document
+    * with the abstract interpreter, using the typed powerset domain.
+    */
   def transformAbstractTypedPowerset(xslt: Elem, data: Elem): XMLRoot = {
     val stylesheet = XSLTParser.parseStylesheet(xslt)
     val analyzer = new XSLTAnalyzer(TypedPowersetDomain)
@@ -63,6 +77,9 @@ object TransformHelper {
     }
   }
 
+  /** This is a helper function for transforming a concrete document
+    * with the abstract interpreter, using the concrete domain.
+    */
   def transformAbstractConcrete(xslt: Elem, data: Elem): XMLRoot = {
     val stylesheet = XSLTParser.parseStylesheet(xslt)
     val analyzer = new XSLTAnalyzer(ConcreteDomain)
@@ -77,6 +94,10 @@ object TransformHelper {
     }
   }
 
+  /** This is a helper function for transforming a concrete document
+    * with the abstract interpreter, using a given domain.
+    * The result is returned in the domain representation.
+    */
   def transformAbstract[N, L, V](xslt: Elem, data: N, domain: Domain[N, L, V], disableBuiltinTemplates: Boolean = false): N = {
     val stylesheet = XSLTParser.parseStylesheet(xslt, disableBuiltinTemplates)
     val analyzer = new XSLTAnalyzer(domain)
