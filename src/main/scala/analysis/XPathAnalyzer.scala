@@ -10,131 +10,129 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   val xpathDom = dom.xpathDom
 
   /** Evaluates a given XPath expression using a specified abstract context and returns the abstract result. */
-  def evaluate(expr: XPathExpr, ctx: AbstractXPathContext[N, L, V]): V = {
-    expr match {
-      case PlusExpr(lhs, rhs) => xpathDom.add(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case MinusExpr(lhs, rhs) => xpathDom.subtract(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case MultiplyExpr(lhs, rhs) => xpathDom.multiply(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case DivExpr(lhs, rhs) => xpathDom.divide(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case ModExpr(lhs, rhs) => xpathDom.modulo(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case RelationalExpr(lhs, rhs, relOp) => xpathDom.compareRelational(evaluate(lhs, ctx), evaluate(rhs, ctx), relOp)
-      case AndExpr(lhs, rhs) =>
-        val left = xpathDom.toBooleanValue(evaluate(lhs, ctx))
-        val leftMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), left)
-        val leftMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), left)
-        if (!leftMaybeTrue) {
-          // Spec section 3.4: "The right operand is not evaluated if the left operand evaluates to false." (short-circuit evaluation)
-          if (!leftMaybeFalse)
-            return xpathDom.bottom
-          else
-            return xpathDom.liftBoolean(false)
-        }
+  def evaluate(expr: XPathExpr, ctx: AbstractXPathContext[N, L, V]): V = expr match {
+    case PlusExpr(lhs, rhs) => xpathDom.add(evaluate(lhs, ctx), evaluate(rhs, ctx))
+    case MinusExpr(lhs, rhs) => xpathDom.subtract(evaluate(lhs, ctx), evaluate(rhs, ctx))
+    case MultiplyExpr(lhs, rhs) => xpathDom.multiply(evaluate(lhs, ctx), evaluate(rhs, ctx))
+    case DivExpr(lhs, rhs) => xpathDom.divide(evaluate(lhs, ctx), evaluate(rhs, ctx))
+    case ModExpr(lhs, rhs) => xpathDom.modulo(evaluate(lhs, ctx), evaluate(rhs, ctx))
+    case RelationalExpr(lhs, rhs, relOp) => xpathDom.compareRelational(evaluate(lhs, ctx), evaluate(rhs, ctx), relOp)
+    case AndExpr(lhs, rhs) =>
+      val left = xpathDom.toBooleanValue(evaluate(lhs, ctx))
+      val leftMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), left)
+      val leftMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), left)
+      if (!leftMaybeTrue) {
+        // Spec section 3.4: "The right operand is not evaluated if the left operand evaluates to false." (short-circuit evaluation)
+        if (!leftMaybeFalse)
+          return xpathDom.bottom
+        else
+          return xpathDom.liftBoolean(false)
+      }
 
-        val right = xpathDom.toBooleanValue(evaluate(rhs, ctx))
-        val rightMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), right)
-        val rightMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), right)
-        if (!rightMaybeTrue)
-          if (!rightMaybeFalse && !leftMaybeFalse)
-            return xpathDom.bottom
-          else
-            return xpathDom.liftBoolean(false)
-
-        if (!leftMaybeFalse && !rightMaybeFalse)
-          return xpathDom.liftBoolean(true)
-
-        xpathDom.join(xpathDom.liftBoolean(true), xpathDom.liftBoolean(false))
-      case OrExpr(lhs, rhs) =>
-        val left = xpathDom.toBooleanValue(evaluate(lhs, ctx))
-        val leftMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), left)
-        val leftMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), left)
-        if (!leftMaybeFalse) {
-          // Spec section 3.4: "The right operand is not evaluated if the left operand evaluates to true." (short-circuit evaluation)
-          if (!leftMaybeTrue)
-            return xpathDom.bottom
-          else
-            return xpathDom.liftBoolean(true)
-        }
-
-        val right = xpathDom.toBooleanValue(evaluate(rhs, ctx))
-        val rightMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), right)
-        val rightMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), right)
-        if (!rightMaybeFalse)
-          if (!rightMaybeTrue && !leftMaybeTrue)
-            return xpathDom.bottom
-          else
-            return xpathDom.liftBoolean(true)
-
-        if (!leftMaybeTrue && !rightMaybeTrue)
+      val right = xpathDom.toBooleanValue(evaluate(rhs, ctx))
+      val rightMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), right)
+      val rightMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), right)
+      if (!rightMaybeTrue)
+        if (!rightMaybeFalse && !leftMaybeFalse)
+          return xpathDom.bottom
+        else
           return xpathDom.liftBoolean(false)
 
-        xpathDom.join(xpathDom.liftBoolean(true), xpathDom.liftBoolean(false))
-      case UnaryMinusExpr(inner) => xpathDom.negateNum(evaluate(inner, ctx))
-      case StringLiteralExpr(literal) => xpathDom.liftString(literal)
-      case NumLiteralExpr(num) => xpathDom.liftNumber(num)
-      case VarReferenceExpr(name) => try ctx.variables(name) catch {
-        // because of static scoping this is an error in the program (no matter what evaluation strategy is used)
-        case e: java.util.NoSuchElementException => throw new ProcessingError(f"Variable $name is not defined")
-      }
-      case UnionExpr(lhs, rhs) => xpathDom.nodeSetUnion(evaluate(lhs, ctx), evaluate(rhs, ctx))
-      case FunctionCallExpr(prefix, name, params) =>
-        val qname = prefix match {
-          case Some(pre) => pre+":"+name
-          case None => name
-        }
-        (qname, params.map(p => evaluate(p, ctx))) match {
-        case ("true", Nil) => xpathDom.liftBoolean(true)
-        case ("false", Nil) => xpathDom.liftBoolean(false)
-        case ("not", List(arg)) =>
-          val bool = xpathDom.toBooleanValue(arg)
-          val maybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), bool)
-          val maybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), bool)
-          (maybeTrue, maybeFalse) match {
-            case (true, true) => xpathDom.join(xpathDom.liftBoolean(true), xpathDom.liftBoolean(false))
-            case (true, false) => xpathDom.liftBoolean(false)
-            case (false, true) => xpathDom.liftBoolean(true)
-            case (false, false) => xpathDom.bottom
-          }
-        case ("string", List(arg)) => xpathDom.toStringValue(arg)
-        case ("boolean", List(arg)) => xpathDom.toBooleanValue(arg)
-        case ("number", List(arg)) => xpathDom.toNumberValue(arg)
-        case ("last", Nil) => ctx.size
-        case ("position", Nil) => ctx.position
-        case ("count", List(arg)) =>
-          val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
-          xmlDom.getNodeListSize(nodeSets)
+      if (!leftMaybeFalse && !rightMaybeFalse)
+        return xpathDom.liftBoolean(true)
 
-        case ("name"|"local-name", Nil) => xmlDom.getNodeName(ctx.node)
-        case ("name"|"local-name", List(arg)) =>
-          val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
-          val result = xmlDom.getNodeName(xmlDom.getFirst(nodeSets))
-          if (xmlDom.lessThanOrEqualLists(xmlDom.createEmptyList(), nodeSets)) // may the set be empty?
-            xpathDom.join(result, xpathDom.liftString("")) // ... then include the empty string in the result
-          else
-            result
-        case ("concat", list@(first :: second :: rest)) => list.reduce(xpathDom.concatStrings) // NOTE: takes 2 or more arguments
-          // NOTE: the following functions are more or less stubbed out; implementing them correctly would
-          // require adding more methods to the XPath domain interface.
-        case ("sum", List(arg)) =>
-          val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
-          if (xmlDom.lessThanOrEqualLists(nodeSets, xmlDom.bottomList)) xpathDom.bottom // return bottom if the input is definitely not a node-set
-          else xpathDom.topNumber
-        case ("string-length", _) => xpathDom.topNumber
-        case ("normalize-space", _) => xpathDom.topString
-        case (_, evaluatedParams) =>
-          throw new ProcessingError(f"Unknown function '$qname' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
+      xpathDom.join(xpathDom.liftBoolean(true), xpathDom.liftBoolean(false))
+    case OrExpr(lhs, rhs) =>
+      val left = xpathDom.toBooleanValue(evaluate(lhs, ctx))
+      val leftMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), left)
+      val leftMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), left)
+      if (!leftMaybeFalse) {
+        // Spec section 3.4: "The right operand is not evaluated if the left operand evaluates to true." (short-circuit evaluation)
+        if (!leftMaybeTrue)
+          return xpathDom.bottom
+        else
+          return xpathDom.liftBoolean(true)
       }
-      case LocationPath(steps, isAbsolute) => xpathDom.toNodeSet(evaluateLocationPath(ctx.node, steps, isAbsolute))
-      case PathExpr(filter, locationPath) =>
-        val (startNodeSet, _) = xpathDom.matchNodeSetValues(evaluate(filter, ctx))
-        xpathDom.toNodeSet(
-          xmlDom.flatMapWithIndex(startNodeSet, {
-            case (n, _) => evaluateLocationPath(n, locationPath.steps, locationPath.isAbsolute)
-          })
-        )
-      case FilterExpr(inner, predicates) =>
-        if (predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported")
-        evaluate(inner, ctx)
+
+      val right = xpathDom.toBooleanValue(evaluate(rhs, ctx))
+      val rightMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), right)
+      val rightMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), right)
+      if (!rightMaybeFalse)
+        if (!rightMaybeTrue && !leftMaybeTrue)
+          return xpathDom.bottom
+        else
+          return xpathDom.liftBoolean(true)
+
+      if (!leftMaybeTrue && !rightMaybeTrue)
+        return xpathDom.liftBoolean(false)
+
+      xpathDom.join(xpathDom.liftBoolean(true), xpathDom.liftBoolean(false))
+    case UnaryMinusExpr(inner) => xpathDom.negateNum(evaluate(inner, ctx))
+    case StringLiteralExpr(literal) => xpathDom.liftString(literal)
+    case NumLiteralExpr(num) => xpathDom.liftNumber(num)
+    case VarReferenceExpr(name) => try ctx.variables(name) catch {
+      // because of static scoping this is an error in the program (no matter what evaluation strategy is used)
+      case e: java.util.NoSuchElementException => throw new ProcessingError(f"Variable $name is not defined")
     }
+    case UnionExpr(lhs, rhs) => xpathDom.nodeSetUnion(evaluate(lhs, ctx), evaluate(rhs, ctx))
+    case FunctionCallExpr(prefix, name, params) =>
+      val qname = prefix match {
+        case Some(pre) => pre+":"+name
+        case None => name
+      }
+      (qname, params.map(p => evaluate(p, ctx))) match {
+      case ("true", Nil) => xpathDom.liftBoolean(true)
+      case ("false", Nil) => xpathDom.liftBoolean(false)
+      case ("not", List(arg)) =>
+        val bool = xpathDom.toBooleanValue(arg)
+        val maybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), bool)
+        val maybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), bool)
+        (maybeTrue, maybeFalse) match {
+          case (true, true) => xpathDom.join(xpathDom.liftBoolean(true), xpathDom.liftBoolean(false))
+          case (true, false) => xpathDom.liftBoolean(false)
+          case (false, true) => xpathDom.liftBoolean(true)
+          case (false, false) => xpathDom.bottom
+        }
+      case ("string", List(arg)) => xpathDom.toStringValue(arg)
+      case ("boolean", List(arg)) => xpathDom.toBooleanValue(arg)
+      case ("number", List(arg)) => xpathDom.toNumberValue(arg)
+      case ("last", Nil) => ctx.size
+      case ("position", Nil) => ctx.position
+      case ("count", List(arg)) =>
+        val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
+        xmlDom.getNodeListSize(nodeSets)
+
+      case ("name"|"local-name", Nil) => xmlDom.getNodeName(ctx.node)
+      case ("name"|"local-name", List(arg)) =>
+        val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
+        val result = xmlDom.getNodeName(xmlDom.getFirst(nodeSets))
+        if (xmlDom.lessThanOrEqualLists(xmlDom.createEmptyList(), nodeSets)) // may the set be empty?
+          xpathDom.join(result, xpathDom.liftString("")) // ... then include the empty string in the result
+        else
+          result
+      case ("concat", list@(first :: second :: rest)) => list.reduce(xpathDom.concatStrings) // NOTE: takes 2 or more arguments
+        // NOTE: the following functions are more or less stubbed out; implementing them correctly would
+        // require adding more methods to the XPath domain interface.
+      case ("sum", List(arg)) =>
+        val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
+        if (xmlDom.lessThanOrEqualLists(nodeSets, xmlDom.bottomList)) xpathDom.bottom // return bottom if the input is definitely not a node-set
+        else xpathDom.topNumber
+      case ("string-length", _) => xpathDom.topNumber
+      case ("normalize-space", _) => xpathDom.topString
+      case (_, evaluatedParams) =>
+        throw new ProcessingError(f"Unknown function '$qname' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
+    }
+    case LocationPath(steps, isAbsolute) => xpathDom.toNodeSet(evaluateLocationPath(ctx.node, steps, isAbsolute))
+    case PathExpr(filter, locationPath) =>
+      val (startNodeSet, _) = xpathDom.matchNodeSetValues(evaluate(filter, ctx))
+      xpathDom.toNodeSet(
+        xmlDom.flatMapWithIndex(startNodeSet, {
+          case (n, _) => evaluateLocationPath(n, locationPath.steps, locationPath.isAbsolute)
+        })
+      )
+    case FilterExpr(inner, predicates) =>
+      if (predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported")
+      evaluate(inner, ctx)
   }
 
   /** Evaluates the steps of a location path for a single starting node.

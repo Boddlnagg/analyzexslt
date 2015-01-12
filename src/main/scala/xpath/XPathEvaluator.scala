@@ -8,88 +8,86 @@ import scala.collection.immutable.TreeSet
 /** Object to evaluate XPath expressions. */
 object XPathEvaluator {
   /** Evaluates a given XPath expression using a specified context and returns the result. */
-  def evaluate(expr: XPathExpr, ctx: XPathContext): XPathValue = {
-    expr match {
-      case PlusExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value + evaluate(rhs, ctx).toNumberValue.value)
-      case MinusExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value - evaluate(rhs, ctx).toNumberValue.value)
-      case MultiplyExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value * evaluate(rhs, ctx).toNumberValue.value)
-      case DivExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value / evaluate(rhs, ctx).toNumberValue.value)
-      case ModExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value % evaluate(rhs, ctx).toNumberValue.value)
-      case RelationalExpr(lhs, rhs, relOp) =>
-        // evaluation is specified in the XPath spec section 3.4
-        val lhsVal = evaluate(lhs, ctx)
-        val rhsVal = evaluate(rhs, ctx)
-        BooleanValue(lhsVal.compare(rhsVal, relOp))
-      // XPath spec section 3.4, shortcut evaluation!
-      case AndExpr(lhs, rhs) => BooleanValue(evaluate(lhs, ctx).toBooleanValue.value && evaluate(rhs, ctx).toBooleanValue.value)
-      // XPath spec section 3.4, shortcut evaluation!
-      case OrExpr(lhs, rhs) => BooleanValue(evaluate(lhs, ctx).toBooleanValue.value || evaluate(rhs, ctx).toBooleanValue.value)
+  def evaluate(expr: XPathExpr, ctx: XPathContext): XPathValue = expr match {
+    case PlusExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value + evaluate(rhs, ctx).toNumberValue.value)
+    case MinusExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value - evaluate(rhs, ctx).toNumberValue.value)
+    case MultiplyExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value * evaluate(rhs, ctx).toNumberValue.value)
+    case DivExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value / evaluate(rhs, ctx).toNumberValue.value)
+    case ModExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value % evaluate(rhs, ctx).toNumberValue.value)
+    case RelationalExpr(lhs, rhs, relOp) =>
+      // evaluation is specified in the XPath spec section 3.4
+      val lhsVal = evaluate(lhs, ctx)
+      val rhsVal = evaluate(rhs, ctx)
+      BooleanValue(lhsVal.compare(rhsVal, relOp))
+    // XPath spec section 3.4, shortcut evaluation!
+    case AndExpr(lhs, rhs) => BooleanValue(evaluate(lhs, ctx).toBooleanValue.value && evaluate(rhs, ctx).toBooleanValue.value)
+    // XPath spec section 3.4, shortcut evaluation!
+    case OrExpr(lhs, rhs) => BooleanValue(evaluate(lhs, ctx).toBooleanValue.value || evaluate(rhs, ctx).toBooleanValue.value)
 
-      case UnaryMinusExpr(inner) => NumberValue(- evaluate(inner, ctx).toNumberValue.value)
-      case StringLiteralExpr(literal) => StringValue(literal)
-      case NumLiteralExpr(num) => NumberValue(num)
-      case VarReferenceExpr(name) => try ctx.variables(name) catch {
-        case e: java.util.NoSuchElementException => throw new ProcessingError(f"Variable $name is not defined")
+    case UnaryMinusExpr(inner) => NumberValue(- evaluate(inner, ctx).toNumberValue.value)
+    case StringLiteralExpr(literal) => StringValue(literal)
+    case NumLiteralExpr(num) => NumberValue(num)
+    case VarReferenceExpr(name) => try ctx.variables(name) catch {
+      case e: java.util.NoSuchElementException => throw new ProcessingError(f"Variable $name is not defined")
+    }
+    case UnionExpr(lhs, rhs) => (evaluate(lhs, ctx), evaluate(rhs, ctx)) match {
+      case (NodeSetValue(left), NodeSetValue(right)) => NodeSetValue(left ++ right)
+      case (left, right) => throw new ProcessingError(f"Wrong types for union expression, must be node-sets ($left | $right)")
+    }
+    case FunctionCallExpr(prefix, name, params) =>
+      // See XPath spec section 3.2
+      val qname = prefix match {
+        case Some(pre) => pre+":"+name
+        case None => name
       }
-      case UnionExpr(lhs, rhs) => (evaluate(lhs, ctx), evaluate(rhs, ctx)) match {
-        case (NodeSetValue(left), NodeSetValue(right)) => NodeSetValue(left ++ right)
-        case (left, right) => throw new ProcessingError(f"Wrong types for union expression, must be node-sets ($left | $right)")
-      }
-      case FunctionCallExpr(prefix, name, params) =>
-        // See XPath spec section 3.2
-        val qname = prefix match {
-          case Some(pre) => pre+":"+name
-          case None => name
+      (qname, params.map(p => evaluate(p, ctx))) match {
+        // arguments are casted to string, number, boolean as required, but if a function expects a node-set, it must be a node-set
+        case ("true", Nil) => BooleanValue(true)
+        case ("false", Nil) => BooleanValue(false)
+        case ("not", List(arg)) => BooleanValue(!arg.toBooleanValue.value)
+        case ("string", List(arg)) => arg.toStringValue
+        case ("boolean", List(arg)) => arg.toBooleanValue
+        case ("number", List(arg)) => arg.toNumberValue
+        case ("last", Nil) => NumberValue(ctx.size)
+        case ("position", Nil) => NumberValue(ctx.position)
+        case ("count", List(NodeSetValue(nodes))) => NumberValue(nodes.size)
+        case ("name"|"local-name", Nil) => ctx.node match {
+          // get name of current node (or empty string)
+          case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
+          case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
+          case _ => StringValue("")
         }
-        (qname, params.map(p => evaluate(p, ctx))) match {
-          // arguments are casted to string, number, boolean as required, but if a function expects a node-set, it must be a node-set
-          case ("true", Nil) => BooleanValue(true)
-          case ("false", Nil) => BooleanValue(false)
-          case ("not", List(arg)) => BooleanValue(!arg.toBooleanValue.value)
-          case ("string", List(arg)) => arg.toStringValue
-          case ("boolean", List(arg)) => arg.toBooleanValue
-          case ("number", List(arg)) => arg.toNumberValue
-          case ("last", Nil) => NumberValue(ctx.size)
-          case ("position", Nil) => NumberValue(ctx.position)
-          case ("count", List(NodeSetValue(nodes))) => NumberValue(nodes.size)
-          case ("name"|"local-name", Nil) => ctx.node match {
-            // get name of current node (or empty string)
+        case ("name"|"local-name", List(NodeSetValue(nodes))) => nodes.headOption match {
+          case None => StringValue("") // empty list
+          case Some(n) => n match {
             case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
             case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
             case _ => StringValue("")
           }
-          case ("name"|"local-name", List(NodeSetValue(nodes))) => nodes.headOption match {
-            case None => StringValue("") // empty list
-            case Some(n) => n match {
-              case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
-              case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
-              case _ => StringValue("")
-            }
+        }
+        case ("concat", in@(first :: second :: rest)) => StringValue(in.map { // NOTE: takes 2 or more arguments
+          case StringValue(str) => str
+          case _ => throw new ProcessingError("The function concat only accepts string parameters.")
+        }.mkString(""))
+        case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.toList.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
+        case ("string-length", Nil) => NumberValue(ctx.node.stringValue.length)
+        case ("string-length", List(StringValue(str))) => NumberValue(str.length)
+        case (_, evaluatedParams) =>
+          throw new ProcessingError(f"Unknown function '$qname' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
+      }
+        case LocationPath(steps, isAbsolute) => NodeSetValue(evaluateLocationPath(ctx.node, steps, isAbsolute))
+    case PathExpr(filter, locationPath) =>
+      evaluate(filter, ctx) match {
+        case startNodeSet@NodeSetValue(_) => NodeSetValue(
+          startNodeSet.nodes.flatMap {
+            n => evaluateLocationPath(n, locationPath.steps, locationPath.isAbsolute)
           }
-          case ("concat", in@(first :: second :: rest)) => StringValue(in.map { // NOTE: takes 2 or more arguments
-            case StringValue(str) => str
-            case _ => throw new ProcessingError("The function concat only accepts string parameters.")
-          }.mkString(""))
-          case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.toList.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
-          case ("string-length", Nil) => NumberValue(ctx.node.stringValue.length)
-          case ("string-length", List(StringValue(str))) => NumberValue(str.length)
-          case (_, evaluatedParams) =>
-            throw new ProcessingError(f"Unknown function '$qname' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
-        }
-          case LocationPath(steps, isAbsolute) => NodeSetValue(evaluateLocationPath(ctx.node, steps, isAbsolute))
-      case PathExpr(filter, locationPath) =>
-        evaluate(filter, ctx) match {
-          case startNodeSet@NodeSetValue(_) => NodeSetValue(
-            startNodeSet.nodes.flatMap {
-              n => evaluateLocationPath(n, locationPath.steps, locationPath.isAbsolute)
-            }
-          )
-          case value => throw new ProcessingError(f"Filter expression must return a node-set (returned: $value)")
-        }
-      case FilterExpr(inner, predicates) =>
-        if (predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported")
-        evaluate(inner, ctx)
-    }
+        )
+        case value => throw new ProcessingError(f"Filter expression must return a node-set (returned: $value)")
+      }
+    case FilterExpr(inner, predicates) =>
+      if (predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported")
+      evaluate(inner, ctx)
   }
 
   /** Processes the steps of a location path for a single starting node.
