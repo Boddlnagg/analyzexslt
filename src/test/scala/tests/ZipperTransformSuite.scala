@@ -1,4 +1,4 @@
-package evaluation
+package tests
 
 import analysis.domain.zipper.ZipperXMLDomain._
 import analysis.domain.zipper._

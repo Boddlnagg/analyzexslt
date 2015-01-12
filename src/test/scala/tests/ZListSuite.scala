@@ -1,4 +1,4 @@
-package evaluation
+package tests
 
 import analysis.domain.zipper._
 import org.scalatest.FunSuite

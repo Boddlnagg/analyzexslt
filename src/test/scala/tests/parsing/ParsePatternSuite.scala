@@ -1,4 +1,4 @@
-package parsing
+package tests.parsing
 
 import org.scalatest.FunSuite
 import xpath._

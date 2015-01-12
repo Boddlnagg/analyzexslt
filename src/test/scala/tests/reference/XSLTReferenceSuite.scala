@@ -1,7 +1,7 @@
-package evaluation
+package tests.reference
 
-import xml.{XMLParser, XMLRoot}
-import xslt.{XSLTProcessor, XSLTParser}
+import tests.TransformHelper
+import xml.XMLRoot
 
 import scala.xml.Elem
 

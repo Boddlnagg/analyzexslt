@@ -1,4 +1,4 @@
-package evaluation
+package tests
 
 import java.io.{StringReader, StringWriter}
 import javax.xml.transform.stream.{StreamResult, StreamSource}
@@ -13,7 +13,6 @@ import xml.{XMLParser, XMLRoot}
 import xslt.{XSLTProcessor, XSLTParser}
 
 import scala.xml.{XML, Elem}
-
 
 object TransformHelper {
   def transformScala(xslt: Elem, data: Elem): XMLRoot = {

@@ -1,4 +1,4 @@
-package parsing
+package tests.parsing
 
 import data.TestData
 import org.scalatest.FunSuite

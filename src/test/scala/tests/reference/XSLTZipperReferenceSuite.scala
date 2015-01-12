@@ -1,9 +1,11 @@
-package evaluation
+package tests.reference
 
 import analysis.domain.XMLParser
 import analysis.domain.zipper.ZipperDomain
 import analysis.domain.zipper.ZipperXMLDomain.N
+import tests.TransformHelper
 import util.EvaluationError
+
 import scala.xml.Elem
 
 class XSLTZipperReferenceSuite extends XSLTReferenceSuiteBase[N] {

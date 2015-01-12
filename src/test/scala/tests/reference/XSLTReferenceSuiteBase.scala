@@ -1,9 +1,10 @@
-package evaluation
+package tests.reference
 
 import javax.xml.transform.TransformerException
 
 import data.TestData
 import org.scalatest.FunSuite
+import tests.TransformHelper
 import util.EvaluationError
 import xml.XMLParser
 

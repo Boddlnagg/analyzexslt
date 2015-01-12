@@ -1,4 +1,4 @@
-package evaluation
+package tests
 
 import analysis.domain.powerset.PowersetDomain
 import analysis.{AbstractXPathContext, XPathAnalyzer}

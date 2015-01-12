@@ -1,4 +1,4 @@
-package evaluation
+package tests
 
 import org.scalatest.FunSuite
 import xml._

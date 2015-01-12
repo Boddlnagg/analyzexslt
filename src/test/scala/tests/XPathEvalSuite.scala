@@ -1,4 +1,4 @@
-package evaluation
+package tests
 
 import xml.XMLNode
 import xpath._

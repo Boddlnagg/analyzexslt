@@ -1,4 +1,4 @@
-package evaluation
+package tests
 
 import analysis._
 import analysis.domain.zipper.Path.PathSetLattice
