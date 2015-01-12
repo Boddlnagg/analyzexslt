@@ -46,7 +46,7 @@ object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
     // Turn a node list into a set by sorting nodes in document order and removing duplicate nodes
     override def nodeListToSet(list: L): L = list match {
       case Left(_) => Left(None) // size might be different because duplicates are removed
-      case Right(s) => Right(s.map(nodes => (TreeSet[XMLNode]() ++ nodes).toList))
+      case Right(s) => Right(s.map(nodes => nodes.to[TreeSet].toList)) // convert to ordered set and back to list
     }
   }
 }

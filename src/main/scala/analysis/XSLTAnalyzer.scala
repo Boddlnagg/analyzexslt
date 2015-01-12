@@ -43,7 +43,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     */
   private def instantiateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: AbstractXSLTContext[N, L, V], params: Map[String, V]): L = {
     val acceptedParams = params.filter { case (key, _) => tmpl.defaultParams.contains(key) }
-    val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key)}.mapValues(v => xpathAnalyzer.process(v, xsltToXPathContext(context)))
+    val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key)}.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))
     // the context for the newly instantiated template contains only global variables and parameters, no local parameters
     // (static scoping and no nested template definitions); global variables are not supported in this implementation
     process(sheet, tmpl.content, context.replaceVariables(Map()).addVariables(remainingDefaultParams ++ acceptedParams))
@@ -119,18 +119,18 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val textResult = xmlDom.getConcatenatedTextNodeValues(process(sheet, value, context))
         Left(xmlDom.createSingletonList(xmlDom.createAttribute(attribute, textResult)))
       case ApplyTemplatesInstruction(None, params) =>
-        Left(transform(sheet, xmlDom.getChildren(context.node), context.variables, params.mapValues(v => xpathAnalyzer.process(v, xsltToXPathContext(context)))))
+        Left(transform(sheet, xmlDom.getChildren(context.node), context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case ApplyTemplatesInstruction(Some(expr), params) =>
-        val result = xpathAnalyzer.process(expr, xsltToXPathContext(context))
+        val result = xpathAnalyzer.evaluate(expr, xsltToXPathContext(context))
         val (extracted, _) = xpathDom.matchNodeSetValues(result)
-        Left(transform(sheet, extracted, context.variables, params.mapValues(v => xpathAnalyzer.process(v, xsltToXPathContext(context)))))
+        Left(transform(sheet, extracted, context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case CallTemplatesInstruction(name, params) =>
         // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)
-        Left(instantiateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => xpathAnalyzer.process(v, xsltToXPathContext(context)))))
+        Left(instantiateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case VariableDefinitionInstruction(name, expr) =>
-        Right(name, xpathAnalyzer.process(expr, xsltToXPathContext(context)))
+        Right(name, xpathAnalyzer.evaluate(expr, xsltToXPathContext(context)))
       case CopyInstruction(select) =>
-        val result = xpathAnalyzer.process(select, xsltToXPathContext(context))
+        val result = xpathAnalyzer.evaluate(select, xsltToXPathContext(context))
         val (nodeSets, rest) = xpathDom.matchNodeSetValues(result)
         val nodeSetsOutput = xmlDom.copyToOutput(nodeSets)
         val restAsString = xpathDom.toStringValue(rest)
@@ -160,7 +160,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     branches match {
       case Nil => Set(otherwise)
       case (firstExpr, firstTmpl) :: rest =>
-        val result = xpathDom.toBooleanValue(xpathAnalyzer.process(firstExpr, context))
+        val result = xpathDom.toBooleanValue(xpathAnalyzer.evaluate(firstExpr, context))
         val maybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), result)
         val maybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), result)
         (maybeTrue, maybeFalse) match {

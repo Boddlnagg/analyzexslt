@@ -5,33 +5,33 @@ import xml._
 
 import scala.collection.immutable.TreeSet
 
-/** Object to process/evaluate XPath expressions. */
-object XPathProcessor {
-  /** Processes a given XPath expression using a specified context and returns the result. */
-  def process(expr: XPathExpr, ctx: XPathContext): XPathValue = {
+/** Object to evaluate XPath expressions. */
+object XPathEvaluator {
+  /** Evaluates a given XPath expression using a specified context and returns the result. */
+  def evaluate(expr: XPathExpr, ctx: XPathContext): XPathValue = {
     expr match {
-      case PlusExpr(lhs, rhs) => NumberValue(process(lhs, ctx).toNumberValue.value + process(rhs, ctx).toNumberValue.value)
-      case MinusExpr(lhs, rhs) => NumberValue(process(lhs, ctx).toNumberValue.value - process(rhs, ctx).toNumberValue.value)
-      case MultiplyExpr(lhs, rhs) => NumberValue(process(lhs, ctx).toNumberValue.value * process(rhs, ctx).toNumberValue.value)
-      case DivExpr(lhs, rhs) => NumberValue(process(lhs, ctx).toNumberValue.value / process(rhs, ctx).toNumberValue.value)
-      case ModExpr(lhs, rhs) => NumberValue(process(lhs, ctx).toNumberValue.value % process(rhs, ctx).toNumberValue.value)
+      case PlusExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value + evaluate(rhs, ctx).toNumberValue.value)
+      case MinusExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value - evaluate(rhs, ctx).toNumberValue.value)
+      case MultiplyExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value * evaluate(rhs, ctx).toNumberValue.value)
+      case DivExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value / evaluate(rhs, ctx).toNumberValue.value)
+      case ModExpr(lhs, rhs) => NumberValue(evaluate(lhs, ctx).toNumberValue.value % evaluate(rhs, ctx).toNumberValue.value)
       case RelationalExpr(lhs, rhs, relOp) =>
         // evaluation is specified in the XPath spec section 3.4
-        val lhsVal = process(lhs, ctx)
-        val rhsVal = process(rhs, ctx)
+        val lhsVal = evaluate(lhs, ctx)
+        val rhsVal = evaluate(rhs, ctx)
         BooleanValue(lhsVal.compare(rhsVal, relOp))
       // XPath spec section 3.4, shortcut evaluation!
-      case AndExpr(lhs, rhs) => BooleanValue(process(lhs, ctx).toBooleanValue.value && process(rhs, ctx).toBooleanValue.value)
+      case AndExpr(lhs, rhs) => BooleanValue(evaluate(lhs, ctx).toBooleanValue.value && evaluate(rhs, ctx).toBooleanValue.value)
       // XPath spec section 3.4, shortcut evaluation!
-      case OrExpr(lhs, rhs) => BooleanValue(process(lhs, ctx).toBooleanValue.value || process(rhs, ctx).toBooleanValue.value)
+      case OrExpr(lhs, rhs) => BooleanValue(evaluate(lhs, ctx).toBooleanValue.value || evaluate(rhs, ctx).toBooleanValue.value)
 
-      case UnaryMinusExpr(inner) => NumberValue(- process(inner, ctx).toNumberValue.value)
+      case UnaryMinusExpr(inner) => NumberValue(- evaluate(inner, ctx).toNumberValue.value)
       case StringLiteralExpr(literal) => StringValue(literal)
       case NumLiteralExpr(num) => NumberValue(num)
       case VarReferenceExpr(name) => try ctx.variables(name) catch {
         case e: java.util.NoSuchElementException => throw new ProcessingError(f"Variable $name is not defined")
       }
-      case UnionExpr(lhs, rhs) => (process(lhs, ctx), process(rhs, ctx)) match {
+      case UnionExpr(lhs, rhs) => (evaluate(lhs, ctx), evaluate(rhs, ctx)) match {
         case (NodeSetValue(left), NodeSetValue(right)) => NodeSetValue(left ++ right)
         case (left, right) => throw new ProcessingError(f"Wrong types for union expression, must be node-sets ($left | $right)")
       }
@@ -41,7 +41,7 @@ object XPathProcessor {
           case Some(pre) => pre+":"+name
           case None => name
         }
-        (qname, params.map(p => process(p, ctx))) match {
+        (qname, params.map(p => evaluate(p, ctx))) match {
           // arguments are casted to string, number, boolean as required, but if a function expects a node-set, it must be a node-set
           case ("true", Nil) => BooleanValue(true)
           case ("false", Nil) => BooleanValue(false)
@@ -76,53 +76,45 @@ object XPathProcessor {
           case (_, evaluatedParams) =>
             throw new ProcessingError(f"Unknown function '$qname' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
         }
-          case LocationPath(steps, isAbsolute) => NodeSetValue(processLocationPathSingle(ctx.node, steps, isAbsolute))
+          case LocationPath(steps, isAbsolute) => NodeSetValue(evaluateLocationPath(ctx.node, steps, isAbsolute))
       case PathExpr(filter, locationPath) =>
-        process(filter, ctx) match {
-          case nodes@NodeSetValue(_) => NodeSetValue(processLocationPath(nodes.nodes, locationPath.steps, locationPath.isAbsolute))
+        evaluate(filter, ctx) match {
+          case startNodeSet@NodeSetValue(_) => NodeSetValue(
+            startNodeSet.nodes.flatMap {
+              n => evaluateLocationPath(n, locationPath.steps, locationPath.isAbsolute)
+            }
+          )
           case value => throw new ProcessingError(f"Filter expression must return a node-set (returned: $value)")
         }
       case FilterExpr(inner, predicates) =>
         if (predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported")
-        process(inner, ctx)
+        evaluate(inner, ctx)
     }
   }
-
-  /** Processes the steps of a location path for a set of starting nodes.
-    *
-    * @param startNodeSet the set of nodes to start with
-    * @param steps the list of remaining steps to evaluate
-    * @param isAbsolute a value indicating whether the location path is absolute (or relative)
-    * @return an ordered set of nodes resulting from the location path, ordered in document order
-    */
-  def processLocationPath(startNodeSet: TreeSet[XMLNode], steps: List[XPathStep], isAbsolute: Boolean): TreeSet[XMLNode] =
-    startNodeSet.flatMap {
-      n => processLocationPathSingle(n, steps, isAbsolute)
-    }
 
   /** Processes the steps of a location path for a single starting node.
     *
     * @param ctxNode the context node
-    * @param steps the list of remaining steps to evaluate
+    * @param steps the list of remaining steps to evaluate, the leftmost step being the first one
     * @param isAbsolute a value indicating whether the location path is absolute (or relative)
     * @return an ordered set of nodes resulting from the location path, ordered in document order
     */
-  private def processLocationPathSingle(ctxNode: XMLNode, steps: List[XPathStep], isAbsolute: Boolean): TreeSet[XMLNode] = {
+  private def evaluateLocationPath(ctxNode: XMLNode, steps: List[XPathStep], isAbsolute: Boolean): TreeSet[XMLNode] = {
     // evaluate steps from left to right, keep nodes in document order (not required by XPath, but by XSLT)
     (steps, isAbsolute) match {
-      case (Nil, true) => TreeSet(ctxNode.root)
-      case (_, true) => processLocationPathSingle(ctxNode.root, steps, false)
+      case (Nil, true) => TreeSet(ctxNode.root) // absolute path with no steps -> just the root node
+      case (_, true) => evaluateLocationPath(ctxNode.root, steps, false)
       case (first :: rest, false) =>
         val nodes: TreeSet[XMLNode] = first.axis match {
           // the child axis contains the children of the context node
           case ChildAxis => ctxNode match {
             case XMLRoot(inner) => TreeSet(inner)
-            case XMLElement(_, _, children, _) => TreeSet[XMLNode]() ++ children
+            case XMLElement(_, _, children, _) => children.to[TreeSet]
             case _ => TreeSet()
           }
           // the descendant axis contains the descendants of the context node
           // a descendant is a child or a child of a child and so on
-          case DescendantAxis => TreeSet[XMLNode]() ++ ctxNode.descendants
+          case DescendantAxis => ctxNode.descendants.to[TreeSet]
           // the parent axis contains the parent of the context node, if there is one
           case ParentAxis => ctxNode match {
             case XMLRoot(_) => TreeSet() // root does not have a parent
@@ -130,14 +122,14 @@ object XPathProcessor {
           }
           // the ancestor axis contains the ancestors of the context node
           // the ancestors of the context node consist of the parent of context node and the parent's parent and so on
-          case AncestorAxis => TreeSet[XMLNode]() ++ ctxNode.ancestors
+          case AncestorAxis => ctxNode.ancestors.to[TreeSet]
           // the following-sibling axis contains all the following siblings of the context node
           // if the context node is an attribute node or namespace node, the following-sibling axis is empty
           case FollowingSiblingAxis => ctxNode match {
             case XMLAttribute(_, _, _) => TreeSet()
             case _ => ctxNode.parent match {
               case XMLRoot(_) => TreeSet() // if parent is root, there are no siblings
-              case XMLElement(_, _, children, _) => TreeSet[XMLNode]() ++ children.filter(_ > ctxNode)
+              case XMLElement(_, _, children, _) => children.filter(_ > ctxNode).to[TreeSet]
             }
           }
           // the preceding-sibling axis contains all the preceding siblings of the context node
@@ -146,19 +138,23 @@ object XPathProcessor {
             case XMLAttribute(_, _, _) => TreeSet()
             case _ => ctxNode.parent match {
               case XMLRoot(_) => TreeSet() // if parent is root, there are no siblings
-              case XMLElement(_, _, children, _) => TreeSet[XMLNode]() ++ children.filter(_ < ctxNode)
+              case XMLElement(_, _, children, _) => children.filter(_ < ctxNode).to[TreeSet]
             }
           }
           // the following axis contains all nodes in the same document as the context node that are after the context
           // node in document order, excluding any descendants and excluding attribute nodes and namespace nodes
           case FollowingAxis =>
             val descendants = ctxNode.descendants
-            TreeSet[XMLNode]() ++ ctxNode.root.nodesInOrder.filter(n => !n.isInstanceOf[XMLAttribute] && n > ctxNode && !descendants.contains(n))
+            ctxNode.root.nodesInOrder
+              .filter(n => !n.isInstanceOf[XMLAttribute] && n > ctxNode && !descendants.contains(n))
+              .to[TreeSet]
           // the preceding axis contains all nodes in the same document as the context node that are before the context
           // node in document order, excluding any ancestors and excluding attribute nodes and namespace nodes
           case PrecedingAxis =>
             val ancestors = ctxNode.ancestors
-            TreeSet[XMLNode]() ++ ctxNode.root.nodesInOrder.filter(n => !n.isInstanceOf[XMLAttribute] && n < ctxNode && !ancestors.contains(n))
+            ctxNode.root.nodesInOrder
+              .filter(n => !n.isInstanceOf[XMLAttribute] && n < ctxNode && !ancestors.contains(n))
+              .to[TreeSet]
           // the attribute axis contains the attributes of the context node; the axis will be empty
           // unless the context node is an element
           case AttributeAxis => ctxNode match {
@@ -189,7 +185,7 @@ object XPathProcessor {
           case AllNodeTest => true
         }}
         if (first.predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported") // NOTE: see XPath spec section 2.4 to implement these
-        testedNodes.flatMap { n => processLocationPathSingle(n, rest, false)}
+        testedNodes.flatMap { n => evaluateLocationPath(n, rest, false)}
       case (Nil, false) => TreeSet(ctxNode)
     }
   }

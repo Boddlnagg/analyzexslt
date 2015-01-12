@@ -9,17 +9,17 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   val xmlDom = dom.xmlDom
   val xpathDom = dom.xpathDom
 
-  /** Processes a given XPath expression using a specified abstract context and returns the abstract result. */
-  def process(expr: XPathExpr, ctx: AbstractXPathContext[N, L, V]): V = {
+  /** Evaluates a given XPath expression using a specified abstract context and returns the abstract result. */
+  def evaluate(expr: XPathExpr, ctx: AbstractXPathContext[N, L, V]): V = {
     expr match {
-      case PlusExpr(lhs, rhs) => xpathDom.add(process(lhs, ctx), process(rhs, ctx))
-      case MinusExpr(lhs, rhs) => xpathDom.subtract(process(lhs, ctx), process(rhs, ctx))
-      case MultiplyExpr(lhs, rhs) => xpathDom.multiply(process(lhs, ctx), process(rhs, ctx))
-      case DivExpr(lhs, rhs) => xpathDom.divide(process(lhs, ctx), process(rhs, ctx))
-      case ModExpr(lhs, rhs) => xpathDom.modulo(process(lhs, ctx), process(rhs, ctx))
-      case RelationalExpr(lhs, rhs, relOp) => xpathDom.compareRelational(process(lhs, ctx), process(rhs, ctx), relOp)
+      case PlusExpr(lhs, rhs) => xpathDom.add(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case MinusExpr(lhs, rhs) => xpathDom.subtract(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case MultiplyExpr(lhs, rhs) => xpathDom.multiply(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case DivExpr(lhs, rhs) => xpathDom.divide(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case ModExpr(lhs, rhs) => xpathDom.modulo(evaluate(lhs, ctx), evaluate(rhs, ctx))
+      case RelationalExpr(lhs, rhs, relOp) => xpathDom.compareRelational(evaluate(lhs, ctx), evaluate(rhs, ctx), relOp)
       case AndExpr(lhs, rhs) =>
-        val left = xpathDom.toBooleanValue(process(lhs, ctx))
+        val left = xpathDom.toBooleanValue(evaluate(lhs, ctx))
         val leftMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), left)
         val leftMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), left)
         if (!leftMaybeTrue) {
@@ -30,7 +30,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
             return xpathDom.liftBoolean(false)
         }
 
-        val right = xpathDom.toBooleanValue(process(rhs, ctx))
+        val right = xpathDom.toBooleanValue(evaluate(rhs, ctx))
         val rightMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), right)
         val rightMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), right)
         if (!rightMaybeTrue)
@@ -44,7 +44,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
 
         xpathDom.join(xpathDom.liftBoolean(true), xpathDom.liftBoolean(false))
       case OrExpr(lhs, rhs) =>
-        val left = xpathDom.toBooleanValue(process(lhs, ctx))
+        val left = xpathDom.toBooleanValue(evaluate(lhs, ctx))
         val leftMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), left)
         val leftMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), left)
         if (!leftMaybeFalse) {
@@ -55,7 +55,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
             return xpathDom.liftBoolean(true)
         }
 
-        val right = xpathDom.toBooleanValue(process(rhs, ctx))
+        val right = xpathDom.toBooleanValue(evaluate(rhs, ctx))
         val rightMaybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), right)
         val rightMaybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), right)
         if (!rightMaybeFalse)
@@ -68,20 +68,20 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           return xpathDom.liftBoolean(false)
 
         xpathDom.join(xpathDom.liftBoolean(true), xpathDom.liftBoolean(false))
-      case UnaryMinusExpr(inner) => xpathDom.negateNum(process(inner, ctx))
+      case UnaryMinusExpr(inner) => xpathDom.negateNum(evaluate(inner, ctx))
       case StringLiteralExpr(literal) => xpathDom.liftString(literal)
       case NumLiteralExpr(num) => xpathDom.liftNumber(num)
       case VarReferenceExpr(name) => try ctx.variables(name) catch {
         // because of static scoping this is an error in the program (no matter what evaluation strategy is used)
         case e: java.util.NoSuchElementException => throw new ProcessingError(f"Variable $name is not defined")
       }
-      case UnionExpr(lhs, rhs) => xpathDom.nodeSetUnion(process(lhs, ctx), process(rhs, ctx))
+      case UnionExpr(lhs, rhs) => xpathDom.nodeSetUnion(evaluate(lhs, ctx), evaluate(rhs, ctx))
       case FunctionCallExpr(prefix, name, params) =>
         val qname = prefix match {
           case Some(pre) => pre+":"+name
           case None => name
         }
-        (qname, params.map(p => process(p, ctx))) match {
+        (qname, params.map(p => evaluate(p, ctx))) match {
         case ("true", Nil) => xpathDom.liftBoolean(true)
         case ("false", Nil) => xpathDom.liftBoolean(false)
         case ("not", List(arg)) =>
@@ -123,27 +123,19 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         case (_, evaluatedParams) =>
           throw new ProcessingError(f"Unknown function '$qname' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
       }
-      case LocationPath(steps, isAbsolute) => xpathDom.toNodeSet(processLocationPathSingle(ctx.node, steps, isAbsolute))
+      case LocationPath(steps, isAbsolute) => xpathDom.toNodeSet(evaluateLocationPath(ctx.node, steps, isAbsolute))
       case PathExpr(filter, locationPath) =>
-        val (startNodeSet, _) = xpathDom.matchNodeSetValues(process(filter, ctx))
-        xpathDom.toNodeSet(processLocationPath(startNodeSet, locationPath.steps, locationPath.isAbsolute))
+        val (startNodeSet, _) = xpathDom.matchNodeSetValues(evaluate(filter, ctx))
+        xpathDom.toNodeSet(
+          xmlDom.flatMapWithIndex(startNodeSet, {
+            case (n, _) => evaluateLocationPath(n, locationPath.steps, locationPath.isAbsolute)
+          })
+        )
       case FilterExpr(inner, predicates) =>
         if (predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported")
-        process(inner, ctx)
+        evaluate(inner, ctx)
     }
   }
-
-  /** Processes the steps of a location path for a set of starting nodes.
-    *
-    * @param startNodeSet the set of nodes to start with
-    * @param steps the list of remaining steps to evaluate
-    * @param isAbsolute a value indicating whether the location path is absolute (or relative)
-    * @return an ordered set of nodes resulting from the location path, ordered in document order
-    */
-  def processLocationPath(startNodeSet: L, steps: List[XPathStep], isAbsolute: Boolean): L =
-    xmlDom.flatMapWithIndex(startNodeSet, {
-      case (n, _) => processLocationPathSingle(n, steps, isAbsolute)
-    })
 
   /** Evaluates the steps of a location path for a single starting node.
     *
@@ -152,11 +144,11 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     * @param isAbsolute a value indicating whether the location path is absolute (or relative)
     * @return an ordered set of nodes resulting from the location path, ordered in document order
     */
-  def processLocationPathSingle(ctxNode: N, steps: List[XPathStep], isAbsolute: Boolean): L = {
+  def evaluateLocationPath(ctxNode: N, steps: List[XPathStep], isAbsolute: Boolean): L = {
     // evaluate steps from left to right, keep nodes in document order (not required by XPath, but by XSLT)
     (steps, isAbsolute) match {
       case (Nil, true) => xmlDom.createSingletonList(xmlDom.getRoot(ctxNode))
-      case (_, true) => processLocationPathSingle(xmlDom.getRoot(ctxNode), steps, false)
+      case (_, true) => evaluateLocationPath(xmlDom.getRoot(ctxNode), steps, false)
       case (first :: rest, false) =>
         val nodes: L = first.axis match {
           // the child axis contains the children of the context node
@@ -217,7 +209,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         // convert to node-set value and back to L in order to sort the list and remove duplicates
         val (testedNodeSet, _) = xpathDom.matchNodeSetValues(xpathDom.toNodeSet(testedNodes))
         xmlDom.flatMapWithIndex(testedNodeSet, {
-          case (node, _) => processLocationPathSingle(node, rest, false)
+          case (node, _) => evaluateLocationPath(node, rest, false)
         })
       case (Nil, false) => xmlDom.createSingletonList(ctxNode)
     }

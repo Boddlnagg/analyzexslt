@@ -44,7 +44,7 @@ object XSLTProcessor {
     */
   def instantiateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: XSLTContext, params: Map[String, XPathValue]): List[XMLNode] = {
     val acceptedParams = params.filter { case (key, _) => tmpl.defaultParams.contains(key) }
-    val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key)}.mapValues(v => XPathProcessor.process(v, context.toXPathContext))
+    val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key)}.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))
     // the context for the newly instantiated template contains only global variables and parameters, no local parameters
     // (static scoping and no nested template definitions); global variables are not supported in this implementation
     process(sheet, tmpl.content, context.replaceVariables(Map()).addVariables(remainingDefaultParams ++ acceptedParams))
@@ -105,22 +105,22 @@ object XSLTProcessor {
         Left(List(XMLAttribute(attribute, textResult)))
       case ApplyTemplatesInstruction(None, params) =>
         context.node match {
-          case XMLRoot(inner) => Left(transform(sheet, List(inner), context.variables, params.mapValues(v => XPathProcessor.process(v, context.toXPathContext))))
-          case elem: XMLElement => Left(transform(sheet, elem.children.toList, context.variables, params.mapValues(v => XPathProcessor.process(v, context.toXPathContext))))
+          case XMLRoot(inner) => Left(transform(sheet, List(inner), context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
+          case elem: XMLElement => Left(transform(sheet, elem.children.toList, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case _ => Left(Nil) // other node types don't have children and return an empty result
         }
       case ApplyTemplatesInstruction(Some(expr), params) =>
-        XPathProcessor.process(expr, context.toXPathContext) match {
-          case NodeSetValue(nodes) => Left(transform(sheet, nodes.toList, context.variables, params.mapValues(v => XPathProcessor.process(v, context.toXPathContext))))
+        XPathEvaluator.evaluate(expr, context.toXPathContext) match {
+          case NodeSetValue(nodes) => Left(transform(sheet, nodes.toList, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case value => throw new ProcessingError(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")
         }
       case CallTemplatesInstruction(name, params) =>
         // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)
-        Left(instantiateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => XPathProcessor.process(v, context.toXPathContext))))
+        Left(instantiateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
       case VariableDefinitionInstruction(name, expr) =>
-        Right(name, XPathProcessor.process(expr, context.toXPathContext))
+        Right(name, XPathEvaluator.evaluate(expr, context.toXPathContext))
       case CopyInstruction(select) =>
-        XPathProcessor.process(select, context.toXPathContext) match {
+        XPathEvaluator.evaluate(select, context.toXPathContext) match {
           // NOTE: result tree fragments are generally not supported
           case NodeSetValue(nodes) => Left(nodes.toList.map {
             case XMLRoot(inner) => inner.copy // "a root node is copied by copying its children" according to spec
@@ -148,7 +148,7 @@ object XSLTProcessor {
   def chooseBranch(branches: List[(XPathExpr, Seq[XSLTInstruction])], otherwise: Seq[XSLTInstruction], context: XPathContext): Seq[XSLTInstruction] = {
     branches match {
       case Nil => otherwise
-      case (firstExpr, firstTmpl) :: rest => XPathProcessor.process(firstExpr, context).toBooleanValue.value match {
+      case (firstExpr, firstTmpl) :: rest => XPathEvaluator.evaluate(firstExpr, context).toBooleanValue.value match {
         case true => firstTmpl
         case false => chooseBranch(rest, otherwise, context)
       }
