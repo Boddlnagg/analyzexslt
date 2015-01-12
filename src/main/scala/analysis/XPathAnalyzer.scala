@@ -76,52 +76,8 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     }
     case UnionExpr(lhs, rhs) => xpathDom.nodeSetUnion(evaluate(lhs, ctx), evaluate(rhs, ctx))
     case FunctionCallExpr(prefix, name, params) =>
-      val qname = prefix match {
-        case Some(pre) => pre+":"+name
-        case None => name
-      }
-      (qname, params.map(p => evaluate(p, ctx))) match {
-      case ("true", Nil) => xpathDom.liftBoolean(true)
-      case ("false", Nil) => xpathDom.liftBoolean(false)
-      case ("not", List(arg)) =>
-        val bool = xpathDom.toBooleanValue(arg)
-        val maybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), bool)
-        val maybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), bool)
-        (maybeTrue, maybeFalse) match {
-          case (true, true) => xpathDom.join(xpathDom.liftBoolean(true), xpathDom.liftBoolean(false))
-          case (true, false) => xpathDom.liftBoolean(false)
-          case (false, true) => xpathDom.liftBoolean(true)
-          case (false, false) => xpathDom.bottom
-        }
-      case ("string", List(arg)) => xpathDom.toStringValue(arg)
-      case ("boolean", List(arg)) => xpathDom.toBooleanValue(arg)
-      case ("number", List(arg)) => xpathDom.toNumberValue(arg)
-      case ("last", Nil) => ctx.size
-      case ("position", Nil) => ctx.position
-      case ("count", List(arg)) =>
-        val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
-        xmlDom.getNodeListSize(nodeSets)
-
-      case ("name"|"local-name", Nil) => xmlDom.getNodeName(ctx.node)
-      case ("name"|"local-name", List(arg)) =>
-        val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
-        val result = xmlDom.getNodeName(xmlDom.getFirst(nodeSets))
-        if (xmlDom.lessThanOrEqualLists(xmlDom.createEmptyList(), nodeSets)) // may the set be empty?
-          xpathDom.join(result, xpathDom.liftString("")) // ... then include the empty string in the result
-        else
-          result
-      case ("concat", list@(first :: second :: rest)) => list.reduce(xpathDom.concatStrings) // NOTE: takes 2 or more arguments
-        // NOTE: the following functions are more or less stubbed out; implementing them correctly would
-        // require adding more methods to the XPath domain interface.
-      case ("sum", List(arg)) =>
-        val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
-        if (xmlDom.lessThanOrEqualLists(nodeSets, xmlDom.bottomList)) xpathDom.bottom // return bottom if the input is definitely not a node-set
-        else xpathDom.topNumber
-      case ("string-length", _) => xpathDom.topNumber
-      case ("normalize-space", _) => xpathDom.topString
-      case (_, evaluatedParams) =>
-        throw new ProcessingError(f"Unknown function '$qname' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
-    }
+      if (prefix != None) throw new NotImplementedError("Prefixed functions are not supported.")
+      evaluateFunctionCall(name, params.map(p => evaluate(p, ctx)), ctx)
     case LocationPath(steps, isAbsolute) => xpathDom.toNodeSet(evaluateLocationPath(ctx.node, steps, isAbsolute))
     case PathExpr(filter, locationPath) =>
       val (startNodeSet, _) = xpathDom.matchNodeSetValues(evaluate(filter, ctx))
@@ -133,6 +89,56 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     case FilterExpr(inner, predicates) =>
       if (predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported")
       evaluate(inner, ctx)
+  }
+
+  /** Evaluates a function call. See XPath spec sections 3.2 and 4.
+    *
+    * @param name The name of the function (no prefix).
+    * @param params A list of already evaluated function parameters.
+    * @param ctx The current XPath evaluation context.
+    * @return The value that results from evaluating the function.
+    */
+  def evaluateFunctionCall(name: String, params: List[V], ctx: AbstractXPathContext[N, L, V]) = (name, params) match {
+    case ("true", Nil) => xpathDom.liftBoolean(true)
+    case ("false", Nil) => xpathDom.liftBoolean(false)
+    case ("not", List(arg)) =>
+      val bool = xpathDom.toBooleanValue(arg)
+      val maybeTrue = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(true), bool)
+      val maybeFalse = xpathDom.lessThanOrEqual(xpathDom.liftBoolean(false), bool)
+      (maybeTrue, maybeFalse) match {
+        case (true, true) => xpathDom.join(xpathDom.liftBoolean(true), xpathDom.liftBoolean(false))
+        case (true, false) => xpathDom.liftBoolean(false)
+        case (false, true) => xpathDom.liftBoolean(true)
+        case (false, false) => xpathDom.bottom
+      }
+    case ("string", List(arg)) => xpathDom.toStringValue(arg)
+    case ("boolean", List(arg)) => xpathDom.toBooleanValue(arg)
+    case ("number", List(arg)) => xpathDom.toNumberValue(arg)
+    case ("last", Nil) => ctx.size
+    case ("position", Nil) => ctx.position
+    case ("count", List(arg)) =>
+      val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
+      xmlDom.getNodeListSize(nodeSets)
+
+    case ("name"|"local-name", Nil) => xmlDom.getNodeName(ctx.node)
+    case ("name"|"local-name", List(arg)) =>
+      val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
+      val result = xmlDom.getNodeName(xmlDom.getFirst(nodeSets))
+      if (xmlDom.lessThanOrEqualLists(xmlDom.createEmptyList(), nodeSets)) // may the set be empty?
+        xpathDom.join(result, xpathDom.liftString("")) // ... then include the empty string in the result
+      else
+        result
+    case ("concat", list@(first :: second :: rest)) => list.reduce(xpathDom.concatStrings) // NOTE: takes 2 or more arguments
+    // NOTE: the following functions are more or less stubbed out; implementing them correctly would
+    // require adding more methods to the XPath domain interface.
+    case ("sum", List(arg)) =>
+      val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
+      if (xmlDom.lessThanOrEqualLists(nodeSets, xmlDom.bottomList)) xpathDom.bottom // return bottom if the input is definitely not a node-set
+      else xpathDom.topNumber
+    case ("string-length", _) => xpathDom.topNumber
+    case ("normalize-space", _) => xpathDom.topString
+    case _ =>
+      throw new ProcessingError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($params).")
   }
 
   /** Evaluates the steps of a location path for a single starting node.

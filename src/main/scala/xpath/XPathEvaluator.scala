@@ -35,47 +35,9 @@ object XPathEvaluator {
       case (left, right) => throw new ProcessingError(f"Wrong types for union expression, must be node-sets ($left | $right)")
     }
     case FunctionCallExpr(prefix, name, params) =>
-      // See XPath spec section 3.2
-      val qname = prefix match {
-        case Some(pre) => pre+":"+name
-        case None => name
-      }
-      (qname, params.map(p => evaluate(p, ctx))) match {
-        // arguments are casted to string, number, boolean as required, but if a function expects a node-set, it must be a node-set
-        case ("true", Nil) => BooleanValue(true)
-        case ("false", Nil) => BooleanValue(false)
-        case ("not", List(arg)) => BooleanValue(!arg.toBooleanValue.value)
-        case ("string", List(arg)) => arg.toStringValue
-        case ("boolean", List(arg)) => arg.toBooleanValue
-        case ("number", List(arg)) => arg.toNumberValue
-        case ("last", Nil) => NumberValue(ctx.size)
-        case ("position", Nil) => NumberValue(ctx.position)
-        case ("count", List(NodeSetValue(nodes))) => NumberValue(nodes.size)
-        case ("name"|"local-name", Nil) => ctx.node match {
-          // get name of current node (or empty string)
-          case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
-          case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
-          case _ => StringValue("")
-        }
-        case ("name"|"local-name", List(NodeSetValue(nodes))) => nodes.headOption match {
-          case None => StringValue("") // empty list
-          case Some(n) => n match {
-            case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
-            case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
-            case _ => StringValue("")
-          }
-        }
-        case ("concat", in@(first :: second :: rest)) => StringValue(in.map { // NOTE: takes 2 or more arguments
-          case StringValue(str) => str
-          case _ => throw new ProcessingError("The function concat only accepts string parameters.")
-        }.mkString(""))
-        case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.toList.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
-        case ("string-length", Nil) => NumberValue(ctx.node.stringValue.length)
-        case ("string-length", List(StringValue(str))) => NumberValue(str.length)
-        case (_, evaluatedParams) =>
-          throw new ProcessingError(f"Unknown function '$qname' (might not be implemented) or invalid number/types of parameters ($evaluatedParams).")
-      }
-        case LocationPath(steps, isAbsolute) => NodeSetValue(evaluateLocationPath(ctx.node, steps, isAbsolute))
+      if (prefix != None) throw new NotImplementedError("Prefixed functions are not supported.")
+      evaluateFunctionCall(name, params.map(p => evaluate(p, ctx)), ctx)
+    case LocationPath(steps, isAbsolute) => NodeSetValue(evaluateLocationPath(ctx.node, steps, isAbsolute))
     case PathExpr(filter, locationPath) =>
       evaluate(filter, ctx) match {
         case startNodeSet@NodeSetValue(_) => NodeSetValue(
@@ -90,7 +52,51 @@ object XPathEvaluator {
       evaluate(inner, ctx)
   }
 
-  /** Processes the steps of a location path for a single starting node.
+  /** Evaluates a function call. See XPath spec sections 3.2 and 4.
+    *
+    * @param name The name of the function (no prefix).
+    * @param params A list of already evaluated function parameters.
+    * @param ctx The current XPath evaluation context.
+    * @return The value that results from evaluating the function.
+    */
+  private def evaluateFunctionCall(name: String, params: List[XPathValue], ctx: XPathContext) : XPathValue = (name, params) match {
+    // See XPath spec section 3.2
+    // arguments are casted to string, number, boolean as required, but if a function expects a node-set, it must be a node-set
+    case ("true", Nil) => BooleanValue(true)
+    case ("false", Nil) => BooleanValue(false)
+    case ("not", List(arg)) => BooleanValue(!arg.toBooleanValue.value)
+    case ("string", List(arg)) => arg.toStringValue
+    case ("boolean", List(arg)) => arg.toBooleanValue
+    case ("number", List(arg)) => arg.toNumberValue
+    case ("last", Nil) => NumberValue(ctx.size)
+    case ("position", Nil) => NumberValue(ctx.position)
+    case ("count", List(NodeSetValue(nodes))) => NumberValue(nodes.size)
+    case ("name"|"local-name", Nil) => ctx.node match {
+      // get name of current node (or empty string)
+      case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
+      case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
+      case _ => StringValue("")
+    }
+    case ("name"|"local-name", List(NodeSetValue(nodes))) => nodes.headOption match {
+      case None => StringValue("") // empty list
+      case Some(n) => n match {
+        case XMLElement(nodeName, _, _, _) => StringValue(nodeName)
+        case XMLAttribute(nodeName, _, _) => StringValue(nodeName)
+        case _ => StringValue("")
+      }
+    }
+    case ("concat", in@(first :: second :: rest)) => StringValue(in.map { // NOTE: takes 2 or more arguments
+      case StringValue(str) => str
+      case _ => throw new ProcessingError("The function concat only accepts string parameters.")
+    }.mkString(""))
+    case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.toList.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
+    case ("string-length", Nil) => NumberValue(ctx.node.stringValue.length)
+    case ("string-length", List(StringValue(str))) => NumberValue(str.length)
+    case _ =>
+      throw new ProcessingError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($params).")
+  }
+
+  /** Evaluates the steps of a location path for a single starting node.
     *
     * @param ctxNode the context node
     * @param steps the list of remaining steps to evaluate, the leftmost step being the first one
