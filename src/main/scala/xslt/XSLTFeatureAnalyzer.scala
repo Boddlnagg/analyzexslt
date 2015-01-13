@@ -164,9 +164,7 @@ object XSLTFeatureAnalyzer {
           case "element" =>
             f += ElementCreation
             val name = elem.attribute("name").get.text
-            if (name.contains("{") && name.contains("}")) {
-              f += AttributeValueTemplates
-            }
+            analyzeAttributeValueTemplate(name, f)
             if (elem.attribute("namespace").isDefined) {
               f += Namespaces
             }
@@ -176,9 +174,7 @@ object XSLTFeatureAnalyzer {
           case "attribute" =>
             f += AttributeCreation
             val name = elem.attribute("name").get.text
-            if (name.contains("{") && name.contains("}")) {
-              f += AttributeValueTemplates
-            }
+            analyzeAttributeValueTemplate(name, f)
             if (elem.attribute("namespace").isDefined) {
               f += Namespaces
             }
@@ -188,9 +184,7 @@ object XSLTFeatureAnalyzer {
           case "processing-instruction" =>
             f += ProcessingInstructionCreation
             val name = elem.attribute("name").get.text
-            if (name.contains("{") && name.contains("}")) {
-              f += AttributeValueTemplates
-            }
+            analyzeAttributeValueTemplate(name, f)
             analyzeTemplate(elem.child, f)
 
           // spec section 7.4
@@ -361,6 +355,21 @@ object XSLTFeatureAnalyzer {
       case _ =>
         f += ArbitraryExpressionPredicate(inPatterns)
         analyzeXPathExpression(pred, f)
+    }
+  }
+
+  private def analyzeAttributeValueTemplate(str: String, f: MutSet[XSLTFeature]): Unit = {
+    if (str.contains("{") && str.contains("}")) {
+      f += AttributeValueTemplates
+      if (str.startsWith("{") && !str.startsWith("{{") && str.indexOf("}") == str.length - 1) {
+        val expr = str.substring(1, str.length - 1)
+        parseAndAnalyzeXPath(expr, f)
+      } else {
+        // parsing Attribute Value Templates is not implemented for the general case, because it
+        // has to be intermingled with XPath parsing (to properly ignore '}' inside string literals)
+        // and Jaxen does not provide a way to do that
+        println(f"Warning: Ignoring XPath expression(s) inside Attribute Value Template: $str")
+      }
     }
   }
 }
