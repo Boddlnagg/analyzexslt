@@ -27,11 +27,10 @@ object XSLTProcessor {
 
   /** Chooses a template that matches the given element best */
   def chooseTemplate(sheet: XSLTStylesheet, node: XMLNode): XSLTTemplate = {
-    val allMatching = sheet.matchableTemplates.filter { case (tmpl, _, _, _) => XPathMatcher.matches(node, tmpl)}
-    if (allMatching.isEmpty)
-      throw new ProcessingError(f"Found no matching template for input node `${XMLNode.formatPath(node)}` [NOTE: this can only happen when builtin templates are disabled]")
-    val (_, template, _, _) = allMatching.last // this one will have highest precedence and priority, because the templates are sorted
-    template
+    sheet.matchableTemplates.find { case (path, _) => XPathMatcher.matches(node, path)} match {
+      case Some((_, tmpl)) => tmpl
+      case None => throw new ProcessingError(f"Found no matching template for input node `${XMLNode.formatPath(node)}` [NOTE: this can only happen when builtin templates are disabled]")
+    }
   }
 
   /** Instantiates an XSLT template in a given XSLT context with parameters and returns a list of resulting nodes.

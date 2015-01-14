@@ -68,8 +68,7 @@ object XSLTParser {
       .map(n => n.asInstanceOf[Elem])
       .map(elem => (parseTemplate(elem),
         elem.attribute("name").map(_.text),
-        elem.attribute("match").map(a => XPathParser.parse(a.text)),
-        UserDefinedImportPrecedence
+        elem.attribute("match").map(a => XPathParser.parse(a.text))
       ))
       .toList // returns a list of tuples (template, name?, match?, precedence)
 
