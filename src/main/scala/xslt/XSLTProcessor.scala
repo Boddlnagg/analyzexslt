@@ -113,12 +113,12 @@ object XSLTProcessor {
           case NodeSetValue(nodes) => Left(transform(sheet, nodes.toList, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case value => throw new ProcessingError(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")
         }
-      case CallTemplatesInstruction(name, params) =>
+      case CallTemplateInstruction(name, params) =>
         // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)
         Left(instantiateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
       case VariableDefinitionInstruction(name, expr) =>
         Right(name, XPathEvaluator.evaluate(expr, context.toXPathContext))
-      case CopyInstruction(select) =>
+      case CopyOfInstruction(select) =>
         XPathEvaluator.evaluate(select, context.toXPathContext) match {
           // NOTE: result tree fragments are generally not supported
           case NodeSetValue(nodes) => Left(nodes.toList.map {

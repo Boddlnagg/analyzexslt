@@ -124,12 +124,12 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val result = xpathAnalyzer.evaluate(expr, xsltToXPathContext(context))
         val (extracted, _) = xpathDom.matchNodeSetValues(result)
         Left(transform(sheet, extracted, context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
-      case CallTemplatesInstruction(name, params) =>
+      case CallTemplateInstruction(name, params) =>
         // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)
         Left(instantiateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case VariableDefinitionInstruction(name, expr) =>
         Right(name, xpathAnalyzer.evaluate(expr, xsltToXPathContext(context)))
-      case CopyInstruction(select) =>
+      case CopyOfInstruction(select) =>
         val result = xpathAnalyzer.evaluate(select, xsltToXPathContext(context))
         val (nodeSets, rest) = xpathDom.matchNodeSetValues(result)
         val nodeSetsOutput = xmlDom.copyToOutput(nodeSets)

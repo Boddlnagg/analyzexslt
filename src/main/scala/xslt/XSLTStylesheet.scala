@@ -28,9 +28,9 @@ class XSLTStylesheet(templates: List[(XSLTTemplate, Option[String], Option[XPath
       Nil
     else
       List(
-        (new XSLTTemplate(List(ApplyTemplatesInstruction())), XPathParser.parse("*|/"), BuiltInImportPrecedence),
+        (new XSLTTemplate(List(ApplyTemplatesInstruction(None))), XPathParser.parse("*|/"), BuiltInImportPrecedence),
         // NOTE: <xsl:value-of select="."> is equivalent to <xsl:copy-of select="string(.)">
-        (new XSLTTemplate(List(CopyInstruction(XPathParser.parse("string(.)")))), XPathParser.parse("text()|@*"), BuiltInImportPrecedence),
+        (new XSLTTemplate(List(CopyOfInstruction(XPathParser.parse("string(.)")))), XPathParser.parse("text()|@*"), BuiltInImportPrecedence),
         // NOTE: the XPath expression here originally is "processing-instruction()|comment()", but processing instructions are not implemented
         (new XSLTTemplate(Nil), XPathParser.parse("comment()"), BuiltInImportPrecedence)
       )

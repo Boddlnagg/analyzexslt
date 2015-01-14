@@ -113,7 +113,7 @@ object XSLTParser {
           val name = elem.attribute("name").get.text
           if (!elem.child.forall(isElem(_, "with-param")))
             throw new NotImplementedError("children of 'call-templates' element must only be 'with-param'")
-          CallTemplatesInstruction(name, parseParams(elem.child, "with-param"))
+          CallTemplateInstruction(name, parseParams(elem.child, "with-param"))
 
         // spec section 7.1.2
         case "element" =>
@@ -136,11 +136,11 @@ object XSLTParser {
         // spec section 7.6.1
         case "value-of" =>
           // <xsl:value-of select="."> is equivalent to <xsl:copy-of select="string(.)">
-          CopyInstruction(XPathParser.parse("string(" + elem.attribute("select").get.text +")"))
+          CopyOfInstruction(XPathParser.parse("string(" + elem.attribute("select").get.text +")"))
 
         // spec section 11.3
         case "copy-of" =>
-          CopyInstruction(XPathParser.parse(elem.attribute("select").get.text))
+          CopyOfInstruction(XPathParser.parse(elem.attribute("select").get.text))
 
         // spec section 9.2
         case "choose" =>
