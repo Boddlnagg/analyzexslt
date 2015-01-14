@@ -5,15 +5,17 @@ import xpath._
 
 import scala.collection.mutable.MutableList
 
-class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
+class AbstractPatternMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
 
   /** Returns a value indicating whether a given node matches a location path pattern.
     * NOTE: only supports location path patterns (XSLT spec section 5.2) without predicates
+    *
+    * First result: nodes for which the path WILL definitely match. When this is BOTTOM it means
+    *               that the path can't match the given input.
+    * Second result: nodes for which the path WILL definitely NOT match. When this is BOTTOM it
+    *                means that the path will always match the given input.
     */
   def matches(node: N, path: LocationPath): (N, N) = {
-    // first result: nodes for which the path WILL definitely match. When this is BOTTOM it means that the path can't match the given input.
-    // second result: nodes for which the path WILL definitely NOT match. When this is BOTTOM it means that the path will always match the given input.
-
     // match recursively from right to left
     if (path.steps.isEmpty) {
       // an empty path is always a match, but when it is an absolute path, the current node must be the root node
@@ -46,8 +48,7 @@ class AbstractXPathMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
           val (attr, notAttr) = xmlDom.isAttribute(node)
           val (hasName, notHasName) = xmlDom.hasName(attr, name)
           (hasName, xmlDom.join(notAttr, notHasName))
-        // attribute::comment() OR attribute::text()
-        // these can never match anything
+        // attribute::comment() OR attribute::text() [these can never match anything]
         case XPathStep(AttributeAxis, CommentNodeTest | TextNodeTest, _) => (xmlDom.bottom, node)
         // any step using a name test with a prefixed name
         case XPathStep(_, NameTest(Some(_), _), Nil) => throw new NotImplementedError("Prefixed names are not implemented")

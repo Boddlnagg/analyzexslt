@@ -10,7 +10,7 @@ import xpath.{XPathParser, LocationPath}
 
 class AbstractPathMatchingSuite extends FunSuite {
   val xmlDom = ZipperDomain.xmlDom
-  val matcher = new AbstractXPathMatcher(xmlDom)
+  val matcher = new AbstractPatternMatcher(xmlDom)
   type P = Set[Path]
   val latP = PathSetLattice
   val latS = SubtreeLattice

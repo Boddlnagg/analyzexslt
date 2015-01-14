@@ -1,13 +1,13 @@
-package xpath
+package xslt
 
 import xml._
+import xpath._
 
-object XPathMatcher {
+object XSLTPatternMatcher {
   /** Returns a value indicating whether a given node matches a location path pattern.
     * NOTE: only supports location path patterns (XSLT spec section 5.2) without predicates
     */
   def matches(node: XMLNode, path: LocationPath): Boolean = {
-
     // match recursively from right to left
     if (path.steps.isEmpty) {
       // an empty path is always a match, but when it is an absolute path, the current node must be the root node
@@ -31,9 +31,10 @@ object XPathMatcher {
         case XPathStep(AttributeAxis, NameTest(None, "*") | AllNodeTest, Nil) => node.isInstanceOf[XMLAttribute]
         // attribute::name
         case XPathStep(AttributeAxis, NameTest(None, name), Nil) => node.isInstanceOf[XMLAttribute] && node.asInstanceOf[XMLAttribute].name == name
-        // attribute::comment() OR attribute::text()
-        // these can never match anything
+        // attribute::comment() OR attribute::text() [these can never match anything]
         case XPathStep(AttributeAxis, CommentNodeTest | TextNodeTest, _) => false
+        // any step using a name test with a prefixed name
+        case XPathStep(_, NameTest(Some(_), _), Nil) => throw new NotImplementedError("Prefixed names are not implemented")
       }
 
       if (!lastStepMatches) {

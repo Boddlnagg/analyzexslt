@@ -27,7 +27,7 @@ object XSLTProcessor {
 
   /** Chooses a template that matches the given element best */
   def chooseTemplate(sheet: XSLTStylesheet, node: XMLNode): XSLTTemplate = {
-    sheet.matchableTemplates.find { case (path, _) => XPathMatcher.matches(node, path)} match {
+    sheet.matchableTemplates.find { case (path, _) => XSLTPatternMatcher.matches(node, path)} match {
       case Some((_, tmpl)) => tmpl
       case None => throw new ProcessingError(f"Found no matching template for input node `${XMLNode.formatPath(node)}` [NOTE: this can only happen when builtin templates are disabled]")
     }
