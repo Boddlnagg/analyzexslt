@@ -61,16 +61,6 @@ object PowersetXMLDomain {
       case (Right(s1), Right(s2)) => Right(s1.union(s2))
     }
 
-    override def createElement(name: String, attributes: L, children: L): N = (attributes, children) match {
-      case (Left(_), _) => None
-      case (_, Left(_)) => None
-      case (Right(s1), Right(s2)) => Some(s1.cross(s2).map {
-        case (attr, chld) => XMLElement(name,
-          attr.map(a => a.asInstanceOf[XMLAttribute].copy),
-          chld.map(c => c.copy))
-      }.toSet)
-    }
-
     override def createEmptyList(): L = Right(Set(Nil))
 
     override def createSingletonList(node: N): L = node match {

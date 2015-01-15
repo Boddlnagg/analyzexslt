@@ -43,21 +43,6 @@ object ConcreteXMLDomain {
       */
     override def lessThanOrEqualLists(l1: L, l2: L): Boolean = l1.lessThanOrEqual(l2)
 
-    /** Create an element node with the given name, attributes and children.
-      * The output is created bottom-up, so children are always created before their parent nodes.
-      * Consecutive text node children must be merged into a single text node by this method.
-      */
-    override def createElement(name: String, attributes: L, children: L): N = (attributes, children) match {
-      case (Value(attr), Value(chld)) => try Value(XMLElement(name, attr.map(_.asInstanceOf[XMLAttribute]), chld))
-        catch {
-          case e: ClassCastException => Bottom
-          case e: IllegalArgumentException => Bottom
-        }
-      case (Bottom, _) => Bottom
-      case (_, Bottom) => Bottom
-      case _ => Top
-    }
-
     /** Create an emtpy list containing no nodes */
     override def createEmptyList(): L = Value(Nil)
 

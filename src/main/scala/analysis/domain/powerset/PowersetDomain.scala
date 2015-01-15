@@ -3,7 +3,7 @@ package analysis.domain.powerset
 import analysis.domain.Domain
 import analysis.domain.powerset.PowersetXMLDomain.{L, N}
 import analysis.domain.powerset.PowersetXPathDomain.V
-import xml.{XMLComment, XMLAttribute, XMLTextNode, XMLNode}
+import xml._
 import xpath._
 
 import scala.collection.immutable.TreeSet
@@ -19,12 +19,25 @@ object PowersetDomain extends Domain[N, L, V] {
   protected object XML extends PowersetXMLDomain.D[V] {
     override val xpathDom = XPATH
 
-    override def createAttribute(name: String, value: V): N = value match {
-      case None => None
-      case Some(s) => Some(s.collect {
-        case StringValue(str) => XMLAttribute(name, str)
+    override def createElement(name: V, attributes: L, children: L): N = (name, attributes, children) match {
+      // TODO: order is wrong (TOP x BOTTOM = BOTTOM); name is missing from cases
+      case (Left(_), _) => None
+      case (_, Left(_)) => None
+      case (Right(s1), Right(s2)) => Some(s1.cross(s2).map {
+        case (attr, chld) => XMLElement(name,
+          attr.map(a => a.asInstanceOf[XMLAttribute].copy),
+          chld.map(c => c.copy))
+      }.toSet)
+    }
+
+    override def createAttribute(name: V, value: V): N = (name, value) match {
+      case (None, None) => None
+      case (None, Some(s)) => if (s.collect { case StringValue(_) => () }.isEmpty) BOT else None
+      case (Some(s), None) => if (s.collect { case StringValue(_) => () }.isEmpty) BOT else None
+      case (Some(s1), Some(s2)) => Some(s1.cross(s2).collect {
+        case (StringValue(n), StringValue(v)) => XMLAttribute(n, v)
         // NOTE: other XPath values are evaluated to bottom implicitly
-      })
+      }.toSet)
     }
 
     override def createTextNode(value: V): N = value match {
