@@ -83,7 +83,7 @@ object XPathEvaluator {
     case ("concat", in@(first :: second :: rest)) => StringValue(in.map { // NOTE: takes 2 or more arguments
       case StringValue(str) => str
       case _ => throw new ProcessingError("The function concat only accepts string parameters.")
-    }.mkString(""))
+    }.mkString)
     case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.toList.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
     case ("string-length", Nil) => NumberValue(ctx.node.stringValue.length)
     case ("string-length", List(StringValue(str))) => NumberValue(str.length)

@@ -45,12 +45,12 @@ trait XMLDomain[N, L, V] {
     * The output is created bottom-up, so children are always created before their parent nodes.
     * Consecutive text node children must be merged into a single text node by this method.
     */
-  def createElement(name: String, attributes: L, children: L): N
+  def createElement(name: V, attributes: L, children: L): N
 
   /** Create an attribute node with the given name and text value.
     * Values that are not strings evaluate to BOTTOM.
     */
-  def createAttribute(name: String, value: V): N
+  def createAttribute(name: V, value: V): N
 
   /** Create a text node with the given text value. Values that are not strings evaluate to BOTTOM.
     * The empty string also evaluates to BOTTOM, because text nodes with no content are not allowed.

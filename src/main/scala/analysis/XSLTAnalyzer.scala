@@ -103,7 +103,11 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case CreateElementInstruction(name, children) =>
         val innerNodes = process(sheet, children, context)
         val (resultAttributes, resultChildren) = xmlDom.partitionAttributes(innerNodes)
-        val result = xmlDom.createElement(name, resultAttributes, resultChildren)
+        val evaluatedName = xpathDom.concatAllStrings(name.map {
+          case Left(str) => xpathDom.liftString(str)
+          case Right(expr) => xpathDom.toStringValue(xpathAnalyzer.evaluate(expr, xsltToXPathContext(context)))
+        })
+        val result = xmlDom.createElement(evaluatedName, resultAttributes, resultChildren)
         Left(xmlDom.createSingletonList(result))
       case CreateTextInstruction(text) =>
         if (text == "")
@@ -114,10 +118,14 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         // merge the content of all text-node children to create the attribute value
         val textResult = xmlDom.getConcatenatedTextNodeValues(process(sheet, value, context))
         Left(xmlDom.createSingletonList(xmlDom.createComment(textResult)))
-      case SetAttributeInstruction(attribute, value) =>
+      case SetAttributeInstruction(name, value) =>
         // merge the content of all text-node children to create the attribute value
         val textResult = xmlDom.getConcatenatedTextNodeValues(process(sheet, value, context))
-        Left(xmlDom.createSingletonList(xmlDom.createAttribute(attribute, textResult)))
+        val evaluatedName = xpathDom.concatAllStrings(name.map {
+          case Left(str) => xpathDom.liftString(str)
+          case Right(expr) => xpathDom.toStringValue(xpathAnalyzer.evaluate(expr, xsltToXPathContext(context)))
+        })
+        Left(xmlDom.createSingletonList(xmlDom.createAttribute(evaluatedName, textResult)))
       case ApplyTemplatesInstruction(None, params) =>
         Left(transform(sheet, xmlDom.getChildren(context.node), context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case ApplyTemplatesInstruction(Some(expr), params) =>

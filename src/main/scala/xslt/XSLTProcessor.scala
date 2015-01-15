@@ -84,7 +84,11 @@ object XSLTProcessor {
         // attributes must come before all other result nodes, afterwards they are ignored (see spec section 7.1.3)
         val resultAttributes = resultNodes.takeWhile(n => n.isInstanceOf[XMLAttribute]).map(n => n.asInstanceOf[XMLAttribute])
         val resultChildren = resultNodes.filter(n => !n.isInstanceOf[XMLAttribute])
-        Left(List(XMLElement(name, resultAttributes, resultChildren)))
+        val evaluatedName = name.map {
+          case Left(str) => str
+          case Right(expr) => XPathEvaluator.evaluate(expr, context.toXPathContext).toStringValue.value
+        }.mkString
+        Left(List(XMLElement(evaluatedName, resultAttributes, resultChildren)))
       case CreateTextInstruction(text) =>
         if (text != "")
           Left(List(XMLTextNode(text)))
@@ -94,14 +98,18 @@ object XSLTProcessor {
         // merge the content of all text-node children to create the comment value (non-text-node children are wrong and can be ignored according to spec)
         val textResult = process(sheet, value, context)
           .collect { case n: XMLTextNode => n.value }
-          .mkString("")
+          .mkString
         Left(List(XMLComment(textResult)))
-      case SetAttributeInstruction(attribute, value) =>
+      case SetAttributeInstruction(name, value) =>
         // merge the content of all text-node children to create the attribute value (non-text-node children are wrong and can be ignored according to spec)
         val textResult = process(sheet, value, context)
           .collect { case n: XMLTextNode => n.value }
-          .mkString("")
-        Left(List(XMLAttribute(attribute, textResult)))
+          .mkString
+        val evaluatedName = name.map {
+          case Left(str) => str
+          case Right(expr) => XPathEvaluator.evaluate(expr, context.toXPathContext).toStringValue.value
+        }.mkString
+        Left(List(XMLAttribute(evaluatedName, textResult)))
       case ApplyTemplatesInstruction(None, params) =>
         context.node match {
           case XMLRoot(inner) => Left(transform(sheet, List(inner), context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
@@ -123,7 +131,7 @@ object XSLTProcessor {
           // NOTE: result tree fragments are generally not supported
           case NodeSetValue(nodes) => Left(nodes.toList.map {
             case XMLRoot(inner) => inner.copy // "a root node is copied by copying its children" according to spec
-            case node => node.copy
+            case n => n.copy
           })
           case value =>
             val textValue = value.toStringValue.value

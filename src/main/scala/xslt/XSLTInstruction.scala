@@ -7,10 +7,10 @@ abstract class XSLTInstruction
 
 /** Instruction to create an element node (see XSLT spec section 7.1.1 and 7.1.2)
   *
-  * @param name the name of the element (namespaces are not implemented)
+  * @param name the name of the element, as an attribute value template (namespaces are not implemented)
   * @param children the instructions used to generate the children of the element
   */
-case class CreateElementInstruction(name: String, children: Seq[XSLTInstruction]) extends XSLTInstruction
+case class CreateElementInstruction(name: List[Either[String, XPathExpr]], children: Seq[XSLTInstruction]) extends XSLTInstruction
 
 /** Instruction to create a text node (see XSLT spec section 7.2)
   *
@@ -47,10 +47,10 @@ case class CallTemplateInstruction(name: String, params: Map[String, XPathExpr] 
 
 /** Set attribute instruction, created using the &lt;xsl:attribute&gt; element (see XSLT spec section 7.1.3)
   *
-  * @param attribute the name of the attribute
+  * @param name the name of the attribute, as an attribute value template
   * @param value the instructions used to compute the value of the attribute
   */
-case class SetAttributeInstruction(attribute: String, value: Seq[XSLTInstruction]) extends XSLTInstruction
+case class SetAttributeInstruction(name: List[Either[String, XPathExpr]], value: Seq[XSLTInstruction]) extends XSLTInstruction
 
 /** Copy-of instruction, created using the &lt;xsl:copy-of&gt; or &lt;xsl:value-of&gt; elements (see XSLT spec sections 7.6.1 and 11.3)
   * For &lt;xsl:value-of&gt;, the result will be converted to a string by wrapping the select expression with a call to the string() function.

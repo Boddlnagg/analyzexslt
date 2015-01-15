@@ -38,7 +38,7 @@ case class XMLElement(name: String,
     if (children.isEmpty) {
       f"<$name$attr/>"
     } else {
-      val child = children.map(_.toString).mkString("")
+      val child = children.map(_.toString).mkString
       f"<$name$attr>$child</$name>"
     }
   }
@@ -58,7 +58,7 @@ case class XMLElement(name: String,
 
   override def hashCode = name.hashCode + attributes.toSet.hashCode * 41 + children.hashCode * 41 * 41
 
-  override def stringValue = children.map(_.stringValue).mkString("")
+  override def stringValue = children.map(_.stringValue).mkString
 
   override def copy = XMLElement(name, attributes.map(a => a.copy), children.map(c => c.copy))
 }

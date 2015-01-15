@@ -271,7 +271,7 @@ object ConcreteXMLDomain {
     override def getConcatenatedTextNodeValues(list: L): V = list match {
       case Top => xpathDom.top
       case Bottom => xpathDom.bottom
-      case Value(l) => xpathDom.liftString(l.collect { case XMLTextNode(text, _) => text }.mkString(""))
+      case Value(l) => xpathDom.liftString(l.collect { case XMLTextNode(text, _) => text }.mkString)
     }
 
     /** Filters a list using a given predicate function. The predicate function should never return a node

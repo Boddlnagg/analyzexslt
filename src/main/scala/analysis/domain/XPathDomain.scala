@@ -64,6 +64,9 @@ trait XPathDomain[V, N, L] {
   /** Concatenate two strings. Operands that are not string values are evaluated to BOTTOM. */
   def concatStrings(left: V, right: V): V
 
+  /** Concatenates a sequence of strings. */
+  def concatAllStrings(values: Traversable[V]): V = values.fold(liftString(""))(concatStrings)
+
   /** Lift a literal string */
   def liftString(lit: String): V
 
