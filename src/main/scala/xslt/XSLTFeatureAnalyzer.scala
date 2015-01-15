@@ -255,11 +255,13 @@ object XSLTFeatureAnalyzer {
         case null | "" =>
           // literal element without namespace
           f += LiteralElements
+          elem.attributes.asAttrMap.values.foreach(analyzeAttributeValueTemplate(_, f))
           analyzeTemplate(elem.child, f)
         case _ =>
           // literal element from other namespace
           f += Namespaces
           f += LiteralElements
+          elem.attributes.asAttrMap.values.foreach(analyzeAttributeValueTemplate(_, f))
           analyzeTemplate(elem.child, f)
       }
       case _ => throw new UnsupportedFeatureException(f"Unsupported XML node $node")
