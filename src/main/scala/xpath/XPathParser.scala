@@ -132,4 +132,70 @@ object XPathParser {
     case Axis.ANCESTOR_OR_SELF => AncestorOrSelfAxis
     case Axis.ANCESTOR => AncestorAxis
   }
+
+  /** Parses an attribute value template (XSLT spec section 7.6.2)
+    * and returns a list of alternating parts, each one either a (litaral) string
+    * or an XPath expression.
+    *
+    * Parsing of Attribute Value Templates where the an expression contains '{' or '}'
+    * inside a string literal is not supported correctly.
+    */
+  def parseAttributeValueTemplate(str: String): List[Either[String, XPathExpr]] = {
+    import scala.util.control.Breaks._
+    import scala.collection.mutable.{MutableList => MutList}
+
+    /** Returns the next index of a single appearance of a given character in the string.
+      * If the character appears two times in a row, it is ignored.
+      */
+    def indexOfNonDoubled(in: String, char: Char, from: Int): Int = {
+      var current = from
+      while(current < in.length) breakable {
+        current = in.indexOf(char, current)
+        if (current == -1) return -1
+        if (current + 1 < in.length && in.charAt(current + 1) == char) {
+          current += 2 // skip this appearance
+          break() // continue looking for next
+        } else return current
+      }
+      -1
+    }
+
+    val result = MutList[Either[String, XPathExpr]]()
+
+    try {
+      var current = 0
+      var inExpr = false
+      breakable {
+        while (true) {
+          if (inExpr) {
+            val next = str.indexOf('}', current) // this should actually ignore '}' if inside of string literal ...
+            if (next == -1) {
+              if (current != str.length) result += Right(parse(str.substring(current)))
+              break()
+            } else {
+              if (current != next) result += Right(parse(str.substring(current, next)))
+              inExpr = false
+              current = next + 1
+            }
+          } else {
+            // look for start of next expression (or end of string)
+            val next = indexOfNonDoubled(str, '{', current)
+            if (next == -1) {
+              if (current != str.length) result += Left(str.substring(current))
+              break()
+            } else {
+              if (current != next) result += Left(str.substring(current, next))
+              inExpr = true
+              current = next + 1
+            }
+          }
+        }
+      }
+    } catch {
+      case e: org.jaxen.saxpath.XPathSyntaxException =>
+        throw new NotImplementedError(f"Could not parse attribute value template (maybe '}' inside expression?): $str")
+    }
+
+    result.toList
+  }
 }

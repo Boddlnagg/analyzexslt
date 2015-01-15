@@ -359,17 +359,11 @@ object XSLTFeatureAnalyzer {
   }
 
   private def analyzeAttributeValueTemplate(str: String, f: MutSet[XSLTFeature]): Unit = {
-    if (str.contains("{") && str.contains("}")) {
-      f += AttributeValueTemplates
-      if (str.startsWith("{") && !str.startsWith("{{") && str.indexOf("}") == str.length - 1) {
-        val expr = str.substring(1, str.length - 1)
-        parseAndAnalyzeXPath(expr, f)
-      } else {
-        // parsing Attribute Value Templates is not implemented for the general case, because it
-        // has to be intermingled with XPath parsing (to properly ignore '}' inside string literals)
-        // and Jaxen does not provide a way to do that
-        println(f"Warning: Ignoring XPath expression(s) inside Attribute Value Template: $str")
-      }
+    val parsed = XPathParser.parseAttributeValueTemplate(str)
+    parsed.collect {
+      case Right(expr) =>
+        f += AttributeValueTemplates
+        analyzeXPathExpression(expr, f)
     }
   }
 }
