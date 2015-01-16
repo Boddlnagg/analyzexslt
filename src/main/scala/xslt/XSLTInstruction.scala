@@ -73,3 +73,10 @@ case class ChooseInstruction(branches: List[(XPathExpr, Seq[XSLTInstruction])], 
   * @param content the instructions that are evaluated for each of the selected node
   */
 case class ForEachInstruction(select: XPathExpr, content: Seq[XSLTInstruction]) extends XSLTInstruction
+
+/** Number instruction, created using the &lt;xsl:number&gt; element (see XSLT spec section 8),
+  * used for formatting numbers as strings and counting nodes in the source tree.
+  *
+  * This is only implemented as a dummy and therefore does not have parameters/content.
+  */
+case class NumberInstruction() extends XSLTInstruction

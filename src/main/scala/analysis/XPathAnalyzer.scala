@@ -136,6 +136,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       else xpathDom.topNumber
     case ("string-length", _) => xpathDom.topNumber
     case ("normalize-space", _) => xpathDom.topString
+    case ("translate", _) => xpathDom.topString
     case _ =>
       throw new ProcessingError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($params).")
   }

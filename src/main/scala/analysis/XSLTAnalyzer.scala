@@ -160,6 +160,9 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           val newContext = AbstractXSLTContext(n, extracted, xpathDom.add(i, xpathDom.liftNumber(1)), context.variables)
           process(sheet, content, newContext)
         }))
+      case NumberInstruction() =>
+        // NOTE: this is a dummy implementation
+        Left(xmlDom.createSingletonList(xmlDom.createTextNode(xpathDom.topString)))
     }
   }
 

@@ -2,7 +2,7 @@ package xslt
 
 import xpath._
 
-import scala.xml.{Comment, Elem, Node, Text}
+import scala.xml._
 
 object XSLTParser {
   /** The XSLT namespace */
@@ -92,6 +92,7 @@ object XSLTParser {
   /** Parses a single [[scala.xml.Node]] as an XSLT instruction */
   def parseInstruction(node: Node): XSLTInstruction = node match {
     case text: Text => CreateTextInstruction(text.data)
+    case entity: EntityRef => CreateTextInstruction(entity.text)
     case elem: Elem => elem.namespace match {
       case Namespace => elem.label match {
         // spec section 11.2
@@ -164,6 +165,9 @@ object XSLTParser {
           if (elem.child.exists(isElem(_, "sort")))
             throw new NotImplementedError("'sort' is not supporte (found inside 'for-each')")
           ForEachInstruction(XPathParser.parse(elem.attribute("select").get.text), parseTemplate(elem.child))
+
+        case "number" =>
+          NumberInstruction() // just a dummy
 
         case _ => throw new NotImplementedError(f"Unsupported XSLT instruction: ${elem.label}")
       }

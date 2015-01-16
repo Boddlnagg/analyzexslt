@@ -152,6 +152,7 @@ object XSLTProcessor {
             })
           case value => throw new ProcessingError(f"select expression in for-each must evaluate to a node-set (evaluated to $value)")
         }
+      case NumberInstruction() => throw new NotImplementedError("Evaluation of the <xsl:number> instruction is not implemented.")
     }
   }
 

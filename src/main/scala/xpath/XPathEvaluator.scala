@@ -87,6 +87,12 @@ object XPathEvaluator {
     case ("sum", List(NodeSetValue(nodes))) => NumberValue(nodes.toList.map(n => StringValue(n.stringValue).toNumberValue.value).sum)
     case ("string-length", Nil) => NumberValue(ctx.node.stringValue.length)
     case ("string-length", List(StringValue(str))) => NumberValue(str.length)
+    case ("translate", List(StringValue(input), StringValue(replace), StringValue(replacement))) => StringValue(input.flatMap { c =>
+      val idx = replace.indexOf(c)
+      if (idx < 0) c.toString
+      else if (idx < replacement.length) replacement.charAt(idx).toString
+      else ""
+    })
     case _ =>
       throw new ProcessingError(f"Unknown function '$name' (might not be implemented) or invalid number/types of parameters ($params).")
   }

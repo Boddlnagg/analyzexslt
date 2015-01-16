@@ -249,6 +249,9 @@ object XSLTFeatureAnalyzer {
           // spec section 7.7
           case "number" =>
             f += OtherInstruction("number")
+            elem.attribute("count").map(v => parseAndAnalyzeXPath(v.text, f))
+            elem.attribute("from").map(v => parseAndAnalyzeXPath(v.text, f))
+            elem.attribute("value").map(v => parseAndAnalyzeXPath(v.text, f))
 
           case _ => throw new UnsupportedFeatureException(f"Unsupported XSLT instruction: ${elem.label}")
         }
@@ -353,6 +356,8 @@ object XSLTFeatureAnalyzer {
         if ((isAttributePath(lhs) && isLiteralAttributeValue(rhs)) ||
           (isAttributePath(rhs) && isLiteralAttributeValue(lhs))) {
           f += AttributeLiteralValuePredicate(inPatterns)
+        } else {
+          f += ArbitraryExpressionPredicate(inPatterns)
         }
       case _ =>
         f += ArbitraryExpressionPredicate(inPatterns)
