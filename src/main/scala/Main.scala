@@ -21,13 +21,8 @@ object Main {
         case 1 =>
           Some(xslFiles(0))
         case _ =>
-          val allFile = xslFiles.filter(f => f.getName == "ALL.xsl")
-          if (allFile.length != 1) {
-            println(f"Multiple XSL files found in directory $dir. Expecting 'ALL.xsl' file.")
-            None
-          } else {
-            Some(allFile(0))
-          }
+          println(f"Skipping directory $dir (multiple XSL files found).")
+          None
       }
 
       xslFile match {
