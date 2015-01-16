@@ -20,20 +20,23 @@ object PowersetDomain extends Domain[N, L, V] {
     override val xpathDom = XPATH
 
     override def createElement(name: V, attributes: L, children: L): N = (name, attributes, children) match {
-      // TODO: order is wrong (TOP x BOTTOM = BOTTOM); name is missing from cases
-      case (Left(_), _) => None
-      case (_, Left(_)) => None
-      case (Right(s1), Right(s2)) => Some(s1.cross(s2).map {
-        case (attr, chld) => XMLElement(name,
+      case (Some(s), _, _) if s.collect { case StringValue(_) => () }.isEmpty => BOT
+      case (_, Right(s), _) if s.isEmpty => BOT
+      case (_, _, Right(s)) if s.isEmpty => BOT
+      case (None, _, _) => None
+      case (_, Left(_), _) => None
+      case (_, _, Left(_)) => None
+      case (Some(s1), Right(s2), Right(s3)) => Some(s1.cross(s2).cross(s3).collect {
+        case ((StringValue(n), attr), chld) => XMLElement(n,
           attr.map(a => a.asInstanceOf[XMLAttribute].copy),
           chld.map(c => c.copy))
       }.toSet)
     }
 
     override def createAttribute(name: V, value: V): N = (name, value) match {
-      case (None, None) => None
-      case (None, Some(s)) => if (s.collect { case StringValue(_) => () }.isEmpty) BOT else None
-      case (Some(s), None) => if (s.collect { case StringValue(_) => () }.isEmpty) BOT else None
+      case (Some(s), _) if s.collect { case StringValue(_) => () }.isEmpty => BOT
+      case (_, Some(s)) if s.collect { case StringValue(_) => () }.isEmpty => BOT
+      case (None, _) | (_, None) => None
       case (Some(s1), Some(s2)) => Some(s1.cross(s2).collect {
         case (StringValue(n), StringValue(v)) => XMLAttribute(n, v)
         // NOTE: other XPath values are evaluated to bottom implicitly

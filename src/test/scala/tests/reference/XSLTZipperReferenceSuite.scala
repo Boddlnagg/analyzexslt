@@ -18,7 +18,7 @@ class XSLTZipperReferenceSuite extends XSLTReferenceSuiteBase[N] {
     TransformHelper.transformAbstract(xslt, parsedData, ZipperDomain)
   }
 
-  override def checkMatch(transformed: Either[N, ProcessingError], referenceResult: Either[Elem, TransformerException]) = {
+  override def checkMatch(transformed: Either[N, Exception], referenceResult: Either[Elem, Exception]) = {
     // use BOTTOM instead of exceptions
     val parsedReference: N = referenceResult match {
       case Left(res) => parser.parseDocument(res)

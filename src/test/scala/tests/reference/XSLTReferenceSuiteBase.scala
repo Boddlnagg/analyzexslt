@@ -899,7 +899,33 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
-  def checkMatch(transformed: Either[T, ProcessingError], referenceResult: Either[Elem, TransformerException]) = {
+  test("Attribute value templates") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/root">
+          <result>
+            <xsl:apply-templates/>
+          </result>
+        </xsl:template>
+        <xsl:template match="*">
+          <xsl:element name="{name(.)}">
+            <xsl:variable name="attr" select="'attr'"/>
+            <xsl:attribute name="{name(.)}-{$attr}"><xsl:value-of select="name(.)"/></xsl:attribute>
+          </xsl:element>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root>
+        <a/>
+        <b/>
+        <c/>
+      </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
+  def checkMatch(transformed: Either[T, Exception], referenceResult: Either[Elem, Exception]) = {
     // if Java throws an exception, we should do the same (because of invalid input)
     (referenceResult, transformed) match {
       case (Left(ref), Left(trans)) => assertResult(XMLParser.parseDocument(ref)) { trans }
@@ -917,6 +943,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
       Left(TransformHelper.transformJava(xslt, data))
     } catch {
       case eJava: TransformerException => Right(eJava)
+      case eJava: RuntimeException => Right(eJava)
     }
     println(referenceResult)
 
@@ -924,6 +951,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
       Left(transform(xslt, data))
     } catch {
       case eScala: ProcessingError => Right(eScala)
+      case eScala: RuntimeException => Right(eScala)
     }
 
     println(f"Result: $testResult")

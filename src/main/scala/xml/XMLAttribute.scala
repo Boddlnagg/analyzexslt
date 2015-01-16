@@ -2,6 +2,8 @@ package xml
 
 /** Attribute node as defined in XPath spec section 5.3. */
 case class XMLAttribute(name: String, value: String, var parent: XMLNode = null) extends XMLNode {
+  if (name.isEmpty) throw new IllegalArgumentException("Cannot create XML attribute with empty name.")
+
   override def toString = {
     name + "=" + "\"" + value + "\""
   }

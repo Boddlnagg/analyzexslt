@@ -67,6 +67,7 @@ case class XMLElement(name: String,
 object XMLElement {
   /** Creates an element from a name as well as optional lists of attributes and children. */
   def apply(name: String, attributes: Seq[XMLAttribute] = Nil, children: Seq[XMLNode] = Nil): XMLElement = {
+    if (name.isEmpty) throw new IllegalArgumentException("Cannot create XML element with empty name.")
     val result = new XMLElement(name, MutList(), MutList(), null)
     attributes.foreach(attr => result.addAttribute(attr))
     children.foreach(child => result.appendChild(child))

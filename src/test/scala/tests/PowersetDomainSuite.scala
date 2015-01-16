@@ -31,7 +31,7 @@ class PowersetDomainSuite extends FunSuite {
   val e2 = XMLParser.parse(<e2/>).asInstanceOf[XMLElement]
 
   /** Helper function to create an element with no children or attributes */
-  def createElement(name: String): N = xmlDom.createElement(name, xmlDom.createEmptyList(), xmlDom.createEmptyList())
+  def createElement(name: String): N = xmlDom.createElement(xpathDom.liftString(name), xmlDom.createEmptyList(), xmlDom.createEmptyList())
 
   test("Get root") {
     assertResult(Some(Set(root))) { xmlDom.getRoot(Some(Set(a))) }
@@ -57,19 +57,19 @@ class PowersetDomainSuite extends FunSuite {
   test("Lift element with children") {
     val child = xmlDom.createSingletonList(createElement("child"))
     assertResult(Some(Set(XMLParser.parse(<e1><child/></e1>)))) {
-      xmlDom.createElement("e1", xmlDom.createEmptyList(), child)
+      xmlDom.createElement(xpathDom.liftString("e1"), xmlDom.createEmptyList(), child)
     }
 
     val children = xmlDom.joinLists(xmlDom.concatLists(xmlDom.createSingletonList(createElement("child1")), xmlDom.createSingletonList(createElement("child2"))), child)
     assertResult(Some(Set(XMLParser.parse(<e1><child/></e1>), XMLParser.parse(<e1><child1/><child2/></e1>)))) {
-      xmlDom.createElement("e1", xmlDom.createEmptyList(), children)
+      xmlDom.createElement(xpathDom.liftString("e1"), xmlDom.createEmptyList(), children)
     }
   }
 
   test("Lift element with attributes") {
-    val attr = xmlDom.createSingletonList(xmlDom.createAttribute("name", xpathDom.liftString("value")))
+    val attr = xmlDom.createSingletonList(xmlDom.createAttribute(xpathDom.liftString("name"), xpathDom.liftString("value")))
     assertResult(Some(Set(XMLParser.parse(<e1 name="value"/>)))) {
-      xmlDom.createElement("e1", attr, xmlDom.createEmptyList())
+      xmlDom.createElement(xpathDom.liftString("e1"), attr, xmlDom.createEmptyList())
     }
 
     val attr2: L = Right(Set(
@@ -83,7 +83,7 @@ class PowersetDomainSuite extends FunSuite {
       XMLParser.parse(<e1 attr1="-1" attr2="-2"/>),
       XMLParser.parse(<e1/>)
     ))) {
-      xmlDom.createElement("e1", attr2, xmlDom.createEmptyList())
+      xmlDom.createElement(xpathDom.liftString("e1"), attr2, xmlDom.createEmptyList())
     }
   }
 
@@ -93,9 +93,9 @@ class PowersetDomainSuite extends FunSuite {
     val attr2 = XMLAttribute("attr2", "2")
     val attr3 = XMLAttribute("attr3", "3")
 
-    val l1a = xmlDom.createSingletonList(xmlDom.createAttribute("attr1", xpathDom.liftString("1")))
-    val l2 = xmlDom.createSingletonList(xmlDom.createAttribute("attr2", xpathDom.liftString("2")))
-    val l3 = xmlDom.createSingletonList(xmlDom.createAttribute("attr3", xpathDom.liftString("3")))
+    val l1a = xmlDom.createSingletonList(xmlDom.createAttribute(xpathDom.liftString("attr1"), xpathDom.liftString("1")))
+    val l2 = xmlDom.createSingletonList(xmlDom.createAttribute(xpathDom.liftString("attr2"), xpathDom.liftString("2")))
+    val l3 = xmlDom.createSingletonList(xmlDom.createAttribute(xpathDom.liftString("attr3"), xpathDom.liftString("3")))
 
     val l1ab: L = Right(Set(List(attr1a), List(attr1b)))
     val l12: L = Right(Set(List(attr1a), List(attr1a, attr2)))

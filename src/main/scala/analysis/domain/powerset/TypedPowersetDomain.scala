@@ -2,7 +2,7 @@ package analysis.domain.powerset
 
 import analysis.domain.{XMLDomain, Domain}
 import analysis.domain.powerset.PowersetXMLDomain.{L, N}
-import xml.{XMLComment, XMLAttribute, XMLTextNode, XMLNode}
+import xml._
 
 import scala.collection.immutable.TreeSet
 
@@ -20,9 +20,25 @@ object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
   protected object XML extends PowersetXMLDomain.D[V] {
     override val xpathDom = XPATH
 
-    override def createAttribute(name: String, value: V): N = value.str match {
-      case None => None
-      case Some(s) => Some(s.map(str => XMLAttribute(name, str)))
+    override def createElement(name: V, attributes: L, children: L): N = (name.str, attributes, children) match {
+      case (Some(s), _, _) if s.isEmpty => BOT
+      case (_, Right(s), _) if s.isEmpty => BOT
+      case (_, _, Right(s)) if s.isEmpty => BOT
+      case (None, _, _) => None
+      case (_, Left(_), _) => None
+      case (_, _, Left(_)) => None
+      case (Some(s1), Right(s2), Right(s3)) => Some(s1.cross(s2).cross(s3).collect {
+        case ((n, attr), chld) => XMLElement(n,
+          attr.map(a => a.asInstanceOf[XMLAttribute].copy),
+          chld.map(c => c.copy))
+      }.toSet)
+    }
+
+    override def createAttribute(name: V, value: V): N = (name.str, value.str) match {
+      case (Some(s), _) if s.isEmpty => BOT
+      case (_, Some(s)) if s.isEmpty => BOT
+      case (None, _) | (_, None) => None
+      case (Some(s1), Some(s2)) => Some(s1.cross(s2).map { case (n, v) => XMLAttribute(n, v)}.toSet)
     }
 
     override def createTextNode(value: V): N = value.str match {
