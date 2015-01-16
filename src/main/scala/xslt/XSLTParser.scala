@@ -164,7 +164,8 @@ object XSLTParser {
       case null | "" =>
         // element without namespace
         val literalAttributes: Seq[XSLTInstruction] = node.attributes.asAttrMap.map { case (name, value) =>
-          SetAttributeInstruction(XPathParser.parseAttributeValueTemplate(name), Seq(CreateTextInstruction(value)))
+          val valueExpr = attributeValueTemplateToExpression(XPathParser.parseAttributeValueTemplate(value))
+          SetAttributeInstruction(List(Left(name)), Seq(CopyOfInstruction(valueExpr)))
         }.toSeq
         CreateElementInstruction(List(Left(node.label)), literalAttributes ++ parseTemplate(node.child))
       case _ => throw new NotImplementedError("Namespaces other than the XSLT namespace are not supported.")
@@ -182,5 +183,20 @@ object XSLTParser {
         case (_, None) => throw new NotImplementedError("Parameter instructions must have a `select` attribute specifying their (default) value. The ability to provide a content template (result tree fragment) is not implemented.")
     })
     Map() ++ params
+  }
+
+  /** Lowers a parsed attribute value template to a single XPath expression that evaluates
+    * to the same result, using the concat function if necessary.
+    */
+  def attributeValueTemplateToExpression(avt: List[Either[String, XPathExpr]]): XPathExpr = {
+    val exprList = avt.map {
+      case Left(str) => StringLiteralExpr(str)
+      case Right(expr) => FunctionCallExpr(None, "string", List(expr))
+    }
+    // NOTE: we need to make sure that the result (and the arguments to concat) are strings
+    exprList match {
+      case single :: Nil => single
+      case _ => FunctionCallExpr(None, "concat", exprList)
+    }
   }
 }

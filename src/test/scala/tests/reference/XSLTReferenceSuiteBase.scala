@@ -903,7 +903,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match="/root">
-          <result>
+          <result attr="{@attr}">
             <xsl:apply-templates/>
           </result>
         </xsl:template>
@@ -916,10 +916,34 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
       </xsl:stylesheet>
 
     val data =
-      <root>
+      <root attr="foobar">
         <a/>
         <b/>
         <c/>
+      </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
+  test("<xsl:for-each>") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/root">
+          <result>
+            <xsl:for-each select="a">
+              <elem attr="{@attr}" position="{position()}-of-{last()}"/>
+            </xsl:for-each>
+          </result>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root>
+        <a attr="a1"/>
+        <b/>
+        <a attr="a2"/>
+        <a attr="a3"/>
+        <b/>
       </root>
 
     assertTransformMatches(xslt, data)
