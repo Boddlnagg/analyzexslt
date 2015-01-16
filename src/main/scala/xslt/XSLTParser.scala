@@ -159,6 +159,12 @@ object XSLTParser {
         case "text" =>
           CreateTextInstruction(elem.text)
 
+        // spec section 8
+        case "for-each" =>
+          if (elem.child.exists(isElem(_, "sort")))
+            throw new NotImplementedError("'sort' is not supporte (found inside 'for-each')")
+          ForEachInstruction(XPathParser.parse(elem.attribute("select").get.text), parseTemplate(elem.child))
+
         case _ => throw new NotImplementedError(f"Unsupported XSLT instruction: ${elem.label}")
       }
       case null | "" =>

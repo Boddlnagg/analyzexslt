@@ -33,7 +33,7 @@ case class VariableDefinitionInstruction(name: String, select: XPathExpr) extend
 
 /** Apply templates instruction, created using the &lt;xsl:apply-templates&gt; element (see XSLT spec 5.4)
   *
-  * @param select an optional XPath expression (must return a node-set) to select only a subset of the child nodes
+  * @param select an optional XPath expression (must return a node-set) to select a different set of nodes instead of the children
   * @param params the parameters for the template instantiation, as defined with &lt;xsl:with-param&gt;
   */
 case class ApplyTemplatesInstruction(select: Option[XPathExpr], params: Map[String, XPathExpr] = Map()) extends XSLTInstruction
@@ -66,3 +66,10 @@ case class CopyOfInstruction(select: XPathExpr) extends XSLTInstruction
   * @param otherwise the instructions that are evaluated when no previous branch matches
   */
 case class ChooseInstruction(branches: List[(XPathExpr, Seq[XSLTInstruction])], otherwise: Seq[XSLTInstruction]) extends XSLTInstruction
+
+/** For-each instruction, created using the &lt;xsl:for-each&gt; element (see XSLT spec section 8)
+  *
+  * @param select an XPath expression (must return a node-set) that specifies what nodes the content should be instantiated for
+  * @param content the instructions that are evaluated for each of the selected node
+  */
+case class ForEachInstruction(select: XPathExpr, content: Seq[XSLTInstruction]) extends XSLTInstruction

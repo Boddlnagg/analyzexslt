@@ -153,7 +153,13 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val possibleBranches = chooseBranches(branches, otherwise, xsltToXPathContext(context))
         // evaluate all possible branches and join the result lists
         Left(xmlDom.joinAllLists(possibleBranches.map(br => process(sheet, br, context))))
-
+      case ForEachInstruction(select, content) =>
+        val result = xpathAnalyzer.evaluate(select, xsltToXPathContext(context))
+        val (extracted, _) = xpathDom.matchNodeSetValues(result)
+        Left(xmlDom.flatMapWithIndex(extracted, (n, i) => {
+          val newContext = AbstractXSLTContext(n, extracted, xpathDom.add(i, xpathDom.liftNumber(1)), context.variables)
+          process(sheet, content, newContext)
+        }))
     }
   }
 

@@ -142,6 +142,16 @@ object XSLTProcessor {
         }
       case ChooseInstruction(branches, otherwise) =>
         Left(process(sheet, chooseBranch(branches, otherwise, context.toXPathContext), context))
+      case ForEachInstruction(select, content) =>
+        XPathEvaluator.evaluate(select, context.toXPathContext) match {
+          case NodeSetValue(nodes) =>
+            val nodeList = nodes.toList
+            Left(nodeList.zipWithIndex.flatMap { case (n, i) =>
+              val newContext = XSLTContext(n, nodeList, i + 1, context.variables)
+              process(sheet, content, newContext)
+            })
+          case value => throw new ProcessingError(f"select expression in for-each must evaluate to a node-set (evaluated to $value)")
+        }
     }
   }
 
