@@ -81,7 +81,7 @@ object XPathParser {
       case numExpr: JNumberExpr => NumLiteralExpr(numExpr.getNumber.doubleValue())
       case varRefExpr: JVariableReferenceExpr =>
         if (varRefExpr.getPrefix != null && varRefExpr.getPrefix.length > 0) throw new NotImplementedError("Prefixed variables are not supported")
-        VarReferenceExpr(varRefExpr.getVariableName)
+        VariableReferenceExpr(varRefExpr.getVariableName)
       case pathExpr: JPathExpr =>
         var filter = parse(pathExpr.getFilterExpr)
         if (!filter.isInstanceOf[FilterExpr]) { filter = FilterExpr(filter, Nil) }

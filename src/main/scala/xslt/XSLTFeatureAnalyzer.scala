@@ -293,7 +293,7 @@ object XSLTFeatureAnalyzer {
         f += ArithmeticXPathExpressions
         analyzeXPathExpression(inner, f)
       case StringLiteralExpr(_) | NumLiteralExpr(_) => ()
-      case VarReferenceExpr(name) => f += Variables
+      case VariableReferenceExpr(name) => f += Variables
       case FunctionCallExpr(prefix, name, params) =>
         val qname = prefix match {
           case Some(pre) => pre+":"+name

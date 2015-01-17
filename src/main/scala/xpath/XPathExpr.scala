@@ -22,7 +22,7 @@ case class UnaryMinusExpr(inner: XPathExpr) extends XPathExpr
 case class FunctionCallExpr(prefix: Option[String], name: String, params: List[XPathExpr]) extends XPathExpr
 case class StringLiteralExpr(literal: String) extends XPathExpr
 case class NumLiteralExpr(num: Double) extends XPathExpr
-case class VarReferenceExpr(name: String) extends XPathExpr
+case class VariableReferenceExpr(name: String) extends XPathExpr
 case class PathExpr(filter: FilterExpr, locationPath: LocationPath) extends XPathExpr
 case class LocationPath(steps: List[XPathStep], isAbsolute: Boolean) extends XPathExpr
 case class FilterExpr(inner: XPathExpr, predicates: List[XPathExpr]) extends XPathExpr

@@ -25,8 +25,9 @@ object XPathEvaluator {
     case UnaryMinusExpr(inner) => NumberValue(- evaluate(inner, ctx).toNumberValue.value)
     case StringLiteralExpr(literal) => StringValue(literal)
     case NumLiteralExpr(num) => NumberValue(num)
-    case VarReferenceExpr(name) => try ctx.variables(name) catch {
-      case e: java.util.NoSuchElementException => throw new ProcessingError(f"Variable $name is not defined")
+    case VariableReferenceExpr(name) => ctx.variables.get(name) match {
+      case Some(value) => value
+      case None => throw new ProcessingError(f"Variable $name is not defined")
     }
     case UnionExpr(lhs, rhs) => (evaluate(lhs, ctx), evaluate(rhs, ctx)) match {
       case (NodeSetValue(left), NodeSetValue(right)) => NodeSetValue(left | right)
