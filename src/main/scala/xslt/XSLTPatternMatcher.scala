@@ -10,7 +10,7 @@ object XSLTPatternMatcher {
   def matches(node: XMLNode, path: LocationPath): Boolean = {
     // match recursively from right to left
     if (path.steps.isEmpty) {
-      // an empty path is always a match, but when it is an absolute path, the current node must be the root node
+      // an empty relative path is always a match, but when it is an absolute path, the current node must be the root node
       if (path.isAbsolute) node.isInstanceOf[XMLRoot] else true
     } else {
       val lastStep = path.steps.last
@@ -45,8 +45,9 @@ object XSLTPatternMatcher {
           val nextRestPath = LocationPath(restPath.steps.dropRight(1), path.isAbsolute)
           node.ancestors.exists(a => matches(a, nextRestPath))
         }
-        else
+        else {
           matches(node.parent, restPath) // does the parent match the rest of the path?
+        }
       }
     }
   }

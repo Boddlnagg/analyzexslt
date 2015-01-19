@@ -93,7 +93,7 @@ object XSLTProcessor {
         if (text != "")
           Left(List(XMLTextNode(text)))
         else
-          Left(List()) // no text node will be created for the empty string
+          Left(Nil) // no text node will be created for the empty string
       case CreateCommentInstruction(value) =>
         // merge the content of all text-node children to create the comment value (non-text-node children are wrong and can be ignored according to spec)
         val textResult = process(sheet, value, context)
@@ -149,7 +149,7 @@ object XSLTProcessor {
             if (textValue != "")
               Left(List(XMLTextNode(value.toStringValue.value)))
             else
-              Left(List()) // text nodes with empty content are not allowed
+              Left(Nil) // text nodes with empty content are not allowed
         }
       case ChooseInstruction(branches, otherwise) =>
         Left(process(sheet, chooseBranch(branches, otherwise, context.toXPathContext), context))
