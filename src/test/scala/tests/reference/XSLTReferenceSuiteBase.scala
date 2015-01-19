@@ -949,6 +949,33 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("<xsl:copy>") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/root">
+          <result>
+            <xsl:for-each select="* | @*">
+              <xsl:copy>
+                <xsl:attribute name="bar">bar</xsl:attribute>
+                <b/>
+              </xsl:copy>
+            </xsl:for-each>
+          </result>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root attr="x">
+        <a foo="foo">
+          <a/>
+        </a>
+        Some text
+        <a/>
+      </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
   def checkMatch(transformed: Either[T, Exception], referenceResult: Either[Elem, Exception]) = {
     // if Java throws an exception, we should do the same (because of invalid input)
     (referenceResult, transformed) match {

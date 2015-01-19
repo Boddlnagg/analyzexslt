@@ -216,7 +216,7 @@ object ZipperXMLDomain {
     override def copyToOutput(list: L): L = list.map {
       case in@(Subtree(desc, attributes, children), path) =>
         val (root, notRoot) = isRoot(in)
-        if (!lessThanOrEqual(root, bottom)) { // isRoot is not BOTTOM -> node might be a root node
+        if (!lessThanOrEqual(root, bottom)) { // root is not BOTTOM -> node might be a root node
           val child = getChildren(in).first
           val (tree, _) = join(notRoot, child)
           normalize(tree, latP.top)

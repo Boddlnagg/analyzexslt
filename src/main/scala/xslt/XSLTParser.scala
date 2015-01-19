@@ -132,6 +132,9 @@ object XSLTParser {
         case "comment" =>
           CreateCommentInstruction(parseTemplate(elem.child))
 
+        // spec section 7.5
+        case "copy" => CopyInstruction(parseTemplate(elem.child))
+
         // spec section 7.6.1
         case "value-of" =>
           // <xsl:value-of select="."> is equivalent to <xsl:copy-of select="string(.)">

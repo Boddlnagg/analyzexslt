@@ -126,6 +126,17 @@ object XSLTProcessor {
         Left(instantiateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
       case VariableDefinitionInstruction(name, expr) =>
         Right(name, XPathEvaluator.evaluate(expr, context.toXPathContext))
+      case CopyInstruction(content) =>
+        context.node match {
+          case XMLRoot(_) => Left(process(sheet, content, context))
+          case XMLElement(name, _, _, _) =>
+            val resultNodes = process(sheet, content, context)
+            // attributes must come before all other result nodes, afterwards they are ignored (see spec section 7.1.3)
+            val resultAttributes = resultNodes.takeWhile(n => n.isInstanceOf[XMLAttribute]).map(n => n.asInstanceOf[XMLAttribute])
+            val resultChildren = resultNodes.filter(n => !n.isInstanceOf[XMLAttribute])
+            Left(List(XMLElement(name, resultAttributes, resultChildren)))
+          case n => Left(List(n.copy))
+        }
       case CopyOfInstruction(select) =>
         XPathEvaluator.evaluate(select, context.toXPathContext) match {
           // NOTE: result tree fragments are generally not supported

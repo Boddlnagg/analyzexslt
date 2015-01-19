@@ -137,6 +137,25 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         Left(instantiateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case VariableDefinitionInstruction(name, expr) =>
         Right(name, xpathAnalyzer.evaluate(expr, xsltToXPathContext(context)))
+      case CopyInstruction(content) =>
+        val (root, notRoot) = xmlDom.isRoot(context.node)
+        var result = xmlDom.bottomList
+        if (!xmlDom.lessThanOrEqual(root, xmlDom.bottom)) { // root is not BOTTOM -> node might be a root node
+          result = xmlDom.joinLists(result, process(sheet, content, context))
+        }
+        val (elem, notElem) = xmlDom.isElement(notRoot)
+        if (!xmlDom.lessThanOrEqual(elem, xmlDom.bottom)) { // elem is not BOTTOM -> node might be an element node
+          val innerNodes = process(sheet, content, context)
+          val (resultAttributes, resultChildren) = xmlDom.partitionAttributes(innerNodes)
+          val elemResult = xmlDom.createElement(xmlDom.getNodeName(elem), resultAttributes, resultChildren)
+          result = xmlDom.joinLists(result, xmlDom.createSingletonList(elemResult))
+        }
+        if (!xmlDom.lessThanOrEqual(notElem, xmlDom.bottom)) {
+          // notElem is not BOTTOM -> there are nodes that are neither elements nor root nodes
+          // those can be copied directly
+          result = xmlDom.joinLists(result, xmlDom.copyToOutput(xmlDom.createSingletonList(notElem)))
+        }
+        Left(result)
       case CopyOfInstruction(select) =>
         val result = xpathAnalyzer.evaluate(select, xsltToXPathContext(context))
         val (nodeSets, rest) = xpathDom.matchNodeSetValues(result)

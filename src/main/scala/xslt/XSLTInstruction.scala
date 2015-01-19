@@ -52,6 +52,13 @@ case class CallTemplateInstruction(name: String, params: Map[String, XPathExpr] 
   */
 case class SetAttributeInstruction(name: List[Either[String, XPathExpr]], value: Seq[XSLTInstruction]) extends XSLTInstruction
 
+/** Copy instruction, created using the &lt;xsl:copy&gt; element (see XSLT spec sections 7.5)
+  * This copies the current node, but without any children or attributes.
+  *
+  * @param content the template that is instantiated to generate the content (children) of the resulting node
+  */
+case class CopyInstruction(content: Seq[XSLTInstruction]) extends XSLTInstruction
+
 /** Copy-of instruction, created using the &lt;xsl:copy-of&gt; or &lt;xsl:value-of&gt; elements (see XSLT spec sections 7.6.1 and 11.3)
   * For &lt;xsl:value-of&gt;, the result will be converted to a string by wrapping the select expression with a call to the string() function.
   *
