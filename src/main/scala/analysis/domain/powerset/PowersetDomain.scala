@@ -21,12 +21,12 @@ object PowersetDomain extends Domain[N, L, V] {
 
     override def createElement(name: V, attributes: L, children: L): N = (name, attributes, children) match {
       case (Some(s), _, _) if s.collect { case StringValue(_) => () }.isEmpty => BOT
-      case (_, Right(s), _) if s.isEmpty => BOT
-      case (_, _, Right(s)) if s.isEmpty => BOT
+      case (_, Some(s), _) if s.isEmpty => BOT
+      case (_, _, Some(s)) if s.isEmpty => BOT
       case (None, _, _) => None
-      case (_, Left(_), _) => None
-      case (_, _, Left(_)) => None
-      case (Some(s1), Right(s2), Right(s3)) => Some(s1.cross(s2).cross(s3).collect {
+      case (_, None, _) => None
+      case (_, _, None) => None
+      case (Some(s1), Some(s2), Some(s3)) => Some(s1.cross(s2).cross(s3).collect {
         case ((StringValue(n), attr), chld) => XMLElement(n,
           attr.map(a => a.asInstanceOf[XMLAttribute].copy),
           chld.map(c => c.copy))
@@ -63,12 +63,12 @@ object PowersetDomain extends Domain[N, L, V] {
   protected object XPATH extends PowersetXPathDomain.D[N, L] {
 
     override def toNodeSet(list: L): V = list match {
-      case Left(_) => None
-      case Right(s) => Some(s.map(nodes => NodeSetValue(nodes.to[TreeSet])))
+      case None => None
+      case Some(s) => Some(s.map(nodes => NodeSetValue(nodes.to[TreeSet])))
     }
 
     override def matchNodeSetValues(v: V): (L, V) = v match {
-      case None => (Left(None), None)
+      case None => (None, None)
       case Some(s) =>
         val nodeSetContents = s.collect {
           case NodeSetValue(nodes) => nodes.toList
@@ -76,7 +76,7 @@ object PowersetDomain extends Domain[N, L, V] {
         val rest = s.collect {
           case v@(NumberValue(_) | StringValue(_) | BooleanValue(_)) => v
         }
-        (Right(nodeSetContents), Some(rest))
+        (Some(nodeSetContents), Some(rest))
     }
   }
 }

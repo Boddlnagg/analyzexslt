@@ -45,13 +45,13 @@ class PowersetDomainSuite extends FunSuite {
     val out2 = XMLParser.parse(<out2/>).asInstanceOf[XMLElement]
     val out3 = XMLParser.parse(<out3/>).asInstanceOf[XMLElement]
 
-    assertResult(Right(Set(List(out1)))) { xmlDom.createSingletonList(createElement("out1")) }
-    assertResult(Left(Some(2))) { xmlDom.concatLists(xmlDom.createSingletonList(createElement("out1")), xmlDom.createSingletonList(xmlDom.top))} // this is true for this domain
-    assertResult(Right(Set(List(out1, out3), List(out2, out3)))) { xmlDom.concatLists(xmlDom.createSingletonList(Some(Set(out1, out2))), xmlDom.createSingletonList(Some(Set(out3)))) }
+    assertResult(Some(Set(List(out1)))) { xmlDom.createSingletonList(createElement("out1")) }
+    assertResult(None) { xmlDom.concatLists(xmlDom.createSingletonList(createElement("out1")), xmlDom.createSingletonList(xmlDom.top))} // this is true for this domain
+    assertResult(Some(Set(List(out1, out3), List(out2, out3)))) { xmlDom.concatLists(xmlDom.createSingletonList(Some(Set(out1, out2))), xmlDom.createSingletonList(Some(Set(out3)))) }
     // this is true for all domains (if one of the elements is bottom, the resulting list must be bottom)
     assertResult(xmlDom.bottomList) { xmlDom.concatLists(xmlDom.createSingletonList(Some(Set(out1, out2))), xmlDom.createSingletonList(xmlDom.bottom)) }
     // the empty list must be lifted to the empty list
-    assertResult(Right(Set(Nil))) { xmlDom.createEmptyList() }
+    assertResult(Some(Set(Nil))) { xmlDom.createEmptyList() }
   }
 
   test("Lift element with children") {
@@ -72,7 +72,7 @@ class PowersetDomainSuite extends FunSuite {
       xmlDom.createElement(xpathDom.liftString("e1"), attr, xmlDom.createEmptyList())
     }
 
-    val attr2: L = Right(Set(
+    val attr2: L = Some(Set(
       List(XMLAttribute("attr1", "1"), XMLAttribute("attr2", "2")), // first alternative
       List(XMLAttribute("attr1", "-1"), XMLAttribute("attr2", "-2")), // second alternative
       Nil // third alternative
@@ -97,16 +97,16 @@ class PowersetDomainSuite extends FunSuite {
     val l2 = xmlDom.createSingletonList(xmlDom.createAttribute(xpathDom.liftString("attr2"), xpathDom.liftString("2")))
     val l3 = xmlDom.createSingletonList(xmlDom.createAttribute(xpathDom.liftString("attr3"), xpathDom.liftString("3")))
 
-    val l1ab: L = Right(Set(List(attr1a), List(attr1b)))
-    val l12: L = Right(Set(List(attr1a), List(attr1a, attr2)))
+    val l1ab: L = Some(Set(List(attr1a), List(attr1b)))
+    val l12: L = Some(Set(List(attr1a), List(attr1a, attr2)))
 
-    assertResult(Right(Set(List(attr1a, attr2)))) { xmlDom.concatLists(l1a, l2) }
-    assertResult(Right(Set(List(attr1a, attr2, attr3)))) { xmlDom.concatLists(xmlDom.concatLists(l1a, l2), l3) }
+    assertResult(Some(Set(List(attr1a, attr2)))) { xmlDom.concatLists(l1a, l2) }
+    assertResult(Some(Set(List(attr1a, attr2, attr3)))) { xmlDom.concatLists(xmlDom.concatLists(l1a, l2), l3) }
 
-    assertResult(Right(Set(List(attr1a, attr2), List(attr1b, attr2)))) { xmlDom.concatLists(l1ab, l2) }
-    assertResult(Right(Set(List(attr1a, attr2, attr3), List(attr1b, attr2, attr3)))) { xmlDom.concatLists(xmlDom.concatLists(l1ab, l2), l3) }
+    assertResult(Some(Set(List(attr1a, attr2), List(attr1b, attr2)))) { xmlDom.concatLists(l1ab, l2) }
+    assertResult(Some(Set(List(attr1a, attr2, attr3), List(attr1b, attr2, attr3)))) { xmlDom.concatLists(xmlDom.concatLists(l1ab, l2), l3) }
 
-    assertResult(Right(Set(List(attr1a, attr2, attr3), List(attr1a, attr3)))) { xmlDom.concatLists(l12, l3) }
+    assertResult(Some(Set(List(attr1a, attr2, attr3), List(attr1a, attr3)))) { xmlDom.concatLists(l12, l3) }
 
     // check associativity of concatenation
     assert(xmlDom.concatLists(xmlDom.concatLists(l1a, l2), l3) == xmlDom.concatLists(l1a, xmlDom.concatLists(l2, l3)))
@@ -152,22 +152,22 @@ class PowersetDomainSuite extends FunSuite {
     val out3 = XMLParser.parse(<out3/>).asInstanceOf[XMLElement]
     val out4 = XMLParser.parse(<out4/>).asInstanceOf[XMLElement]
 
-    val input: L = Right(Set(List(a, b, c), List(c, b), List(a)))
+    val input: L = Some(Set(List(a, b, c), List(c, b), List(a)))
     def transform(node: N, index: V): L = {
       if (node == Some(Set(a))) {
         assert(index == Some(Set(NumberValue(0))))
-        Right(Set(List(out1, out2), List(out3)))
+        Some(Set(List(out1, out2), List(out3)))
       } else if (node == Some(Set(b))) {
         assert(index == Some(Set(NumberValue(1))))
-        Right(Set(List(out4)))
+        Some(Set(List(out4)))
       } else if (node == Some(Set(c))) {
-        Right(Set(List()))
+        Some(Set(List()))
       } else {
         throw new AssertionError(f"node must be a, b, or c but was $node")
       }
     }
 
-    assertResult(Right(Set(List(out3, out4), List(out1, out2), List(out1, out2, out4), List(out4), List(out3)))) {
+    assertResult(Some(Set(List(out3, out4), List(out1, out2), List(out1, out2, out4), List(out4), List(out3)))) {
       xmlDom.flatMapWithIndex(input, transform)
     }
   }
