@@ -976,6 +976,38 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("Template modes") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <result>
+            <xsl:apply-templates/>
+            <xsl:apply-templates mode="foobar" />
+          </result>
+        </xsl:template>
+
+        <!-- Make sure that the built-in recursive rules propagate the mode -->
+        <xsl:template match="a" mode="foobar">
+          <foobar-mode>
+            <!-- The following should trigger the template below -->
+            <xsl:apply-templates select="."/>
+          </foobar-mode>
+        </xsl:template>
+
+        <xsl:template match="a">
+          <no-mode/>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root>
+        <a/>
+        <a/>
+      </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
   def checkMatch(transformed: Either[T, Exception], referenceResult: Either[Elem, Exception]) = {
     // if Java throws an exception, we should do the same (because of invalid input)
     (referenceResult, transformed) match {

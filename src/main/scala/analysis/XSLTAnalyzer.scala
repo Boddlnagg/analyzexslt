@@ -17,14 +17,14 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   /** Transforms a source document (represented by it's root node) into a new document using an XSLT stylesheet*/
   def transform(sheet: XSLTStylesheet, source: N): N = {
     val (rootSource, _) = xmlDom.isRoot(source) // enforce the source node to be a root node
-    xmlDom.wrapInRoot(transform(sheet, xmlDom.createSingletonList(rootSource), Map(), Map()))
+    xmlDom.wrapInRoot(applyTemplates(sheet, xmlDom.createSingletonList(rootSource), None, Map(), Map()))
   }
 
-  /** Transforms a list of source nodes to a new list of nodes using given variable and parameter bindings */
-  private def transform(sheet: XSLTStylesheet, sources: L, variables: Map[String, V], params: Map[String, V]): L = {
+  /** Applies matching templates to a list of given source nodes and produces a new list of nodes */
+  private def applyTemplates(sheet: XSLTStylesheet, sources: L, mode: Option[String], variables: Map[String, V], params: Map[String, V]): L = {
     // create context, choose template, instantiate template, append results
     xmlDom.flatMapWithIndex(sources, (node, index) => {
-      val templates = chooseTemplates(sheet, node)
+      val templates = chooseTemplates(sheet, node, mode)
 
       xmlDom.joinAllLists(templates.map { case (tmpl, specificNode) =>
         val context = AbstractXSLTContext[N, L, V](specificNode, sources, xpathDom.add(index, xpathDom.liftNumber(1)), variables)
@@ -49,12 +49,16 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     process(sheet, tmpl.content, context.replaceVariables(Map()).addVariables(remainingDefaultParams ++ acceptedParams))
   }
 
-  private def chooseTemplates(sheet: XSLTStylesheet, node: N): Map[XSLTTemplate, N] = {
+  private def chooseTemplates(sheet: XSLTStylesheet, node: N, mode: Option[String]): Map[XSLTTemplate, N] = {
     val result = scala.collection.mutable.Map[XSLTTemplate, N]()
+    val matchable = sheet.matchableTemplates.get(mode) match {
+      case Some(m) => m
+      case None => return Map()
+    }
     var currentNode = node
     breakable {
       // iterate through matchable templates (they are ordered s.t. the first one always has highest priority/precedence)
-      sheet.matchableTemplates.foreach { case (path, tpl) =>
+      matchable.foreach { case (path, tpl) =>
         val (matches, notMatches) = patternMatcher.matches(currentNode, path)
         if (!xmlDom.lessThanOrEqual(matches, xmlDom.bottom))
           result.put(tpl, matches) // template might match, so add it to possible results
@@ -126,12 +130,12 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           case Right(expr) => xpathDom.toStringValue(xpathAnalyzer.evaluate(expr, xsltToXPathContext(context)))
         })
         Left(xmlDom.createSingletonList(xmlDom.createAttribute(evaluatedName, textResult)))
-      case ApplyTemplatesInstruction(None, params) =>
-        Left(transform(sheet, xmlDom.getChildren(context.node), context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
-      case ApplyTemplatesInstruction(Some(expr), params) =>
+      case ApplyTemplatesInstruction(None, mode, params) =>
+        Left(applyTemplates(sheet, xmlDom.getChildren(context.node), mode, context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
+      case ApplyTemplatesInstruction(Some(expr), mode, params) =>
         val result = xpathAnalyzer.evaluate(expr, xsltToXPathContext(context))
         val (extracted, _) = xpathDom.matchNodeSetValues(result)
-        Left(transform(sheet, extracted, context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
+        Left(applyTemplates(sheet, extracted, mode, context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
       case CallTemplateInstruction(name, params) =>
         // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)
         Left(instantiateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))

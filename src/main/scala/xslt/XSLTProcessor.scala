@@ -9,25 +9,25 @@ object XSLTProcessor {
   /** Transforms a source document (represented by it's root node) into a new document using an XSLT stylesheet*/
   def transform(sheet: XSLTStylesheet, source: XMLRoot): XMLRoot = {
     // process according to XSLT spec section 5.1
-    transform(sheet, List(source), Map(), Map()) match {
+    applyTemplates(sheet, List(source), None, Map(), Map()) match {
       case List(inner@XMLElement(_, _, _, _)) => XMLRoot(inner)
-      case _ => throw new IllegalStateException("Transformation result must be a single XMLElement")
+      case x => throw new IllegalStateException("Transformation result must be a single XMLElement")
     }
   }
 
-  /** Transforms a list of source nodes to a new list of nodes using given variable and parameter bindings */
-  def transform(sheet: XSLTStylesheet, sources: List[XMLNode], variables: Map[String, XPathValue], params: Map[String, XPathValue]): List[XMLNode] = {
+  /** Applies matching templates to a list of given source nodes and produces a new list of nodes */
+  def applyTemplates(sheet: XSLTStylesheet, sources: List[XMLNode], mode: Option[String], variables: Map[String, XPathValue], params: Map[String, XPathValue]): List[XMLNode] = {
     // create context, choose template, instantiate template, append results
     sources.zipWithIndex.flatMap { case (n,i) =>
-      val tmpl = chooseTemplate(sheet, n)
+      val tmpl = chooseTemplate(sheet, n, mode)
       val context = XSLTContext(n, sources, i + 1, variables)
       instantiateTemplate(sheet, tmpl, context, params)
     }
   }
 
   /** Chooses a template that matches the given element best */
-  def chooseTemplate(sheet: XSLTStylesheet, node: XMLNode): XSLTTemplate = {
-    sheet.matchableTemplates.find { case (path, _) => XSLTPatternMatcher.matches(node, path)} match {
+  def chooseTemplate(sheet: XSLTStylesheet, node: XMLNode, mode: Option[String]): XSLTTemplate = {
+    sheet.matchableTemplates(mode).find { case (path, _) => XSLTPatternMatcher.matches(node, path)} match {
       case Some((_, tmpl)) => tmpl
       case None => throw new ProcessingError(f"Found no matching template for input node `${XMLNode.formatPath(node)}` [NOTE: this can only happen when builtin templates are disabled]")
     }
@@ -110,15 +110,15 @@ object XSLTProcessor {
           case Right(expr) => XPathEvaluator.evaluate(expr, context.toXPathContext).toStringValue.value
         }.mkString
         Left(List(XMLAttribute(evaluatedName, textResult)))
-      case ApplyTemplatesInstruction(None, params) =>
+      case ApplyTemplatesInstruction(None, mode, params) =>
         context.node match {
-          case XMLRoot(inner) => Left(transform(sheet, List(inner), context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
-          case elem: XMLElement => Left(transform(sheet, elem.children.toList, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
+          case XMLRoot(inner) => Left(applyTemplates(sheet, List(inner), mode, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
+          case elem: XMLElement => Left(applyTemplates(sheet, elem.children.toList, mode, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case _ => Left(Nil) // other node types don't have children and return an empty result
         }
-      case ApplyTemplatesInstruction(Some(expr), params) =>
+      case ApplyTemplatesInstruction(Some(expr), mode, params) =>
         XPathEvaluator.evaluate(expr, context.toXPathContext) match {
-          case NodeSetValue(nodes) => Left(transform(sheet, nodes.toList, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
+          case NodeSetValue(nodes) => Left(applyTemplates(sheet, nodes.toList, mode, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case value => throw new ProcessingError(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")
         }
       case CallTemplateInstruction(name, params) =>

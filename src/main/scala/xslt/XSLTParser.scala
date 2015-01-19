@@ -68,7 +68,8 @@ object XSLTParser {
       .map(n => n.asInstanceOf[Elem])
       .map(elem => (parseTemplate(elem),
         elem.attribute("name").map(_.text),
-        elem.attribute("match").map(a => XPathParser.parse(a.text))
+        elem.attribute("match").map(a => XPathParser.parse(a.text)),
+        elem.attribute("mode").map(_.text)
       ))
       .toList // returns a list of tuples (template, name?, match?, precedence)
 
@@ -105,9 +106,10 @@ object XSLTParser {
         // spec sections 5.4 and 11.6
         case "apply-templates" =>
           val select = elem.attribute("select").map(a => XPathParser.parse(a.text))
+          val mode = elem.attribute("mode").map(_.text)
           if (!elem.child.forall(isElem(_, "with-param")))
             throw new NotImplementedError("children of 'apply-templates' element must only be 'with-param' ('sort' is not supported)")
-          ApplyTemplatesInstruction(select, parseParams(elem.child, "with-param"))
+          ApplyTemplatesInstruction(select, mode, parseParams(elem.child, "with-param"))
 
         // spec section 6
         case "call-template" =>
