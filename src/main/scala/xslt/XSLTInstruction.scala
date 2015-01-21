@@ -8,9 +8,9 @@ abstract class XSLTInstruction
 /** Instruction to create an element node (see XSLT spec section 7.1.1 and 7.1.2)
   *
   * @param name the name of the element, as an attribute value template (namespaces are not implemented)
-  * @param children the instructions used to generate the children of the element
+  * @param content the instructions used to generate the attributes and children of the element
   */
-case class CreateElementInstruction(name: List[Either[String, XPathExpr]], children: Seq[XSLTInstruction]) extends XSLTInstruction
+case class CreateElementInstruction(name: List[Either[String, XPathExpr]], content: Seq[XSLTInstruction]) extends XSLTInstruction
 
 /** Set attribute instruction, created using the &lt;xsl:attribute&gt; element (see XSLT spec section 7.1.3)
   * or from attributes in literal elements.

@@ -109,14 +109,14 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     */
   private def process(sheet: XSLTStylesheet, instruction: XSLTInstruction, context: AbstractXSLTContext[N, L, V]): Either[L, (String, V)] = {
     instruction match {
-      case CreateElementInstruction(name, children) =>
-        val innerNodes = processAll(sheet, children, context)
-        val (resultAttributes, resultChildren) = xmlDom.partitionAttributes(innerNodes)
+      case CreateElementInstruction(name, content) =>
+        val innerNodes = processAll(sheet, content, context)
+        val (attributes, children) = xmlDom.partitionAttributes(innerNodes)
         val evaluatedName = xpathDom.concatAllStrings(name.map {
           case Left(str) => xpathDom.liftString(str)
           case Right(expr) => xpathDom.toStringValue(xpathAnalyzer.evaluate(expr, xsltToXPathContext(context)))
         })
-        val result = xmlDom.createElement(evaluatedName, resultAttributes, resultChildren)
+        val result = xmlDom.createElement(evaluatedName, attributes, children)
         Left(xmlDom.createSingletonList(result))
       case CreateTextInstruction(text) =>
         if (text == "")

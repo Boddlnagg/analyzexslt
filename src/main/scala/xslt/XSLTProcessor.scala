@@ -88,16 +88,16 @@ object XSLTProcessor {
     */
   def process(sheet: XSLTStylesheet, instruction: XSLTInstruction, context: XSLTContext): Either[List[XMLNode], (String, XPathValue)] = {
     instruction match {
-      case CreateElementInstruction(name, children) =>
-        val resultNodes = processAll(sheet, children, context)
+      case CreateElementInstruction(name, content) =>
+        val innerNodes = processAll(sheet, content, context)
         // attributes must come before all other result nodes, afterwards they are ignored (see spec section 7.1.3)
-        val resultAttributes = resultNodes.takeWhile(n => n.isInstanceOf[XMLAttribute]).map(n => n.asInstanceOf[XMLAttribute])
-        val resultChildren = resultNodes.filter(n => !n.isInstanceOf[XMLAttribute])
+        val attributes = innerNodes.takeWhile(n => n.isInstanceOf[XMLAttribute]).map(n => n.asInstanceOf[XMLAttribute])
+        val children = innerNodes.filter(n => !n.isInstanceOf[XMLAttribute])
         val evaluatedName = name.map {
           case Left(str) => str
           case Right(expr) => XPathEvaluator.evaluate(expr, context.toXPathContext).toStringValue.value
-        }.mkString
-        Left(List(XMLElement(evaluatedName, resultAttributes, resultChildren)))
+        }.mkString // concatenate literal and expression parts to get the element name
+        Left(List(XMLElement(evaluatedName, attributes, children)))
       case CreateTextInstruction(text) =>
         if (text != "")
           Left(List(XMLTextNode(text)))
@@ -117,7 +117,7 @@ object XSLTProcessor {
         val evaluatedName = name.map {
           case Left(str) => str
           case Right(expr) => XPathEvaluator.evaluate(expr, context.toXPathContext).toStringValue.value
-        }.mkString
+        }.mkString // concatenate literal and expression parts to get the attribute name
         Left(List(XMLAttribute(evaluatedName, textResult)))
       case ApplyTemplatesInstruction(None, mode, params) =>
         context.node match {
@@ -153,10 +153,10 @@ object XSLTProcessor {
             case XMLRoot(inner) => inner.copy // "a root node is copied by copying its children" according to spec
             case n => n.copy
           })
-          case value =>
-            val textValue = value.toStringValue.value
+          case other =>
+            val textValue = other.toStringValue.value
             if (textValue != "")
-              Left(List(XMLTextNode(value.toStringValue.value)))
+              Left(List(XMLTextNode(other.toStringValue.value)))
             else
               Left(Nil) // text nodes with empty content are not allowed
         }
