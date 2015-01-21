@@ -4,30 +4,30 @@ import util.ProcessingError
 import xml._
 import xpath._
 
+import scala.collection.mutable.{Set => MutableSet}
+
 /** Object to process XSLT stylesheets. */
 object XSLTProcessor {
-  /** Transforms a source document (represented by it's root node) into a new document using an XSLT stylesheet*/
+  /** Transforms a source document (represented by its root node) into a new document using an XSLT stylesheet */
   def transform(sheet: XSLTStylesheet, source: XMLRoot): XMLRoot = {
     // process according to XSLT spec section 5.1
     applyTemplates(sheet, List(source), None, Map(), Map()) match {
-      case List(inner@XMLElement(_, _, _, _)) => XMLRoot(inner)
-      case x => throw new IllegalStateException("Transformation result must be a single XMLElement")
+      case List(inner: XMLElement) => XMLRoot(inner)
+      case x => throw new ProcessingError("Transformation result must be a single XMLElement")
     }
   }
 
   /** Applies matching templates to a list of given source nodes and produces a new list of nodes */
   def applyTemplates(sheet: XSLTStylesheet, sources: List[XMLNode], mode: Option[String], variables: Map[String, XPathValue], params: Map[String, XPathValue]): List[XMLNode] = {
-    // create context, choose template, instantiate template, append results
-    sources.zipWithIndex.flatMap { case (n,i) =>
+    sources.zipWithIndex.flatMap { case (n, i) =>
       val tmpl = chooseTemplate(sheet, n, mode)
-      val context = XSLTContext(n, sources, i + 1, variables)
-      instantiateTemplate(sheet, tmpl, context, params)
+      instantiateTemplate(sheet, tmpl, XSLTContext(n, sources, i + 1, variables), params)
     }
   }
 
   /** Chooses a template that matches the given element best */
   def chooseTemplate(sheet: XSLTStylesheet, node: XMLNode, mode: Option[String]): XSLTTemplate = {
-    sheet.matchableTemplates(mode).find { case (path, _) => XSLTPatternMatcher.matches(node, path)} match {
+    sheet.matchableTemplates(mode).find { case (path, _) => XSLTPatternMatcher.matches(node, path) } match {
       case Some((_, tmpl)) => tmpl
       case None => throw new ProcessingError(f"Found no matching template for input node `${XMLNode.formatPath(node)}` [NOTE: this can only happen when builtin templates are disabled]")
     }
@@ -35,6 +35,7 @@ object XSLTProcessor {
 
   /** Instantiates an XSLT template in a given XSLT context with parameters and returns a list of resulting nodes.
     *
+    * @param sheet the stylesheet that is currently processed
     * @param tmpl the template to instantiate
     * @param context the context used to instantiate the template
     * @param params the parameters to use for instantiating the template (they will be ignored if they don't have
@@ -43,25 +44,28 @@ object XSLTProcessor {
     */
   def instantiateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: XSLTContext, params: Map[String, XPathValue]): List[XMLNode] = {
     val acceptedParams = params.filter { case (key, _) => tmpl.defaultParams.contains(key) }
-    val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key)}.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))
-    // the context for the newly instantiated template contains only global variables and parameters, no local parameters
-    // (static scoping and no nested template definitions); global variables are not supported in this implementation
-    process(sheet, tmpl.content, context.replaceVariables(Map()).addVariables(remainingDefaultParams ++ acceptedParams))
+    val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key) }
+      .mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))
+    // the context for the newly instantiated template contains only global variables and parameters,
+    // no local parameters (static scoping and no nested template definitions);
+    // global variables are not supported in this implementation
+    processAll(sheet, tmpl.content, context.replaceVariables(remainingDefaultParams ++ acceptedParams))
   }
 
   /** Processes a sequence of XSLT instructions using a new scope (variable definitions are collected
     * so they will be visible in subsequent nodes, but never outside of the scope)
     *
-    * @param nodes the instructions to process
+    * @param sheet the stylesheet that is currently processed
+    * @param instructions the instructions to process
     * @param context the context to evaluate the first instruction in (subsequent instructions might have additional variable bindings)
     * @return a list of resulting XML nodes
     */
-  def process(sheet: XSLTStylesheet, nodes: Seq[XSLTInstruction], context: XSLTContext): List[XMLNode] = {
+  def processAll(sheet: XSLTStylesheet, instructions: Seq[XSLTInstruction], context: XSLTContext): List[XMLNode] = {
     // remember variable names that were created in this scope so we can throw an error
     // if any of these is shadowed in the SAME scope
-    var scopeVariables = scala.collection.mutable.Set[String]()
+    var scopeVariables = MutableSet[String]()
 
-    val (result, _) = nodes.foldLeft((List[XMLNode](), context)) {
+    val (result, _) = instructions.foldLeft((List[XMLNode](), context)) {
       case ((resultNodes, ctx), next) =>
         process(sheet, next, ctx) match {
           case Left(moreResultNodes) => (resultNodes ++ moreResultNodes, ctx)
@@ -76,11 +80,16 @@ object XSLTProcessor {
 
   /** Processes a single XSLT instruction in a given XSLT context, resulting in either a list of result nodes
     * or an additional variable binding (if the instruction was a variable definition).
+    *
+    * @param sheet the stylesheet that is currently processed
+    * @param instruction the instruction to process
+    * @param context the context to evaluate the instruction in
+    * @return either a list of resulting XML nodes or a new variable binding
     */
-  def process(sheet: XSLTStylesheet, node: XSLTInstruction, context: XSLTContext): Either[List[XMLNode], (String, XPathValue)] = {
-    node match {
+  def process(sheet: XSLTStylesheet, instruction: XSLTInstruction, context: XSLTContext): Either[List[XMLNode], (String, XPathValue)] = {
+    instruction match {
       case CreateElementInstruction(name, children) =>
-        val resultNodes = process(sheet, children, context)
+        val resultNodes = processAll(sheet, children, context)
         // attributes must come before all other result nodes, afterwards they are ignored (see spec section 7.1.3)
         val resultAttributes = resultNodes.takeWhile(n => n.isInstanceOf[XMLAttribute]).map(n => n.asInstanceOf[XMLAttribute])
         val resultChildren = resultNodes.filter(n => !n.isInstanceOf[XMLAttribute])
@@ -96,13 +105,13 @@ object XSLTProcessor {
           Left(Nil) // no text node will be created for the empty string
       case CreateCommentInstruction(value) =>
         // merge the content of all text-node children to create the comment value (non-text-node children are wrong and can be ignored according to spec)
-        val textResult = process(sheet, value, context)
+        val textResult = processAll(sheet, value, context)
           .collect { case n: XMLTextNode => n.value }
           .mkString
         Left(List(XMLComment(textResult)))
       case SetAttributeInstruction(name, value) =>
         // merge the content of all text-node children to create the attribute value (non-text-node children are wrong and can be ignored according to spec)
-        val textResult = process(sheet, value, context)
+        val textResult = processAll(sheet, value, context)
           .collect { case n: XMLTextNode => n.value }
           .mkString
         val evaluatedName = name.map {
@@ -128,9 +137,9 @@ object XSLTProcessor {
         Right(name, XPathEvaluator.evaluate(expr, context.toXPathContext))
       case CopyInstruction(content) =>
         context.node match {
-          case XMLRoot(_) => Left(process(sheet, content, context))
+          case XMLRoot(_) => Left(processAll(sheet, content, context))
           case XMLElement(name, _, _, _) =>
-            val resultNodes = process(sheet, content, context)
+            val resultNodes = processAll(sheet, content, context)
             // attributes must come before all other result nodes, afterwards they are ignored (see spec section 7.1.3)
             val resultAttributes = resultNodes.takeWhile(n => n.isInstanceOf[XMLAttribute]).map(n => n.asInstanceOf[XMLAttribute])
             val resultChildren = resultNodes.filter(n => !n.isInstanceOf[XMLAttribute])
@@ -152,14 +161,14 @@ object XSLTProcessor {
               Left(Nil) // text nodes with empty content are not allowed
         }
       case ChooseInstruction(branches, otherwise) =>
-        Left(process(sheet, chooseBranch(branches, otherwise, context.toXPathContext), context))
+        Left(processAll(sheet, chooseBranch(branches, otherwise, context.toXPathContext), context))
       case ForEachInstruction(select, content) =>
         XPathEvaluator.evaluate(select, context.toXPathContext) match {
           case NodeSetValue(nodes) =>
             val nodeList = nodes.toList
             Left(nodeList.zipWithIndex.flatMap { case (n, i) =>
               val newContext = XSLTContext(n, nodeList, i + 1, context.variables)
-              process(sheet, content, newContext)
+              processAll(sheet, content, newContext)
             })
           case value => throw new ProcessingError(f"select expression in for-each must evaluate to a node-set (evaluated to $value)")
         }

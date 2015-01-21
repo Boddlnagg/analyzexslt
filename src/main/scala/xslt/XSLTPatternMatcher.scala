@@ -37,9 +37,7 @@ object XSLTPatternMatcher {
         case XPathStep(_, NameTest(Some(_), _), Nil) => throw new NotImplementedError("Prefixed names are not implemented")
       }
 
-      if (!lastStepMatches) {
-        false
-      } else {
+      if (!lastStepMatches) { false } else {
         if (restPath.steps.nonEmpty && restPath.steps.last == XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil)) {
           // the next step is '//' and must be handled separately (does any ancestor match the rest of the path?)
           val nextRestPath = LocationPath(restPath.steps.dropRight(1), path.isAbsolute)
