@@ -13,8 +13,8 @@ class ZipperTransformSuite extends FunSuite {
   val xpathDom = ZipperDomain.xpathDom
   val parser = new XMLParser(ZipperDomain)
 
-  def transform(xslt: Elem, source: ZipperXMLDomain.N = xmlDom.top) =
-    TransformHelper.transformAbstract(xslt: Elem, source, ZipperDomain, true)
+  def transform(xslt: Elem, source: ZipperXMLDomain.N = xmlDom.top, disableBuiltinTemplates: Boolean = true) =
+    TransformHelper.transformAbstract(xslt: Elem, source, ZipperDomain, disableBuiltinTemplates)
 
   test("Simple literal result element") {
     val xslt =
@@ -34,6 +34,14 @@ class ZipperTransformSuite extends FunSuite {
 
     // built-in templates are disabled, so this should evaluate to BOTTOM
     assertResult(xmlDom.bottom) { transform(xslt) }
+  }
+
+  ignore("No templates (with built-in)") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+      </xsl:stylesheet>
+
+    assertResult(null) { transform(xslt, disableBuiltinTemplates = false) }
   }
 
   test("No matching template (for /)") {
