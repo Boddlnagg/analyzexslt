@@ -4,6 +4,7 @@ import util.ProcessingError
 import xml._
 import xpath._
 
+import scala.collection.immutable.TreeSet
 import scala.collection.mutable.{Set => MutableSet}
 
 /** Object to process XSLT stylesheets. */
@@ -45,7 +46,7 @@ object XSLTProcessor {
   def instantiateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: XSLTContext, params: Map[String, XPathValue]): List[XMLNode] = {
     val acceptedParams = params.filter { case (key, _) => tmpl.defaultParams.contains(key) }
     val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key) }
-      .mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))
+      .mapValues(v => evaluateVariable(sheet, v, context))
     // the context for the newly instantiated template contains only global variables and parameters,
     // no local parameters (static scoping and no nested template definitions);
     // global variables are not supported in this implementation
@@ -121,20 +122,20 @@ object XSLTProcessor {
         Left(List(XMLAttribute(evaluatedName, textResult)))
       case ApplyTemplatesInstruction(None, mode, params) =>
         context.node match {
-          case XMLRoot(children) => Left(applyTemplates(sheet, children, mode, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
-          case elem: XMLElement => Left(applyTemplates(sheet, elem.children.toList, mode, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
+          case XMLRoot(children) => Left(applyTemplates(sheet, children, mode, context.variables, params.mapValues(v => evaluateVariable(sheet, v, context))))
+          case elem: XMLElement => Left(applyTemplates(sheet, elem.children.toList, mode, context.variables, params.mapValues(v => evaluateVariable(sheet, v, context))))
           case _ => Left(Nil) // other node types don't have children and return an empty result
         }
       case ApplyTemplatesInstruction(Some(expr), mode, params) =>
         XPathEvaluator.evaluate(expr, context.toXPathContext) match {
-          case NodeSetValue(nodes) => Left(applyTemplates(sheet, nodes.toList, mode, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
+          case NodeSetValue(nodes) => Left(applyTemplates(sheet, nodes.toList, mode, context.variables, params.mapValues(v => evaluateVariable(sheet, v, context))))
           case value => throw new ProcessingError(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")
         }
       case CallTemplateInstruction(name, params) =>
         // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)
-        Left(instantiateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
-      case VariableDefinitionInstruction(name, expr) =>
-        Right(name, XPathEvaluator.evaluate(expr, context.toXPathContext))
+        Left(instantiateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => evaluateVariable(sheet, v, context))))
+      case VariableDefinitionInstruction(name, value) =>
+        Right(name, evaluateVariable(sheet, value, context))
       case CopyInstruction(content) =>
         context.node match {
           case XMLRoot(_) => Left(processAll(sheet, content, context))
@@ -191,5 +192,12 @@ object XSLTProcessor {
         case false => chooseBranch(rest, otherwise, context)
       }
     }
+  }
+
+  def evaluateVariable(sheet: XSLTStylesheet, variable: Either[XPathExpr, Seq[XSLTInstruction]], context: XSLTContext): XPathValue = variable match {
+    case Left(expr) =>
+      XPathEvaluator.evaluate(expr, context.toXPathContext)
+    case Right(instructions) =>
+      NodeSetValue(TreeSet(XMLRoot(processAll(sheet, instructions, context))))
   }
 }

@@ -1035,6 +1035,61 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("Result Tree Fragments #1") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <xsl:variable name="foo">
+            <result-tree-fragment node="1">
+              <child/>
+              <child/>
+            </result-tree-fragment>
+            <result-tree-fragment node="2">
+              Some text
+            </result-tree-fragment>
+          </xsl:variable>
+
+          <result>
+            <xsl:copy-of select="$foo"/>
+          </result>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data = <root/>
+
+    assertTransformMatches(xslt, data)
+  }
+
+  test("Result Tree Fragments #2") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <xsl:variable name="foo">1</xsl:variable>
+          <xsl:variable name="bar">
+            <xsl:apply-templates select="root"/>
+          </xsl:variable>
+          <result>
+            <xsl:copy-of select="number($foo)"/>
+            <xsl:copy-of select="$bar"/>
+          </result>
+        </xsl:template>
+
+        <xsl:template match="a|b|c">
+          <xsl:variable name="name"><xsl:copy-of select="name(.)"/></xsl:variable>
+          <xsl:element name="{$name}"/>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root>
+        <a/>
+        <b/>
+        <c/>
+      </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
   def checkMatch(transformed: Either[T, Exception], referenceResult: Either[Elem, Exception]) = {
     // if Java throws an exception, we should do the same (because of invalid input)
     (referenceResult, transformed) match {

@@ -37,14 +37,14 @@ case class CreateCommentInstruction(content: Seq[XSLTInstruction]) extends XSLTI
   * @param select an optional XPath expression (must return a node-set) to select a different set of nodes instead of the children
   * @param params the parameters for the template instantiation, as defined with &lt;xsl:with-param&gt;
   */
-case class ApplyTemplatesInstruction(select: Option[XPathExpr], mode: Option[String], params: Map[String, XPathExpr] = Map()) extends XSLTInstruction
+case class ApplyTemplatesInstruction(select: Option[XPathExpr], mode: Option[String], params: Map[String, Either[XPathExpr, Seq[XSLTInstruction]]] = Map()) extends XSLTInstruction
 
 /** Call template instruction, created using the &lt;xsl:call-template&gt; element (see XSLT spec section 6)
   *
   * @param name the name of the called template
   * @param params the parameters for the template instantiation, as defined with &lt;xsl:with-param&gt;
   */
-case class CallTemplateInstruction(name: String, params: Map[String, XPathExpr] = Map()) extends XSLTInstruction
+case class CallTemplateInstruction(name: String, params: Map[String, Either[XPathExpr, Seq[XSLTInstruction]]] = Map()) extends XSLTInstruction
 
 /** Copy-of instruction, created using the &lt;xsl:copy-of&gt; or &lt;xsl:value-of&gt; elements (see XSLT spec sections 7.6.1 and 11.3)
   * For &lt;xsl:value-of&gt;, the result will be converted to a string by wrapping the select expression with a call to the string() function.
@@ -78,9 +78,9 @@ case class ForEachInstruction(select: XPathExpr, content: Seq[XSLTInstruction]) 
 /** Variable definitions, created using the &lt;xsl:variable&gt; element (see XSLT spec section 11)
   *
   * @param name the name of the variable
-  * @param select the XPath expression used to compute the value
+  * @param value either an XPath expression used to compute the value or a template for a result tree fragment
   */
-case class VariableDefinitionInstruction(name: String, select: XPathExpr) extends XSLTInstruction
+case class VariableDefinitionInstruction(name: String, value: Either[XPathExpr, Seq[XSLTInstruction]]) extends XSLTInstruction
 
 /** Number instruction, created using the &lt;xsl:number&gt; element (see XSLT spec section 8),
   * used for formatting numbers as strings and counting nodes in the source tree.

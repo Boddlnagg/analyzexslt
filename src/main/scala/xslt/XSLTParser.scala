@@ -80,13 +80,13 @@ object XSLTParser {
   def parseTemplate(elem: Elem): XSLTTemplate = {
     assert(isElem(elem, "template"))
     new XSLTTemplate(
-      parseTemplate(elem.child.filter(n => !isElem(n, "param"))),
+      parseInstructions(elem.child.filter(n => !isElem(n, "param"))),
       parseParams(elem.child, "param")
     )
   }
 
   /** Parses a sequence of [[scala.xml.Node]]s as XSLT instructions */
-  def parseTemplate(template: Seq[Node]): Seq[XSLTInstruction] = {
+  def parseInstructions(template: Seq[Node]): Seq[XSLTInstruction] = {
     template.map(parseInstruction).toList
   }
 
@@ -98,10 +98,12 @@ object XSLTParser {
       case Namespace => elem.label match {
         // spec section 11.2
         case "variable" =>
-          if (elem.child.nonEmpty) throw new NotImplementedError("Variable definitions are only supported when they use the 'select' attribute")
-          // value is empty string '' if there is no select attribute (see XSLT spec section 11.2)
-          val select = XPathParser.parse(elem.attribute("select").map(_.text).getOrElse("''"))
-          VariableDefinitionInstruction(elem.attribute("name").get.text, select)
+          val value = (elem.attribute("select"), elem.child.isEmpty) match {
+            case (Some(select), _) => Left(XPathParser.parse(select.text))
+            case (None, false) => Right(parseInstructions(elem.child))
+            case (None, true) => Left(StringLiteralExpr("")) // value is empty string '' if there is no select attribute (see XSLT spec section 11.2)
+          }
+          VariableDefinitionInstruction(elem.attribute("name").get.text, value)
 
         // spec sections 5.4 and 11.6
         case "apply-templates" =>
@@ -122,20 +124,20 @@ object XSLTParser {
         case "element" =>
           val name = XPathParser.parseAttributeValueTemplate(elem.attribute("name").get.text)
           if (elem.attribute("namespace").isDefined) throw new NotImplementedError("The 'namespace' attribute on xsl:element is not supported.")
-          CreateElementInstruction(name, parseTemplate(elem.child))
+          CreateElementInstruction(name, parseInstructions(elem.child))
 
         // spec section 7.1.3
         case "attribute" =>
           val name = XPathParser.parseAttributeValueTemplate(elem.attribute("name").get.text)
           if (elem.attribute("namespace").isDefined) throw new NotImplementedError("The 'namespace' attribute on xsl:attribute is not supported.")
-          SetAttributeInstruction(name, parseTemplate(elem.child)) // NOTE: only text nodes are allowed in the instantiation of this template
+          SetAttributeInstruction(name, parseInstructions(elem.child)) // NOTE: only text nodes are allowed in the instantiation of this template
 
         // spec section 7.4
         case "comment" =>
-          CreateCommentInstruction(parseTemplate(elem.child))
+          CreateCommentInstruction(parseInstructions(elem.child))
 
         // spec section 7.5
-        case "copy" => CopyInstruction(parseTemplate(elem.child))
+        case "copy" => CopyInstruction(parseInstructions(elem.child))
 
         // spec section 7.6.1
         case "value-of" =>
@@ -150,16 +152,16 @@ object XSLTParser {
         case "choose" =>
           val xsltChildren = elem.child.filter(isElem).map(_.asInstanceOf[Elem])
           val whenBranches = xsltChildren.filter(n => n.label == "when")
-            .map(n => (XPathParser.parse(n.attribute("test").get.text), parseTemplate(n.child)))
+            .map(n => (XPathParser.parse(n.attribute("test").get.text), parseInstructions(n.child)))
           val otherwiseBranch = xsltChildren.filter(n => n.label == "otherwise")
-            .map(n => parseTemplate(n.child))
+            .map(n => parseInstructions(n.child))
             .headOption.getOrElse(Seq())
           ChooseInstruction(whenBranches.toList, otherwiseBranch)
 
         // spec section 9.1
         case "if" =>
           val test = XPathParser.parse(elem.attribute("test").get.text)
-          ChooseInstruction(List((test, parseTemplate(elem.child))), Seq())
+          ChooseInstruction(List((test, parseInstructions(elem.child))), Seq())
 
         // spec section 7.2 and 3.4 (whitespace stripping)
         case "text" =>
@@ -169,7 +171,7 @@ object XSLTParser {
         case "for-each" =>
           if (elem.child.exists(isElem(_, "sort")))
             throw new NotImplementedError("'sort' is not supporte (found inside 'for-each')")
-          ForEachInstruction(XPathParser.parse(elem.attribute("select").get.text), parseTemplate(elem.child))
+          ForEachInstruction(XPathParser.parse(elem.attribute("select").get.text), parseInstructions(elem.child))
 
         case "number" =>
           NumberInstruction() // just a dummy
@@ -182,21 +184,22 @@ object XSLTParser {
           val valueExpr = attributeValueTemplateToExpression(XPathParser.parseAttributeValueTemplate(value))
           SetAttributeInstruction(List(Left(name)), Seq(CopyOfInstruction(valueExpr)))
         }.toSeq
-        CreateElementInstruction(List(Left(node.label)), literalAttributes ++ parseTemplate(node.child))
+        CreateElementInstruction(List(Left(node.label)), literalAttributes ++ parseInstructions(node.child))
       case _ => throw new NotImplementedError("Namespaces other than the XSLT namespace are not supported.")
     }
     case _ => throw new NotImplementedError(f"Unsupported XML node $node")
   }
 
   /** Parses &lt;xsl:param&gt; and &lt;xsl:with-param&gt; nodes */
-  def parseParams(input: Seq[Node], elemName: String): Map[String, XPathExpr] = {
+  def parseParams(input: Seq[Node], elemName: String): Map[String, Either[XPathExpr, Seq[XSLTInstruction]]] = {
     val params = input.filter(isElem(_, elemName))
       .map(n => n.asInstanceOf[Elem])
-      .map(elem => (elem.attribute("name"), elem.attribute("select")) match {
-        case (Some(name), Some(select)) => (name.text, XPathParser.parse(select.text))
-        case (None, _) => throw new AssertionError("Parameter instructions must have a `name` attribute")
-        case (_, None) => throw new NotImplementedError("Parameter instructions must have a `select` attribute specifying their (default) value. The ability to provide a content template (result tree fragment) is not implemented.")
-    })
+      .map { elem =>
+        elem.attribute("name").get.text -> ((elem.attribute("select"), elem.child.isEmpty) match {
+        case (Some(select), _) => Left(XPathParser.parse(select.text))
+        case (None, false) => Right(parseInstructions(elem.child))
+        case (None, true) => Left(StringLiteralExpr(""))
+    })}
     Map() ++ params
   }
 

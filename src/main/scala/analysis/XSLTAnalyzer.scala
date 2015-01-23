@@ -44,7 +44,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   private def instantiateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: AbstractXSLTContext[N, L, V], params: Map[String, V]): L = {
     val acceptedParams = params.filter { case (key, _) => tmpl.defaultParams.contains(key) }
     val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key) }
-      .mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))
+      .mapValues(v => evaluateVariable(sheet, v, context))
     // the context for the newly instantiated template contains only global variables and parameters,
     // no local parameters (static scoping and no nested template definitions);
     // global variables are not supported in this implementation
@@ -136,16 +136,16 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         })
         Left(xmlDom.createSingletonList(xmlDom.createAttribute(evaluatedName, textResult)))
       case ApplyTemplatesInstruction(None, mode, params) =>
-        Left(applyTemplates(sheet, xmlDom.getChildren(context.node), mode, context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
+        Left(applyTemplates(sheet, xmlDom.getChildren(context.node), mode, context.variables, params.mapValues(v => evaluateVariable(sheet, v, context))))
       case ApplyTemplatesInstruction(Some(expr), mode, params) =>
         val result = xpathAnalyzer.evaluate(expr, xsltToXPathContext(context))
         val (extracted, _) = xpathDom.matchNodeSetValues(result)
-        Left(applyTemplates(sheet, extracted, mode, context.variables, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
+        Left(applyTemplates(sheet, extracted, mode, context.variables, params.mapValues(v => evaluateVariable(sheet, v, context))))
       case CallTemplateInstruction(name, params) =>
         // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)
-        Left(instantiateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => xpathAnalyzer.evaluate(v, xsltToXPathContext(context)))))
-      case VariableDefinitionInstruction(name, expr) =>
-        Right(name, xpathAnalyzer.evaluate(expr, xsltToXPathContext(context)))
+        Left(instantiateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => evaluateVariable(sheet, v, context))))
+      case VariableDefinitionInstruction(name, value) =>
+        Right(name, evaluateVariable(sheet, value, context))
       case CopyInstruction(content) =>
         val (root, notRoot) = xmlDom.isRoot(context.node)
         var result = xmlDom.bottomList
@@ -219,4 +219,11 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
 
   def xsltToXPathContext(ctx: AbstractXSLTContext[N, L, V]): AbstractXPathContext[N, L, V] =
     AbstractXPathContext[N, L, V](ctx.node, ctx.position, xmlDom.getNodeListSize(ctx.nodeList), ctx.variables)
+
+  def evaluateVariable(sheet: XSLTStylesheet, variable: Either[XPathExpr, Seq[XSLTInstruction]], context: AbstractXSLTContext[N, L, V]): V = variable match {
+    case Left(expr) =>
+      xpathAnalyzer.evaluate(expr, xsltToXPathContext(context))
+    case Right(instructions) =>
+      xpathDom.toNodeSet(xmlDom.createSingletonList(xmlDom.createRoot(processAll(sheet, instructions, context))))
+  }
 }
