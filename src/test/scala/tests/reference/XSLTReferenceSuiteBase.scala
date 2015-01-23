@@ -1014,9 +1014,11 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
         <xsl:template match="/">
           <result>
             <first>
+              <!-- this will copy only the content of the first `p` element -->
               <xsl:value-of select="string(root/p)"/>
             </first>
             <second>
+              <!-- this will copy all of the content of the `root` element -->
               <xsl:value-of select="string(root)"/>
             </second>
           </result>

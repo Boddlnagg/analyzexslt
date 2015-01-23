@@ -18,7 +18,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   /** Transforms a source document (represented by its root node) into a new document using an XSLT stylesheet */
   def transform(sheet: XSLTStylesheet, source: N): N = {
     val (rootSource, _) = xmlDom.isRoot(source) // enforce the source node to be a root node
-    xmlDom.wrapInRoot(applyTemplates(sheet, xmlDom.createSingletonList(rootSource), None, Map(), Map()))
+    xmlDom.verifyDocument(xmlDom.createRoot(applyTemplates(sheet, xmlDom.createSingletonList(rootSource), None, Map(), Map())))
   }
 
   /** Applies matching templates to a list of given source nodes and produces a new list of nodes */

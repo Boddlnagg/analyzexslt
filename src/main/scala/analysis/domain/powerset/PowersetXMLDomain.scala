@@ -91,17 +91,20 @@ object PowersetXMLDomain {
       (Some(attr), Some(children))
     }
 
-    override def wrapInRoot(list: L): N = list match {
+    override def verifyDocument(root: N): N = root match {
       case None => None
       case Some(s) => Some(
         s.filter {
-          case List(e: XMLElement) => true
+          case XMLRoot(List(e: XMLElement)) => true
           case l => println(f"[WARNING] Failed to wrap nodes in root: $l"); false
           // NOTE: Lists with more than one node or a non-element node are evaluated to bottom implicitly
-        }.map {
-          case List(e: XMLElement) => XMLRoot(List(e)) // TODO: support comments here?
         }
       )
+    }
+
+    override def createRoot(children: L): N = children match {
+      case None => None
+      case Some(s) => Some(s.map { ch => XMLRoot(ch) })
     }
 
     override def copyToOutput(list: L): L = list match {

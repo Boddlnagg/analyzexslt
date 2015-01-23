@@ -97,8 +97,13 @@ trait XMLDomain[N, L, V] {
     */
   def partitionAttributes(list: L): (L, L)
 
-  /** Wraps a list of nodes in a document/root node. Lists that don't have exactly one element evaluate to BOTTOM. */
-  def wrapInRoot(list: L): N
+  /** Verifies that the given node is a root node and has exactly one element child.
+    * If that is not the case, BOTTOM is returned.
+    */
+  def verifyDocument(root: N): N
+
+  /** Creates a root node with the given children. */
+  def createRoot(children: L): N
 
   /** Copies a list of nodes, so that they can be used in the output.
     * A root node is copied by copying its child (not wrapped in a root node). */

@@ -105,12 +105,17 @@ object ConcreteXMLDomain {
         (Value(resultAttributes), Value(resultChildren))
     }
 
-    /** Wraps a list of nodes in a document/root node. Lists that don't have exactly one element evaluate to BOTTOM. */
-    override def wrapInRoot(list: L): N = list match {
+    /** Verifies that the given node is a root node and has exactly one element child.
+      * If that is not the case, BOTTOM is returned.
+      */
+    override def verifyDocument(root: N): N = root match {
       case Top => Top
-      case Value(List(inner: XMLElement)) => Value(XMLRoot(List(inner))) // TODO: support comment nodes?
+      case Value(XMLRoot(List(inner: XMLElement))) => root
       case _ => Bottom
     }
+
+    /** Creates a root node with the given children. */
+    override def createRoot(children: L): N = children.map { ch => XMLRoot(ch) }
 
     /** Copies a list of nodes, so that they can be used in the output.
       * A root node is copied by copying its child (not wrapped in a root node). */

@@ -195,20 +195,17 @@ object ZipperXMLDomain {
     override def partitionAttributes(list: L): (L, L) =
       (list.takeWhile(n => isAttribute(n)._1), list.filter(n => isAttribute(n)._2))
 
-    /** Wraps a list of nodes in a document/root node. Lists that don't have exactly one element evaluate to BOTTOM. */
-    override def wrapInRoot(list: L): N = {
-      val firstChild: N = list match {
-        case ZTop() => top
-        case ZBottom() => bottom
-        case ZUnknownLength(elems) => elems
-        case ZCons(first, ZCons(_, _)) => bottom // list with more than one element
-        case ZCons(first, _) => first // list with at least one element
-        case ZMaybeNil(first, ZCons(_, _)) => bottom // list with 0 or more than one element (at least 2)
-        case ZMaybeNil(first, _) => first // list with 0 or more elements (can't know exactly)
-        case ZNil() => bottom // list with 0 elements
-      }
-      val (firstChildElement, _) = isElement(firstChild)
-      normalize(Subtree(Set(Root), ZNil(), ZList(firstChildElement._1)), Set(RootPath))
+    /** Verifies that the given node is a root node and has exactly one element child.
+      * If that is not the case, BOTTOM is returned.
+      */
+    override def verifyDocument(root: N): N = {
+      val allowed: N = (Subtree(Set(Root), ZNil(), ZList(Subtree(Set(AnyElement), ZTop(), ZTop()))), Set(RootPath))
+      meet(root, allowed)
+    }
+
+    /** Creates a root node with the given children. */
+    def createRoot(children: L): N = {
+      normalize(Subtree(Set(Root), ZNil(), children.map(_._1)), Set(RootPath))
     }
 
     /** Copies a list of nodes, so that they can be used in the output.
@@ -229,7 +226,7 @@ object ZipperXMLDomain {
       * The resulting lists are flattened into a single list.
       */
     override def flatMapWithIndex(list: L, f: (N, V) => L): L = {
-      def flatMapWithIndexInternal(rest: L, currentIndex: V, f: (N, V) => L): L = rest match {
+      def flatMapWithIndexInternal(list: L, currentIndex: V, f: (N, V) => L): L = list match {
         case ZBottom() => ZBottom()
         case ZTop() => ZTop()
         case ZUnknownLength(elems) => ZUnknownLength(f(elems, xpathDom.topNumber).joinInner)
