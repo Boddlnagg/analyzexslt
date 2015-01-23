@@ -26,8 +26,8 @@ class ParseDataSuite extends FunSuite {
   }
 
   test("Node ordering") {
-    val xml = XMLParser.parseDocument(<root><a><b></b></a><a><b></b></a><c attr="x"></c></root>)
-    val root = xml.inner
+    val doc = XMLParser.parseDocument(<root><a><b></b></a><a><b></b></a><c attr="x"></c></root>)
+    val root = doc.children(0).asInstanceOf[XMLElement]
     val a1 = root.children(0).asInstanceOf[XMLElement]
     val a2 = root.children(1).asInstanceOf[XMLElement]
     val b1 = a1.children(0).asInstanceOf[XMLElement]
@@ -49,9 +49,9 @@ class ParseDataSuite extends FunSuite {
     assert(a2 > b1)
     assert(b1 > a1)
     assert(a1 > root)
-    assert(root > xml)
+    assert(root > doc)
 
-    assertResult(xml.nodesInOrder) {TreeSet[XMLNode](a2, attr, b1, c, xml, b2, a1, root).toList}
+    assertResult(doc.nodesInOrder) {TreeSet[XMLNode](a2, attr, b1, c, doc, b2, a1, root).toList}
   }
 
   test("Equality and hash codes") {
@@ -63,7 +63,7 @@ class ParseDataSuite extends FunSuite {
     assert(n1 != n3)
     assert(n1.hashCode == n2.hashCode)
     assert(n1.hashCode != n3.hashCode)
-    assert(n1.inner.hashCode == n2.inner.hashCode)
-    assert(n1.inner.hashCode != n1.hashCode)
+    assert(n1.children(0).hashCode == n2.children(0).hashCode)
+    assert(n1.children(0).hashCode != n1.hashCode)
   }
 }

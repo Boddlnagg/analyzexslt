@@ -114,7 +114,7 @@ object XPathEvaluator {
         val nodes: TreeSet[XMLNode] = first.axis match {
           // "the child axis contains the children of the context node"
           case ChildAxis => node match {
-            case XMLRoot(inner) => TreeSet(inner)
+            case XMLRoot(children) => children.to[TreeSet]
             case XMLElement(_, _, children, _) => children.to[TreeSet]
             case _ => TreeSet()
           }

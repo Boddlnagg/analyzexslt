@@ -8,7 +8,7 @@ import xslt.XSLTPatternMatcher
 class MatchPatternSuite extends FunSuite {
   val root = XMLParser.parseDocument(<a><b x="y"><c/></b><b/></a>)
 
-  val a = root.inner
+  val a = root.children(0).asInstanceOf[XMLElement]
   val b1 = a.children(0).asInstanceOf[XMLElement]
   val b2 = a.children(1).asInstanceOf[XMLElement]
   val c = b1.children(0)

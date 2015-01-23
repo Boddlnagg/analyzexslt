@@ -16,16 +16,18 @@ class PowersetDomainSuite extends FunSuite {
   val xpathDom = PowersetDomain.xpathDom
 
   val root = XMLParser.parseDocument(<root><a/><b/><c/><d/></root>)
-  val a = root.inner.children(0).asInstanceOf[XMLElement]
-  val b = root.inner.children(1).asInstanceOf[XMLElement]
-  val c = root.inner.children(2).asInstanceOf[XMLElement]
-  val d = root.inner.children(3).asInstanceOf[XMLElement]
+  val rootelem = root.children(0).asInstanceOf[XMLElement]
+  val a = rootelem.children(0).asInstanceOf[XMLElement]
+  val b = rootelem.children(1).asInstanceOf[XMLElement]
+  val c = rootelem.children(2).asInstanceOf[XMLElement]
+  val d = rootelem.children(3).asInstanceOf[XMLElement]
 
   val root2 = XMLParser.parseDocument(<root><a/><b/><c/><d/></root>)
-  val a2 = root2.inner.children(0).asInstanceOf[XMLElement]
-  val b2 = root2.inner.children(1).asInstanceOf[XMLElement]
-  val c2 = root2.inner.children(2).asInstanceOf[XMLElement]
-  val d2 = root2.inner.children(3).asInstanceOf[XMLElement]
+  val root2elem = root2.children(0).asInstanceOf[XMLElement]
+  val a2 = root2elem.children(0).asInstanceOf[XMLElement]
+  val b2 = root2elem.children(1).asInstanceOf[XMLElement]
+  val c2 = root2elem.children(2).asInstanceOf[XMLElement]
+  val d2 = root2elem.children(3).asInstanceOf[XMLElement]
 
   val e1 = XMLParser.parse(<e1/>).asInstanceOf[XMLElement]
   val e2 = XMLParser.parse(<e2/>).asInstanceOf[XMLElement]
@@ -174,7 +176,7 @@ class PowersetDomainSuite extends FunSuite {
 
   test("Match patterns") {
     val doc = XMLParser.parseDocument(<root attr="1" otherattr="foobar"><a/><b><a/><a/></b><b attr="2"/></root>)
-    val root = doc.inner
+    val root = doc.children(0).asInstanceOf[XMLElement]
     val attr1 = root.attributes.filter(_.name == "attr")(0)
     val otherattr = root.attributes.filter(_.name == "otherattr")(0)
     val a1 = root.children(0).asInstanceOf[XMLElement]

@@ -57,7 +57,7 @@ object PowersetXMLDomain {
     override def getChildren(node: PowersetXMLDomain.N): L = node match {
       case None => None
       case Some(s) => Some(s.map {
-        case XMLRoot(inner) => List(inner)
+        case XMLRoot(children) => children
         case XMLElement(_, _, children, _) => children.toList
         case _ => Nil // NOTE: other node types have no children, but this must NOT evaluate to BOTTOM
       })
@@ -99,16 +99,16 @@ object PowersetXMLDomain {
           case l => println(f"[WARNING] Failed to wrap nodes in root: $l"); false
           // NOTE: Lists with more than one node or a non-element node are evaluated to bottom implicitly
         }.map {
-          case List(e: XMLElement) => XMLRoot(e)
+          case List(e: XMLElement) => XMLRoot(List(e)) // TODO: support comments here?
         }
       )
     }
 
     override def copyToOutput(list: L): L = list match {
       case None => None
-      case Some(s) => Some(s.map(_.map {
-        case XMLRoot(inner) => inner.copy // "a root node is copied by copying its children" according to spec
-        case node => node.copy
+      case Some(s) => Some(s.map(_.flatMap {
+        case XMLRoot(children) => children.map(_.copy) // "a root node is copied by copying its children" according to spec
+        case node => List(node.copy)
       }))
     }
 

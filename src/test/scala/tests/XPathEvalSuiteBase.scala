@@ -42,25 +42,26 @@ abstract class XPathEvalSuiteBase extends FunSuite {
   }
 
   test("Location paths") {
-    val node = XMLParser.parseDocument(<root><a/><a/><b><c/><a/></b></root>)
-    val a1 = node.inner.children(0).asInstanceOf[XMLElement]
-    val a2 = node.inner.children(1).asInstanceOf[XMLElement]
-    val b = node.inner.children(2).asInstanceOf[XMLElement]
+    val doc = XMLParser.parseDocument(<root><a/><a/><b><c/><a/></b></root>)
+    val root = doc.children(0).asInstanceOf[XMLElement]
+    val a1 = root.children(0).asInstanceOf[XMLElement]
+    val a2 = root.children(1).asInstanceOf[XMLElement]
+    val b = root.children(2).asInstanceOf[XMLElement]
     val c = b.children(0).asInstanceOf[XMLElement]
     val a3 = b.children(1).asInstanceOf[XMLElement]
 
-    assertResult(NodeSetValue(TreeSet(node.inner))) { eval("/root", node) }
-    assertResult(NodeSetValue(TreeSet(a1, a2))) { eval("/root/a", node) }
-    assertResult(NodeSetValue(TreeSet())) { eval("/a", node) }
-    assertResult(NodeSetValue(TreeSet(a1, a2, a3))) { eval("//a", node) }
-    assertResult(NodeSetValue(TreeSet(a1, a2))) { eval("a", node.inner) }
-    assertResult(NodeSetValue(TreeSet(a1, a2, a3))) { eval("descendant::a", node) }
-    assertResult(NodeSetValue(TreeSet(b))) { eval("descendant::b", node) }
-    assertResult(NodeSetValue(TreeSet(b))) { eval("/root/b", node) }
-    assertResult(NodeSetValue(TreeSet(c))) { eval("descendant::c", node) }
-    assertResult(NodeSetValue(TreeSet(c))) { eval("/root/b/c", node) }
-    assertResult(NodeSetValue(TreeSet(c))) { eval("/root/*/c", node) }
-    assertResult(NodeSetValue(TreeSet(c))) { eval("/root//c", node) }
-    assertResult(NodeSetValue(TreeSet())) { eval("/*/c", node) }
+    assertResult(NodeSetValue(TreeSet(root))) { eval("/root", doc) }
+    assertResult(NodeSetValue(TreeSet(a1, a2))) { eval("/root/a", doc) }
+    assertResult(NodeSetValue(TreeSet())) { eval("/a", doc) }
+    assertResult(NodeSetValue(TreeSet(a1, a2, a3))) { eval("//a", doc) }
+    assertResult(NodeSetValue(TreeSet(a1, a2))) { eval("a", root) }
+    assertResult(NodeSetValue(TreeSet(a1, a2, a3))) { eval("descendant::a", doc) }
+    assertResult(NodeSetValue(TreeSet(b))) { eval("descendant::b", doc) }
+    assertResult(NodeSetValue(TreeSet(b))) { eval("/root/b", doc) }
+    assertResult(NodeSetValue(TreeSet(c))) { eval("descendant::c", doc) }
+    assertResult(NodeSetValue(TreeSet(c))) { eval("/root/b/c", doc) }
+    assertResult(NodeSetValue(TreeSet(c))) { eval("/root/*/c", doc) }
+    assertResult(NodeSetValue(TreeSet(c))) { eval("/root//c", doc) }
+    assertResult(NodeSetValue(TreeSet())) { eval("/*/c", doc) }
   }
 }

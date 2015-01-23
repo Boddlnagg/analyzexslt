@@ -12,7 +12,7 @@ object XSLTProcessor {
   def transform(sheet: XSLTStylesheet, source: XMLRoot): XMLRoot = {
     // process according to XSLT spec section 5.1
     applyTemplates(sheet, List(source), None, Map(), Map()) match {
-      case List(inner: XMLElement) => XMLRoot(inner)
+      case List(inner: XMLElement) => XMLRoot(List(inner)) // TODO: support comments here?
       case x => throw new ProcessingError("Transformation result must be a single XMLElement")
     }
   }
@@ -121,7 +121,7 @@ object XSLTProcessor {
         Left(List(XMLAttribute(evaluatedName, textResult)))
       case ApplyTemplatesInstruction(None, mode, params) =>
         context.node match {
-          case XMLRoot(inner) => Left(applyTemplates(sheet, List(inner), mode, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
+          case XMLRoot(children) => Left(applyTemplates(sheet, children, mode, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case elem: XMLElement => Left(applyTemplates(sheet, elem.children.toList, mode, context.variables, params.mapValues(v => XPathEvaluator.evaluate(v, context.toXPathContext))))
           case _ => Left(Nil) // other node types don't have children and return an empty result
         }
@@ -149,9 +149,9 @@ object XSLTProcessor {
       case CopyOfInstruction(select) =>
         XPathEvaluator.evaluate(select, context.toXPathContext) match {
           // NOTE: result tree fragments are generally not supported
-          case NodeSetValue(nodes) => Left(nodes.toList.map {
-            case XMLRoot(inner) => inner.copy // "a root node is copied by copying its children" according to spec
-            case n => n.copy
+          case NodeSetValue(nodes) => Left(nodes.toList.flatMap {
+            case XMLRoot(children) => children.map(_.copy) // "a root node is copied by copying its children" according to spec
+            case n => List(n.copy)
           })
           case other =>
             val textValue = other.toStringValue.value

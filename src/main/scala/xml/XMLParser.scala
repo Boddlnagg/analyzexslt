@@ -26,7 +26,7 @@ object XMLParser {
 
   /** Creates a root node from a [[scala.xml.Elem]] node */
   def parseDocument(elem: Elem): XMLRoot = {
-    XMLRoot(parseElement(elem))
+    XMLRoot(List(parseElement(elem)))
   }
 
   /** Creates a root node from a string representing an XML document */

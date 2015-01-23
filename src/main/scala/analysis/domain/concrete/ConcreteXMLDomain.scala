@@ -64,7 +64,7 @@ object ConcreteXMLDomain {
       * Nodes that don't have children return an empty list, not BOTTOM! */
     override def getChildren(node: N): L = node.map {
       case XMLElement(_, _, children, _) => children.toList
-      case XMLRoot(inner) => List(inner)
+      case XMLRoot(children) => children
       case _ => Nil
     }
 
@@ -108,15 +108,15 @@ object ConcreteXMLDomain {
     /** Wraps a list of nodes in a document/root node. Lists that don't have exactly one element evaluate to BOTTOM. */
     override def wrapInRoot(list: L): N = list match {
       case Top => Top
-      case Value(List(inner: XMLElement)) => Value(XMLRoot(inner))
+      case Value(List(inner: XMLElement)) => Value(XMLRoot(List(inner))) // TODO: support comment nodes?
       case _ => Bottom
     }
 
     /** Copies a list of nodes, so that they can be used in the output.
       * A root node is copied by copying its child (not wrapped in a root node). */
-    override def copyToOutput(list: L): L = list.map(_.map({
-      case XMLRoot(inner) => inner.copy // "a root node is copied by copying its children" according to spec
-      case node => node.copy
+    override def copyToOutput(list: L): L = list.map(_.flatMap({
+      case XMLRoot(children) => children.map(_.copy) // "a root node is copied by copying its children" according to spec
+      case node => List(node.copy)
     }))
 
     /** Evaluates a function for every element in the given list, providing also the index of each element in the list.

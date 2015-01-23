@@ -58,9 +58,12 @@ case class XMLElement(name: String,
 
   override def hashCode = name.hashCode + attributes.toSet.hashCode * 41 + children.hashCode * 41 * 41
 
-  override def stringValue = children.map(_.stringValue).mkString
+  override def stringValue = children.collect {
+    case XMLTextNode(text, _) => text
+    case e: XMLElement => e.stringValue
+  }.mkString
 
-  override def copy = XMLElement(name, attributes.map(a => a.copy), children.map(c => c.copy))
+  override def copy = XMLElement(name, attributes.map(_.copy), children.map(_.copy))
 }
 
 /** Factory for [[XMLElement]] instances */
