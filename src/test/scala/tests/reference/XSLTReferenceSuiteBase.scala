@@ -1008,6 +1008,31 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("String value of node-sets") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <result>
+            <first>
+              <xsl:value-of select="string(root/p)"/>
+            </first>
+            <second>
+              <xsl:value-of select="string(root)"/>
+            </second>
+          </result>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root>
+        <p>This is the first paragraph.</p>
+        <p foo="bar">This is the <i>second</i> paragraph.</p>
+        <p>And the last one.</p>
+      </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
   def checkMatch(transformed: Either[T, Exception], referenceResult: Either[Elem, Exception]) = {
     // if Java throws an exception, we should do the same (because of invalid input)
     (referenceResult, transformed) match {

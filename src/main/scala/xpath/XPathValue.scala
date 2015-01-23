@@ -60,8 +60,7 @@ abstract class XPathValue {
       )
       case NodeSetValue(set) => set.toList match {
         case Nil => StringValue("")
-        case List(node) => StringValue(node.stringValue)
-        case _ => throw new NotImplementedError("Converting node sets to strings is not implemented for node-sets with more than one element")
+        case first :: _ => StringValue(first.stringValue)
       }
     }
   }

@@ -259,12 +259,23 @@ object ZipperXMLDomain {
         val Subtree(desc, _, children) = tree
         xpathDom.joinAll(desc.map {
           case Root => getStringValueFromSubtree(children.first)
-          case Element(name) => xpathDom.topString // TODO: concatenate the string values of all (non-attribute) children
+          case Element(name) => concatStringValuesFromZList(children)
           case Attribute(name, value) => xpathDom.liftString(value)
           case Text(value) => xpathDom.liftString(value)
           case Comment(value) => xpathDom.liftString(value)
           case AnyElement | AnyAttribute | NamedAttribute(_) | AnyText | AnyComment => xpathDom.topString
         })
+      }
+
+      /** Concatenates the string values of all nodes (subtrees) in a ZList */
+      def concatStringValuesFromZList(list: ZList[Subtree]): V = list match {
+        case ZBottom() => xpathDom.bottom
+        case ZTop() | ZUnknownLength(_) => xpathDom.topString
+        case ZNil() => xpathDom.liftString("")
+        case ZCons(first, rest) =>
+          xpathDom.concatStrings(getStringValueFromSubtree(first), concatStringValuesFromZList(rest))
+        case ZMaybeNil(first, rest) =>
+          xpathDom.join(xpathDom.liftString(""), xpathDom.concatStrings(getStringValueFromSubtree(first), concatStringValuesFromZList(rest)))
       }
       getStringValueFromSubtree(node._1)
     }
