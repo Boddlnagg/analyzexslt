@@ -977,7 +977,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
-  test("Template modes") {
+  test("Template modes #1") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match="/">
@@ -1005,6 +1005,26 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
         <a/>
         <a/>
       </root>
+
+    assertTransformMatches(xslt, data)
+  }
+
+  test("Template modes #2") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <result>
+            <!-- This will invoke the built-in template that copies text node children -->
+            <xsl:apply-templates mode="foobar"/>
+          </result>
+        </xsl:template>
+        <xsl:template match="/" mode="foobar">
+          <!-- This should never be called -->
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data =
+      <root>This is some text.</root>
 
     assertTransformMatches(xslt, data)
   }
