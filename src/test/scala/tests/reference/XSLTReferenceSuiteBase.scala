@@ -4,6 +4,7 @@ import javax.xml.transform.TransformerException
 
 import data.TestData
 import org.scalatest.FunSuite
+import org.xml.sax.SAXParseException
 import tests.TransformHelper
 import util.ProcessingError
 import xml.XMLParser
@@ -1090,6 +1091,20 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("Multiple result elements (invalid)") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <a/>
+          <b/>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data = <root/>
+
+    assertTransformMatches(xslt, data)
+  }
+
   def checkMatch(transformed: Either[T, Exception], referenceResult: Either[Elem, Exception]) = {
     // if Java throws an exception, we should do the same (because of invalid input)
     (referenceResult, transformed) match {
@@ -1109,6 +1124,7 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     } catch {
       case eJava: TransformerException => Right(eJava)
       case eJava: RuntimeException => Right(eJava)
+      case eJava: SAXParseException => Right(eJava) // this is thrown when the resulting document is invalid
     }
     println(referenceResult)
 

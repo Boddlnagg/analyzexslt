@@ -35,21 +35,23 @@ object ZipperXMLDomain {
     }
 
     latD.normalizeDescriptors(path.map {
-      case RootPath => Root
+      case RootPath(_) => Root
       case ChildStep(desc, _) => getSingle(desc)
       case DescendantStep(desc, _) => getSingle(desc)
     })
   }
 
-  private def getPathsFromDescriptors(descriptors: Set[NodeDescriptor]): P = descriptors.map {
-    case Root => RootPath
-    case Element(name) => DescendantStep(NamedElementStep(name), RootPath)
-    case AnyElement => DescendantStep(AnyElementStep, RootPath)
-    case Attribute(name, _) => DescendantStep(NamedAttributeStep(name), RootPath)
-    case NamedAttribute(name) => DescendantStep(NamedAttributeStep(name), RootPath)
-    case AnyAttribute => DescendantStep(AnyAttributeStep, RootPath)
-    case Text(_) | AnyText => DescendantStep(AnyTextNodeStep, RootPath)
-    case Comment(_) | AnyComment => DescendantStep(AnyCommentNodeStep, RootPath)
+  private val anyRoot: Set[Path] = Set(RootPath(isFragment = false), RootPath(isFragment = true))
+
+  private def getPathsFromDescriptors(descriptors: Set[NodeDescriptor]): P = descriptors.flatMap[Path, Set[Path]] {
+    case Root => anyRoot
+    case Element(name) => anyRoot.map(DescendantStep(NamedElementStep(name), _))
+    case AnyElement => anyRoot.map(DescendantStep(AnyElementStep, _))
+    case Attribute(name, _) => anyRoot.map(DescendantStep(NamedAttributeStep(name), _))
+    case NamedAttribute(name) => anyRoot.map(DescendantStep(NamedAttributeStep(name), _))
+    case AnyAttribute => anyRoot.map(DescendantStep(AnyAttributeStep, _))
+    case Text(_) | AnyText => anyRoot.map(DescendantStep(AnyTextNodeStep, _))
+    case Comment(_) | AnyComment => anyRoot.map(DescendantStep(AnyCommentNodeStep, _))
   }
 
   /** Removes impossible elements (where Path and Subtree descriptors don't agree) */
@@ -115,16 +117,22 @@ object ZipperXMLDomain {
     /** Create a list containing a single abstract node */
     override def createSingletonList(node: N): L = ZCons(node, ZNil())
 
-    /** Get the root node of a given node */
+    /** Get the root node of a given node. */
     override def getRoot(node: N): N = {
       val (Subtree(desc, attributes, children), path) = node
       val (selfRoot, selfNotRoot) = isRoot(node) // find out if the node itself is a root node
       if (lessThanOrEqual(selfNotRoot, bottom)) { // if the input node is definitely a root node ...
         node // ... return it, because it is its own root
       } else {
-        // NOTE: the root node can't have attributes and has only one (element) child, which is determined by the path
-        val childDescriptor = latD.meet(getDescriptorsFromPaths(latP.getRootChild(selfNotRoot._2)), Set(AnyElement))
-        val restRoot = normalize(Subtree(Set(Root), ZNil(), ZCons(Subtree(childDescriptor, ZUnknownLength(Set(AnyAttribute)), ZTop()), ZNil())), Set(RootPath))
+        val mayBelongToFragment = !latP.lessThanOrEqual(latP.meet(path, latP.top(isFragment = true)), latP.bottom)
+        val restRoot = if (mayBelongToFragment) {
+          // we don't know anything about the children if it is a fragment (because there's no guarantee that the root has only a single child)
+          normalize(Subtree(Set(Root), ZNil(), ZUnknownLength(Subtree(Set(AnyElement, AnyComment, AnyText), ZUnknownLength(Set(AnyAttribute)), ZTop()))), anyRoot)
+        } else {
+          // if the node does not belong to a fragment, we know that it only has one element child, which is determined by the path
+          val childDescriptor = latD.meet(getDescriptorsFromPaths(latP.getRootChild(selfNotRoot._2)), Set(AnyElement))
+          normalize(Subtree(Set(Root), ZNil(), ZCons(Subtree(childDescriptor, ZUnknownLength(Set(AnyAttribute)), ZTop()), ZNil())), Set(RootPath(isFragment = false)))
+        }
         join(selfRoot, restRoot)
       }
     }
@@ -195,17 +203,17 @@ object ZipperXMLDomain {
     override def partitionAttributes(list: L): (L, L) =
       (list.takeWhile(n => isAttribute(n)._1), list.filter(n => isAttribute(n)._2))
 
-    /** Verifies that the given node is a root node and has exactly one element child.
-      * If that is not the case, BOTTOM is returned.
+    /** Creates a root node with the given children. The second parameter specifies whether the root represents a
+      * (result tree) fragment or a complete document (the latter can only have a single element child).
       */
-    override def verifyDocument(root: N): N = {
-      val allowed: N = (Subtree(Set(Root), ZNil(), ZList(Subtree(Set(AnyElement), ZTop(), ZTop()))), Set(RootPath))
-      meet(root, allowed)
-    }
-
-    /** Creates a root node with the given children. */
-    def createRoot(children: L): N = {
-      normalize(Subtree(Set(Root), ZNil(), children.map(_._1)), Set(RootPath))
+    def createRoot(children: L, isFragment: Boolean): N = {
+      val verifiedChildren = if (isFragment) {
+        children.map(_._1) // just extract the Subtree part of all children (their paths are ignored)
+      } else {
+        // if the root node is not a fragment, it can only have a single element child
+        children.map(_._1) & ZList(Subtree(Set(AnyElement), ZTop(), ZTop()))
+      }
+      normalize(Subtree(Set(Root), ZNil(), verifiedChildren), Set(RootPath(isFragment)))
     }
 
     /** Copies a list of nodes, so that they can be used in the output.
@@ -213,8 +221,14 @@ object ZipperXMLDomain {
     override def copyToOutput(list: L): L = flatMapWithIndex(list, (n, _) => {
       val (root, notRoot) = isRoot(n)
       if (!lessThanOrEqual(root, bottom)) { // root is not BOTTOM -> node might be a root node -> copy children
-        // TODO: for "real" root nodes (not result tree fragments) we could only take the first child, not all of them
-        ZList(normalize(notRoot._1, latP.top)) | getChildren(root)
+        val (Subtree(desc, attributes, children), path) = n
+        val isFragmentRoot = !latP.lessThanOrEqual(latP.meet(path, Set(RootPath(isFragment = true))), latP.bottom)
+        if (!isFragmentRoot) {
+          // it's not a fragment, so we can restrict the result to a single element child
+          ZList(normalize(notRoot._1, latP.top)) | ZList(getChildren(root).first)
+        } else {
+          ZList(normalize(notRoot._1, latP.top)) | getChildren(root)
+        }
       } else {
         ZList(normalize(n._1, latP.top))
       }
@@ -280,13 +294,27 @@ object ZipperXMLDomain {
       * is not a root node), the second result is a node that might not be a root node (this is
       * BOTTOM if the node definitely is a root node). The two results are not necessarily disjoint.
       */
-    override def isRoot(node: N): (N, N) = {
+    override def isRoot(node: N, allowFragments: Boolean): (N, N) = {
       val (Subtree(desc, attributes, children), path) = node
+      val isFragmentRoot = !latP.lessThanOrEqual(latP.meet(path, Set(RootPath(isFragment = true))), latP.bottom)
+      val newChildren: ZList[S] = if (!allowFragments || !isFragmentRoot) {
+        // we know that this node is not the root of a fragment (it's either not a root at all or the root of a non-fragment document)
+        val firstChild = children.first // so wa can restrict the result to a single element child
+        if (latS.lessThanOrEqual(firstChild, latS.bottom)) // if there was no first child ...
+          ZBottom() // return bottom
+        else
+          ZCons(firstChild, ZNil()) // otherwise create a singleton list from that child
+      } else {
+        children
+      }
+      val (newPathPos, newPathNeg): (P, P) = if (!allowFragments || !isFragmentRoot) {
+        (latP.meet(path, Set(RootPath(isFragment = false))), path.diff(Set(RootPath(isFragment = false))))
+      } else {
+        (latP.meet(path, anyRoot), path.diff(anyRoot))
+      }
       // NOTE: root node can't have attributes, so we set it to ZNil
-      // TODO: for "real" root nodes (not result tree fragments) we could take only a single child element
-      val positiveResult: N = normalize(Subtree(latD.meet(desc, Set(Root)), ZNil(), children), latP.meet(path, Set(RootPath)))
-      val negativeDesc = desc.diff(Set(Root))
-      val negativeResult: N = normalize(Subtree(negativeDesc, attributes, children), path.diff(Set(RootPath)))
+      val positiveResult: N = normalize(Subtree(latD.meet(desc, Set(Root)), ZNil(), newChildren), newPathPos)
+      val negativeResult: N = normalize(Subtree(desc.diff(Set(Root)), attributes, children), newPathNeg)
       (positiveResult, negativeResult)
     }
 

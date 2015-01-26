@@ -28,8 +28,8 @@ case object AnyCommentNodeStep extends PathStepDescriptor {
 abstract class Path
 
 /** The root path describes the root node. */
-case object RootPath extends Path {
-  override def toString = "/"
+case class RootPath(isFragment: Boolean) extends Path {
+  override def toString = if (isFragment) "[fragment]/" else "/"
 }
 
 /** The child step describes a node that is a child of another node.
@@ -37,7 +37,8 @@ case object RootPath extends Path {
   */
 case class ChildStep(descriptor: PathStepDescriptor, parent: Path) extends Path {
   override def toString = parent match {
-    case RootPath => "/" + descriptor.toString
+    case RootPath(false) => "/" + descriptor.toString
+    case RootPath(true) => "[fragment]/" + descriptor.toString
     case p => p.toString + "/" + descriptor.toString
   }
 }
@@ -47,7 +48,8 @@ case class ChildStep(descriptor: PathStepDescriptor, parent: Path) extends Path 
   */
 case class DescendantStep(descriptor: PathStepDescriptor, ancestor: Path) extends Path {
   override def toString = ancestor match {
-    case RootPath => descriptor.toString
+    case RootPath(false) => descriptor.toString
+    case RootPath(true) => "[fragment]" + descriptor.toString
     case p => p.toString + "//" + descriptor.toString
   }
 }
@@ -77,10 +79,10 @@ object Path {
     }
 
     reverseSteps match {
-      case Nil if isAbsolute => RootPath
+      case Nil if isAbsolute => RootPath(isFragment = false)
       case Nil => throw new UnsupportedOperationException("Empty relative paths cannot exist.")
       case next :: Nil if !isAbsolute =>
-        DescendantStep(parseStep(next), RootPath) // last step of a relative path -> descendant of root
+        DescendantStep(parseStep(next), RootPath(isFragment = false)) // last step of a relative path -> descendant of root
       case next :: XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil) :: rest =>
         DescendantStep(parseStep(next), fromLocationPath(rest, isAbsolute))
       case next :: rest => // default case
@@ -95,11 +97,15 @@ object Path {
       * - the root node itself or
       * - an element, attribute, comment or text node that is a descendant of the root node
       */
-    def top = Set(RootPath,
-      DescendantStep(AnyElementStep, RootPath),
-      DescendantStep(AnyAttributeStep, RootPath),
-      DescendantStep(AnyCommentNodeStep, RootPath),
-      DescendantStep(AnyTextNodeStep, RootPath))
+    def top = Set(true, false).flatMap { frag => top(frag) }
+
+    def top(isFragment: Boolean): Set[Path] = Set(
+      RootPath(isFragment),
+      DescendantStep(AnyElementStep, RootPath(isFragment)),
+      DescendantStep(AnyAttributeStep, RootPath(isFragment)),
+      DescendantStep(AnyCommentNodeStep, RootPath(isFragment)),
+      DescendantStep(AnyTextNodeStep, RootPath(isFragment))
+    )
 
     def bottom = Set()
 
@@ -132,7 +138,7 @@ object Path {
       * Examples: /@foobar && /@* = Set(/@foobar), /a && /a/b = Set()
       */
     protected def meetSingle(left: Path, right: Path): Set[Path] = (left, right) match {
-      case (RootPath, RootPath) => Set(RootPath)
+      case (RootPath(true), RootPath(true)) | (RootPath(false), RootPath(false)) => Set(left)
       case (ChildStep(desc1, prev1), ChildStep(desc2, prev2)) =>
         meetSingle(prev1, prev2).flatMap { r =>
           meetDescriptor(desc1, desc2) match {
@@ -189,7 +195,7 @@ object Path {
       * Examples: /@foobar <= /@*, elem/@foobar <= elem//@foobar
       */
     protected def lessThanOrEqualSingle(left: Path, right: Path): Boolean = (left, right) match {
-      case (RootPath, RootPath) => true
+      case (RootPath(true), RootPath(true)) | (RootPath(false), RootPath(false)) => true
       case (ChildStep(desc1, prev1), ChildStep(desc2, prev2)) =>
         lessThanOrEqualDescriptor(desc1, desc2) && lessThanOrEqualSingle(prev1, prev2)
       case (DescendantStep(desc1, prev1), DescendantStep(desc2, prev2)) =>
@@ -221,10 +227,10 @@ object Path {
     def getParent(path: Set[Path]): Set[Path] = normalize(path.collect {
       case ChildStep(desc, prev) => List(prev)
       case DescendantStep(desc, prev) => prev match {
-        case RootPath => desc match {
+        case root@RootPath(_) => desc match {
           // NOTE: only elements can have Root as their parent
-          case AnyElementStep | NamedElementStep(_) => List(RootPath, DescendantStep(AnyElementStep, RootPath))
-          case _ => List(DescendantStep(AnyElementStep, RootPath))
+          case AnyElementStep | NamedElementStep(_) => List(root, DescendantStep(AnyElementStep, root))
+          case _ => List(DescendantStep(AnyElementStep, root))
         }
         case p => List(p, DescendantStep(AnyElementStep, p))
       }
@@ -234,10 +240,8 @@ object Path {
     def getChildren(path: Set[Path]): ZList[Set[Path]] = ZList.joinAll(path.map {
       case e@ChildStep(AnyElementStep | NamedElementStep(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
       case e@DescendantStep(AnyElementStep | NamedElementStep(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
-      case e@RootPath => ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
-        // NOTE: for real documents we could return ZCons(Set[Path](ChildStep(AnyElementStep, e)), ZNil())
-        // for RootPaths, but this won't work for Result Tree Fragments
-        // TODO: improve this situation
+      case e@RootPath(true) => ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
+      case e@RootPath(false) => ZCons(Set[Path](ChildStep(AnyElementStep, e)), ZNil()) // non-fragments have only a single element child
       case _ => ZNil[Set[Path]]() // other node types (text, attribute) return empty lists because they don't have children
     })
 
@@ -245,7 +249,7 @@ object Path {
     def getDescendants(path: Set[Path]): ZList[Set[Path]] = ZList.joinAll(path.map {
       case e@ChildStep(AnyElementStep | NamedElementStep(_), _) => ZUnknownLength(Set[Path](DescendantStep(AnyElementStep, e), DescendantStep(AnyTextNodeStep, e), DescendantStep(AnyCommentNodeStep, e)))
       case e@DescendantStep(AnyElementStep | NamedElementStep(_), _) => ZUnknownLength(Set[Path](DescendantStep(AnyElementStep, e), DescendantStep(AnyTextNodeStep, e), DescendantStep(AnyCommentNodeStep, e)))
-      case e@RootPath => ZUnknownLength(Set[Path](DescendantStep(AnyElementStep, e), DescendantStep(AnyTextNodeStep, e), DescendantStep(AnyCommentNodeStep, e)))
+      case e@RootPath(_) => ZUnknownLength(Set[Path](DescendantStep(AnyElementStep, e), DescendantStep(AnyTextNodeStep, e), DescendantStep(AnyCommentNodeStep, e)))
       case _ => ZNil[Set[Path]]() // other node types (text, attribute) return empty lists because they don't have children/descendants
     })
 
@@ -327,9 +331,9 @@ object Path {
       */
     def getRootChild(path: Set[Path]): Set[Path] = {
       def getRootChildSingle(path: Path): Path = path match {
-        case RootPath => throw new IllegalArgumentException("path must not be a RootPath")
-        case ChildStep(last, RootPath) => path
-        case DescendantStep(_, RootPath) => ChildStep(AnyElementStep, RootPath)
+        case RootPath(_) => throw new IllegalArgumentException("path must not be a RootPath")
+        case ChildStep(last, RootPath(_)) => path
+        case DescendantStep(_, root@RootPath(_)) => ChildStep(AnyElementStep, root)
         case ChildStep(_, rest) => getRootChildSingle(rest)
         case DescendantStep(_, rest) => getRootChildSingle(rest)
       }

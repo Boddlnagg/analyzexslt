@@ -17,8 +17,8 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
 
   /** Transforms a source document (represented by its root node) into a new document using an XSLT stylesheet */
   def transform(sheet: XSLTStylesheet, source: N): N = {
-    val (rootSource, _) = xmlDom.isRoot(source) // enforce the source node to be a root node
-    xmlDom.verifyDocument(xmlDom.createRoot(applyTemplates(sheet, xmlDom.createSingletonList(rootSource), None, Map(), Map())))
+    val (rootSource, _) = xmlDom.isRoot(source, allowFragments = false) // enforce the source node to be a (non-fragment) root node
+    xmlDom.createRoot(applyTemplates(sheet, xmlDom.createSingletonList(rootSource), None, Map(), Map()), isFragment = false)
   }
 
   /** Applies matching templates to a list of given source nodes and produces a new list of nodes */
@@ -224,6 +224,6 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     case Left(expr) =>
       xpathAnalyzer.evaluate(expr, xsltToXPathContext(context))
     case Right(instructions) =>
-      xpathDom.toNodeSet(xmlDom.createSingletonList(xmlDom.createRoot(processAll(sheet, instructions, context))))
+      xpathDom.toNodeSet(xmlDom.createSingletonList(xmlDom.createRoot(processAll(sheet, instructions, context), isFragment = true)))
   }
 }

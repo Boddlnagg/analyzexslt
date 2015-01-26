@@ -340,6 +340,28 @@ class ZipperTransformSuite extends FunSuite {
     ) { transform(xslt)._1 }
   }
 
+  test("Absolute selector paths") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match='/'>
+          <result>
+            <xsl:apply-templates select="/a/b"/>
+          </result>
+        </xsl:template>
+        <xsl:template match="b">
+          <xsl:element name="{name(/*)}"/>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    assertResult(
+      Subtree(Set(Root),ZNil(),ZList(
+        Subtree(Set(Element("result")),ZNil(),ZUnknownLength(
+          Subtree(Set(Element("a")),ZNil(),ZNil())
+        ))
+      ))
+    ) { transform(xslt)._1 }
+  }
+
   test("Descendant selector (//) and parent axis") {
     // TODO: could use //b/a as selector for the second template, but currently this does not terminate
     val xslt =

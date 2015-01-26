@@ -83,7 +83,7 @@ class AbstractPatternMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
             notAncestorMatches = xmlDom.meet(notAncestorMatches, newNotParentMatches)
 
             current = parent
-            val (newRoot, newNotRoot) = xmlDom.isRoot(current) // instead of returning two results here, one could add isNotRoot
+            val (newRoot, newNotRoot) = xmlDom.isRoot(current)
             root = newRoot
             notRoot = newNotRoot
             nodeStack += notRoot

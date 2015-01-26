@@ -14,7 +14,7 @@ class AbstractPathMatchingSuite extends FunSuite {
   type P = Set[Path]
   val latP = PathSetLattice
   val latS = SubtreeLattice
-  val TOP = latP.top
+  val TOP = latP.top(isFragment = false) // don't try to match on fragments
 
   def matches(path: LocationPath, start: P): P = {
     val startNode: N = (latS.top, start)
@@ -26,7 +26,7 @@ class AbstractPathMatchingSuite extends FunSuite {
 
   test("/") {
     val pattern = XPathParser.parse("/").asInstanceOf[LocationPath]
-    assertResult(Set(RootPath)) { matches(pattern, TOP) }
+    assertResult(Set(RootPath(isFragment = false))) { matches(pattern, TOP) }
   }
 
   test("*") {

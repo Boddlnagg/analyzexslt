@@ -97,13 +97,10 @@ trait XMLDomain[N, L, V] {
     */
   def partitionAttributes(list: L): (L, L)
 
-  /** Verifies that the given node is a root node and has exactly one element child.
-    * If that is not the case, BOTTOM is returned.
+  /** Creates a root node with the given children. The second parameter specifies whether the root represents a
+    * (result tree) fragment or a complete document (the latter can only have a single element child).
     */
-  def verifyDocument(root: N): N
-
-  /** Creates a root node with the given children. */
-  def createRoot(children: L): N
+  def createRoot(children: L, isFragment: Boolean): N
 
   /** Copies a list of nodes, so that they can be used in the output.
     * A root node is copied by copying its child (not wrapped in a root node). */
@@ -125,7 +122,7 @@ trait XMLDomain[N, L, V] {
     * is not a root node), the second result is a node that might not be a root node (this is
     * BOTTOM if the node definitely is a root node). The two results are not necessarily disjoint.
     */
-  def isRoot(node: N): (N, N)
+  def isRoot(node: N, allowFragments: Boolean = true): (N, N)
 
   /** Predicate function that checks whether a node is an element node.
     * The first result is a node that is known to be an element node (this is BOTTOM if the node definitely

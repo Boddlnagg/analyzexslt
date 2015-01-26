@@ -34,7 +34,8 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
         */
       def mergeConsecutiveTextNodes(list: ZListElement[N]): (ZListElement[N], Boolean) = {
         // a node that represents any text node
-        val anyTextNode: N = normalize((Subtree(Set(AnyText), ZNil(), ZNil()), Set(DescendantStep(AnyTextNodeStep, RootPath))))
+        val anyTextNode: N = normalize((Subtree(Set(AnyText), ZNil(), ZNil()),
+          Set(DescendantStep(AnyTextNodeStep, RootPath(isFragment = false)), DescendantStep(AnyTextNodeStep, RootPath(isFragment = true)))))
 
         list match {
           case ZNil() => (ZNil(), false)
@@ -102,7 +103,7 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
       }
 
       val tree = Subtree(desc, attrSet, newChildren.map(_._1))
-      val path = Set[Path](DescendantStep(AnyElementStep, RootPath))
+      val path = Set[Path](DescendantStep(AnyElementStep, RootPath(isFragment = false)), DescendantStep(AnyElementStep, RootPath(isFragment = true)))
       normalize(tree, path)
     }
 
@@ -117,7 +118,7 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
         }
       }
       val tree = Subtree(desc, ZNil(), ZNil()) // text nodes have no children or attributes
-      val path = Set[Path](DescendantStep(AnyTextNodeStep, RootPath))
+      val path = Set[Path](DescendantStep(AnyTextNodeStep, RootPath(isFragment = false)), DescendantStep(AnyTextNodeStep, RootPath(isFragment = true)))
       (tree, path)
     }
 
@@ -130,7 +131,7 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
         }
       }
       val tree = Subtree(desc, ZNil(), ZNil()) // comment nodes have no children or attributes
-      val path = Set[Path](DescendantStep(AnyCommentNodeStep, RootPath))
+      val path = Set[Path](DescendantStep(AnyCommentNodeStep, RootPath(isFragment = false)), DescendantStep(AnyCommentNodeStep, RootPath(isFragment = true)))
       (tree, path)
     }
 
@@ -147,8 +148,8 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
       }
       val tree = Subtree(desc, ZNil(), ZNil()) // attribute nodes have no children or attributes
       val path: Set[Path] = name.str match {
-          case None => Set(DescendantStep(AnyAttributeStep, RootPath))
-          case Some(s) => s.map(n => DescendantStep(NamedAttributeStep(n), RootPath))
+          case None => Set[Path](DescendantStep(AnyAttributeStep, RootPath(isFragment = false)), DescendantStep(AnyAttributeStep, RootPath(isFragment = true)))
+          case Some(s) => s.flatMap(n => Set(DescendantStep(NamedAttributeStep(n), RootPath(isFragment = false)), DescendantStep(NamedAttributeStep(n), RootPath(isFragment = true))))
       }
       (tree, path)
     }

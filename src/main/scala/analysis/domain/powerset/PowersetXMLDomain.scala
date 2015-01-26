@@ -91,20 +91,13 @@ object PowersetXMLDomain {
       (Some(attr), Some(children))
     }
 
-    override def verifyDocument(root: N): N = root match {
+    override def createRoot(children: L, isFragment: Boolean): N = children match {
       case None => None
-      case Some(s) => Some(
-        s.filter {
-          case XMLRoot(List(e: XMLElement)) => true
-          case l => println(f"[WARNING] Failed to wrap nodes in root: $l"); false
-          // NOTE: Lists with more than one node or a non-element node are evaluated to bottom implicitly
-        }
-      )
-    }
-
-    override def createRoot(children: L): N = children match {
-      case None => None
-      case Some(s) => Some(s.map { ch => XMLRoot(ch) })
+      case Some(s) => Some(s.collect {
+        case ch if isFragment => XMLRoot(ch)
+        case ch@List(single: XMLElement) => XMLRoot(ch)
+        // NOTE: when isFragment == false, lists with more than a single element node are implicitly ignored
+      })
     }
 
     override def copyToOutput(list: L): L = list match {
@@ -125,10 +118,19 @@ object PowersetXMLDomain {
       case Some(s) => xpathDom.joinAll(s.map(n => xpathDom.liftString(n.stringValue)))
     }
 
-    override def isRoot(node: N): (N, N) = node match {
+    override def isRoot(node: N, allowFragments: Boolean): (N, N) = node match {
       case None => (None, None)
       case Some(s) =>
-        val (yes, no) = s.partition(_.isInstanceOf[XMLRoot])
+        val (yes, no) =
+          if (allowFragments)
+            s.partition(_.isInstanceOf[XMLRoot])
+          else
+            s.partition { n =>
+              n.isInstanceOf[XMLRoot] && (n.asInstanceOf[XMLRoot].children match {
+                case List(single: XMLElement) => true
+                case _ => false
+              })
+            }
         (Some(yes), Some(no))
     }
 
