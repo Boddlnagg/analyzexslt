@@ -24,7 +24,8 @@ object XSLTProcessor {
   def applyTemplates(sheet: XSLTStylesheet, sources: List[XMLNode], mode: Option[String], globalVariables: Map[String, XPathValue], localVariables: Map[String, XPathValue], params: Map[String, XPathValue]): List[XMLNode] = {
     sources.zipWithIndex.flatMap { case (n, i) =>
       val tmpl = chooseTemplate(sheet, n, mode)
-      instantiateTemplate(sheet, tmpl, new XSLTContext(n, sources, i + 1, globalVariables, localVariables), params)
+      val context = XSLTContext(n, sources, i + 1, globalVariables, localVariables)
+      instantiateTemplate(sheet, tmpl, context, params)
     }
   }
 
