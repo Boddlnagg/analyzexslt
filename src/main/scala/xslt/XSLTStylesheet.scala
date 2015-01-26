@@ -3,7 +3,11 @@ package xslt
 import xpath.{XPathExpr, XPathParser, LocationPath}
 
 /** An XSLT stylesheet responsible for managing its named and matchable templates. */
-class XSLTStylesheet(templates: List[(XSLTTemplate, Option[String], Option[XPathExpr], Option[String])], disableBuiltinTemplates: Boolean) {
+class XSLTStylesheet(
+  templates: List[(XSLTTemplate, Option[String], Option[XPathExpr], Option[String])],
+  val globalVariables: List[(String, Either[XPathExpr, Seq[XSLTInstruction]])],
+  disableBuiltinTemplates: Boolean
+) {
   // templates is a list of tuples of the form (template, name?, match-clause?, mode?)
 
   // perform some sanity checks

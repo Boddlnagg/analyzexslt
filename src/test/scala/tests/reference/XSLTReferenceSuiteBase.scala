@@ -1105,6 +1105,31 @@ abstract class XSLTReferenceSuiteBase[T] extends FunSuite {
     assertTransformMatches(xslt, data)
   }
 
+  test("Global variables/parameters") {
+    val xslt =
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:param name="a" select="1"/>
+        <xsl:variable name="b" select="$a + 1"/>
+        <xsl:variable name="x" select="5"/>
+        <xsl:template match="/">
+          <result>
+            <xsl:call-template name="foobar">
+              <xsl:with-param name="a" select="$b"/>
+            </xsl:call-template>
+          </result>
+        </xsl:template>
+        <xsl:template name="foobar">
+          <xsl:param name="a" select="0"/> <!-- this should shadow the global param `a` -->
+          <xsl:param name="c" select="$a + 1"/> <!-- this should be evaluated after `a` -->
+          <xsl:value-of select="$c + $x"/> <!-- should be 3 + 5 = 8 -->
+        </xsl:template>
+      </xsl:stylesheet>
+
+    val data = <root/>
+
+    assertTransformMatches(xslt, data)
+  }
+
   def checkMatch(transformed: Either[T, Exception], referenceResult: Either[Elem, Exception]) = {
     // if Java throws an exception, we should do the same (because of invalid input)
     (referenceResult, transformed) match {

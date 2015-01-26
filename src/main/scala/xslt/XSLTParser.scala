@@ -50,18 +50,14 @@ object XSLTParser {
     if (!isElem(cleaned, "stylesheet") && !isElem(cleaned, "transform")) throw new NotImplementedError(f"Root element must be 'stylesheet' or 'transform' with namespace $Namespace (a literal result element is not supported as root node)") // TODO?
     if (cleaned.attribute("version").get.text != "1.0") throw new NotImplementedError("Stylesheet versions other than 1.0 are not supported")
     cleaned.child.foreach {
-      n => require(n.namespace == Namespace && (n.label == "template" || n.label == "variable"), f"Top-level elements must either be XSLT templates or variable definitions, got $n")
+      n => require(n.namespace == Namespace && (n.label == "template" || n.label == "variable" || n.label == "param"), f"Top-level elements must either be XSLT templates or variable/param definitions, got $n")
     }
 
-    val globalVariables = cleaned.child
-      .filter(isElem(_, "variable"))
-      .map(n => n.asInstanceOf[Elem])
-      .map(elem => (elem.attribute("name").get.text, XPathParser.parse(elem.attribute("select").map(_.text).getOrElse("''"))))
-
-    // the spec requires us to evaluate top-level variables in an order such that variables can depend on each other
-    // (as long as there are no circular dependencies, which would result in an error),
-    // see spec section 11.4; this has not been implemented.
-    if (globalVariables.nonEmpty) throw new NotImplementedError("Top-level variables are not implemented.")
+    // collect global variables and treat top-level parameters as if they were variables (using their mandatory default values)
+    // NOTE: the spec requires us to evaluate top-level variables in an order such that variables can depend on each other
+    // (as long as there are no circular dependencies, which would result in an error), see spec section 11.4
+    // this has not been implemented!
+    val globalVariables = parseParams(cleaned.child.filter(e => isElem(e, "variable") || isElem(e, "param")))
 
     val templates = cleaned.child
       .filter(isElem(_, "template"))
@@ -73,7 +69,7 @@ object XSLTParser {
       ))
       .toList // returns a list of tuples (template, name?, match?, precedence)
 
-    new XSLTStylesheet(templates, disableBuiltinTemplates)
+    new XSLTStylesheet(templates, globalVariables, disableBuiltinTemplates)
   }
 
   /** Creates a new XSLT template from a [[scala.xml.Elem]] (must be an &lt;xsl:template&gt; element) */
@@ -81,7 +77,7 @@ object XSLTParser {
     assert(isElem(elem, "template"))
     new XSLTTemplate(
       parseInstructions(elem.child.filter(n => !isElem(n, "param"))),
-      parseParams(elem.child, "param")
+      parseParams(elem.child.filter(isElem(_, "param")))
     )
   }
 
@@ -111,14 +107,14 @@ object XSLTParser {
           val mode = elem.attribute("mode").map(_.text)
           if (!elem.child.forall(isElem(_, "with-param")))
             throw new NotImplementedError("children of 'apply-templates' element must only be 'with-param' ('sort' is not supported)")
-          ApplyTemplatesInstruction(select, mode, parseParams(elem.child, "with-param"))
+          ApplyTemplatesInstruction(select, mode, Map() ++ parseParams(elem.child.filter(isElem(_, "with-param"))))
 
         // spec section 6
         case "call-template" =>
           val name = elem.attribute("name").get.text
           if (!elem.child.forall(isElem(_, "with-param")))
             throw new NotImplementedError("children of 'call-templates' element must only be 'with-param'")
-          CallTemplateInstruction(name, parseParams(elem.child, "with-param"))
+          CallTemplateInstruction(name, Map() ++ parseParams(elem.child.filter(isElem(_, "with-param"))))
 
         // spec section 7.1.2
         case "element" =>
@@ -191,16 +187,14 @@ object XSLTParser {
   }
 
   /** Parses &lt;xsl:param&gt; and &lt;xsl:with-param&gt; nodes */
-  def parseParams(input: Seq[Node], elemName: String): Map[String, Either[XPathExpr, Seq[XSLTInstruction]]] = {
-    val params = input.filter(isElem(_, elemName))
-      .map(n => n.asInstanceOf[Elem])
+  def parseParams(input: Seq[Node]): List[(String, Either[XPathExpr, Seq[XSLTInstruction]])] = {
+    input.map(n => n.asInstanceOf[Elem])
       .map { elem =>
         elem.attribute("name").get.text -> ((elem.attribute("select"), elem.child.isEmpty) match {
         case (Some(select), _) => Left(XPathParser.parse(select.text))
         case (None, false) => Right(parseInstructions(elem.child))
         case (None, true) => Left(StringLiteralExpr(""))
-    })}
-    Map() ++ params
+    })}.toList
   }
 
   /** Lowers a parsed attribute value template to a single XPath expression that evaluates

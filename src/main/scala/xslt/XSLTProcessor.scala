@@ -11,18 +11,20 @@ import scala.collection.mutable.{Set => MutableSet}
 object XSLTProcessor {
   /** Transforms a source document (represented by its root node) into a new document using an XSLT stylesheet */
   def transform(sheet: XSLTStylesheet, source: XMLRoot): XMLRoot = {
+    val globalVariables = evaluateVariables(sheet, sheet.globalVariables, XSLTContext(source, List(source), 1, Map(), Map()))
+
     // process according to XSLT spec section 5.1
-    applyTemplates(sheet, List(source), None, Map(), Map()) match {
-      case List(inner: XMLElement) => XMLRoot(List(inner)) // TODO: support comments here?
+    applyTemplates(sheet, List(source), None, globalVariables, Map(), Map()) match {
+      case List(inner: XMLElement) => XMLRoot(List(inner))
       case x => throw new ProcessingError("Transformation result must be a single XMLElement")
     }
   }
 
   /** Applies matching templates to a list of given source nodes and produces a new list of nodes */
-  def applyTemplates(sheet: XSLTStylesheet, sources: List[XMLNode], mode: Option[String], variables: Map[String, XPathValue], params: Map[String, XPathValue]): List[XMLNode] = {
+  def applyTemplates(sheet: XSLTStylesheet, sources: List[XMLNode], mode: Option[String], globalVariables: Map[String, XPathValue], localVariables: Map[String, XPathValue], params: Map[String, XPathValue]): List[XMLNode] = {
     sources.zipWithIndex.flatMap { case (n, i) =>
       val tmpl = chooseTemplate(sheet, n, mode)
-      instantiateTemplate(sheet, tmpl, XSLTContext(n, sources, i + 1, variables), params)
+      instantiateTemplate(sheet, tmpl, new XSLTContext(n, sources, i + 1, globalVariables, localVariables), params)
     }
   }
 
@@ -44,13 +46,13 @@ object XSLTProcessor {
     * @return a list of resulting XML nodes
     */
   def instantiateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: XSLTContext, params: Map[String, XPathValue]): List[XMLNode] = {
-    val acceptedParams = params.filter { case (key, _) => tmpl.defaultParams.contains(key) }
-    val remainingDefaultParams = tmpl.defaultParams.filter { case (key, _) => !params.contains(key) }
-      .mapValues(v => evaluateVariable(sheet, v, context))
+    val evaluatedParams = tmpl.defaultParams.foldLeft(Map[String, XPathValue]()) {
+      case (current, (name, _)) if params.contains(name) => current + (name -> params(name))
+      case (current, (name, value)) => current + (name -> evaluateVariable(sheet, value, context.addLocalVariables(current)))
+    }
     // the context for the newly instantiated template contains only global variables and parameters,
-    // no local parameters (static scoping and no nested template definitions);
-    // global variables are not supported in this implementation
-    processAll(sheet, tmpl.content, context.replaceVariables(remainingDefaultParams ++ acceptedParams))
+    // no other local variables (static scoping and no nested template definitions)
+    processAll(sheet, tmpl.content, context.replaceLocalVariables(evaluatedParams))
   }
 
   /** Processes a sequence of XSLT instructions using a new scope (variable definitions are collected
@@ -73,7 +75,7 @@ object XSLTProcessor {
           case Right((name, value)) =>
             if (scopeVariables.contains(name)) throw new ProcessingError(f"Variable $name is defined multiple times in the same scope")
             scopeVariables += name
-            (resultNodes, ctx.addVariable(name, value))
+            (resultNodes, ctx.addLocalVariable(name, value))
         }
     }
     result
@@ -122,13 +124,13 @@ object XSLTProcessor {
         Left(List(XMLAttribute(evaluatedName, textResult)))
       case ApplyTemplatesInstruction(None, mode, params) =>
         context.node match {
-          case XMLRoot(children) => Left(applyTemplates(sheet, children, mode, context.variables, params.mapValues(v => evaluateVariable(sheet, v, context))))
-          case elem: XMLElement => Left(applyTemplates(sheet, elem.children.toList, mode, context.variables, params.mapValues(v => evaluateVariable(sheet, v, context))))
+          case XMLRoot(children) => Left(applyTemplates(sheet, children, mode, context.globalVariables, context.localVariables, params.mapValues(v => evaluateVariable(sheet, v, context))))
+          case elem: XMLElement => Left(applyTemplates(sheet, elem.children.toList, mode, context.globalVariables, context.localVariables, params.mapValues(v => evaluateVariable(sheet, v, context))))
           case _ => Left(Nil) // other node types don't have children and return an empty result
         }
       case ApplyTemplatesInstruction(Some(expr), mode, params) =>
         XPathEvaluator.evaluate(expr, context.toXPathContext) match {
-          case NodeSetValue(nodes) => Left(applyTemplates(sheet, nodes.toList, mode, context.variables, params.mapValues(v => evaluateVariable(sheet, v, context))))
+          case NodeSetValue(nodes) => Left(applyTemplates(sheet, nodes.toList, mode, context.globalVariables, context.localVariables, params.mapValues(v => evaluateVariable(sheet, v, context))))
           case value => throw new ProcessingError(f"select expression in apply-templates must evaluate to a node-set (evaluated to $value)")
         }
       case CallTemplateInstruction(name, params) =>
@@ -168,7 +170,7 @@ object XSLTProcessor {
           case NodeSetValue(nodes) =>
             val nodeList = nodes.toList
             Left(nodeList.zipWithIndex.flatMap { case (n, i) =>
-              val newContext = XSLTContext(n, nodeList, i + 1, context.variables)
+              val newContext = XSLTContext(n, nodeList, i + 1, context.globalVariables, context.localVariables)
               processAll(sheet, content, newContext)
             })
           case value => throw new ProcessingError(f"select expression in for-each must evaluate to a node-set (evaluated to $value)")
@@ -194,6 +196,14 @@ object XSLTProcessor {
     }
   }
 
+  /** Evaluates a list of variable definitions in the order they are defined. */
+  def evaluateVariables(sheet: XSLTStylesheet, variables: List[(String, Either[XPathExpr, Seq[XSLTInstruction]])], context: XSLTContext): Map[String, XPathValue] = {
+    variables.foldLeft(Map[String, XPathValue]()) {
+      case (current, (name, value)) => current + (name -> evaluateVariable(sheet, value, context.addLocalVariables(current)))
+    }
+  }
+
+  /** Evaluates a single variable value. */
   def evaluateVariable(sheet: XSLTStylesheet, variable: Either[XPathExpr, Seq[XSLTInstruction]], context: XSLTContext): XPathValue = variable match {
     case Left(expr) =>
       XPathEvaluator.evaluate(expr, context.toXPathContext)

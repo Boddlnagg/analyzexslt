@@ -10,5 +10,5 @@ import xpath.XPathExpr
   */
 case class XSLTTemplate(
   content: Seq[XSLTInstruction],
-  defaultParams: Map[String, Either[XPathExpr, Seq[XSLTInstruction]]] = Map()
+  defaultParams: List[(String, Either[XPathExpr, Seq[XSLTInstruction]])] = Nil
 )
