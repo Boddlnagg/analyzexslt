@@ -20,6 +20,10 @@ object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
   protected object XML extends PowersetXMLDomain.D[V] {
     override val xpathDom = XPATH
 
+    /** Create an element node with the given name, attributes and children.
+      * The output is created bottom-up, so children are always created before their parent nodes.
+      * Consecutive text node children must be merged into a single text node by this method.
+      */
     override def createElement(name: V, attributes: L, children: L): N = (name.str, attributes, children) match {
       case (Some(s), _, _) if s.isEmpty => BOT
       case (_, Some(s), _) if s.isEmpty => BOT
@@ -34,6 +38,9 @@ object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
       }.toSet)
     }
 
+    /** Create an attribute node with the given name and text value.
+      * Values that are not strings evaluate to BOTTOM.
+      */
     override def createAttribute(name: V, value: V): N = (name.str, value.str) match {
       case (Some(s), _) if s.isEmpty => BOT
       case (_, Some(s)) if s.isEmpty => BOT
@@ -41,6 +48,9 @@ object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
       case (Some(s1), Some(s2)) => Some(s1.cross(s2).map { case (n, v) => XMLAttribute(n, v)}.toSet)
     }
 
+    /** Create a text node with the given text value. Values that are not strings evaluate to BOTTOM.
+      * The empty string also evaluates to BOTTOM, because text nodes with no content are not allowed.
+      */
     override def createTextNode(value: V): N = value.str match {
       case None => None
       case Some(s) => Some(s.collect {
@@ -48,6 +58,7 @@ object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
       })
     }
 
+    /** Create a comment node with the given text value. Values that are not strings evaluate to BOTTOM. */
     override def createComment(value: V): N = value.str match {
       case None => None
       case Some(s) => Some(s.collect {
@@ -59,7 +70,7 @@ object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
   protected object XPATH extends OuterXPATH.D[N] {
     override val xmlDom: XMLDomain[N, L, OuterXPATH.V] = XML
 
-    // Turn a node list into a set by sorting nodes in document order and removing duplicate nodes
+    /** Turn a node list into a set by sorting nodes in document order and removing duplicate nodes */
     override def nodeListToSet(list: L): L = list match {
       case None => None // size might be different because duplicates are removed
       case Some(s) => Some(s.map(nodes => nodes.to[TreeSet].toList)) // convert to ordered set and back to list

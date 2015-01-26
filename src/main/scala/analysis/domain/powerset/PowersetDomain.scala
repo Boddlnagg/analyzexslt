@@ -19,6 +19,10 @@ object PowersetDomain extends Domain[N, L, V] {
   protected object XML extends PowersetXMLDomain.D[V] {
     override val xpathDom = XPATH
 
+    /** Create an element node with the given name, attributes and children.
+      * The output is created bottom-up, so children are always created before their parent nodes.
+      * Consecutive text node children must be merged into a single text node by this method.
+      */
     override def createElement(name: V, attributes: L, children: L): N = (name, attributes, children) match {
       case (Some(s), _, _) if s.collect { case StringValue(_) => () }.isEmpty => BOT
       case (_, Some(s), _) if s.isEmpty => BOT
@@ -33,6 +37,9 @@ object PowersetDomain extends Domain[N, L, V] {
       }.toSet)
     }
 
+    /** Create an attribute node with the given name and text value.
+      * Values that are not strings evaluate to BOTTOM.
+      */
     override def createAttribute(name: V, value: V): N = (name, value) match {
       case (Some(s), _) if s.collect { case StringValue(_) => () }.isEmpty => BOT
       case (_, Some(s)) if s.collect { case StringValue(_) => () }.isEmpty => BOT
@@ -43,6 +50,9 @@ object PowersetDomain extends Domain[N, L, V] {
       }.toSet)
     }
 
+    /** Create a text node with the given text value. Values that are not strings evaluate to BOTTOM.
+      * The empty string also evaluates to BOTTOM, because text nodes with no content are not allowed.
+      */
     override def createTextNode(value: V): N = value match {
       case None => None
       case Some(s) => Some(s.collect {
@@ -51,6 +61,7 @@ object PowersetDomain extends Domain[N, L, V] {
       })
     }
 
+    /** Create a comment node with the given text value. Values that are not strings evaluate to BOTTOM. */
     override def createComment(value: V): N = value match {
       case None => None
       case Some(s) => Some(s.collect {
@@ -62,11 +73,18 @@ object PowersetDomain extends Domain[N, L, V] {
 
   protected object XPATH extends PowersetXPathDomain.D[N, L] {
 
+    /** Converts a list of nodes to a node-set value.
+      * This has to order the nodes in document order and remove duplicates.
+      */
     override def toNodeSet(list: L): V = list match {
       case None => None
       case Some(s) => Some(s.map(nodes => NodeSetValue(nodes.to[TreeSet])))
     }
 
+    /** Match on a value to find out whether it is a node-set value.
+      * The part of the value that is a node-set value is returned as a node list in the first result value,
+      * the part of the value that isn't is returned in the second result value.
+      */
     override def matchNodeSetValues(v: V): (L, V) = v match {
       case None => (None, None)
       case Some(s) =>

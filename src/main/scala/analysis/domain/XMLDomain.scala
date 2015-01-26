@@ -67,15 +67,17 @@ trait XMLDomain[N, L, V] {
   def createSingletonList(node: N): L
 
   /** Get the root node of a given node */
-  def getRoot(node: N): N // TODO: this might be implementable using getParent() and isRoot()
+  def getRoot(node: N): N
 
   /** Get the list of attributes of a given node.
-    * Nodes that are not an element (and therefore don't have attributes) return an empty list, not BOTTOM! */
+    * Nodes that are not an element (and therefore don't have attributes) return an empty list, not BOTTOM!
+    */
   def getAttributes(node: N): L
 
   /** Get the list of children of a given node.
     * Root nodes have a single child, element nodes have an arbitrary number of children.
-    * Nodes that don't have children return an empty list, not BOTTOM! */
+    * Nodes that don't have children return an empty list, not BOTTOM!
+    */
   def getChildren(node: N): L
 
   /** Get the parent of given node. If the node has no parent (root node), BOTTOM is returned. */
@@ -103,7 +105,8 @@ trait XMLDomain[N, L, V] {
   def createRoot(children: L, isFragment: Boolean): N
 
   /** Copies a list of nodes, so that they can be used in the output.
-    * A root node is copied by copying its child (not wrapped in a root node). */
+    * A root node is copied by copying its child (not wrapped in a root node).
+    */
   def copyToOutput(list: L): L
 
   /** Evaluates a function for every element in the given list, providing also the index of each element in the list.

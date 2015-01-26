@@ -138,7 +138,8 @@ object ZipperXMLDomain {
     }
 
     /** Get the list of attributes of a given node.
-      * Nodes that are not an element (and therefore don't have attributes) return an empty list, not BOTTOM! */
+      * Nodes that are not an element (and therefore don't have attributes) return an empty list, not BOTTOM!
+      */
     override def getAttributes(node: N): L = {
       val (Subtree(desc, attributes, children), path) = node
       val attributePath: Set[Path] = latP.getAttributes(path).joinInner
@@ -147,7 +148,8 @@ object ZipperXMLDomain {
 
     /** Get the list of children of a given node.
       * Root nodes have a single child, element nodes have an arbitrary number of children.
-      * Nodes that don't have children return an empty list, not BOTTOM! */
+      * Nodes that don't have children return an empty list, not BOTTOM!
+      */
     override def getChildren(node: N): L = {
       val (Subtree(desc, attributes, children), path) = node
       val childrenPath: Set[Path] = latP.getChildren(path).joinInner
@@ -217,7 +219,8 @@ object ZipperXMLDomain {
     }
 
     /** Copies a list of nodes, so that they can be used in the output.
-      * A root node is copied by copying its child (not wrapped in a root node). */
+      * A root node is copied by copying its child (not wrapped in a root node).
+      */
     override def copyToOutput(list: L): L = flatMapWithIndex(list, (n, _) => {
       val (root, notRoot) = isRoot(n)
       if (!lessThanOrEqual(root, bottom)) { // root is not BOTTOM -> node might be a root node -> copy children

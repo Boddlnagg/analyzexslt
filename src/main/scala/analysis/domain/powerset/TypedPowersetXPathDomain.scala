@@ -21,7 +21,10 @@ class TypedPowersetXPathDomain[L] {
     private val latNumbers = Lattice.createFromOptionalSet[Double]
     private val latStrings = Lattice.createFromOptionalSet[String]
 
+    /** Get the TOP element */
     override def top: V = TypedXPathValue(latBooleans.top, latNumbers.top, latStrings.top, xmlDom.topList)
+
+    /** Get the BOTTOM element */
     override def bottom: V = TypedXPathValue(latBooleans.bottom, latNumbers.bottom, latStrings.bottom, xmlDom.bottomList)
 
     // "constants" to use for pattern matching
@@ -33,7 +36,7 @@ class TypedPowersetXPathDomain[L] {
     protected def fromNumbers(num: Option[Set[Double]]) = TypedXPathValue(latBooleans.bottom, num, latStrings.bottom, xmlDom.bottomList)
     protected def fromStrings(str: Option[Set[String]]) = TypedXPathValue(latBooleans.bottom, latNumbers.bottom, str, xmlDom.bottomList)
 
-    // NOTE: joining does not uphold any sorted-set property for the node-list/node-set component
+    /** Join two values. This calculates their supremum (least upper bound). */
     override def join(v1: V, v2: V): V = TypedXPathValue(
       latBooleans.join(v1.bool, v2.bool),
       latNumbers.join(v1.num, v2.num),
@@ -41,6 +44,9 @@ class TypedPowersetXPathDomain[L] {
       xmlDom.joinLists(v1.nodeSet, v2.nodeSet)
     )
 
+    /** Compares two elements of the lattice.
+      * Returns true if v1 < v2 or v1 = v2, false if v1 > v2 or if they are incomparable.
+      */
     override def lessThanOrEqual(v1: V, v2: V): Boolean = {
       // lessThanOrEqual must hold for all components
       latBooleans.lessThanOrEqual(v1.bool, v2.bool) &&
@@ -49,7 +55,10 @@ class TypedPowersetXPathDomain[L] {
       xmlDom.lessThanOrEqualLists(v1.nodeSet, v2.nodeSet)
     }
 
+    /** Get the TOP element of the subdomain of numbers (representing any number). topNumber <= top must hold. */
     override def topNumber: V = TypedXPathValue(latBooleans.bottom, None, latStrings.bottom, xmlDom.bottomList)
+
+    /** Get the TOP element of the subdomain of strings (representing any string). topString <= top must hold. */
     override def topString: V = TypedXPathValue(latBooleans.bottom, latNumbers.bottom, None, xmlDom.bottomList)
 
     /** A node-set is converted to a string by returning the string-value of the node in the node-set that is
@@ -130,26 +139,34 @@ class TypedPowersetXPathDomain[L] {
       fromNumbers(numResult)
     }
 
+    /** The addition operation. Must convert its operands to numbers first if they aren't. */
     override def add(left: V, right: V): V = liftBinaryNumOp(left, right,
       (v1, v2) => v1 + v2
     )
 
+    /** The subtraction operation. Must convert its operands to numbers first if they aren't. */
     override def subtract(left: V, right: V): V = liftBinaryNumOp(left, right,
       (v1, v2) => v1 - v2
     )
 
+    /** The multiplication operation. Must convert its operands to numbers first if they aren't. */
     override def multiply(left: V, right: V): V = liftBinaryNumOp(left, right,
       (v1, v2) => v1 * v2
     )
 
+    /** The division operation. Must convert its operands to numbers first if they aren't. */
     override def divide(left: V, right: V): V = liftBinaryNumOp(left, right,
       (v1, v2) => v1 / v2
     )
 
+    /** The modulo operation. Must convert its operands to numbers first if they aren't. */
     override def modulo(left: V, right: V): V = liftBinaryNumOp(left, right,
       (v1, v2) => v1 % v2
     )
 
+    /** Compares two values using a given relational operator (=, !=, <, >, >=, <=).
+      * Must behave according to the XPath specification, section 3.4.
+      */
     override def compareRelational(left: V, right: V, relOp: RelationalOperator): V = {
       // compares for equality
       def compareRelationalBooleans(left: Set[Boolean], right: Set[Boolean]): Set[Boolean] =
@@ -214,10 +231,12 @@ class TypedPowersetXPathDomain[L] {
       }
     }
 
+    /** The numeric negation operation (unary minus). Must convert its operand to a number if it isn't. */
     override def negateNum(v: V): V = {
       fromNumbers(toNumberValueInternal(v).map(_.map(num => -num)))
     }
 
+    /** Concatenate two strings. Operands that are not string values are evaluated to BOTTOM. */
     override def concatStrings(left: V, right: V): V = (left.str, right.str) match {
       case (BOTTOM_STR, _) | (_, BOTTOM_STR) => bottom
       case (Some(s1), Some(s2)) => fromStrings(Some(s1.cross(s2).map {
@@ -226,27 +245,42 @@ class TypedPowersetXPathDomain[L] {
       case _ => topString // in this case, one parameter is TOP and the other is not BOTTOM
     }
 
+    /** Convert a value to a string as defined by the XPath specification section 4.2. */
     override def toStringValue(v: V): V = fromStrings(toStringValueInternal(v))
+
+    /** Convert a value to a boolean as defined by the XPath specification section 4.3. */
     override def toNumberValue(v: V): V = fromNumbers(toNumberValueInternal(v))
+
+    /** Convert a value to a number as defined by the XPath specification section 4.4. */
     override def toBooleanValue(v: V): V = fromBooleans(toBooleanValueInternal(v))
 
+    /** Lift a literal string */
     override def liftString(lit: String): V = fromStrings(Some(Set(lit)))
 
+    /** Lift a number */
     override def liftNumber(num: Double): V = fromNumbers(Some(Set(num)))
 
+    /** Lift a boolean */
     override def liftBoolean(bool: Boolean): V = fromBooleans(Set(bool))
 
+    /** The union operator for node-sets. If one of the operands is not a node-set, return BOTTOM. */
     override def nodeSetUnion(left: V, right: V): V = {
       val resultSet = nodeListToSet(xmlDom.concatLists(left.nodeSet, right.nodeSet))
       TypedXPathValue(Set(), latNumbers.bottom, latStrings.bottom, resultSet)
     }
 
-    // TODO: don't automatically sort/set when creating these values
+    /** Converts a list of nodes to a node-set value.
+      * This has to order the nodes in document order and remove duplicates.
+      */
     override def toNodeSet(list: L): V = TypedXPathValue(Set(), latNumbers.bottom, latStrings.bottom, nodeListToSet(list))
 
+    /** Match on a value to find out whether it is a node-set value.
+      * The part of the value that is a node-set value is returned as a node list in the first result value,
+      * the part of the value that isn't is returned in the second result value.
+      */
     override def matchNodeSetValues(v: V): (L, V) = (v.nodeSet, TypedXPathValue(v.bool, v.num, v.str, xmlDom.bottomList))
 
     /** Turn a node list into a set by sorting nodes in document order and removing duplicate nodes */
-    def nodeListToSet(list: L): L
+    def nodeListToSet(list: L): L // must be implemented by subclasses
   }
 }

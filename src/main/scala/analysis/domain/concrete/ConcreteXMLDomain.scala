@@ -53,7 +53,8 @@ object ConcreteXMLDomain {
     override def getRoot(node: N): N = node.map(_.root)
 
     /** Get the list of attributes of a given node.
-      * Nodes that are not an element (and therefore don't have attributes) return an empty list, not BOTTOM! */
+      * Nodes that are not an element (and therefore don't have attributes) return an empty list, not BOTTOM!
+      */
     override def getAttributes(node: N): L = node.map {
       case XMLElement(_, attr, _, _) => attr.toList
       case _ => Nil
@@ -61,7 +62,8 @@ object ConcreteXMLDomain {
 
     /** Get the list of children of a given node.
       * Root nodes have a single child, element nodes have an arbitrary number of children.
-      * Nodes that don't have children return an empty list, not BOTTOM! */
+      * Nodes that don't have children return an empty list, not BOTTOM!
+      */
     override def getChildren(node: N): L = node.map {
       case XMLElement(_, _, children, _) => children.toList
       case XMLRoot(children) => children
@@ -116,7 +118,8 @@ object ConcreteXMLDomain {
     }
 
     /** Copies a list of nodes, so that they can be used in the output.
-      * A root node is copied by copying its child (not wrapped in a root node). */
+      * A root node is copied by copying its child (not wrapped in a root node).
+      */
     override def copyToOutput(list: L): L = list.map(_.flatMap({
       case XMLRoot(children) => children.map(_.copy) // "a root node is copied by copying its children" according to spec
       case node => List(node.copy)
