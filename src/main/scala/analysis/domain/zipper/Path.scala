@@ -234,7 +234,7 @@ object Path {
     def getChildren(path: Set[Path]): ZList[Set[Path]] = ZList.joinAll(path.map {
       case e@ChildStep(AnyElementStep | NamedElementStep(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
       case e@DescendantStep(AnyElementStep | NamedElementStep(_), _) => ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
-      case e@RootPath => ZCons(Set[Path](ChildStep(AnyElementStep, e)), ZNil()) //ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
+      case e@RootPath => ZUnknownLength(Set[Path](ChildStep(AnyElementStep, e), ChildStep(AnyTextNodeStep, e), ChildStep(AnyCommentNodeStep, e)))
         // NOTE: for real documents we could return ZCons(Set[Path](ChildStep(AnyElementStep, e)), ZNil())
         // for RootPaths, but this won't work for Result Tree Fragments
         // TODO: improve this situation
@@ -245,7 +245,7 @@ object Path {
     def getDescendants(path: Set[Path]): ZList[Set[Path]] = ZList.joinAll(path.map {
       case e@ChildStep(AnyElementStep | NamedElementStep(_), _) => ZUnknownLength(Set[Path](DescendantStep(AnyElementStep, e), DescendantStep(AnyTextNodeStep, e), DescendantStep(AnyCommentNodeStep, e)))
       case e@DescendantStep(AnyElementStep | NamedElementStep(_), _) => ZUnknownLength(Set[Path](DescendantStep(AnyElementStep, e), DescendantStep(AnyTextNodeStep, e), DescendantStep(AnyCommentNodeStep, e)))
-      case e@RootPath => ZCons(Set[Path](DescendantStep(AnyElementStep, e)), ZNil())
+      case e@RootPath => ZUnknownLength(Set[Path](DescendantStep(AnyElementStep, e), DescendantStep(AnyTextNodeStep, e), DescendantStep(AnyCommentNodeStep, e)))
       case _ => ZNil[Set[Path]]() // other node types (text, attribute) return empty lists because they don't have children/descendants
     })
 
