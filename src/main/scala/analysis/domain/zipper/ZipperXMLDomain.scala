@@ -15,12 +15,12 @@ object ZipperXMLDomain {
 
 
   implicit object NodeLattice extends Lattice[N] {
-    def top = (latS.top, latP.top)
-    def bottom = (latS.bottom, latP.bottom)
-    def join(left: N, right: N): N = normalize(latS.join(left._1, right._1), latP.join(left._2, right._2))
-    def meet(left: N, right: N): N = normalize(latS.meet(left._1, right._1), latP.meet(left._2, right._2))
+    override def top = (latS.top, latP.top)
+    override def bottom = (latS.bottom, latP.bottom)
+    override def join(left: N, right: N): N = normalize(latS.join(left._1, right._1), latP.join(left._2, right._2))
+    override def meet(left: N, right: N): N = normalize(latS.meet(left._1, right._1), latP.meet(left._2, right._2))
 
-    def lessThanOrEqual(left: N, right: N): Boolean =
+    override def lessThanOrEqual(left: N, right: N): Boolean =
       latS.lessThanOrEqual(left._1, right._1) && latP.lessThanOrEqual(left._2, right._2)
   }
 
@@ -41,17 +41,15 @@ object ZipperXMLDomain {
     })
   }
 
-  private val anyRoot: Set[Path] = Set(RootPath(isFragment = false), RootPath(isFragment = true))
-
   private def getPathsFromDescriptors(descriptors: Set[NodeDescriptor]): P = descriptors.flatMap[Path, Set[Path]] {
-    case Root => anyRoot
-    case Element(name) => anyRoot.map(DescendantStep(NamedElementStep(name), _))
-    case AnyElement => anyRoot.map(DescendantStep(AnyElementStep, _))
-    case Attribute(name, _) => anyRoot.map(DescendantStep(NamedAttributeStep(name), _))
-    case NamedAttribute(name) => anyRoot.map(DescendantStep(NamedAttributeStep(name), _))
-    case AnyAttribute => anyRoot.map(DescendantStep(AnyAttributeStep, _))
-    case Text(_) | AnyText => anyRoot.map(DescendantStep(AnyTextNodeStep, _))
-    case Comment(_) | AnyComment => anyRoot.map(DescendantStep(AnyCommentNodeStep, _))
+    case Root => latP.topRoot
+    case Element(name) => latP.topRoot.map(DescendantStep(NamedElementStep(name), _))
+    case AnyElement => latP.topRoot.map(DescendantStep(AnyElementStep, _))
+    case Attribute(name, _) => latP.topRoot.map(DescendantStep(NamedAttributeStep(name), _))
+    case NamedAttribute(name) => latP.topRoot.map(DescendantStep(NamedAttributeStep(name), _))
+    case AnyAttribute => latP.topRoot.map(DescendantStep(AnyAttributeStep, _))
+    case Text(_) | AnyText => latP.topRoot.map(DescendantStep(AnyTextNodeStep, _))
+    case Comment(_) | AnyComment => latP.topRoot.map(DescendantStep(AnyCommentNodeStep, _))
   }
 
   /** Removes impossible elements (where Path and Subtree descriptors don't agree) */
@@ -127,7 +125,7 @@ object ZipperXMLDomain {
         val mayBelongToFragment = !latP.lessThanOrEqual(latP.meet(path, latP.top(isFragment = true)), latP.bottom)
         val restRoot = if (mayBelongToFragment) {
           // we don't know anything about the children if it is a fragment (because there's no guarantee that the root has only a single child)
-          normalize(Subtree(Set(Root), ZNil(), ZUnknownLength(Subtree(Set(AnyElement, AnyComment, AnyText), ZUnknownLength(Set(AnyAttribute)), ZTop()))), anyRoot)
+          normalize(Subtree(Set(Root), ZNil(), ZUnknownLength(Subtree(Set(AnyElement, AnyComment, AnyText), ZUnknownLength(Set(AnyAttribute)), ZTop()))), latP.topRoot)
         } else {
           // if the node does not belong to a fragment, we know that it only has one element child, which is determined by the path
           val childDescriptor = latD.meet(getDescriptorsFromPaths(latP.getRootChild(selfNotRoot._2)), Set(AnyElement))
@@ -313,7 +311,7 @@ object ZipperXMLDomain {
       val (newPathPos, newPathNeg): (P, P) = if (!allowFragments || !isFragmentRoot) {
         (latP.meet(path, Set(RootPath(isFragment = false))), path.diff(Set(RootPath(isFragment = false))))
       } else {
-        (latP.meet(path, anyRoot), path.diff(anyRoot))
+        (latP.meet(path, latP.topRoot), path.diff(latP.topRoot))
       }
       // NOTE: root node can't have attributes, so we set it to ZNil
       val positiveResult: N = normalize(Subtree(latD.meet(desc, Set(Root)), ZNil(), newChildren), newPathPos)

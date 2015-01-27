@@ -93,12 +93,16 @@ object Path {
   /** This defines operations on the lattice of sets of abstract paths. */
   implicit object PathSetLattice extends Lattice[Set[Path]] {
 
+    /** A root node is either the root of a fragment or of a complete document */
+    def topRoot: Set[Path] = Set(RootPath(isFragment = true), RootPath(isFragment = false))
+
     /** This describes every possible path, because every node is either
-      * - the root node itself or
+      * - the root node itself (either containing a fragment or a complete document) or
       * - an element, attribute, comment or text node that is a descendant of the root node
       */
-    def top = Set(true, false).flatMap { frag => top(frag) }
+    override def top = Set(true, false).flatMap { frag => top(frag) }
 
+    /** This describes every possible path of a node that belongs either to a fragment or to a complete document */
     def top(isFragment: Boolean): Set[Path] = Set(
       RootPath(isFragment),
       DescendantStep(AnyElementStep, RootPath(isFragment)),
@@ -107,10 +111,10 @@ object Path {
       DescendantStep(AnyTextNodeStep, RootPath(isFragment))
     )
 
-    def bottom = Set()
+    override def bottom = Set()
 
     /** Defines the JOIN operation for the lattice of path-sets. */
-    def join(n1: Set[Path], n2: Set[Path]): Set[Path] = normalize(n1.union(n2))
+    override def join(n1: Set[Path], n2: Set[Path]): Set[Path] = normalize(n1.union(n2))
 
     /** Normalize the given set of paths in such a way that the resulting set contains
       * no path that also describes (i.e. is greater than or equal to) another path in the set.
@@ -123,7 +127,7 @@ object Path {
     }.toSet
 
     /** Defines the MEET operation (&&) for the lattice of path-sets. */
-    def meet(n1: Set[Path], n2: Set[Path]): Set[Path] = {
+    override def meet(n1: Set[Path], n2: Set[Path]): Set[Path] = {
       val result = n1.cross(n2).flatMap {
         case (p1, p2) => meetSingle(p1, p2)
       }
@@ -186,7 +190,7 @@ object Path {
     }
 
     /** Defines the <= operation for the lattice of path-sets */
-    def lessThanOrEqual(n1: Set[Path], n2: Set[Path]): Boolean =
+    override def lessThanOrEqual(n1: Set[Path], n2: Set[Path]): Boolean =
       n1.forall(pat1 => n2.exists(pat2 => lessThanOrEqualSingle(pat1, pat2)))
 
     /** Check if a single path is less than or equal to another path,

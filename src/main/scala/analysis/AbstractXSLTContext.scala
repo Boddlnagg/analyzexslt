@@ -7,7 +7,7 @@ case class AbstractXSLTContext[N, L, V](
   globalVariables: Map[String, V],
   localVariables: Map[String, V]
 ) {
-  val variables = globalVariables ++ localVariables
+  lazy val variables = globalVariables ++ localVariables // local variables shadow global ones with the same name
 
   /** Returns a new context where a local variable binding was added to the set of variables */
   def addLocalVariable(name: String, value: V): AbstractXSLTContext[N, L, V] = {

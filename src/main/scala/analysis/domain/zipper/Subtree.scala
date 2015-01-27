@@ -60,13 +60,13 @@ object Subtree {
   private val latD = NodeDescriptor.NodeDescriptorLattice
 
   implicit object SubtreeLattice extends Lattice[Subtree] {
-    def top = Subtree(latD.top, ZUnknownLength(Set(AnyAttribute)), ZTop())
-    def bottom = Subtree(latD.bottom, ZBottom(), ZBottom())
-    def join(left: Subtree, right: Subtree): Subtree =
+    override def top = Subtree(latD.top, ZUnknownLength(Set(AnyAttribute)), ZTop())
+    override def bottom = Subtree(latD.bottom, ZBottom(), ZBottom())
+    override def join(left: Subtree, right: Subtree): Subtree =
       Subtree(latD.join(left.desc, right.desc), left.attributes | right.attributes, left.children | right.children)
-    def meet(left: Subtree, right: Subtree): Subtree =
+    override def meet(left: Subtree, right: Subtree): Subtree =
       Subtree(latD.meet(left.desc, right.desc), left.attributes & right.attributes, left.children & right.children)
-    def lessThanOrEqual(left: Subtree, right: Subtree): Boolean =
+    override def lessThanOrEqual(left: Subtree, right: Subtree): Boolean =
       latD.lessThanOrEqual(left.desc, right.desc) &&
         left.attributes <= right.attributes &&
         left.children <= right.children

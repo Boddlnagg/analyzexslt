@@ -18,7 +18,7 @@ case object AnyComment extends NodeDescriptor
 
 object NodeDescriptor {
   implicit object NodeDescriptorLattice extends Lattice[Set[NodeDescriptor]] {
-    def top = Set(
+    override def top = Set(
       Root,
       AnyElement,
       AnyAttribute,
@@ -26,18 +26,18 @@ object NodeDescriptor {
       AnyText
     )
 
-    def bottom = Set()
+    override def bottom = Set()
 
-    def join(left: Set[NodeDescriptor], right: Set[NodeDescriptor]): Set[NodeDescriptor] = normalizeDescriptors(left | right)
+    override def join(left: Set[NodeDescriptor], right: Set[NodeDescriptor]): Set[NodeDescriptor] = normalizeDescriptors(left | right)
 
-    def meet(left: Set[NodeDescriptor], right: Set[NodeDescriptor]): Set[NodeDescriptor] = {
+    override def meet(left: Set[NodeDescriptor], right: Set[NodeDescriptor]): Set[NodeDescriptor] = {
       val result = left.cross(right).flatMap {
         case (p1, p2) => meetSingle(p1, p2)
       }
       normalizeDescriptors(result.toSet)
     }
 
-    def lessThanOrEqual(left: Set[NodeDescriptor], right: Set[NodeDescriptor]): Boolean = {
+    override def lessThanOrEqual(left: Set[NodeDescriptor], right: Set[NodeDescriptor]): Boolean = {
       left.forall(desc1 => right.exists(desc2 => lessThanOrEqualSingle(desc1, desc2)))
     }
 

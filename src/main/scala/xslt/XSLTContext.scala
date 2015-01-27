@@ -18,7 +18,7 @@ case class XSLTContext(
   globalVariables: Map[String, XPathValue],
   localVariables: Map[String, XPathValue])
 {
-  val variables = globalVariables ++ localVariables
+  lazy val variables = globalVariables ++ localVariables // local variables shadow global ones with the same name
 
   /** Creates an equivalent XPath context from this XSLT context */
   def toXPathContext = XPathContext(node, position, nodeList.size, variables)
