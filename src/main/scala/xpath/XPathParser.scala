@@ -160,6 +160,8 @@ object XPathParser {
       -1
     }
 
+    if (str.isEmpty) return List(Left(""))
+
     val result = MutList[Either[String, XPathExpr]]()
 
     try {

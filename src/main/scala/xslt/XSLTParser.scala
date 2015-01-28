@@ -50,7 +50,11 @@ object XSLTParser {
     if (!isElem(cleaned, "stylesheet") && !isElem(cleaned, "transform")) throw new NotImplementedError(f"Root element must be 'stylesheet' or 'transform' with namespace $Namespace (a literal result element is not supported as root node)") // TODO?
     if (cleaned.attribute("version").get.text != "1.0") throw new NotImplementedError("Stylesheet versions other than 1.0 are not supported")
     cleaned.child.foreach {
-      n => require(n.namespace == Namespace && (n.label == "template" || n.label == "variable" || n.label == "param"), f"Top-level elements must either be XSLT templates or variable/param definitions, got $n")
+      n =>
+        require(n.namespace == Namespace, f"Top-level elements must be from XSL namespace, got $n")
+        if (n.label != "template" && n.label != "variable" && n.label != "param") {
+          println(f"Warning: Ignoring unsupported top-level element ${n}")
+        }
     }
 
     // collect global variables and treat top-level parameters as if they were variables (using their mandatory default values)
@@ -181,7 +185,7 @@ object XSLTParser {
           SetAttributeInstruction(List(Left(name)), Seq(CopyOfInstruction(valueExpr)))
         }.toSeq
         CreateElementInstruction(List(Left(node.label)), literalAttributes ++ parseInstructions(node.child))
-      case _ => throw new NotImplementedError("Namespaces other than the XSLT namespace are not supported.")
+      case _ => throw new NotImplementedError(f"Namespaces other than the XSLT namespace are not supported ($node).")
     }
     case _ => throw new NotImplementedError(f"Unsupported XML node $node")
   }

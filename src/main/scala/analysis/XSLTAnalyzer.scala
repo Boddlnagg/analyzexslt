@@ -16,20 +16,20 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   val patternMatcher = new AbstractPatternMatcher[N, L, V](xmlDom)
 
   /** Transforms a source document (represented by its root node) into a new document using an XSLT stylesheet */
-  def transform(sheet: XSLTStylesheet, source: N): N = {
+  def transform(sheet: XSLTStylesheet, source: N, recursionLimit: Option[Int] = None): N = {
     val (rootSource, _) = xmlDom.isRoot(source, allowFragments = false) // enforce the source node to be a (non-fragment) root node
 
-    val globalVariables = evaluateVariables(sheet, sheet.globalVariables, AbstractXSLTContext(rootSource, xmlDom.createSingletonList(rootSource), xpathDom.liftNumber(1), Map(), Map()))
-    xmlDom.createRoot(applyTemplates(sheet, xmlDom.createSingletonList(rootSource), None, globalVariables, Map(), Map()), isFragment = false)
+    val globalVariables = evaluateVariables(sheet, sheet.globalVariables, AbstractXSLTContext(rootSource, xmlDom.createSingletonList(rootSource), xpathDom.liftNumber(1), Map(), Map()), recursionLimit)
+    xmlDom.createRoot(applyTemplates(sheet, xmlDom.createSingletonList(rootSource), None, globalVariables, Map(), Map(), recursionLimit), isFragment = false)
   }
 
   /** Applies matching templates to a list of given source nodes and produces a new list of nodes */
-  private def applyTemplates(sheet: XSLTStylesheet, sources: L, mode: Option[String], globalVariables: Map[String, V], localVariables: Map[String, V], params: Map[String, V]): L = {
+  private def applyTemplates(sheet: XSLTStylesheet, sources: L, mode: Option[String], globalVariables: Map[String, V], localVariables: Map[String, V], params: Map[String, V], recursionLimit: Option[Int]): L = {
     xmlDom.flatMapWithIndex(sources, (node, index) => {
       val templates = chooseTemplates(sheet, node, mode)
       xmlDom.joinAllLists(templates.map { case (tmpl, specificNode) =>
         val context = AbstractXSLTContext[N, L, V](specificNode, sources, xpathDom.add(index, xpathDom.liftNumber(1)), globalVariables, localVariables)
-        instantiateTemplate(sheet, tmpl, context, params)
+        instantiateTemplate(sheet, tmpl, context, params, recursionLimit)
       })
     })
   }
@@ -43,14 +43,16 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     *               a corresponding default parameter in the template, see XSLT spec section 11.6)
     * @return a list of resulting XML nodes
     */
-  private def instantiateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: AbstractXSLTContext[N, L, V], params: Map[String, V]): L = {
+  private def instantiateTemplate(sheet: XSLTStylesheet, tmpl: XSLTTemplate, context: AbstractXSLTContext[N, L, V], params: Map[String, V], recursionLimit: Option[Int]): L = {
+    if (recursionLimit == Some(0)) return xmlDom.topList
+
     val evaluatedParams = tmpl.defaultParams.foldLeft(Map[String, V]()) {
       case (current, (name, _)) if params.contains(name) => current + (name -> params(name))
-      case (current, (name, value)) => current + (name -> evaluateVariable(sheet, value, context.addLocalVariables(current)))
+      case (current, (name, value)) => current + (name -> evaluateVariable(sheet, value, context.addLocalVariables(current), recursionLimit))
     }
     // the context for the newly instantiated template contains only global variables and parameters,
     // no other local variables (static scoping and no nested template definitions)
-    processAll(sheet, tmpl.content, context.replaceLocalVariables(evaluatedParams))
+    processAll(sheet, tmpl.content, context.replaceLocalVariables(evaluatedParams), recursionLimit.map(_ - 1))
   }
 
   private def chooseTemplates(sheet: XSLTStylesheet, node: N, mode: Option[String]): Map[XSLTTemplate, N] = {
@@ -83,14 +85,14 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     * @param context the context to evaluate the first instruction in (subsequent instructions might have additional variable bindings)
     * @return a list of resulting XML nodes
     */
-  private def processAll(sheet: XSLTStylesheet, instructions: Seq[XSLTInstruction], context: AbstractXSLTContext[N, L, V]): L = {
+  private def processAll(sheet: XSLTStylesheet, instructions: Seq[XSLTInstruction], context: AbstractXSLTContext[N, L, V], recursionLimit: Option[Int]): L = {
     // remember variable names that were created in this scope so we can throw an error
     // if any of these is shadowed in the SAME scope
     var scopeVariables = MutableSet[String]()
 
     val (result, _) = instructions.foldLeft((xmlDom.createEmptyList(), context)) {
       case ((resultNodes, ctx), next) =>
-        process(sheet, next, ctx) match {
+        process(sheet, next, ctx, recursionLimit) match {
           case Left(moreResultNodes) => (xmlDom.concatLists(resultNodes, moreResultNodes), ctx)
           case Right((name, value)) =>
             if (scopeVariables.contains(name)) throw new ProcessingError(f"Variable $name is defined multiple times in the same scope")
@@ -109,10 +111,10 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     * @param context the context to evaluate the instruction in
     * @return either a list of resulting XML nodes or a new variable binding
     */
-  private def process(sheet: XSLTStylesheet, instruction: XSLTInstruction, context: AbstractXSLTContext[N, L, V]): Either[L, (String, V)] = {
+  private def process(sheet: XSLTStylesheet, instruction: XSLTInstruction, context: AbstractXSLTContext[N, L, V], recursionLimit: Option[Int]): Either[L, (String, V)] = {
     instruction match {
       case CreateElementInstruction(name, content) =>
-        val innerNodes = processAll(sheet, content, context)
+        val innerNodes = processAll(sheet, content, context, recursionLimit)
         val (attributes, children) = xmlDom.partitionAttributes(innerNodes)
         val evaluatedName = xpathDom.concatAllStrings(name.map {
           case Left(str) => xpathDom.liftString(str)
@@ -127,36 +129,36 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
           Left(xmlDom.createSingletonList(xmlDom.createTextNode(xpathDom.liftString(text))))
       case CreateCommentInstruction(value) =>
         // merge the content of all text-node children to create the attribute value
-        val textResult = xmlDom.getConcatenatedTextNodeValues(processAll(sheet, value, context))
+        val textResult = xmlDom.getConcatenatedTextNodeValues(processAll(sheet, value, context, recursionLimit))
         Left(xmlDom.createSingletonList(xmlDom.createComment(textResult)))
       case SetAttributeInstruction(name, value) =>
         // merge the content of all text-node children to create the attribute value
-        val textResult = xmlDom.getConcatenatedTextNodeValues(processAll(sheet, value, context))
+        val textResult = xmlDom.getConcatenatedTextNodeValues(processAll(sheet, value, context, recursionLimit))
         val evaluatedName = xpathDom.concatAllStrings(name.map {
           case Left(str) => xpathDom.liftString(str)
           case Right(expr) => xpathDom.toStringValue(xpathAnalyzer.evaluate(expr, xsltToXPathContext(context)))
         })
         Left(xmlDom.createSingletonList(xmlDom.createAttribute(evaluatedName, textResult)))
       case ApplyTemplatesInstruction(None, mode, params) =>
-        Left(applyTemplates(sheet, xmlDom.getChildren(context.node), mode, context.globalVariables, context.localVariables, params.mapValues(v => evaluateVariable(sheet, v, context))))
+        Left(applyTemplates(sheet, xmlDom.getChildren(context.node), mode, context.globalVariables, context.localVariables, params.mapValues(v => evaluateVariable(sheet, v, context, recursionLimit)), recursionLimit))
       case ApplyTemplatesInstruction(Some(expr), mode, params) =>
         val result = xpathAnalyzer.evaluate(expr, xsltToXPathContext(context))
         val (extracted, _) = xpathDom.matchNodeSetValues(result)
-        Left(applyTemplates(sheet, extracted, mode, context.globalVariables, context.localVariables, params.mapValues(v => evaluateVariable(sheet, v, context))))
+        Left(applyTemplates(sheet, extracted, mode, context.globalVariables, context.localVariables, params.mapValues(v => evaluateVariable(sheet, v, context, recursionLimit)), recursionLimit))
       case CallTemplateInstruction(name, params) =>
         // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)
-        Left(instantiateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => evaluateVariable(sheet, v, context))))
+        Left(instantiateTemplate(sheet, sheet.namedTemplates(name), context, params.mapValues(v => evaluateVariable(sheet, v, context, recursionLimit)), recursionLimit))
       case VariableDefinitionInstruction(name, value) =>
-        Right(name, evaluateVariable(sheet, value, context))
+        Right(name, evaluateVariable(sheet, value, context, recursionLimit))
       case CopyInstruction(content) =>
         val (root, notRoot) = xmlDom.isRoot(context.node)
         var result = xmlDom.bottomList
         if (!xmlDom.lessThanOrEqual(root, xmlDom.bottom)) { // root is not BOTTOM -> node might be a root node
-          result = xmlDom.joinLists(result, processAll(sheet, content, context))
+          result = xmlDom.joinLists(result, processAll(sheet, content, context, recursionLimit))
         }
         val (elem, notElem) = xmlDom.isElement(notRoot)
         if (!xmlDom.lessThanOrEqual(elem, xmlDom.bottom)) { // elem is not BOTTOM -> node might be an element node
-          val innerNodes = processAll(sheet, content, context)
+          val innerNodes = processAll(sheet, content, context, recursionLimit)
           val (resultAttributes, resultChildren) = xmlDom.partitionAttributes(innerNodes)
           val elemResult = xmlDom.createElement(xmlDom.getNodeName(elem), resultAttributes, resultChildren)
           result = xmlDom.joinLists(result, xmlDom.createSingletonList(elemResult))
@@ -182,13 +184,13 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case ChooseInstruction(branches, otherwise) =>
         val possibleBranches = chooseBranches(branches, otherwise, xsltToXPathContext(context))
         // evaluate all possible branches and join the result lists
-        Left(xmlDom.joinAllLists(possibleBranches.map(br => processAll(sheet, br, context))))
+        Left(xmlDom.joinAllLists(possibleBranches.map(br => processAll(sheet, br, context, recursionLimit))))
       case ForEachInstruction(select, content) =>
         val result = xpathAnalyzer.evaluate(select, xsltToXPathContext(context))
         val (extracted, _) = xpathDom.matchNodeSetValues(result)
         Left(xmlDom.flatMapWithIndex(extracted, (n, i) => {
           val newContext = AbstractXSLTContext(n, extracted, xpathDom.add(i, xpathDom.liftNumber(1)), context.globalVariables, context.localVariables)
-          processAll(sheet, content, newContext)
+          processAll(sheet, content, newContext, recursionLimit)
         }))
       case NumberInstruction() =>
         // NOTE: this is a dummy implementation
@@ -223,17 +225,17 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     AbstractXPathContext[N, L, V](ctx.node, ctx.position, xmlDom.getNodeListSize(ctx.nodeList), ctx.variables)
 
   /** Evaluates a list of variable definitions in the order they are defined. */
-  def evaluateVariables(sheet: XSLTStylesheet, variables: List[(String, Either[XPathExpr, Seq[XSLTInstruction]])], context: AbstractXSLTContext[N, L, V]): Map[String, V] = {
+  def evaluateVariables(sheet: XSLTStylesheet, variables: List[(String, Either[XPathExpr, Seq[XSLTInstruction]])], context: AbstractXSLTContext[N, L, V], recursionLimit: Option[Int]): Map[String, V] = {
     variables.foldLeft(Map[String, V]()) {
-      case (current, (name, value)) => current + (name -> evaluateVariable(sheet, value, context.addLocalVariables(current)))
+      case (current, (name, value)) => current + (name -> evaluateVariable(sheet, value, context.addLocalVariables(current), recursionLimit))
     }
   }
 
   /** Evaluates a single variable value. */
-  def evaluateVariable(sheet: XSLTStylesheet, variable: Either[XPathExpr, Seq[XSLTInstruction]], context: AbstractXSLTContext[N, L, V]): V = variable match {
+  def evaluateVariable(sheet: XSLTStylesheet, variable: Either[XPathExpr, Seq[XSLTInstruction]], context: AbstractXSLTContext[N, L, V], recursionLimit: Option[Int]): V = variable match {
     case Left(expr) =>
       xpathAnalyzer.evaluate(expr, xsltToXPathContext(context))
     case Right(instructions) =>
-      xpathDom.toNodeSet(xmlDom.createSingletonList(xmlDom.createRoot(processAll(sheet, instructions, context), isFragment = true)))
+      xpathDom.toNodeSet(xmlDom.createSingletonList(xmlDom.createRoot(processAll(sheet, instructions, context, recursionLimit), isFragment = true)))
   }
 }

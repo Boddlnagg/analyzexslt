@@ -17,7 +17,7 @@ import scala.xml.{XML, Elem}
 object TransformHelper {
   /** This is a helper function for transforming a concrete document
     * with our implementation of a concrete interpreter.
-    * The abstract interpreter is not involed.
+    * The abstract interpreter is not involved.
     */
   def transformScala(xslt: Elem, data: Elem): XMLRoot = {
     val stylesheet = XSLTParser.parseStylesheet(xslt)
@@ -98,9 +98,9 @@ object TransformHelper {
     * with the abstract interpreter, using a given domain.
     * The result is returned in the domain representation.
     */
-  def transformAbstract[N, L, V](xslt: Elem, data: N, domain: Domain[N, L, V], disableBuiltinTemplates: Boolean = false): N = {
+  def transformAbstract[N, L, V](xslt: Elem, data: N, domain: Domain[N, L, V], disableBuiltinTemplates: Boolean = false, recursionLimit: Option[Int] = None): N = {
     val stylesheet = XSLTParser.parseStylesheet(xslt, disableBuiltinTemplates)
     val analyzer = new XSLTAnalyzer(domain)
-    analyzer.transform(stylesheet, data)
+    analyzer.transform(stylesheet, data, recursionLimit)
   }
 }

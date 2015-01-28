@@ -1,6 +1,8 @@
 import java.io.File
 
-import xslt.{UnsupportedFeatureException, XSLTFeatureAnalyzer}
+import analysis.XSLTAnalyzer
+import analysis.domain.zipper.ZipperDomain
+import xslt.{XSLTParser, UnsupportedFeatureException, XSLTFeatureAnalyzer}
 
 import scala.collection.mutable.{Map => MutMap, MutableList => MutList, Set => MutSet}
 import scala.xml.XML
@@ -12,8 +14,12 @@ object Main {
     val keys: MutSet[String] = MutSet()
     val files: MutList[File] = MutList()
 
+    val analyzeFeatures: Boolean = true
+    val inputFileName = "stylesheet.xsl"
+
+    // TODO: use configurable glob file pattern ./xslt-collection/*/stylesheet.xsl
     for (dir <- new File("./xslt-collection").listFiles.toIterator if dir.isDirectory) {
-      val xslFiles = dir.listFiles.filter(f => f.getName.toLowerCase.endsWith(".xsl") || f.getName.toLowerCase.endsWith(".xslt"))
+      val xslFiles = dir.listFiles.filter(f => f.getName == inputFileName)
       val xslFile = xslFiles.length match {
         case 0 =>
           println(f"Skipping directory $dir (no XSL files found).")
@@ -25,33 +31,43 @@ object Main {
           None
       }
 
+
       xslFile match {
         case Some(file) =>
           val xml = XML.loadFile(file)
-          try {
-            val result = XSLTFeatureAnalyzer.collectFeatures(xml)
-            keys ++= result.keys
-            map += file -> result
-            files += file
-          } catch {
-            case e: UnsupportedFeatureException => println(f"Could not analyze features in $file: Unsupported feature: ${e.getMessage}")
+          if (analyzeFeatures) {
+            try {
+              val result = XSLTFeatureAnalyzer.collectFeatures(xml)
+              keys ++= result.keys
+              map += file -> result
+              files += file
+            } catch {
+              case e: UnsupportedFeatureException => println(f"Could not analyze features in $file: Unsupported feature: ${e.getMessage}")
+            }
+          } else {
+            val stylesheet = XSLTParser.parseStylesheet(xml, disableBuiltinTemplates = false)
+            val analyzer = new XSLTAnalyzer(ZipperDomain)
+            val (subtree, path) = analyzer.transform(stylesheet, ZipperDomain.xmlDom.top, Some(5))
+            println(subtree)
           }
         case _ => ()
       }
     }
 
-    // Output as list of features
-    for (file <- files) {
-      println(f"XSLT features used in $file")
-      for ((key, value) <- map(file)) {
-        println(f"- $key: $value")
+    if (analyzeFeatures) {
+      // Output as list of features
+      for (file <- files) {
+        println(f"XSLT features used in $file")
+        for ((key, value) <- map(file)) {
+          println(f"- $key: $value")
+        }
       }
-    }
 
-    // Output as CSV ('files' contains the columns of the output table; 'map(file)' contains the rows)
-    println(f"'',${files.map("'" + _.getParentFile.getName + "'").mkString(",")}") // print header
-    for (feature <- keys) {
-      println(f"'$feature',${files.map("'" + map(_).getOrElse(feature, "-") + "'").mkString(",")}")
+      // Output as CSV ('files' contains the columns of the output table; 'map(file)' contains the rows)
+      println(f"'',${files.map("'" + _.getParentFile.getName + "'").mkString(",")}") // print header
+      for (feature <- keys) {
+        println(f"'$feature',${files.map("'" + map(_).getOrElse(feature, "-") + "'").mkString(",")}")
+      }
     }
   }
 }
