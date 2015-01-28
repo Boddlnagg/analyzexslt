@@ -1,0 +1,58 @@
+Subtree(Set(Root),[],[
+	Subtree(Set(Element(svg)),[Set(Attribute(viewBox,-50 -40 100 80), Attribute(height,80mm), Attribute(width,100mm), Attribute(version,1.1))*],[
+		Subtree(Set(Element(metadata)),[],[
+			Subtree(Set(Element(rdf-RDF)),[],[
+				Subtree(Set(Element(cc-Work)),[Set(Attribute(rdf-about,))*],[
+					Subtree(Set(Element(dc-format)),[],[
+						Subtree(Set(Text(image/svg+xml)),[],[])
+					]),
+					Subtree(Set(Element(dc-type)),[Set(Attribute(rdf-resource,http://purl.org/dc/dcmitype/StillImage))*],[]),
+					Subtree(Set(Element(dc-title)),[],[])
+				])
+			])
+		]),
+		Subtree(Set(Element(defs)),[],[
+			Subtree(Set(Element(g)),[Set(Attribute(id,center-mark))*],[
+				Subtree(Set(Element(path)),[Set(Attribute(style,stroke:white;stroke-width:0.25), Attribute(d,m 0,-1 v 2 z))*],[]),
+				Subtree(Set(Element(path)),[Set(Attribute(style,stroke:white;stroke-width:0.25), Attribute(d,m -1,0 h 2 z))*],[])
+			]),
+			Subtree(Set(Element(g)),[Set(Attribute(id,corner-keepout-once))*],[
+				Subtree(Set(Element(path)),[Set(Attribute(id,corner-keepout-pad))*],[])
+			]),
+			Subtree(Set(Element(g)),[Set(Attribute(id,hole-once))*],[
+				Subtree(Set(Element(circle)),[Set(Attribute(style,fill:black;stroke:none), Attribute(r,1.6), Attribute(cy,0), Attribute(cx,0))*],[])
+			])
+		]),
+		Subtree(Set(Element(g)),[Set(Attribute(style,display:inline), Attribute(inkscape-groupmode,layer), Attribute(id,layer-board), Attribute(inkscape-label,Board))*],[
+			Subtree(Set(Element(path)),[Set(Attribute(id,board))*],[])
+		]),
+		Subtree(Set(Element(g)),[Set(Attribute(style,display:inline), Attribute(inkscape-groupmode,layer), Attribute(id,layer-keepout), Attribute(inkscape-label,Keepout))*],[
+			Subtree(Set(Element(path)),[Set(Attribute(id,edge-keepout))*],[]),
+			Subtree(Set(Element(use)),[Set(Attribute(y,0), Attribute(transform,translate(-46,36)), Attribute(id,lower-left-corner-keepout), Attribute(xlink-href,#corner-keepout-once), Attribute(x,0))*],[]),
+			Subtree(Set(Element(use)),[Set(Attribute(y,0), Attribute(id,lower-right-corner-keepout), Attribute(xlink-href,#corner-keepout-once), Attribute(x,0), Attribute(transform,matrix(-1,0,0,1,46,36)))*],[]),
+			Subtree(Set(Element(use)),[Set(Attribute(y,0), Attribute(id,upper-right-corner-keepout), Attribute(xlink-href,#corner-keepout-once), Attribute(transform,matrix(-1,0,0,-1,46,-36)), Attribute(x,0))*],[]),
+			Subtree(Set(Element(use)),[Set(Attribute(y,0), Attribute(xlink-href,#corner-keepout-once), Attribute(id,upper-left-corner-keepout), Attribute(transform,matrix(1,0,0,-1,-46,-36)), Attribute(x,0))*],[])
+		]),
+		Subtree(Set(Element(g)),[Set(Attribute(style,display:inline), Attribute(inkscape-groupmode,layer), Attribute(id,layer-drill), Attribute(inkscape-label,Drill))*],[
+			Subtree(Set(Element(use)),[Set(Attribute(y,0), Attribute(transform,translate(-46,36)), Attribute(id,lower-left-hole), Attribute(xlink-href,#hole-once), Attribute(x,0))*],[]),
+			Subtree(Set(Element(use)),[Set(Attribute(y,0), Attribute(id,lower-right-hole), Attribute(xlink-href,#hole-once), Attribute(x,0), Attribute(transform,matrix(-1,0,0,1,46,36)))*],[]),
+			Subtree(Set(Element(use)),[Set(Attribute(y,0), Attribute(transform,matrix(-1,0,0,-1,46,-36)), Attribute(xlink-href,#hole-once), Attribute(id,upper-right-hole), Attribute(x,0))*],[]),
+			Subtree(Set(Element(use)),[Set(Attribute(y,0), Attribute(id,upper-left-hole), Attribute(xlink-href,#hole-once), Attribute(transform,matrix(1,0,0,-1,-46,-36)), Attribute(x,0))*],[])
+		]),
+		Subtree(Set(Element(g)),[Set(Attribute(style,display:inline), Attribute(id,layer-centers), Attribute(inkscape-groupmode,layer), Attribute(inkscape-label,Centers))*],[
+			Subtree(Set(Element(use)),[Set(Attribute(xlink-href,#center-mark), Attribute(y,0), Attribute(x,0), Attribute(id,center-center-mark))*],[]),
+			Subtree(Set(Element(use)),[Set(Attribute(y,0), Attribute(transform,translate(-44.75,0)), Attribute(xlink-href,#center-mark), Attribute(id,left-usb-center-mark), Attribute(x,0))*],[]),
+			Subtree(Set(Element(use)),[Set(Attribute(y,0), Attribute(transform,translate(44.75,0)), Attribute(id,right-usb-center-mark), Attribute(xlink-href,#center-mark), Attribute(x,0))*],[])
+		]),
+		Subtree(Set(Element(g)),[Set(Attribute(style,display:inline), Attribute(id,layer-description), Attribute(inkscape-groupmode,layer), Attribute(inkscape-label,Description))*],[
+			Subtree(Set(Element(g)),[Set(Attribute(transform,translate(0,-6)), Attribute(id,descriptive-text))*],[
+				Subtree(Set(Element(text)),[Set(Attribute(style,font-size:4;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;fill:white;fill-opacity:1;font-family:monospace), Attribute(y,-2), Attribute(xml:space,preserve))*],[
+					Subtree(Set(Element(tspan)),[],[])
+				]),
+				Subtree(Set(Element(text)),[Set(Attribute(style,font-size:4;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;fill:white;fill-opacity:1;font-family:monospace), Attribute(y,2), Attribute(xml:space,preserve))*],[
+					Subtree(Set(Element(tspan)),[],[])
+				])
+			])
+		])
+	])
+])

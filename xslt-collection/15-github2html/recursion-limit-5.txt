@@ -1,0 +1,5 @@
+Subtree(Set(Root),[],[
+	Subtree(Set(Element(html)),[Set(AnyAttribute)*],[
+		Subtree(Set(AnyText, Root, AnyElement, AnyComment),[Set(AnyAttribute)*],[TOP])*
+	])
+])

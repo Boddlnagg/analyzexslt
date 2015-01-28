@@ -1,0 +1,168 @@
+Subtree(Set(Root),[],[
+	Subtree(Set(Element(w--wordDocument)),[Set(Attribute(w--ocxPresent,no), Attribute(xmlns--w10,urn:schemas-microsoft-com:office:word), Attribute(xmlns--w,http://schemas.microsoft.com/office/word/2003/wordml), Attribute(xmlns--sl,http://schemas.microsoft.com/schemaLibrary/2003/core), Attribute(xmlns--aml,http://schemas.microsoft.com/aml/2001/core), Attribute(xml--space,preserve), Attribute(xmlns--o,urn:schemas-microsoft-com:office:office), Attribute(xmlns--dt,uuid:C2F41010-65B3-11d1-A29F-00AA00C14882), Attribute(w--embeddedObjPresent,no), Attribute(w--macrosPresent,no), Attribute(xmlns--wx,http://schemas.microsoft.com/office/word/2003/auxHint), Attribute(xmlns--v,urn:schemas-microsoft-com:vml))*],[
+		Subtree(Set(Element(w--fonts)),[],[
+			Subtree(Set(Element(w--defaultFonts)),[Set(Attribute(w--cs,Times New Roman), Attribute(w--h-ansi,Times New Roman), Attribute(w--fareast,Times New Roman), Attribute(w--ascii,Times New Roman))*],[])
+		]),
+		Subtree(Set(Element(w--styles)),[],[
+			Subtree(Set(Element(w--versionOfBuiltInStylenames)),[Set(Attribute(w--val,4))*],[]),
+			Subtree(Set(Element(w--latentStyles)),[Set(Attribute(w--latentStyleCount,156), Attribute(w--defLockedState,off))*],[]),
+			Subtree(Set(Element(w--style)),[Set(Attribute(w--styleId,Normal), Attribute(w--default,on), Attribute(w--type,paragraph))*],[
+				Subtree(Set(Element(w--name)),[Set(Attribute(w--val,Normal))*],[]),
+				Subtree(Set(Element(w--rPr)),[],[
+					Subtree(Set(Element(wx--font)),[Set(Attribute(wx--val,Times New Roman))*],[]),
+					Subtree(Set(Element(w--sz)),[Set(Attribute(w--val,24))*],[]),
+					Subtree(Set(Element(w--sz-cs)),[Set(Attribute(w--val,24))*],[]),
+					Subtree(Set(Element(w--lang)),[Set(Attribute(w--bidi,AR-SA), Attribute(w--fareast,EN-US), Attribute(w--val,EN-US))*],[])
+				])
+			]),
+			Subtree(Set(Element(w--style)),[Set(Attribute(w--styleId,TitlePage), Attribute(w--default,off), Attribute(w--type,paragraph))*],[
+				Subtree(Set(Element(w--name)),[Set(Attribute(w--val,Title Page))*],[]),
+				Subtree(Set(Element(w--pPr)),[],[
+					Subtree(Set(Element(w--spacing)),[Set(Attribute(w--line-rule,auto), Attribute(w--line,480))*],[]),
+					Subtree(Set(Element(w--keepNext)),[],[])
+				]),
+				Subtree(Set(Element(w--rPr)),[],[
+					Subtree(Set(Element(w--rFonts)),[Set(Attribute(w--ascii,Arial))*],[]),
+					Subtree(Set(Element(w--b)),[],[]),
+					Subtree(Set(Element(w--sz)),[Set(Attribute(w--val,28))*],[]),
+					Subtree(Set(Element(w--sz-cs)),[Set(Attribute(w--val,28))*],[]),
+					Subtree(Set(Element(w--lang)),[Set(Attribute(w--bidi,AR-SA), Attribute(w--fareast,EN-US), Attribute(w--val,EN-US))*],[])
+				])
+			]),
+			Subtree(Set(Element(w--style)),[Set(Attribute(w--styleId,BigHead), Attribute(w--default,off), Attribute(w--type,paragraph))*],[
+				Subtree(Set(Element(w--name)),[Set(Attribute(w--val,Large Heading))*],[]),
+				Subtree(Set(Element(w--pPr)),[],[
+					Subtree(Set(Element(w--spacing)),[Set(Attribute(w--line-rule,auto), Attribute(w--line,480))*],[]),
+					Subtree(Set(Element(w--keepNext)),[],[])
+				]),
+				Subtree(Set(Element(w--rPr)),[],[
+					Subtree(Set(Element(w--rFonts)),[Set(Attribute(w--ascii,Arial))*],[]),
+					Subtree(Set(Element(w--b)),[],[]),
+					Subtree(Set(Element(w--sz)),[Set(Attribute(w--val,28))*],[]),
+					Subtree(Set(Element(w--sz-cs)),[Set(Attribute(w--val,28))*],[]),
+					Subtree(Set(Element(w--lang)),[Set(Attribute(w--bidi,AR-SA), Attribute(w--fareast,EN-US), Attribute(w--val,EN-US))*],[])
+				])
+			]),
+			Subtree(Set(Element(w--style)),[Set(Attribute(w--styleId,MediumHead), Attribute(w--default,off), Attribute(w--type,paragraph))*],[
+				Subtree(Set(Element(w--name)),[Set(Attribute(w--val,Medium Heading))*],[]),
+				Subtree(Set(Element(w--pPr)),[],[
+					Subtree(Set(Element(w--ind)),[Set(Attribute(w--left,720))*],[]),
+					Subtree(Set(Element(w--spacing)),[Set(Attribute(w--line-rule,auto), Attribute(w--line,360))*],[]),
+					Subtree(Set(Element(w--keepNext)),[],[])
+				]),
+				Subtree(Set(Element(w--rPr)),[],[
+					Subtree(Set(Element(w--rFonts)),[Set(Attribute(w--ascii,Arial))*],[]),
+					Subtree(Set(Element(w--b)),[],[]),
+					Subtree(Set(Element(w--sz)),[Set(Attribute(w--val,24))*],[]),
+					Subtree(Set(Element(w--sz-cs)),[Set(Attribute(w--val,24))*],[]),
+					Subtree(Set(Element(w--lang)),[Set(Attribute(w--bidi,AR-SA), Attribute(w--fareast,EN-US), Attribute(w--val,EN-US))*],[])
+				])
+			]),
+			Subtree(Set(Element(w--style)),[Set(Attribute(w--styleId,BasePara), Attribute(w--default,off), Attribute(w--type,paragraph))*],[
+				Subtree(Set(Element(w--name)),[Set(Attribute(w--val,Base Paragraph))*],[]),
+				Subtree(Set(Element(w--pPr)),[],[
+					Subtree(Set(Element(w--keepNext)),[],[]),
+					Subtree(Set(Element(wx--font)),[Set(Attribute(wx--val,Times New Roman))*],[]),
+					Subtree(Set(Element(w--ind)),[Set(Attribute(w--left,720))*],[])
+				]),
+				Subtree(Set(Element(w--rPr)),[],[
+					Subtree(Set(Element(w--sz)),[Set(Attribute(w--val,24))*],[]),
+					Subtree(Set(Element(w--sz-cs)),[Set(Attribute(w--val,24))*],[]),
+					Subtree(Set(Element(w--lang)),[Set(Attribute(w--bidi,AR-SA), Attribute(w--fareast,EN-US), Attribute(w--val,EN-US))*],[])
+				])
+			]),
+			Subtree(Set(Element(w--style)),[Set(Attribute(w--styleId,IndentPara), Attribute(w--default,off), Attribute(w--type,paragraph))*],[
+				Subtree(Set(Element(w--name)),[Set(Attribute(w--val,Indented Paragraph))*],[]),
+				Subtree(Set(Element(w--pPr)),[],[
+					Subtree(Set(Element(w--keepNext)),[],[]),
+					Subtree(Set(Element(w--ind)),[Set(Attribute(w--left,1440))*],[])
+				]),
+				Subtree(Set(Element(w--rPr)),[],[
+					Subtree(Set(Element(w--rFonts)),[Set(Attribute(ascii,Times New Roman))*],[]),
+					Subtree(Set(Element(w--sz)),[Set(Attribute(w--val,24))*],[]),
+					Subtree(Set(Element(w--sz-cs)),[Set(Attribute(w--val,24))*],[]),
+					Subtree(Set(Element(w--lang)),[Set(Attribute(w--bidi,AR-SA), Attribute(w--fareast,EN-US), Attribute(w--val,EN-US))*],[])
+				])
+			]),
+			Subtree(Set(Element(w--style)),[Set(Attribute(w--styleId,c01Did), Attribute(w--default,off), Attribute(w--type,paragraph))*],[
+				Subtree(Set(Element(w--name)),[Set(Attribute(w--val,c01 Did))*],[]),
+				Subtree(Set(Element(w--pPr)),[],[
+					Subtree(Set(Element(w--keepNext)),[],[]),
+					Subtree(Set(Element(wx--font)),[Set(Attribute(wx--val,Times New Roman))*],[]),
+					Subtree(Set(Element(w--ind)),[Set(Attribute(w--left,720))*],[])
+				]),
+				Subtree(Set(Element(w--rPr)),[],[
+					Subtree(Set(Element(w--sz)),[Set(Attribute(w--val,24))*],[]),
+					Subtree(Set(Element(w--sz-cs)),[Set(Attribute(w--val,24))*],[]),
+					Subtree(Set(Element(w--lang)),[Set(Attribute(w--bidi,AR-SA), Attribute(w--fareast,EN-US), Attribute(w--val,EN-US))*],[])
+				])
+			]),
+			Subtree(Set(Element(w--style)),[Set(Attribute(w--styleId,DefaultParagraphFont), Attribute(w--default,on), Attribute(w--type,character))*],[
+				Subtree(Set(Element(w--name)),[Set(Attribute(w--val,Default Paragraph Font))*],[]),
+				Subtree(Set(Element(w--semiHidden)),[],[])
+			]),
+			Subtree(Set(Element(w--style)),[Set(Attribute(w--styleId,Bold), Attribute(w--default,off), Attribute(w--type,character))*],[
+				Subtree(Set(Element(w--basedOn)),[Set(Attribute(w--val,DefaultParagraphFont))*],[]),
+				Subtree(Set(Element(w--name)),[Set(Attribute(w--val,Bold))*],[]),
+				Subtree(Set(Element(w--semiHidden)),[],[]),
+				Subtree(Set(Element(w--rPr)),[],[
+					Subtree(Set(Element(w--b)),[],[])
+				])
+			]),
+			Subtree(Set(Element(w--style)),[Set(Attribute(w--styleId,Italic), Attribute(w--default,off), Attribute(w--type,character))*],[
+				Subtree(Set(Element(w--basedOn)),[Set(Attribute(w--val,Default Paragraph Font))*],[]),
+				Subtree(Set(Element(w--name)),[Set(Attribute(w--val,Italic))*],[]),
+				Subtree(Set(Element(w--semiHidden)),[],[]),
+				Subtree(Set(Element(w--rPr)),[],[
+					Subtree(Set(Element(w--i)),[],[])
+				])
+			]),
+			Subtree(Set(Element(w--style)),[Set(Attribute(w--styleId,Underscore), Attribute(w--default,off), Attribute(w--type,character))*],[
+				Subtree(Set(Element(w--basedOn)),[Set(Attribute(w--val,Default Paragraph Font))*],[]),
+				Subtree(Set(Element(w--name)),[Set(Attribute(w--val,Underscore))*],[]),
+				Subtree(Set(Element(w--semiHidden)),[],[]),
+				Subtree(Set(Element(w--rPr)),[],[
+					Subtree(Set(Element(w--u)),[Set(Attribute(w--val,single))*],[])
+				])
+			]),
+			Subtree(Set(Element(w--style)),[Set(Attribute(w--styleId,TableNormal), Attribute(w--default,on), Attribute(w--type,table))*],[
+				Subtree(Set(Element(w--name)),[Set(Attribute(w--val,Normal Table))*],[]),
+				Subtree(Set(Element(wx--uiName)),[Set(Attribute(wx--val,Table Normal))*],[]),
+				Subtree(Set(Element(w--semiHidden)),[],[]),
+				Subtree(Set(Element(w--rPr)),[],[
+					Subtree(Set(Element(wx--font)),[Set(Attribute(wx--val,Times New Roman))*],[])
+				]),
+				Subtree(Set(Element(w--tblPr)),[],[
+					Subtree(Set(Element(w--tblInd)),[Set(Attribute(w--type,dxa), Attribute(w--w,0))*],[]),
+					Subtree(Set(Element(w--tblCellMar)),[],[
+						Subtree(Set(Element(w--top)),[Set(Attribute(w--type,dxa), Attribute(w--w,0))*],[]),
+						Subtree(Set(Element(w--left)),[Set(Attribute(w--type,dxa), Attribute(w--w,108))*],[]),
+						Subtree(Set(Element(w--bottom)),[Set(Attribute(w--type,dxa), Attribute(w--w,0))*],[]),
+						Subtree(Set(Element(w--right)),[Set(Attribute(w--type,dxa), Attribute(w--w,108))*],[])
+					])
+				])
+			]),
+			Subtree(Set(Element(w--style)),[Set(Attribute(w--styleId,NoList), Attribute(w--default,on), Attribute(w--type,list))*],[
+				Subtree(Set(Element(w--name)),[Set(Attribute(w--val,No List))*],[]),
+				Subtree(Set(Element(w--semiHidden)),[],[])
+			])
+		]),
+		Subtree(Set(Element(w--docPr)),[],[
+			Subtree(Set(Element(w--view)),[Set(Attribute(w--val,web))*],[]),
+			Subtree(Set(Element(w--zoom)),[Set(Attribute(w--percent,100))*],[]),
+			Subtree(Set(Element(w--proofState)),[Set(Attribute(w--grammar,clean))*],[]),
+			Subtree(Set(Element(w--attachedTemplate)),[Set(Attribute(w--val,))*],[]),
+			Subtree(Set(Element(w--defaultTabStop)),[Set(Attribute(w--val,720))*],[]),
+			Subtree(Set(Element(w--characterSpacingControl)),[Set(Attribute(w--val,DontCompress))*],[]),
+			Subtree(Set(Element(w--validateAgainstSchema)),[],[]),
+			Subtree(Set(Element(w--saveInvalidXML)),[Set(Attribute(w--val,off))*],[]),
+			Subtree(Set(Element(w--ignoreMixedContent)),[Set(Attribute(w--val,off))*],[]),
+			Subtree(Set(Element(w--alwaysShowPlaceholderText)),[Set(Attribute(w--val,off))*],[]),
+			Subtree(Set(Element(w--alwaysMergeEmptyNamespace)),[],[]),
+			Subtree(Set(Element(w--compat)),[],[])
+		]),
+		Subtree(Set(Element(w--body)),[Set(AnyAttribute)*],[
+			Subtree(Set(AnyText, Root, AnyElement, AnyComment),[Set(AnyAttribute)*],[TOP])*
+		])
+	])
+])

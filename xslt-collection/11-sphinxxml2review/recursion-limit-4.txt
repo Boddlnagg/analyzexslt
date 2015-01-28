@@ -1,0 +1,5 @@
+Subtree(Set(Root),[],[
+	Subtree(Set(Element(plain-text-result)),[Set(AnyAttribute)*],[
+		Subtree(Set(AnyText, Root, AnyElement, AnyComment),[Set(AnyAttribute)*],[TOP])*
+	])
+])

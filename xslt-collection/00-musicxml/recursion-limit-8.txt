@@ -1,0 +1,3 @@
+Subtree(Set(Root),[],[
+	Subtree(Set(Element(score-timewise)),[Set(AnyAttribute)*],[TOP])
+])
