@@ -13,8 +13,8 @@ class ZipperTransformSuite extends FunSuite {
   val xpathDom = ZipperDomain.xpathDom
   val parser = new XMLParser(ZipperDomain)
 
-  def transform(xslt: Elem, source: ZipperXMLDomain.N = xmlDom.top, disableBuiltinTemplates: Boolean = true) =
-    TransformHelper.transformAbstract(xslt: Elem, source, ZipperDomain, disableBuiltinTemplates)
+  def transform(xslt: Elem, source: ZipperXMLDomain.N = xmlDom.top, disableBuiltinTemplates: Boolean = true, limitRecursion: Option[Int] = None) =
+    TransformHelper.transformAbstract(xslt: Elem, source, ZipperDomain, disableBuiltinTemplates, limitRecursion)
 
   test("Simple literal result element") {
     val xslt =
@@ -391,5 +391,46 @@ class ZipperTransformSuite extends FunSuite {
         ))
       ))
     ) { transform(xslt)._1 }
+  }
+
+  test("Thesis example") {
+    val xslt =
+      <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+        <xsl:template match="/">
+          <html>
+            <body>
+              <h2>Available CDs</h2>
+              <ul>
+                <xsl:apply-templates select="catalog/cd"/>
+              </ul>
+            </body>
+          </html>
+        </xsl:template>
+        <xsl:template match="cd">
+          <li>
+            <b><xsl:value-of select="text()"/></b> by <xsl:value-of select="@artist"/>
+          </li>
+        </xsl:template>
+      </xsl:stylesheet>
+
+    assertResult(
+      Subtree(Set(Root),ZNil(),ZList(
+        Subtree(Set(Element("html")),ZNil(),ZList(
+          Subtree(Set(Element("body")),ZNil(),ZList(
+            Subtree(Set(Element("h2")),ZNil(),ZList(
+              Subtree(Set(Text("Available CDs")),ZNil(),ZNil())
+            )),
+            Subtree(Set(Element("ul")),ZNil(),ZUnknownLength(
+              Subtree(Set(Element("li")),ZNil(),ZList(
+                Subtree(Set(Element("b")),ZNil(),ZMaybeNil(
+                  Subtree(Set(AnyText),ZNil(),ZNil()),
+                ZNil())),
+                Subtree(Set(AnyText),ZNil(),ZNil())
+              ))
+            ))
+          ))
+        ))
+      ))
+    ) { transform(xslt, disableBuiltinTemplates = false)._1 }
   }
 }
