@@ -15,7 +15,7 @@ object XSLTProcessor {
 
     // process according to XSLT spec section 5.1
     applyTemplates(sheet, List(source), None, globalVariables, Map(), Map()) match {
-      case List(inner: XMLElement) => XMLRoot(List(inner))
+      case List(elem: XMLElement) => XMLRoot(List(elem))
       case x => throw new ProcessingError("Transformation result must be a single XMLElement")
     }
   }
