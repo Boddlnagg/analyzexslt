@@ -7,7 +7,7 @@ import scala.collection.immutable.TreeSet
 /** Base class for XPath values.
   *
   * An XPath value can either be a node-set, a boolean, a number or a string (see XPath spec section 1).
-  * NOTE: Result tree fragments are an additional data type in the XSLT specification, but they are not implemented here.
+  * Result tree fragments are an additional data type in the XSLT specification, but they are treated as node-sets here.
   *
   * This class also provides methods to convert between the four value types, where
   * conversions to node-sets are generally not allowed (see XPath spec section 3.3)

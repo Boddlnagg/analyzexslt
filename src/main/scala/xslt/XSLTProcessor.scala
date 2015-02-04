@@ -152,7 +152,6 @@ object XSLTProcessor {
         }
       case CopyOfInstruction(select) =>
         XPathEvaluator.evaluate(select, context.toXPathContext) match {
-          // NOTE: result tree fragments are generally not supported
           case NodeSetValue(nodes) => Left(nodes.toList.flatMap {
             case XMLRoot(children) => children.map(_.copy) // "a root node is copied by copying its children" according to spec
             case n => List(n.copy)
