@@ -111,17 +111,16 @@ class AbstractPathMatchingSuite extends FunSuite {
     assertResult(Set("*/*/*/@*", "/*/*/@*")) { matches(pattern, TOP).map(_.toString) }
   }
 
-  // TODO: disabled because of non-termination
+  // NOTE: this test is ignored, because it won't terminate with the current implementation
   ignore("a//b") {
     val pattern = XPathParser.parse("a//b").asInstanceOf[LocationPath]
     assertResult(Set("a//b")) { matches(pattern, TOP).map(_.toString) }
   }
 
-  // TODO: disabled because of non-termination
-  ignore("a//b starting from /a/b//b") {
-    val start = parse("/a/b//b")
-    val pattern = XPathParser.parse("a//b").asInstanceOf[LocationPath]
-    assertResult(Set("a//b")) { matches(pattern, start).map(_.toString) }
+  // NOTE: in contrast to the test above, this will terminate as '//a/b' is equivalent to the relative path 'a/b'
+  test("//a/b") {
+    val pattern = XPathParser.parse("//a/b").asInstanceOf[LocationPath]
+    assertResult(Set("a/b")) { matches(pattern, TOP).map(_.toString) }
   }
 
   test("/a/*/b starting from //c/b") {

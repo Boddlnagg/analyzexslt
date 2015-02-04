@@ -3,7 +3,7 @@ package analysis
 import analysis.domain.XMLDomain
 import xpath._
 
-import scala.collection.mutable.MutableList
+import scala.collection.mutable.{MutableList => MutList}
 
 class AbstractPatternMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
 
@@ -15,89 +15,93 @@ class AbstractPatternMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
     * Second result: nodes for which the path WILL definitely NOT match. When this is BOTTOM it
     *                means that the path will always match the given input.
     */
-  def matches(node: N, path: LocationPath): (N, N) = {
-    // match recursively from right to left
-    if (path.steps.isEmpty) {
-      // an empty path is always a match, but when it is an absolute path, the current node must be the root node
-      if (path.isAbsolute) xmlDom.isRoot(node) else (node, xmlDom.bottom)
-    } else {
-      val lastStep = path.steps.last
-      val restPath = LocationPath(path.steps.dropRight(1), path.isAbsolute)
-      if (lastStep.predicates.nonEmpty) throw new NotImplementedError("predicates in paths are not implemented")
-      val (lastStepMatches, notLastStepMatches) = lastStep match {
-        // child::node()
-        case XPathStep(ChildAxis, AllNodeTest, Nil) =>
-          val matches = xmlDom.joinAll(List(xmlDom.isElement(node)._1, xmlDom.isTextNode(node)._1, xmlDom.isComment(node)._1))
-          val notMatches = xmlDom.join(xmlDom.isRoot(node)._1, xmlDom.isAttribute(node)._1) // TODO: is this always correct?
-          (matches, notMatches)
-        // child::comment()
-        case XPathStep(ChildAxis, CommentNodeTest, Nil) => xmlDom.isComment(node)
-        // child::text()
-        case XPathStep(ChildAxis, TextNodeTest, Nil) => xmlDom.isTextNode(node)
-        // child::*
-        case XPathStep(ChildAxis, NameTest(None, "*"), Nil) => xmlDom.isElement(node)
-        // child::name
-        case XPathStep(ChildAxis, NameTest(None, name), Nil) =>
-          val (element, notElement) = xmlDom.isElement(node)
-          val (hasName, notHasName) = xmlDom.hasName(element, name)
-          (hasName, xmlDom.join(notElement, notHasName))
-        // attribute::* OR attribute::node()
-        case XPathStep(AttributeAxis, NameTest(None, "*") | AllNodeTest, Nil) => xmlDom.isAttribute(node)
-        // attribute::name
-        case XPathStep(AttributeAxis, NameTest(None, name), Nil) =>
-          val (attr, notAttr) = xmlDom.isAttribute(node)
-          val (hasName, notHasName) = xmlDom.hasName(attr, name)
-          (hasName, xmlDom.join(notAttr, notHasName))
-        // attribute::comment() OR attribute::text() [these can never match anything]
-        case XPathStep(AttributeAxis, CommentNodeTest | TextNodeTest, _) => (xmlDom.bottom, node)
-        // any step using a name test with a prefixed name
-        case XPathStep(_, NameTest(Some(_), _), Nil) => throw new NotImplementedError("Prefixed names are not implemented")
-      }
+  def matches(node: N, path: LocationPath): (N, N) = matches(node, path.steps.reverse, path.isAbsolute)
 
-      if (xmlDom.lessThanOrEqual(lastStepMatches, xmlDom.bottom)) {
-        (xmlDom.bottom, notLastStepMatches)
-      } else {
-        // this node could match, but what about the rest of the path?
-        if (restPath.steps.nonEmpty && restPath.steps.last == XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil)) {
-          // the next step is '//' and must be handled separately (does any ancestor match the rest of the path?)
-          val nextRestPath = LocationPath(restPath.steps.dropRight(1), path.isAbsolute)
-          var current = lastStepMatches
-          var ancestorMatches = xmlDom.bottom
-          var notAncestorMatches = node
-          var (root, notRoot) = xmlDom.isRoot(current)
-          val nodeStack = MutableList(notRoot)
-          while (!xmlDom.lessThanOrEqual(notRoot, xmlDom.bottom)) {
-            // TODO: this may not terminate (search for fixed point)
-            val parent = xmlDom.getParent(notRoot)
-            val (parentMatchesRest, _) = matches(parent, nextRestPath)
-            var parentMatches = parentMatchesRest
+  def matches(node: N, reversedPathSteps: List[XPathStep], pathIsAbsolute: Boolean): (N, N) = {
+    // match recursively from right to left (path steps are reversed!)
+    reversedPathSteps match {
+      case Nil =>
+        // an empty path is always a match, but when it is an absolute path, the current node must be the root node
+        if (pathIsAbsolute) xmlDom.isRoot(node) else (node, xmlDom.bottom)
+      case lastStep :: restPath =>
+        if (lastStep.predicates.nonEmpty) throw new NotImplementedError("predicates in paths are not implemented")
+        val (lastStepMatches, notLastStepMatches) = lastStep match {
+          // child::node()
+          case XPathStep(ChildAxis, AllNodeTest, Nil) =>
+            // NOTE: we assume here that there are no more node types that element, text, comment, root and attribute
+            val matches = xmlDom.joinAll(List(xmlDom.isElement(node)._1, xmlDom.isTextNode(node)._1, xmlDom.isComment(node)._1))
+            val notMatches = xmlDom.join(xmlDom.isRoot(node)._1, xmlDom.isAttribute(node)._1)
+            (matches, notMatches)
+          // child::comment()
+          case XPathStep(ChildAxis, CommentNodeTest, Nil) => xmlDom.isComment(node)
+          // child::text()
+          case XPathStep(ChildAxis, TextNodeTest, Nil) => xmlDom.isTextNode(node)
+          // child::*
+          case XPathStep(ChildAxis, NameTest(None, "*"), Nil) => xmlDom.isElement(node)
+          // child::name
+          case XPathStep(ChildAxis, NameTest(None, name), Nil) =>
+            val (element, notElement) = xmlDom.isElement(node)
+            val (hasName, notHasName) = xmlDom.hasName(element, name)
+            (hasName, xmlDom.join(notElement, notHasName))
+          // attribute::* OR attribute::node()
+          case XPathStep(AttributeAxis, NameTest(None, "*") | AllNodeTest, Nil) => xmlDom.isAttribute(node)
+          // attribute::name
+          case XPathStep(AttributeAxis, NameTest(None, name), Nil) =>
+            val (attr, notAttr) = xmlDom.isAttribute(node)
+            val (hasName, notHasName) = xmlDom.hasName(attr, name)
+            (hasName, xmlDom.join(notAttr, notHasName))
+          // attribute::comment() OR attribute::text() [these can never match anything]
+          case XPathStep(AttributeAxis, CommentNodeTest | TextNodeTest, _) => (xmlDom.bottom, node)
+          // any step using a name test with a prefixed name
+          case XPathStep(_, NameTest(Some(_), _), Nil) => throw new NotImplementedError("Prefixed names are not implemented")
+        }
 
-            for (d <- (nodeStack.size - 1) to 1 by -1) {
-              // go down in the tree, back to the original level
-              val (newParentMatches, _) = hasParent(nodeStack(d), parentMatches)
-              parentMatches = newParentMatches
+        if (!xmlDom.lessThanOrEqual(lastStepMatches, xmlDom.bottom)) restPath match {
+          case restHead :: Nil if XPathStep.isDescendantSelector(restHead) =>
+            // special case for the trivial '//' step as leftmost step in the path, which always matches
+            // because every node is a descendant of the root node
+            require(pathIsAbsolute)
+            (lastStepMatches, notLastStepMatches)
+          case restHead :: restTail if XPathStep.isDescendantSelector(restHead) =>
+            // the next step is '//' and must be handled separately (does any ancestor match the rest of the path?)
+            var current = lastStepMatches
+            var ancestorMatches = xmlDom.bottom
+            var notAncestorMatches = node
+            var (root, notRoot) = xmlDom.isRoot(current)
+            val nodeStack = MutList(notRoot)
+            while (!xmlDom.lessThanOrEqual(notRoot, xmlDom.bottom)) {
+              // NOTE: This loop will not terminate when one can always move to the next parent, then
+              //       the parent of the parent, ... infinitely.
+              //       A better approach would search for a fixed point somewhere, but non-trivial '//'-steps
+              //       were never used in our tested real-life XSLT stylesheets
+              val parent = xmlDom.getParent(notRoot)
+              val (parentMatchesRest, _) = matches(parent, restTail, pathIsAbsolute)
+              var parentMatches = parentMatchesRest
+
+              for (d <- (nodeStack.size - 1) to 1 by -1) {
+                // go down in the tree, back to the original level
+                val (newParentMatches, _) = hasParent(nodeStack(d), parentMatches)
+                parentMatches = newParentMatches
+              }
+
+              val (newParentMatches, newNotParentMatches) = hasParent(nodeStack(0), parentMatches)
+              ancestorMatches = xmlDom.join(ancestorMatches, newParentMatches)
+              notAncestorMatches = xmlDom.meet(notAncestorMatches, newNotParentMatches)
+
+              current = parent
+              val (newRoot, newNotRoot) = xmlDom.isRoot(current)
+              root = newRoot
+              notRoot = newNotRoot
+              nodeStack += notRoot
             }
-
-            val (newParentMatches, newNotParentMatches) = hasParent(nodeStack(0), parentMatches)
-            ancestorMatches = xmlDom.join(ancestorMatches, newParentMatches)
-            notAncestorMatches = xmlDom.meet(notAncestorMatches, newNotParentMatches)
-
-            current = parent
-            val (newRoot, newNotRoot) = xmlDom.isRoot(current)
-            root = newRoot
-            notRoot = newNotRoot
-            nodeStack += notRoot
-          }
-          (ancestorMatches, xmlDom.join(notAncestorMatches, notLastStepMatches))
-        }
-        else {
-          // does the parent match the rest of the path?
-          val parent = xmlDom.getParent(lastStepMatches)
-          val (parentMatchesRest, _) = matches(parent, restPath)
-          val (parentMatches, notParentMatches) = hasParent(lastStepMatches, parentMatchesRest)
-          (parentMatches, xmlDom.join(notParentMatches, notLastStepMatches))
-        }
-      }
+            (ancestorMatches, xmlDom.join(notAncestorMatches, notLastStepMatches))
+          case _ =>
+            // does the parent match the rest of the path?
+            val parent = xmlDom.getParent(lastStepMatches)
+            val (parentMatchesRest, _) = matches(parent, restPath, pathIsAbsolute)
+            val (parentMatches, notParentMatches) = hasParent(lastStepMatches, parentMatchesRest)
+            (parentMatches, xmlDom.join(notParentMatches, notLastStepMatches))
+        } else (xmlDom.bottom, notLastStepMatches)
     }
   }
 
