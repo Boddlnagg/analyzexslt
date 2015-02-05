@@ -57,12 +57,12 @@ class AbstractPatternMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
         }
 
         if (!xmlDom.lessThanOrEqual(lastStepMatches, xmlDom.bottom)) restPath match {
-          case restHead :: Nil if XPathStep.isDescendantSelector(restHead) =>
+          case XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil) :: Nil =>
             // special case for the trivial '//' step as leftmost step in the path, which always matches
             // because every node is a descendant of the root node
-            require(pathIsAbsolute)
+            assert(pathIsAbsolute)
             (lastStepMatches, notLastStepMatches)
-          case restHead :: restTail if XPathStep.isDescendantSelector(restHead) =>
+          case XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil) :: restTail =>
             // the next step is '//' and must be handled separately (does any ancestor match the rest of the path?)
             var current = lastStepMatches
             var ancestorMatches = xmlDom.bottom

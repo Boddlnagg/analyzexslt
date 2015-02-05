@@ -10,12 +10,3 @@ case object CommentNodeTest extends NodeTest
 case object TextNodeTest extends NodeTest
 case class NameTest(prefix: Option[String], name: String) extends NodeTest
 case class ProcessingInstructionTest(name: Option[String]) extends NodeTest
-
-object XPathStep {
-  /** Check whether the given step is equivalent to `/descendant-or-self::node()/`, which is the same as `//` */
-  def isDescendantSelector(step: XPathStep): Boolean = step match {
-    case XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil) => true
-    case XPathStep(_, _, Nil) => false
-    case _ => throw new NotImplementedError("Predicates are not implemented.")
-  }
-}

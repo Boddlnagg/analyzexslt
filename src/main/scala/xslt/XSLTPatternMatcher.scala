@@ -39,12 +39,12 @@ object XSLTPatternMatcher {
         }
         if (lastStepMatches) {
           restPath match {
-            case restHead :: Nil if XPathStep.isDescendantSelector(restHead) =>
+            case XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil) :: Nil =>
               // special case for the trivial '//' step as leftmost step in the path, which always matches
               // because every node is a descendant of the root node
-              require(pathIsAbsolute)
+              assert(pathIsAbsolute)
               true
-            case restHead :: restTail if XPathStep.isDescendantSelector(restHead) =>
+            case XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil) :: restTail =>
               // the next step is '//' and must be handled separately (does any ancestor match the rest of the path?)
               node.ancestors.exists(a => matches(a, restTail, pathIsAbsolute))
             case _ => matches(node.parent, restPath, pathIsAbsolute) // does the parent match the rest of the path?
