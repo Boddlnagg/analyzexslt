@@ -148,17 +148,17 @@ object XSLTFeatureAnalyzer {
               f += SortInstruction
             }
             elem.attribute("select").foreach { a => parseAndAnalyzeXPath(a.text, f) }
-            elem.child.filter(n => isElem(n, "with-param")).map(_.asInstanceOf[Elem]).foreach {
+            elem.child.filter(n => isElem(n, "with-param")).map(_.asInstanceOf[Elem]).foreach { e =>
               f += TemplateParameters
-              analyzeVariableOrParamDefinition(_, f)
+              analyzeVariableOrParamDefinition(e, f)
             }
 
           // spec section 6
           case "call-template" =>
             f += NamedTemplates
-            elem.child.filter(n => isElem(n, "with-param")).map(_.asInstanceOf[Elem]).foreach {
+            elem.child.filter(n => isElem(n, "with-param")).map(_.asInstanceOf[Elem]).foreach { e =>
               f += TemplateParameters
-              analyzeVariableOrParamDefinition(_, f)
+              analyzeVariableOrParamDefinition(e, f)
             }
 
           // spec section 7.1.2
