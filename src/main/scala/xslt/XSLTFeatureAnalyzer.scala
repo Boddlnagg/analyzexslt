@@ -28,7 +28,8 @@ case object TextCreation extends XSLTFeature // <xsl:text>
 case object ElementCreation extends XSLTFeature // <xsl:element>
 case object AttributeCreation extends XSLTFeature // <xsl:attribute>
 case object ProcessingInstructionCreation extends XSLTFeature // <xsl:processing-instruction>
-case object Conditionals extends XSLTFeature // <xsl:if> and <xsl:choose>
+case object IfConditionals extends XSLTFeature // <xsl:if>
+case object ChooseConditionals extends XSLTFeature // <xsl:choose>
 case object ForEach extends XSLTFeature // <xsl:for-each>
 case class OtherInstruction(name: String) extends CollectableXSLTFeature
 case object UnionPatterns extends XSLTFeature // union patterns (with '|' operator)
@@ -194,7 +195,7 @@ object XSLTFeatureAnalyzer {
 
           // spec section 9.2
           case "choose" =>
-            f += Conditionals
+            f += ChooseConditionals
             val xsltChildren = elem.child.filter(isElem).map(_.asInstanceOf[Elem])
             xsltChildren.filter(n => n.label == "when")
               .foreach { n =>
@@ -206,7 +207,7 @@ object XSLTFeatureAnalyzer {
 
           // spec section 9.1
           case "if" =>
-            f += Conditionals
+            f += IfConditionals
             parseAndAnalyzeXPath(elem.attribute("test").get.text, f)
             analyzeTemplate(elem.child, f)
 
