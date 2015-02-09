@@ -80,9 +80,6 @@ trait XMLDomain[N, L, V] {
   /** Gets the size of a node list */
   def getNodeListSize(list: L): V
 
-  /** Get the root node of a given node */
-  def getRoot(node: N): N
-
   /** Get the list of attributes of a given node.
     * Nodes that are not an element (and therefore don't have attributes) return an empty list, not BOTTOM!
     */
@@ -96,6 +93,14 @@ trait XMLDomain[N, L, V] {
 
   /** Get the parent of given node. If the node has no parent (root node), BOTTOM is returned. */
   def getParent(node: N): N
+
+  /** Get the root node of a given node */
+  def getRoot(node: N): N
+
+  /** Get the name for a given node. Nodes that don't have a name (i.e. are not an element or attribute node)
+    * are evaluated to the empty string, not BOTTOM!
+    */
+  def getNodeName(node: N): V
 
   /** Partitions a node list in such a way that the first result contains all attribute nodes from the beginning of
     * the list (as soon as there are other node types in the list, attributes are ignored) and the second result
@@ -128,6 +133,13 @@ trait XMLDomain[N, L, V] {
     */
   def isElement(node: N): (N, N)
 
+  /** Predicate function that checks whether a node is an attribute node.
+    * The first result is a node that is known to be an attribute node (this is BOTTOM if the node definitely
+    * is not an attribute node), the second result is a node that might not be an attribute node (this is
+    * BOTTOM if the node definitely is an attribute node). The two results are not necessarily disjoint.
+    */
+  def isAttribute(node: N): (N, N)
+
   /** Predicate function that checks whether a node is a text node.
     * The first result is a node that is known to be a text node (this is BOTTOM if the node definitely
     * is not a text node), the second result is a node that might not be a text node (this is
@@ -142,13 +154,6 @@ trait XMLDomain[N, L, V] {
     */
   def isComment(node: N): (N, N)
 
-  /** Predicate function that checks whether a node is an attribute node.
-    * The first result is a node that is known to be an attribute node (this is BOTTOM if the node definitely
-    * is not an attribute node), the second result is a node that might not be an attribute node (this is
-    * BOTTOM if the node definitely is an attribute node). The two results are not necessarily disjoint.
-    */
-  def isAttribute(node: N): (N, N)
-
   /** Predicate function that checks whether a node has a specified name.
     * The first result is a node that is known to have that name (this is BOTTOM if the node definitely
     * doesn't have that name), the second result is a node that might not have that name (this is
@@ -157,27 +162,22 @@ trait XMLDomain[N, L, V] {
     */
   def hasName(node: N, name: String): (N, N)
 
-  /** Get the name for a given node. Nodes that don't have a name (i.e. are not an element or attribute node)
-    * are evaluated to the empty string, not BOTTOM!
-    */
-  def getNodeName(node: N): V
-
-  /** Evaluates a function for every element in the given list, providing also the index of each element in the list.
-    * The resulting lists are flattened into a single list.
-    */
-  def flatMapWithIndex(list: L, f: (N, V) => L): L
-
-  /** Filters a list using a given predicate function. The predicate function should never return a node
-  * (as its first result) that is less precise than the input node.
-  */
-  def filter(list: L, predicate: N => (N, N)): L
-
   /** Predicate function that checks whether a node is in a given list of nodes.
     * The first result is a node that is known to be in that list (this is BOTTOM if the node definitely
     * is not in the list), the second result is a node that might not be in the list (this is
     * BOTTOM if the node definitely is contained in the list). The two results are not necessarily disjoint.
     */
   def isContainedIn(node: N, list: L): (N, N)
+
+  /** Filters a list using a given predicate function. The predicate function should never return a node
+    * (as its first result) that is less precise than the input node.
+    */
+  def filter(list: L, predicate: N => (N, N)): L
+
+  /** Evaluates a function for every element in the given list, providing also the index of each element in the list.
+    * The resulting lists are flattened into a single list.
+    */
+  def flatMapWithIndex(list: L, f: (N, V) => L): L
 
   /** Get a list of all descendants of a node. */
   def getDescendants(node: N): L = {
