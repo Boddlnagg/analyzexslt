@@ -143,7 +143,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         Left(applyTemplates(sheet, xmlDom.getChildren(context.node), mode, context.globalVariables, context.localVariables, params.mapValues(v => evaluateVariable(sheet, v, context, recursionLimit)), recursionLimit))
       case ApplyTemplatesInstruction(Some(expr), mode, params) =>
         val result = xpathAnalyzer.evaluate(expr, xsltToXPathContext(context))
-        val (extracted, _) = xpathDom.matchNodeSetValues(result)
+        val (extracted, _) = xpathDom.matchNodeSet(result)
         Left(applyTemplates(sheet, extracted, mode, context.globalVariables, context.localVariables, params.mapValues(v => evaluateVariable(sheet, v, context, recursionLimit)), recursionLimit))
       case CallTemplateInstruction(name, params) =>
         // unlike apply-templates, call-template does not change the current node or current node list (see spec section 6)
@@ -171,7 +171,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         Left(result)
       case CopyOfInstruction(select) =>
         val result = xpathAnalyzer.evaluate(select, xsltToXPathContext(context))
-        val (nodeSets, rest) = xpathDom.matchNodeSetValues(result)
+        val (nodeSets, rest) = xpathDom.matchNodeSet(result)
         val nodeSetsOutput = xmlDom.copyToOutput(nodeSets)
         val restAsString = xpathDom.toStringValue(rest)
         var restOutput = xmlDom.createSingletonList(xmlDom.createTextNode(restAsString))
@@ -187,7 +187,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         Left(xmlDom.joinAllLists(possibleBranches.map(br => processAll(sheet, br, context, recursionLimit))))
       case ForEachInstruction(select, content) =>
         val result = xpathAnalyzer.evaluate(select, xsltToXPathContext(context))
-        val (extracted, _) = xpathDom.matchNodeSetValues(result)
+        val (extracted, _) = xpathDom.matchNodeSet(result)
         Left(xmlDom.flatMapWithIndex(extracted, (n, i) => {
           val newContext = AbstractXSLTContext(n, extracted, xpathDom.add(i, xpathDom.liftNumber(1)), context.globalVariables, context.localVariables)
           processAll(sheet, content, newContext, recursionLimit)

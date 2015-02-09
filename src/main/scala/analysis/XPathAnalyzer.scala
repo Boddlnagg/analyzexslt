@@ -80,7 +80,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     case FunctionCallExpr(Some(_), _, _) => throw new NotImplementedError("Prefixed functions are not supported")
     case LocationPath(steps, isAbsolute) => xpathDom.toNodeSet(evaluateLocationPath(ctx.node, steps, isAbsolute))
     case PathExpr(filter, locationPath) =>
-      val (startNodeSet, _) = xpathDom.matchNodeSetValues(evaluate(filter, ctx))
+      val (startNodeSet, _) = xpathDom.matchNodeSet(evaluate(filter, ctx))
       xpathDom.toNodeSet(
         xmlDom.flatMapWithIndex(startNodeSet, {
           case (n, _) => evaluateLocationPath(n, locationPath.steps, locationPath.isAbsolute)
@@ -117,12 +117,12 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     case ("last", Nil) => ctx.size
     case ("position", Nil) => ctx.position
     case ("count", List(arg)) =>
-      val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
+      val (nodeSets, _) = xpathDom.matchNodeSet(arg)
       xmlDom.getNodeListSize(nodeSets)
 
     case ("name"|"local-name", Nil) => xmlDom.getNodeName(ctx.node)
     case ("name"|"local-name", List(arg)) =>
-      val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
+      val (nodeSets, _) = xpathDom.matchNodeSet(arg)
       val result = xmlDom.getNodeName(xmlDom.getFirst(nodeSets))
       if (xmlDom.lessThanOrEqualLists(xmlDom.createEmptyList(), nodeSets)) // may the set be empty?
         xpathDom.join(result, xpathDom.liftString("")) // ... then include the empty string in the result
@@ -132,7 +132,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     // NOTE: the following functions are more or less stubbed out; implementing them correctly would
     // require adding more methods to the XPath domain interface.
     case ("sum", List(arg)) =>
-      val (nodeSets, _) = xpathDom.matchNodeSetValues(arg)
+      val (nodeSets, _) = xpathDom.matchNodeSet(arg)
       if (xmlDom.lessThanOrEqualLists(nodeSets, xmlDom.bottomList)) xpathDom.bottom // return bottom if the input is definitely not a node-set
       else xpathDom.topNumber
     case ("string-length", _) => xpathDom.topNumber
@@ -212,7 +212,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         })
         if (first.predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported") // NOTE: see XPath spec section 2.4 to implement these
         // convert to node-set value and back to L in order to sort the list and remove duplicates
-        val (testedNodeSet, _) = xpathDom.matchNodeSetValues(xpathDom.toNodeSet(testedNodes))
+        val (testedNodeSet, _) = xpathDom.matchNodeSet(xpathDom.toNodeSet(testedNodes))
         xmlDom.flatMapWithIndex(testedNodeSet, {
           case (n, _) => evaluateLocationPath(n, rest, false)
         })

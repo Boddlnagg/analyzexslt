@@ -85,7 +85,7 @@ object PowersetDomain extends Domain[N, L, V] {
       * The part of the value that is a node-set value is returned as a node list in the first result value,
       * the part of the value that isn't is returned in the second result value.
       */
-    override def matchNodeSetValues(v: V): (L, V) = v match {
+    override def matchNodeSet(v: V): (L, V) = v match {
       case None => (None, None)
       case Some(s) =>
         val nodeSetContents = s.collect {

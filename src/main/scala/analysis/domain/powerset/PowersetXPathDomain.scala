@@ -45,59 +45,59 @@ object PowersetXPathDomain {
     /** Get the TOP element of the subdomain of strings (representing any string). topString <= top must hold. */
     override def topString: V = None // no type distinction in this domain
 
-    protected def liftBinaryOp(left: V, right: V, pf: PartialFunction[(XPathValue, XPathValue), XPathValue]): V = (left, right) match {
+    protected def liftBinaryOp(v1: V, v2: V, pf: PartialFunction[(XPathValue, XPathValue), XPathValue]): V = (v1, v2) match {
       case (BOT, _) => BOT
       case (_, BOT) => BOT
       case (Some(s1), Some(s2)) => Some(s1.cross(s2).collect(pf).toSet)
       case _ => None
     }
 
-    protected def liftBinaryLogicalOp(left: V, right: V, f: (XPathValue, XPathValue) => XPathValue): V =
-      liftBinaryOp(left, right, { case (v1, v2) => f(v1, v2) }) match {
+    protected def liftBinaryLogicalOp(v1: V, v2: V, f: (XPathValue, XPathValue) => XPathValue): V =
+      liftBinaryOp(v1, v2, { case (l, r) => f(l, r) }) match {
         case None => anyBoolean
         case Some(s) => Some(s)
       }
 
-    protected def liftBinaryNumOp(left: V, right: V, f: (Double, Double) => Double): V = (left, right) match {
+    protected def liftBinaryNumOp(v1: V, v2: V, f: (Double, Double) => Double): V = (v1, v2) match {
       case (BOT, _) => BOT
       case (_, BOT) => BOT
       case (Some(s1), Some(s2)) => Some(s1.cross(s2)
-        .map { case (v1, v2) => NumberValue(f(v1.toNumberValue.value, v2.toNumberValue.value))}
+        .map { case (l, r) => NumberValue(f(l.toNumberValue.value, r.toNumberValue.value))}
         .toSet
       )
       case _ => None
     }
 
     /** The addition operation. Must convert its operands to numbers first if they aren't. */
-    override def add(left: V, right: V): V = liftBinaryNumOp(left, right,
-      (v1, v2) => v1 + v2
+    override def add(v1: V, v2: V): V = liftBinaryNumOp(v1, v2,
+      (l, r) => l + r
     )
 
     /** The subtraction operation. Must convert its operands to numbers first if they aren't. */
-    override def subtract(left: V, right: V): V = liftBinaryNumOp(left, right,
-      (v1, v2) => v1 - v2
+    override def subtract(v1: V, v2: V): V = liftBinaryNumOp(v1, v2,
+      (l, r) => l - r
     )
 
     /** The multiplication operation. Must convert its operands to numbers first if they aren't. */
-    override def multiply(left: V, right: V): V = liftBinaryNumOp(left, right,
-      (v1, v2) => v1 * v2
+    override def multiply(v1: V, v2: V): V = liftBinaryNumOp(v1, v2,
+      (l, r) => l * r
     )
 
     /** The division operation. Must convert its operands to numbers first if they aren't. */
-    override def divide(left: V, right: V): V = liftBinaryNumOp(left, right,
-      (v1, v2) => v1 / v2
+    override def divide(v1: V, v2: V): V = liftBinaryNumOp(v1, v2,
+      (l, r) => l / r
     )
 
     /** The modulo operation. Must convert its operands to numbers first if they aren't. */
-    override def modulo(left: V, right: V): V = liftBinaryNumOp(left, right,
-      (v1, v2) => v1 % v2
+    override def modulo(v1: V, v2: V): V = liftBinaryNumOp(v1, v2,
+      (l, r) => l % r
     )
 
     /** Compares two values using a given relational operator (=, !=, <, >, >=, <=).
       * Must behave according to the XPath specification, section 3.4.
       */
-    override def compareRelational(left: V, right: V, relOp: RelationalOperator): V = liftBinaryLogicalOp(left, right,
-      (v1, v2) => BooleanValue(v1.compare(v2, relOp))
+    override def compareRelational(v1: V, v2: V, relOp: RelationalOperator): V = liftBinaryLogicalOp(v1, v2,
+      (l, r) => BooleanValue(l.compare(r, relOp))
     )
 
     /** The numeric negation operation (unary minus). Must convert its operand to a number if it isn't. */
@@ -113,7 +113,7 @@ object PowersetXPathDomain {
     override def toBooleanValue(v: V): V = v.map(_.map(_.toBooleanValue))
 
     /** Concatenate two strings. Operands that are not string values are evaluated to BOTTOM. */
-    override def concatStrings(left: V, right: V): V = (left, right) match {
+    override def concatStrings(v1: V, v2: V): V = (v1, v2) match {
       case (BOT, _) | (_, BOT) => BOT
       case (Some(s1), Some(s2)) => Some(s1.cross(s2)
         .collect { case (StringValue(str1), StringValue(str2)) => StringValue(str1 + str2) }
@@ -132,7 +132,7 @@ object PowersetXPathDomain {
     override def liftBoolean(bool: Boolean): V = Some(Set(BooleanValue(bool)))
 
     /** The union operator for node-sets. If one of the operands is not a node-set, return BOTTOM. */
-    override def nodeSetUnion(left: V, right: V): V = liftBinaryOp(left, right, {
+    override def nodeSetUnion(v1: V, v2: V): V = liftBinaryOp(v1, v2, {
       case (NodeSetValue(lVal), NodeSetValue(rVal)) => NodeSetValue(lVal ++ rVal)
       // NOTE: ignore values that are not node-sets by not including them in the result (essentially evaluating them to bottom)
     })

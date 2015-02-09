@@ -38,35 +38,6 @@ trait XPathDomain[V, N, L] {
   /** Get the TOP element of the subdomain of strings (representing any string). topString <= top must hold. */
   def topString: V
 
-  /** The addition operation. Must convert its operands to numbers first if they aren't. */
-  def add(left: V, right: V): V
-
-  /** The subtraction operation. Must convert its operands to numbers first if they aren't. */
-  def subtract(left: V, right: V): V
-
-  /** The multiplication operation. Must convert its operands to numbers first if they aren't. */
-  def multiply(left: V, right: V): V
-
-  /** The division operation. Must convert its operands to numbers first if they aren't. */
-  def divide(left: V, right: V): V
-
-  /** The modulo operation. Must convert its operands to numbers first if they aren't. */
-  def modulo(left: V, right: V): V
-
-  /** Compares two values using a given relational operator (=, !=, <, >, >=, <=).
-    * Must behave according to the XPath specification, section 3.4.
-    */
-  def compareRelational(left: V, right: V, relOp: RelationalOperator): V
-
-  /** The numeric negation operation (unary minus). Must convert its operand to a number if it isn't. */
-  def negateNum(v: V): V
-
-  /** Concatenate two strings. Operands that are not string values are evaluated to BOTTOM. */
-  def concatStrings(left: V, right: V): V
-
-  /** Concatenates a sequence of strings. */
-  def concatAllStrings(values: Traversable[V]): V = values.fold(liftString(""))(concatStrings)
-
   /** Lift a literal string */
   def liftString(lit: String): V
 
@@ -76,8 +47,37 @@ trait XPathDomain[V, N, L] {
   /** Lift a boolean */
   def liftBoolean(bool: Boolean): V
 
+  /** The addition operation. Must convert its operands to numbers first if they aren't. */
+  def add(v1: V, v2: V): V
+
+  /** The subtraction operation. Must convert its operands to numbers first if they aren't. */
+  def subtract(v1: V, v2: V): V
+
+  /** The multiplication operation. Must convert its operands to numbers first if they aren't. */
+  def multiply(v1: V, v2: V): V
+
+  /** The division operation. Must convert its operands to numbers first if they aren't. */
+  def divide(v1: V, v2: V): V
+
+  /** The modulo operation. Must convert its operands to numbers first if they aren't. */
+  def modulo(v1: V, v2: V): V
+
+  /** The numeric negation operation (unary minus). Must convert its operand to a number if it isn't. */
+  def negateNum(v: V): V
+
+  /** Compares two values using a given relational operator (=, !=, <, >, >=, <=).
+    * Must behave according to the XPath specification, section 3.4.
+    */
+  def compareRelational(v1: V, v2: V, relOp: RelationalOperator): V
+
+  /** Concatenate two strings. Operands that are not string values are evaluated to BOTTOM. */
+  def concatStrings(v1: V, v2: V): V
+
+  /** Concatenates a sequence of strings. */
+  def concatAllStrings(values: Traversable[V]): V = values.fold(liftString(""))(concatStrings)
+
   /** The union operator for node-sets. If one of the operands is not a node-set, evaluate to BOTTOM. */
-  def nodeSetUnion(left: V, right: V): V
+  def nodeSetUnion(v1: V, v2: V): V
 
   /** Convert a value to a string as defined by the XPath specification section 4.2. */
   def toStringValue(v: V): V
@@ -97,5 +97,5 @@ trait XPathDomain[V, N, L] {
     * The part of the value that is a node-set value is returned as a node list in the first result value,
     * the part of the value that isn't is returned in the second result value.
     */
-  def matchNodeSetValues(v: V): (L, V)
+  def matchNodeSet(v: V): (L, V)
  }

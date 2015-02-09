@@ -126,12 +126,12 @@ class TypedPowersetXPathDomain[L] {
       }
     }
 
-    protected def liftBinaryNumOp(left: V, right: V, f: (Double, Double) => Double): V = {
-      val numResult = (toNumberValueInternal(left), toNumberValueInternal(right)) match {
+    protected def liftBinaryNumOp(v1: V, v2: V, f: (Double, Double) => Double): V = {
+      val numResult = (toNumberValueInternal(v1), toNumberValueInternal(v2)) match {
         case (BOTTOM_NUM, _) => BOTTOM_NUM
         case (_, BOTTOM_NUM) => BOTTOM_NUM
         case (Some(s1), Some(s2)) => Some(s1.cross(s2)
-          .map { case (v1, v2) => f(v1, v2) }
+          .map { case (l, r) => f(l, r) }
           .toSet
         )
         case _ => None
@@ -140,34 +140,34 @@ class TypedPowersetXPathDomain[L] {
     }
 
     /** The addition operation. Must convert its operands to numbers first if they aren't. */
-    override def add(left: V, right: V): V = liftBinaryNumOp(left, right,
-      (v1, v2) => v1 + v2
+    override def add(v1: V, v2: V): V = liftBinaryNumOp(v1, v2,
+      (l, r) => l + r
     )
 
     /** The subtraction operation. Must convert its operands to numbers first if they aren't. */
-    override def subtract(left: V, right: V): V = liftBinaryNumOp(left, right,
-      (v1, v2) => v1 - v2
+    override def subtract(v1: V, v2: V): V = liftBinaryNumOp(v1, v2,
+      (l, r) => l - r
     )
 
     /** The multiplication operation. Must convert its operands to numbers first if they aren't. */
-    override def multiply(left: V, right: V): V = liftBinaryNumOp(left, right,
-      (v1, v2) => v1 * v2
+    override def multiply(v1: V, v2: V): V = liftBinaryNumOp(v1, v2,
+      (l, r) => l * r
     )
 
     /** The division operation. Must convert its operands to numbers first if they aren't. */
-    override def divide(left: V, right: V): V = liftBinaryNumOp(left, right,
-      (v1, v2) => v1 / v2
+    override def divide(v1: V, v2: V): V = liftBinaryNumOp(v1, v2,
+      (l, r) => l / r
     )
 
     /** The modulo operation. Must convert its operands to numbers first if they aren't. */
-    override def modulo(left: V, right: V): V = liftBinaryNumOp(left, right,
-      (v1, v2) => v1 % v2
+    override def modulo(v1: V, v2: V): V = liftBinaryNumOp(v1, v2,
+      (l, r) => l % r
     )
 
     /** Compares two values using a given relational operator (=, !=, <, >, >=, <=).
       * Must behave according to the XPath specification, section 3.4.
       */
-    override def compareRelational(left: V, right: V, relOp: RelationalOperator): V = {
+    override def compareRelational(v1: V, v2: V, relOp: RelationalOperator): V = {
       // compares for equality
       def compareRelationalBooleans(left: Set[Boolean], right: Set[Boolean]): Set[Boolean] =
       left.cross(right).map {
@@ -189,20 +189,20 @@ class TypedPowersetXPathDomain[L] {
       (left, right) match {
         case (BOTTOM_NUM, _) | (_, BOTTOM_NUM)  => Set[Boolean]() // one operand is BOTTOM -> return BOTTOM
         case (Some(s1), Some(s2)) => s1.cross(s2).map {
-          case (v1, v2) => relOp match {
-            case EqualsOperator => v1 == v2
-            case NotEqualsOperator => v1 != v2
-            case LessThanOperator => v1 < v2
-            case GreaterThanOperator => v1 > v2
-            case LessThanEqualOperator => v1 <= v2
-            case GreaterThanEqualOperator => v1 >= v2
+          case (l, r) => relOp match {
+            case EqualsOperator => l == r
+            case NotEqualsOperator => l != r
+            case LessThanOperator => l < r
+            case GreaterThanOperator => l > r
+            case LessThanEqualOperator => l <= r
+            case GreaterThanEqualOperator => l >= r
           }
         }.toSet
         case _ => Set(true, false) // return TOP
       }
 
-      if (!xmlDom.lessThanOrEqualLists(left.nodeSet, xmlDom.bottomList) || // if left node-set part is not BOTTOM ...
-          !xmlDom.lessThanOrEqualLists(right.nodeSet, xmlDom.bottomList)) { // ... or right node-set part is not BOTTOM ...
+      if (!xmlDom.lessThanOrEqualLists(v1.nodeSet, xmlDom.bottomList) || // if left node-set part is not BOTTOM ...
+          !xmlDom.lessThanOrEqualLists(v2.nodeSet, xmlDom.bottomList)) { // ... or right node-set part is not BOTTOM ...
         // .. then we don't know the result because node-set comparisons are not implemented
         fromBooleans(Set(true, false))
       } else {
@@ -211,21 +211,21 @@ class TypedPowersetXPathDomain[L] {
             // we can ignore the node-sets now and compare all pairs of remaining components for equality
             val equals =
               // compare both as booleans if at least one of them is a boolean
-              compareRelationalBooleans(left.bool, right.bool) |
-              compareRelationalBooleans(left.bool, toBooleanValueInternal(fromNumbers(right.num))) |
-              compareRelationalBooleans(left.bool, toBooleanValueInternal(fromStrings(right.str))) |
-              compareRelationalBooleans(toBooleanValueInternal(fromNumbers(left.num)), right.bool) |
-              compareRelationalBooleans(toBooleanValueInternal(fromStrings(left.str)), right.bool) |
+              compareRelationalBooleans(v1.bool, v2.bool) |
+              compareRelationalBooleans(v1.bool, toBooleanValueInternal(fromNumbers(v2.num))) |
+              compareRelationalBooleans(v1.bool, toBooleanValueInternal(fromStrings(v2.str))) |
+              compareRelationalBooleans(toBooleanValueInternal(fromNumbers(v1.num)), v2.bool) |
+              compareRelationalBooleans(toBooleanValueInternal(fromStrings(v1.str)), v2.bool) |
               // compare both as numbers if at least one of them is a number (and none is a boolean)
-              compareRelationalNumbers(left.num, right.num, EqualsOperator) |
-              compareRelationalNumbers(toNumberValueInternal(fromStrings(left.str)), right.num, EqualsOperator) |
-              compareRelationalNumbers(left.num, toNumberValueInternal(fromStrings(right.str)), EqualsOperator) |
+              compareRelationalNumbers(v1.num, v2.num, EqualsOperator) |
+              compareRelationalNumbers(toNumberValueInternal(fromStrings(v1.str)), v2.num, EqualsOperator) |
+              compareRelationalNumbers(v1.num, toNumberValueInternal(fromStrings(v2.str)), EqualsOperator) |
               // compare both as strings otherwise
-              compareRelationalStrings(left.str, right.str)
+              compareRelationalStrings(v1.str, v2.str)
 
             if (relOp == NotEqualsOperator) equals.map(b => !b)
             else equals
-          case _ => compareRelationalNumbers(toNumberValueInternal(left), toNumberValueInternal(right), relOp)
+          case _ => compareRelationalNumbers(toNumberValueInternal(v1), toNumberValueInternal(v2), relOp)
         }
         fromBooleans(result)
       }
@@ -237,7 +237,7 @@ class TypedPowersetXPathDomain[L] {
     }
 
     /** Concatenate two strings. Operands that are not string values are evaluated to BOTTOM. */
-    override def concatStrings(left: V, right: V): V = (left.str, right.str) match {
+    override def concatStrings(v1: V, v2: V): V = (v1.str, v2.str) match {
       case (BOTTOM_STR, _) | (_, BOTTOM_STR) => bottom
       case (Some(s1), Some(s2)) => fromStrings(Some(s1.cross(s2).map {
         case (str1, str2) => str1 + str2
@@ -264,8 +264,8 @@ class TypedPowersetXPathDomain[L] {
     override def liftBoolean(bool: Boolean): V = fromBooleans(Set(bool))
 
     /** The union operator for node-sets. If one of the operands is not a node-set, return BOTTOM. */
-    override def nodeSetUnion(left: V, right: V): V = {
-      val resultSet = nodeListToSet(xmlDom.concatLists(left.nodeSet, right.nodeSet))
+    override def nodeSetUnion(v1: V, v2: V): V = {
+      val resultSet = nodeListToSet(xmlDom.concatLists(v1.nodeSet, v2.nodeSet))
       TypedXPathValue(Set(), latNumbers.bottom, latStrings.bottom, resultSet)
     }
 
@@ -278,7 +278,7 @@ class TypedPowersetXPathDomain[L] {
       * The part of the value that is a node-set value is returned as a node list in the first result value,
       * the part of the value that isn't is returned in the second result value.
       */
-    override def matchNodeSetValues(v: V): (L, V) = (v.nodeSet, TypedXPathValue(v.bool, v.num, v.str, xmlDom.bottomList))
+    override def matchNodeSet(v: V): (L, V) = (v.nodeSet, TypedXPathValue(v.bool, v.num, v.str, xmlDom.bottomList))
 
     /** Turn a node list into a set by sorting nodes in document order and removing duplicate nodes */
     def nodeListToSet(list: L): L // must be implemented by subclasses

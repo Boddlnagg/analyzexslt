@@ -32,37 +32,37 @@ object ConcreteXPathDomain {
     /** Get the TOP element of the subdomain of strings (representing any string). topString <= top must hold. */
     override def topString: V = Top // no type distinction in this domain
 
-    protected def liftBinaryNumOp(left: V, right: V)(f: (Double, Double) => Double): V =
-        left.liftBinaryOp(right) {(v1, v2) => NumberValue(f(v1.toNumberValue.value, v2.toNumberValue.value))}
+    protected def liftBinaryNumOp(v1: V, v2: V)(f: (Double, Double) => Double): V =
+        v1.liftBinaryOp(v2) {(l, r) => NumberValue(f(l.toNumberValue.value, r.toNumberValue.value))}
 
     /** The addition operation. Must convert its operands to numbers first if they aren't. */
-    override def add(left: V, right: V): V = liftBinaryNumOp(left, right) {(v1, v2) => v1 + v2}
+    override def add(v1: V, v2: V): V = liftBinaryNumOp(v1, v2) {(l, r) => l + r}
 
     /** The subtraction operation. Must convert its operands to numbers first if they aren't. */
-    override def subtract(left: V, right: V): V = liftBinaryNumOp(left, right) {(v1, v2) => v1 - v2}
+    override def subtract(v1: V, v2: V): V = liftBinaryNumOp(v1, v2) {(l, r) => l - r}
 
     /** The multiplication operation. Must convert its operands to numbers first if they aren't. */
-    override def multiply(left: V, right: V): V = liftBinaryNumOp(left, right) {(v1, v2) => v1 * v2}
+    override def multiply(v1: V, v2: V): V = liftBinaryNumOp(v1, v2) {(l, r) => l * r}
 
     /** The division operation. Must convert its operands to numbers first if they aren't. */
-    override def divide(left: V, right: V): V = liftBinaryNumOp(left, right) {(v1, v2) => v1 / v2}
+    override def divide(v1: V, v2: V): V = liftBinaryNumOp(v1, v2) {(l, r) => l / r}
 
     /** The modulo operation. Must convert its operands to numbers first if they aren't. */
-    override def modulo(left: V, right: V): V = liftBinaryNumOp(left, right) {(v1, v2) => v1 % v2}
+    override def modulo(v1: V, v2: V): V = liftBinaryNumOp(v1, v2) {(l, r) => l % r}
 
     /** Compares two values using a given relational operator (=, !=, <, >, >=, <=).
       * Must behave according to the XPath specification, section 3.4.
       */
-    override def compareRelational(left: V, right: V, relOp: RelationalOperator): V = left.liftBinaryOp(right) {
-      (v1, v2) => BooleanValue(v1.compare(v2, relOp))
+    override def compareRelational(v1: V, v2: V, relOp: RelationalOperator): V = v1.liftBinaryOp(v2) {
+      (l, r) => BooleanValue(l.compare(r, relOp))
     }
 
     /** The numeric negation operation (unary minus). Must convert its operand to a number if it isn't. */
     override def negateNum(v: V): V = v.map(n => NumberValue(-n.toNumberValue.value))
 
     /** Concatenate two strings. Operands that are not string values are evaluated to BOTTOM. */
-    override def concatStrings(left: V, right: V): V = (left, right) match {
-      case (Value(v1), Value(v2)) => (v1, v2) match {
+    override def concatStrings(v1: V, v2: V): V = (v1, v2) match {
+      case (Value(l), Value(r)) => (l, r) match {
         case (StringValue(str1), StringValue(str2)) => Value(StringValue(str1 + str2))
         case _ => Bottom // wrong argument types
       }
@@ -81,7 +81,7 @@ object ConcreteXPathDomain {
     override def liftBoolean(bool: Boolean): V = Value(BooleanValue(bool))
 
     /** The union operator for node-sets. If one of the operands is not a node-set, return BOTTOM. */
-    override def nodeSetUnion(left: V, right: V): V = (left, right) match {
+    override def nodeSetUnion(v1: V, v2: V): V = (v1, v2) match {
       case (Value(NodeSetValue(lVal)), Value(NodeSetValue(rVal))) =>
         Value(NodeSetValue(lVal ++ rVal))
       case (Value(_), Value(_)) => Bottom // values of incompatible type -> error/bottom
