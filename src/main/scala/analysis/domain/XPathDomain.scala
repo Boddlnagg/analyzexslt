@@ -88,10 +88,10 @@ trait XPathDomain[V, N, L] {
   /** Convert a value to a number as defined by the XPath specification section 4.4. */
   def toNumberValue(v: V): V
 
-  /** Converts a list of nodes to a node-set value.
+  /** Creates a node-set value from a list of XML nodes.
     * This has to order the nodes in document order and remove duplicates.
     */
-  def toNodeSet(list: L): V
+  def createNodeSet(list: L): V
 
   /** Match on a value to find out whether it is a node-set value.
     * The part of the value that is a node-set value is returned as a node list in the first result value,

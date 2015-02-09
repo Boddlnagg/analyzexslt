@@ -125,7 +125,7 @@ class PowersetDomainSuite extends FunSuite {
     val input = xmlDom.concatLists(l1, xmlDom.concatLists(l2, l3))
 
     assertResult(Some(Set(NodeSetValue(TreeSet(a, b, c))))) {
-      xpathDom.toNodeSet(input)
+      xpathDom.createNodeSet(input)
     }
   }
 
@@ -144,7 +144,7 @@ class PowersetDomainSuite extends FunSuite {
     ))
 
     assertResult(expected) {
-      xpathDom.toNodeSet(input)
+      xpathDom.createNodeSet(input)
     }
   }
 

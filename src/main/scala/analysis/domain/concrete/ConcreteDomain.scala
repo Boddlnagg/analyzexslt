@@ -64,10 +64,10 @@ object ConcreteDomain extends Domain[N, L, V] {
   }
 
   object XPATH extends ConcreteXPathDomain.D[N, L] {
-    /** Converts a list of nodes to a node-set value.
+    /** Creates a node-set value from a list of XML nodes.
       * This has to order the nodes in document order and remove duplicates.
       */
-    override def toNodeSet(list: L): V = list.map(nodes => NodeSetValue(nodes.to[TreeSet]))
+    override def createNodeSet(list: L): V = list.map(nodes => NodeSetValue(nodes.to[TreeSet]))
 
     /** Match on a value to find out whether it is a node-set value.
       * The part of the value that is a node-set value is returned as a node list in the first result value,

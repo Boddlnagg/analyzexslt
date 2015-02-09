@@ -73,10 +73,10 @@ object PowersetDomain extends Domain[N, L, V] {
 
   protected object XPATH extends PowersetXPathDomain.D[N, L] {
 
-    /** Converts a list of nodes to a node-set value.
+    /** Creates a node-set value from a list of XML nodes.
       * This has to order the nodes in document order and remove duplicates.
       */
-    override def toNodeSet(list: L): V = list match {
+    override def createNodeSet(list: L): V = list match {
       case None => None
       case Some(s) => Some(s.map(nodes => NodeSetValue(nodes.to[TreeSet])))
     }

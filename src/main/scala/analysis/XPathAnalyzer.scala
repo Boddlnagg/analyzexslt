@@ -78,10 +78,10 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     case UnionExpr(lhs, rhs) => xpathDom.nodeSetUnion(evaluate(lhs, ctx), evaluate(rhs, ctx))
     case FunctionCallExpr(None, name, params) => evaluateFunctionCall(name, params.map(p => evaluate(p, ctx)), ctx)
     case FunctionCallExpr(Some(_), _, _) => throw new NotImplementedError("Prefixed functions are not supported")
-    case LocationPath(steps, isAbsolute) => xpathDom.toNodeSet(evaluateLocationPath(ctx.node, steps, isAbsolute))
+    case LocationPath(steps, isAbsolute) => xpathDom.createNodeSet(evaluateLocationPath(ctx.node, steps, isAbsolute))
     case PathExpr(filter, locationPath) =>
       val (startNodeSet, _) = xpathDom.matchNodeSet(evaluate(filter, ctx))
-      xpathDom.toNodeSet(
+      xpathDom.createNodeSet(
         xmlDom.flatMapWithIndex(startNodeSet, {
           case (n, _) => evaluateLocationPath(n, locationPath.steps, locationPath.isAbsolute)
         })
@@ -212,7 +212,7 @@ class XPathAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         })
         if (first.predicates.nonEmpty) throw new NotImplementedError("Predicates are not supported") // NOTE: see XPath spec section 2.4 to implement these
         // convert to node-set value and back to L in order to sort the list and remove duplicates
-        val (testedNodeSet, _) = xpathDom.matchNodeSet(xpathDom.toNodeSet(testedNodes))
+        val (testedNodeSet, _) = xpathDom.matchNodeSet(xpathDom.createNodeSet(testedNodes))
         xmlDom.flatMapWithIndex(testedNodeSet, {
           case (n, _) => evaluateLocationPath(n, rest, false)
         })

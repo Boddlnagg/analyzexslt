@@ -236,6 +236,6 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     case Left(expr) =>
       xpathAnalyzer.evaluate(expr, xsltToXPathContext(context))
     case Right(instructions) =>
-      xpathDom.toNodeSet(xmlDom.createSingletonList(xmlDom.createRoot(processAll(sheet, instructions, context, recursionLimit), isFragment = true)))
+      xpathDom.createNodeSet(xmlDom.createSingletonList(xmlDom.createRoot(processAll(sheet, instructions, context, recursionLimit), isFragment = true)))
   }
 }

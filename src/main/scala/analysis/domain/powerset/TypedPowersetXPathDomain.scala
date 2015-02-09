@@ -269,10 +269,10 @@ class TypedPowersetXPathDomain[L] {
       TypedXPathValue(Set(), latNumbers.bottom, latStrings.bottom, resultSet)
     }
 
-    /** Converts a list of nodes to a node-set value.
+    /** Creates a node-set value from a list of XML nodes.
       * This has to order the nodes in document order and remove duplicates.
       */
-    override def toNodeSet(list: L): V = TypedXPathValue(Set(), latNumbers.bottom, latStrings.bottom, nodeListToSet(list))
+    override def createNodeSet(list: L): V = TypedXPathValue(Set(), latNumbers.bottom, latStrings.bottom, nodeListToSet(list))
 
     /** Match on a value to find out whether it is a node-set value.
       * The part of the value that is a node-set value is returned as a node list in the first result value,
