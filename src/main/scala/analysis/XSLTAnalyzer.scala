@@ -17,10 +17,10 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
 
   /** Transforms a source document (represented by its root node) into a new document using an XSLT stylesheet */
   def transform(sheet: XSLTStylesheet, source: N, recursionLimit: Option[Int] = None): N = {
-    val (rootSource, _) = xmlDom.isRoot(source, allowFragments = false) // enforce the source node to be a (non-fragment) root node
+    val (rootSource, _) = xmlDom.isRoot(source, allowResultTreeFragments = false) // enforce the source node to be a (non-fragment) root node
 
     val globalVariables = evaluateVariables(sheet, sheet.globalVariables, AbstractXSLTContext(rootSource, xmlDom.createSingletonList(rootSource), xpathDom.liftNumber(1), Map(), Map()), recursionLimit)
-    xmlDom.createRoot(applyTemplates(sheet, xmlDom.createSingletonList(rootSource), None, globalVariables, Map(), Map(), recursionLimit), isFragment = false)
+    xmlDom.createRoot(applyTemplates(sheet, xmlDom.createSingletonList(rootSource), None, globalVariables, Map(), Map(), recursionLimit), isResultTreeFragment = false)
   }
 
   /** Applies matching templates to a list of given source nodes and produces a new list of nodes */
@@ -236,6 +236,6 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     case Left(expr) =>
       xpathAnalyzer.evaluate(expr, xsltToXPathContext(context))
     case Right(instructions) =>
-      xpathDom.createNodeSet(xmlDom.createSingletonList(xmlDom.createRoot(processAll(sheet, instructions, context, recursionLimit), isFragment = true)))
+      xpathDom.createNodeSet(xmlDom.createSingletonList(xmlDom.createRoot(processAll(sheet, instructions, context, recursionLimit), isResultTreeFragment = true)))
   }
 }

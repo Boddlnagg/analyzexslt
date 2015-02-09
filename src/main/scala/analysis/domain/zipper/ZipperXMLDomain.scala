@@ -206,14 +206,14 @@ object ZipperXMLDomain {
     /** Creates a root node with the given children. The second parameter specifies whether the root represents a
       * (result tree) fragment or a complete document (the latter can only have a single element child).
       */
-    def createRoot(children: L, isFragment: Boolean): N = {
-      val verifiedChildren = if (isFragment) {
+    def createRoot(children: L, isResultTreeFragment: Boolean): N = {
+      val verifiedChildren = if (isResultTreeFragment) {
         children.map(_._1) // just extract the Subtree part of all children (their paths are ignored)
       } else {
         // if the root node is not a fragment, it can only have a single element child
         children.map(_._1) & ZList(Subtree(Set(AnyElement), ZTop(), ZTop()))
       }
-      normalize(Subtree(Set(Root), ZNil(), verifiedChildren), Set(RootPath(isFragment)))
+      normalize(Subtree(Set(Root), ZNil(), verifiedChildren), Set(RootPath(isResultTreeFragment)))
     }
 
     /** Copies a list of nodes, so that they can be used in the output.
@@ -295,10 +295,10 @@ object ZipperXMLDomain {
       * is not a root node), the second result is a node that might not be a root node (this is
       * BOTTOM if the node definitely is a root node). The two results are not necessarily disjoint.
       */
-    override def isRoot(node: N, allowFragments: Boolean): (N, N) = {
+    override def isRoot(node: N, allowResultTreeFragments: Boolean): (N, N) = {
       val (Subtree(desc, attributes, children), path) = node
       val isFragmentRoot = !latP.lessThanOrEqual(latP.meet(path, Set(RootPath(isFragment = true))), latP.bottom)
-      val newChildren: ZList[S] = if (!allowFragments || !isFragmentRoot) {
+      val newChildren: ZList[S] = if (!allowResultTreeFragments || !isFragmentRoot) {
         // we know that this node is not the root of a fragment (it's either not a root at all or the root of a non-fragment document)
         val firstChild = children.first // so wa can restrict the result to a single element child
         if (latS.lessThanOrEqual(firstChild, latS.bottom)) // if there was no first child ...
@@ -308,7 +308,7 @@ object ZipperXMLDomain {
       } else {
         children
       }
-      val (newPathPos, newPathNeg): (P, P) = if (!allowFragments || !isFragmentRoot) {
+      val (newPathPos, newPathNeg): (P, P) = if (!allowResultTreeFragments || !isFragmentRoot) {
         (latP.meet(path, Set(RootPath(isFragment = false))), path.diff(Set(RootPath(isFragment = false))))
       } else {
         (latP.meet(path, latP.topRoot), path.diff(latP.topRoot))

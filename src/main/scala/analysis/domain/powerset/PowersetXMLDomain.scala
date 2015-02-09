@@ -125,10 +125,10 @@ object PowersetXMLDomain {
     /** Creates a root node with the given children. The second parameter specifies whether the root represents a
       * (result tree) fragment or a complete document (the latter can only have a single element child).
       */
-    override def createRoot(children: L, isFragment: Boolean): N = children match {
+    override def createRoot(children: L, isResultTreeFragment: Boolean): N = children match {
       case None => None
       case Some(s) => Some(s.collect {
-        case ch if isFragment => XMLRoot(ch)
+        case ch if isResultTreeFragment => XMLRoot(ch)
         case ch@List(single: XMLElement) => XMLRoot(ch)
         // NOTE: when isFragment == false, lists with more than a single element node are implicitly ignored
       })
@@ -162,11 +162,11 @@ object PowersetXMLDomain {
       * is not a root node), the second result is a node that might not be a root node (this is
       * BOTTOM if the node definitely is a root node). The two results are not necessarily disjoint.
       */
-    override def isRoot(node: N, allowFragments: Boolean): (N, N) = node match {
+    override def isRoot(node: N, allowResultTreeFragments: Boolean): (N, N) = node match {
       case None => (None, None)
       case Some(s) =>
         val (yes, no) =
-          if (allowFragments)
+          if (allowResultTreeFragments)
             s.partition(_.isInstanceOf[XMLRoot])
           else
             s.partition { n =>

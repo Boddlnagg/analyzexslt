@@ -22,5 +22,5 @@ class XMLParser[N, L, V](dom: Domain[N, L, V]) {
     }
   }
 
-  def parseDocument(elem: Elem): N = xml.createRoot(xml.createSingletonList(parse(elem)), isFragment = false)
+  def parseDocument(elem: Elem): N = xml.createRoot(xml.createSingletonList(parse(elem)), isResultTreeFragment = false)
 }

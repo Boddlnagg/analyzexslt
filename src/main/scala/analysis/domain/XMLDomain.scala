@@ -60,11 +60,25 @@ trait XMLDomain[N, L, V] {
   /** Create a comment node with the given text value. Values that are not strings evaluate to BOTTOM. */
   def createComment(value: V): N
 
+  /** Creates a root node with the given children. The second parameter specifies whether the root represents a
+    * (result tree) fragment or a complete document (the latter can only have a single element child).
+    */
+  def createRoot(children: L, isResultTreeFragment: Boolean): N
+
   /** Create an emtpy list containing no nodes */
   def createEmptyList(): L
 
   /** Create a list containing a single abstract node */
   def createSingletonList(node: N): L
+
+  /** Concatenates two lists. */
+  def concatLists(list1: L, list2: L): L
+
+  /** Gets the first node out of a node list. BOTTOM is returned if the list is empty or BOTTOM. */
+  def getFirst(list: L): N
+
+  /** Gets the size of a node list */
+  def getNodeListSize(list: L): V
 
   /** Get the root node of a given node */
   def getRoot(node: N): N
@@ -83,49 +97,29 @@ trait XMLDomain[N, L, V] {
   /** Get the parent of given node. If the node has no parent (root node), BOTTOM is returned. */
   def getParent(node: N): N
 
-  /** Predicate function that checks whether a node is in a given list of nodes.
-    * The first result is a node that is known to be in that list (this is BOTTOM if the node definitely
-    * is not in the list), the second result is a node that might not be in the list (this is
-    * BOTTOM if the node definitely is contained in the list). The two results are not necessarily disjoint.
-    */
-  def isContainedIn(node: N, list: L): (N, N)
-
-  /** Concatenates two lists. */
-  def concatLists(list1: L, list2: L): L
-
   /** Partitions a node list in such a way that the first result contains all attribute nodes from the beginning of
     * the list (as soon as there are other node types in the list, attributes are ignored) and the second result
     * contains all other nodes.
     */
   def partitionAttributes(list: L): (L, L)
 
-  /** Creates a root node with the given children. The second parameter specifies whether the root represents a
-    * (result tree) fragment or a complete document (the latter can only have a single element child).
-    */
-  def createRoot(children: L, isFragment: Boolean): N
-
   /** Copies a list of nodes, so that they can be used in the output.
     * A root node is copied by copying its child (not wrapped in a root node).
     */
   def copyToOutput(list: L): L
 
-  /** Evaluates a function for every element in the given list, providing also the index of each element in the list.
-    * The resulting lists are flattened into a single list.
-    */
-  def flatMapWithIndex(list: L, f: (N, V) => L): L
-
-  /** Gets the size of a node list */
-  def getNodeListSize(list: L): V
-
   /** Gets the string-value of a node, as specified in the XSLT specification */
   def getStringValue(node: N): V
+
+  /** Concatenates the values of all text nodes in the list. List elements that are not text nodes are ignored. */
+  def getConcatenatedTextNodeValues(list: L): V
 
   /** Predicate function that checks whether a node is a root node.
     * The first result is a node that is known to be a root node (this is BOTTOM if the node definitely
     * is not a root node), the second result is a node that might not be a root node (this is
     * BOTTOM if the node definitely is a root node). The two results are not necessarily disjoint.
     */
-  def isRoot(node: N, allowFragments: Boolean = true): (N, N)
+  def isRoot(node: N, allowResultTreeFragments: Boolean = true): (N, N)
 
   /** Predicate function that checks whether a node is an element node.
     * The first result is a node that is known to be an element node (this is BOTTOM if the node definitely
@@ -168,13 +162,22 @@ trait XMLDomain[N, L, V] {
     */
   def getNodeName(node: N): V
 
-  /** Concatenates the values of all text nodes in the list. List elements that are not text nodes are ignored. */
-  def getConcatenatedTextNodeValues(list: L): V
+  /** Evaluates a function for every element in the given list, providing also the index of each element in the list.
+    * The resulting lists are flattened into a single list.
+    */
+  def flatMapWithIndex(list: L, f: (N, V) => L): L
 
   /** Filters a list using a given predicate function. The predicate function should never return a node
   * (as its first result) that is less precise than the input node.
   */
   def filter(list: L, predicate: N => (N, N)): L
+
+  /** Predicate function that checks whether a node is in a given list of nodes.
+    * The first result is a node that is known to be in that list (this is BOTTOM if the node definitely
+    * is not in the list), the second result is a node that might not be in the list (this is
+    * BOTTOM if the node definitely is contained in the list). The two results are not necessarily disjoint.
+    */
+  def isContainedIn(node: N, list: L): (N, N)
 
   /** Get a list of all descendants of a node. */
   def getDescendants(node: N): L = {
@@ -183,7 +186,4 @@ trait XMLDomain[N, L, V] {
       case (n, _) => concatLists(createSingletonList(n), getDescendants(n))
     })
   }
-
-  /** Gets the first node out of a node list. BOTTOM is returned if the list is empty or BOTTOM. */
-  def getFirst(list: L): N
 }

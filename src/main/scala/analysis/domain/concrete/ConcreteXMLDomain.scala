@@ -110,9 +110,9 @@ object ConcreteXMLDomain {
     /** Creates a root node with the given children. The second parameter specifies whether the root represents a
       * (result tree) fragment or a complete document (the latter can only have a single element child).
       */
-    override def createRoot(children: L, isFragment: Boolean): N = children match {
+    override def createRoot(children: L, isResultTreeFragment: Boolean): N = children match {
       case Top => Top
-      case Value(ch) if isFragment => Value(XMLRoot(ch)) // for fragments, everything is allowed
+      case Value(ch) if isResultTreeFragment => Value(XMLRoot(ch)) // for fragments, everything is allowed
       case Value(ch@List(single: XMLElement)) => Value(XMLRoot(ch))
       case _ => Bottom
     }
@@ -164,11 +164,11 @@ object ConcreteXMLDomain {
       * is not a root node), the second result is a node that might not be a root node (this is
       * BOTTOM if the node definitely is a root node). The two results are not necessarily disjoint.
       */
-    override def isRoot(node: N, allowFragments: Boolean): (N, N) = node match {
+    override def isRoot(node: N, allowResultTreeFragments: Boolean): (N, N) = node match {
       case Bottom => (Bottom, Bottom)
       case Top => (Top, Top)
       case Value(n) => n match {
-        case XMLRoot(_) if allowFragments => (node, Bottom)
+        case XMLRoot(_) if allowResultTreeFragments => (node, Bottom)
         case XMLRoot(List(single: XMLElement)) => (node, Bottom) // only a single element child if fragments are not allowed
         case _ => (Bottom, node)
       }
