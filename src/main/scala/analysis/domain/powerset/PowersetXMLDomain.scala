@@ -108,20 +108,6 @@ object PowersetXMLDomain {
       case _ => None // at least one operand is TOP and the other is not BOTTOM
     }
 
-    /** Partitions a node list in such a way that the first result contains all attribute nodes from the beginning of
-      * the list (as soon as there are other node types in the list, attributes are ignored) and the second result
-      * contains all other nodes.
-      */
-    override def partitionAttributes(list: L): (L, L) = list match {
-      case None => (None, None) // don't know anything about attributes or other nodes
-      case Some(s) => val (attr, children) = s.map { l =>
-        val resultAttributes = l.takeWhile(n => n.isInstanceOf[XMLAttribute])
-        val resultChildren = l.filter(n => !n.isInstanceOf[XMLAttribute])
-        (resultAttributes, resultChildren)
-      }.unzip
-      (Some(attr), Some(children))
-    }
-
     /** Creates a root node with the given children. The second parameter specifies whether the root represents a
       * (result tree) fragment or a complete document (the latter can only have a single element child).
       */
@@ -303,8 +289,27 @@ object PowersetXMLDomain {
       }))
     }
 
+    /** Takes the longest prefix of a list where all elements fulfill a given predicate function.
+      * The predicate function should never return a node (as its first result) that is less precise than the input node.
+      */
+    override def takeWhile(list: L, predicate: N => (N, N)): L = list match {
+      case None => None
+      case Some(s) => Some(s.map(_.takeWhile { n =>
+        val node: N = Some(Set(n))
+        val (resultTrue, _) = predicate(node)
+        assert(lessThanOrEqual(resultTrue, node))
+        resultTrue.get.toList match {
+          case Nil => false // list without elements -> element was filtered out
+          case first :: Nil => true // list with one element -> element was not filtered out
+          case _ =>
+            // list with more than one element -> this should not happen in this domain
+            throw new AssertionError("Predicate for takeWhile returned node with more than one possibility.")
+        }
+      }))
+    }
+
     /** Evaluates a function for every element in the given list, providing also the index of each element in the list.
-      * The resulting lists are flattened into a single list.
+      * The resulting lists are flattened into a single list by concatenation.
       */
     override def flatMapWithIndex(list: L, f: (N, V) => L): L = list match {
       case None => // list with unknown number of unknown elements

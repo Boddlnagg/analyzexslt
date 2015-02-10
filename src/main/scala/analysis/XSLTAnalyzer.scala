@@ -115,7 +115,11 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     instruction match {
       case CreateElementInstruction(name, content) =>
         val innerNodes = processAll(sheet, content, context, recursionLimit)
-        val (attributes, children) = xmlDom.partitionAttributes(innerNodes)
+        val attributes = xmlDom.takeWhile(innerNodes, n => xmlDom.isAttribute(n))
+        val children = xmlDom.filter(innerNodes, n => {
+          val (isAttr, isNotAttr) = xmlDom.isAttribute(n)
+          (isNotAttr, isAttr) // swap positive and negative results of isAttribute
+        })
         val evaluatedName = xpathDom.concatAllStrings(name.map {
           case Left(str) => xpathDom.liftString(str)
           case Right(expr) => xpathDom.toStringValue(xpathAnalyzer.evaluate(expr, xsltToXPathContext(context)))
@@ -159,7 +163,11 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         val (elem, notElem) = xmlDom.isElement(notRoot)
         if (!xmlDom.lessThanOrEqual(elem, xmlDom.bottom)) { // elem is not BOTTOM -> node might be an element node
           val innerNodes = processAll(sheet, content, context, recursionLimit)
-          val (resultAttributes, resultChildren) = xmlDom.partitionAttributes(innerNodes)
+          val resultAttributes = xmlDom.takeWhile(innerNodes, n => xmlDom.isAttribute(n))
+          val resultChildren = xmlDom.filter(innerNodes, n => {
+            val (isAttr, isNotAttr) = xmlDom.isAttribute(n)
+            (isNotAttr, isAttr) // swap positive and negative results of isAttribute
+          })
           val elemResult = xmlDom.createElement(xmlDom.getNodeName(elem), resultAttributes, resultChildren)
           result = xmlDom.joinLists(result, xmlDom.createSingletonList(elemResult))
         }

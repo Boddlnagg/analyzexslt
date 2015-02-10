@@ -102,12 +102,6 @@ trait XMLDomain[N, L, V] {
     */
   def getNodeName(node: N): V
 
-  /** Partitions a node list in such a way that the first result contains all attribute nodes from the beginning of
-    * the list (as soon as there are other node types in the list, attributes are ignored) and the second result
-    * contains all other nodes.
-    */
-  def partitionAttributes(list: L): (L, L)
-
   /** Copies a list of nodes, so that they can be used in the output.
     * A root node is copied by copying its child (not wrapped in a root node).
     */
@@ -174,8 +168,13 @@ trait XMLDomain[N, L, V] {
     */
   def filter(list: L, predicate: N => (N, N)): L
 
+  /** Takes the longest prefix of a list where all elements fulfill a given predicate function.
+    * The predicate function should never return a node (as its first result) that is less precise than the input node.
+    */
+  def takeWhile(list: L, predicate: N => (N, N)): L
+
   /** Evaluates a function for every element in the given list, providing also the index of each element in the list.
-    * The resulting lists are flattened into a single list.
+    * The resulting lists are flattened into a single list by concatenation.
     */
   def flatMapWithIndex(list: L, f: (N, V) => L): L
 

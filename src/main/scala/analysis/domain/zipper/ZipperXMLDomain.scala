@@ -196,13 +196,6 @@ object ZipperXMLDomain {
     /** Concatenates two lists. */
     override def concatLists(list1: L, list2: L): L = list1 ++ list2
 
-    /** Partitions a node list in such a way that the first result contains all attribute nodes from the beginning of
-      * the list (as soon as there are other node types in the list, attributes are ignored) and the second result
-      * contains all other nodes.
-      */
-    override def partitionAttributes(list: L): (L, L) =
-      (list.takeWhile(n => isAttribute(n)._1), list.filter(n => isAttribute(n)._2))
-
     /** Creates a root node with the given children. The second parameter specifies whether the root represents a
       * (result tree) fragment or a complete document (the latter can only have a single element child).
       */
@@ -236,7 +229,7 @@ object ZipperXMLDomain {
     })
 
     /** Evaluates a function for every element in the given list, providing also the index of each element in the list.
-      * The resulting lists are flattened into a single list.
+      * The resulting lists are flattened into a single list by concatenation.
       */
     override def flatMapWithIndex(list: L, f: (N, V) => L): L = {
       def flatMapWithIndexInternal(list: L, currentIndex: V, f: (N, V) => L): L = list match {
@@ -478,6 +471,11 @@ object ZipperXMLDomain {
       * (as its first result) that is less precise than the input node.
       */
     override def filter(list: L, predicate: N => (N, N)): L = list.filter(n => predicate(n)._1)
+
+    /** Takes the longest prefix of a list where all elements fulfill a given predicate function.
+      * The predicate function should never return a node (as its first result) that is less precise than the input node.
+      */
+    override def takeWhile(list: L, predicate: N => (N, N)): L = list.takeWhile(n => predicate(n)._1)
 
     /** Gets the first node out of a node list. BOTTOM is returned if the list is empty or BOTTOM. */
     override def getFirst(list: L): N = list.first

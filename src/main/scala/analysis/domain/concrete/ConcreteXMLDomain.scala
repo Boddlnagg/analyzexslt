@@ -94,19 +94,6 @@ object ConcreteXMLDomain {
       (l1, l2) => l1 ++ l2
     }
 
-    /** Partitions a node list in such a way that the first result contains all attribute nodes from the beginning of
-      * the list (as soon as there are other node types in the list, attributes are ignored) and the second result
-      * contains all other nodes.
-      */
-    override def partitionAttributes(list: L): (L, L) = list match {
-      case Top => (Top, Top)
-      case Bottom => (Bottom, Bottom)
-      case Value(l) =>
-        val resultAttributes = l.takeWhile(n => n.isInstanceOf[XMLAttribute]) // NOTE: takeWhile, not filter!
-        val resultChildren = l.filter(n => !n.isInstanceOf[XMLAttribute])
-        (Value(resultAttributes), Value(resultChildren))
-    }
-
     /** Creates a root node with the given children. The second parameter specifies whether the root represents a
       * (result tree) fragment or a complete document (the latter can only have a single element child).
       */
@@ -126,7 +113,7 @@ object ConcreteXMLDomain {
     }))
 
     /** Evaluates a function for every element in the given list, providing also the index of each element in the list.
-      * The resulting lists are flattened into a single list.
+      * The resulting lists are flattened into a single list by concatenation.
       */
     override def flatMapWithIndex(list: L, f: (N, V) => L): L = list match {
       case Top => Top
@@ -273,6 +260,22 @@ object ConcreteXMLDomain {
       case Top => Top
       case Bottom => Bottom
       case Value(l) => Value(l.filter { node =>
+        val (predicateTrue, _) = predicate(Value(node))
+        predicateTrue match {
+          case Bottom => false
+          case Value(n) if n == node => true
+          case _  => throw new AssertionError("predicate should never return Top or a different element from what it was given")
+        }
+      })
+    }
+
+    /** Takes the longest prefix of a list where all elements fulfill a given predicate function.
+      * The predicate function should never return a node (as its first result) that is less precise than the input node.
+      */
+    override def takeWhile(list: L, predicate: N => (N, N)): L = list match {
+      case Top => Top
+      case Bottom => Bottom
+      case Value(l) => Value(l.takeWhile { node =>
         val (predicateTrue, _) = predicate(Value(node))
         predicateTrue match {
           case Bottom => false
