@@ -12,7 +12,7 @@ protected object OuterXPATH extends TypedPowersetXPathDomain[L]
   * the remaining method implementations.
   */
 object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
-  type V = TypedXPathValue[L]
+  type V = (Set[Boolean], Option[Set[Double]], Option[Set[String]], L)
 
   override val xmlDom = XML
   override val xpathDom = XPATH
@@ -24,7 +24,7 @@ object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
       * The output is created bottom-up, so children are always created before their parent nodes.
       * Consecutive text node children must be merged into a single text node by this method.
       */
-    override def createElement(name: V, attributes: L, children: L): N = (name.str, attributes, children) match {
+    override def createElement(name: V, attributes: L, children: L): N = (name._3, attributes, children) match {
       case (Some(s), _, _) if s.isEmpty => BOT
       case (_, Some(s), _) if s.isEmpty => BOT
       case (_, _, Some(s)) if s.isEmpty => BOT
@@ -41,7 +41,7 @@ object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
     /** Create an attribute node with the given name and text value.
       * Values that are not strings evaluate to BOTTOM.
       */
-    override def createAttribute(name: V, value: V): N = (name.str, value.str) match {
+    override def createAttribute(name: V, value: V): N = (name._3, value._3) match {
       case (Some(s), _) if s.isEmpty => BOT
       case (_, Some(s)) if s.isEmpty => BOT
       case (None, _) | (_, None) => None
@@ -51,7 +51,7 @@ object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
     /** Create a text node with the given text value. Values that are not strings evaluate to BOTTOM.
       * The empty string also evaluates to BOTTOM, because text nodes with no content are not allowed.
       */
-    override def createTextNode(value: V): N = value.str match {
+    override def createTextNode(value: V): N = value._3 match {
       case None => None
       case Some(s) => Some(s.collect {
         case str if str != "" => XMLTextNode(str)
@@ -59,7 +59,7 @@ object TypedPowersetDomain extends Domain[N, L, OuterXPATH.V] {
     }
 
     /** Create a comment node with the given text value. Values that are not strings evaluate to BOTTOM. */
-    override def createComment(value: V): N = value.str match {
+    override def createComment(value: V): N = value._3 match {
       case None => None
       case Some(s) => Some(s.collect {
         case str => XMLComment(str)

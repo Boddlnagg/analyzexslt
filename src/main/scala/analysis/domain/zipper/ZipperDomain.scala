@@ -1,10 +1,9 @@
 package analysis.domain.zipper
 
 import analysis.domain.Domain
-import analysis.domain.Lattice
 import analysis.domain.zipper.ZipperXMLDomain.{L, N}
 import analysis.domain.zipper.ZipperXMLDomain._
-import analysis.domain.powerset.{TypedXPathValue, TypedPowersetXPathDomain}
+import analysis.domain.powerset.TypedPowersetXPathDomain
 
 protected object OuterXPATH extends TypedPowersetXPathDomain[L]
 
@@ -12,7 +11,7 @@ protected object OuterXPATH extends TypedPowersetXPathDomain[L]
   * the remaining method implementations.
   */
 object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
-  type V = TypedXPathValue[L]
+  type V = (Set[Boolean], Option[Set[Double]], Option[Set[String]], L)
 
   override val xmlDom = XML
   override val xpathDom = XPATH
@@ -97,7 +96,7 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
         case res => mergeConsecutiveTextNodes(res.asInstanceOf[ZListElement[N]])._1
       }
 
-      val desc: Set[NodeDescriptor] = name.str match {
+      val desc: Set[NodeDescriptor] = name._3 match {
         case None => Set(AnyElement)
         case Some(s) => s.map { n => Element(n) }
       }
@@ -111,7 +110,7 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
       * The empty string also evaluates to BOTTOM, because text nodes with no content are not allowed.
       */
     override def createTextNode(value: V): N = {
-      val desc: Set[NodeDescriptor] = value.str match {
+      val desc: Set[NodeDescriptor] = value._3 match {
         case None => Set(AnyText)
         case Some(s) => s.collect {
           case str if str != "" => Text(str)
@@ -124,7 +123,7 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
 
     /** Create a comment node with the given text value. Values that are not strings evaluate to BOTTOM. */
     override def createComment(value: V): N = {
-      val desc: Set[NodeDescriptor] = value.str match {
+      val desc: Set[NodeDescriptor] = value._3 match {
         case None => Set(AnyComment)
         case Some(s) => s.collect {
           case str => Comment(str)
@@ -139,7 +138,7 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
       * Values that are not strings evaluate to BOTTOM.
       */
     override def createAttribute(name: V, value: V): N = {
-      val desc: Set[NodeDescriptor] = (name.str, value.str) match {
+      val desc: Set[NodeDescriptor] = (name._3, value._3) match {
         case (Some(s), _) if s.isEmpty => Set()
         case (_, Some(s)) if s.isEmpty => Set()
         case (None, _) => Set(AnyAttribute) // don't know the name
@@ -147,7 +146,7 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
         case (Some(s1), Some(s2)) => s1.cross(s2).map { case (n, v) => Attribute(n, v)}.toSet
       }
       val tree = Subtree(desc, ZNil(), ZNil()) // attribute nodes have no children or attributes
-      val path: Set[Path] = name.str match {
+      val path: Set[Path] = name._3 match {
           case None => Set[Path](DescendantStep(AnyAttributeStep, RootPath(isFragment = false)), DescendantStep(AnyAttributeStep, RootPath(isFragment = true)))
           case Some(s) => s.flatMap(n => Set(DescendantStep(NamedAttributeStep(n), RootPath(isFragment = false)), DescendantStep(NamedAttributeStep(n), RootPath(isFragment = true))))
       }
