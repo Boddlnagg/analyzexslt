@@ -5,7 +5,7 @@ import xslt._
 import util.ProcessingError
 import analysis.domain.Domain
 import scala.util.control.Breaks._
-import scala.collection.mutable.{Map => MutableMap, Set => MutableSet}
+import scala.collection.mutable.{MutableList => MutList, Set => MutSet}
 
 /** Class to analyze XSLT stylesheets using abstract interpretation */
 class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
@@ -27,7 +27,11 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   private def applyTemplates(sheet: XSLTStylesheet, sources: L, mode: Option[String], globalVariables: Map[String, V], localVariables: Map[String, V], params: Map[String, V], recursionLimit: Option[Int]): L = {
     xmlDom.flatMapWithIndex(sources, (node, index) => {
       val templates = chooseTemplates(sheet, node, mode)
-      xmlDom.joinAllLists(templates.map { case (tmpl, specificNode) =>
+      // use templates.reverse.view as performance optimization:
+      // - reverse list, so most general template comes first
+      // - and when this evaluates to TOP, the remaining templates are not even looked at
+      //   because joinAllLists returns early
+      xmlDom.joinAllLists(templates.reverse.view.map { case (tmpl, specificNode) =>
         val context = AbstractXSLTContext[N, L, V](specificNode, sources, xpathDom.add(index, xpathDom.liftNumber(1)), globalVariables, localVariables)
         instantiateTemplate(sheet, tmpl, context, params, recursionLimit)
       })
@@ -55,8 +59,8 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     processAll(sheet, tmpl.content, context.replaceLocalVariables(evaluatedParams), recursionLimit.map(_ - 1))
   }
 
-  private def chooseTemplates(sheet: XSLTStylesheet, node: N, mode: Option[String]): Map[XSLTTemplate, N] = {
-    val result = MutableMap[XSLTTemplate, N]()
+  private def chooseTemplates(sheet: XSLTStylesheet, node: N, mode: Option[String]): List[(XSLTTemplate, N)] = {
+    val result = MutList[(XSLTTemplate, N)]()
     val matchable = sheet.matchableTemplates.getOrElse(mode, Map())
     var currentNode = node
     breakable {
@@ -64,7 +68,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       matchable.foreach { case (path, tpl) =>
         val (matches, notMatches) = patternMatcher.matches(currentNode, path)
         if (!xmlDom.lessThanOrEqual(matches, xmlDom.bottom))
-          result.put(tpl, matches) // template might match, so add it to possible results
+          result += ((tpl, matches)) // template might match, so add it to possible results
         if (xmlDom.lessThanOrEqual(notMatches, xmlDom.bottom))
           break() // there is nothing left did not match, so we can stop the process
         if (xmlDom.lessThanOrEqual(currentNode, matches))
@@ -74,7 +78,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
         // (we already found the correct template for everything that did match so far)
       }
     }
-    result.toMap
+    result.toList
   }
 
   /** Processes a sequence of XSLT instructions using a new scope (variable definitions are collected
@@ -88,7 +92,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   private def processAll(sheet: XSLTStylesheet, instructions: Seq[XSLTInstruction], context: AbstractXSLTContext[N, L, V], recursionLimit: Option[Int]): L = {
     // remember variable names that were created in this scope so we can throw an error
     // if any of these is shadowed in the SAME scope
-    var scopeVariables = MutableSet[String]()
+    var scopeVariables = MutSet[String]()
 
     val (result, _) = instructions.foldLeft((xmlDom.createEmptyList(), context)) {
       case ((resultNodes, ctx), next) =>

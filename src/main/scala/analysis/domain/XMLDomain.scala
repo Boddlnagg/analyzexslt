@@ -28,8 +28,12 @@ trait XMLDomain[N, L, V] {
   /** Join two node lists. This calculates their supremum (least upper bound). */
   def joinLists(l1: L, l2: L): L
 
-  /** Join a sequence of nodes lists. The supremum of the empty list is BOTTOM. */
-  def joinAllLists(lists: Traversable[L]): L = lists.fold(bottomList)(joinLists)
+  /** Join a sequence of nodes lists. The supremum of the empty list is BOTTOM.
+    * Returns early as soon as the aggregated list is TOP.
+    */
+  def joinAllLists(lists: Iterable[L]): L = lists.fold(bottomList){
+    (l1, l2) => if (lessThanOrEqualLists(topList, l1)) return topList else joinLists(l1, l2)
+  }
 
   /** Compares two elements of the lattice of nodes.
     * Returns true if n1 < n2 or n1 = n2, false if n1 > n2 or if they are incomparable.

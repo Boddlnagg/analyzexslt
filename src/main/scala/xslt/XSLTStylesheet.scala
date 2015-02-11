@@ -53,6 +53,6 @@ class XSLTStylesheet(
         case (_, _, priority, importPrecedence) => (importPrecedence, priority) // sort by precedence, then by priority
       }.map {
         case (path, tmpl, _, _) => (path, tmpl) // forget about precedence and priority
-      }.reverse
+      }.reverse // reverse order, so highest precedence comes first
     }
 }
