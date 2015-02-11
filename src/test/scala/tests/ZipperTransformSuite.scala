@@ -1,6 +1,5 @@
 package tests
 
-import analysis.domain.zipper.ZipperXMLDomain._
 import analysis.domain.zipper._
 import analysis.domain.XMLParser
 import data.TestData
@@ -13,8 +12,11 @@ class ZipperTransformSuite extends FunSuite {
   val xpathDom = ZipperDomain.xpathDom
   val parser = new XMLParser(ZipperDomain)
 
-  def transform(xslt: Elem, source: ZipperXMLDomain.N = xmlDom.top, disableBuiltinTemplates: Boolean = true, limitRecursion: Option[Int] = None) =
-    TransformHelper.transformAbstract(xslt: Elem, source, ZipperDomain, disableBuiltinTemplates, limitRecursion)
+  def transform(xslt: Elem, source: ZipperXMLDomain.N = xmlDom.top, disableBuiltinTemplates: Boolean = true, limitRecursion: Option[Int] = None) = {
+    val res = TransformHelper.transformAbstract(xslt: Elem, source, ZipperDomain, disableBuiltinTemplates, limitRecursion)
+    println(res._1.prettyPrint)
+    res
+  }
 
   test("Simple literal result element") {
     val xslt =

@@ -15,10 +15,11 @@ object Main {
     val files: MutList[File] = MutList()
 
     // TODO: these must be configurable
-    val analyzeFeatures: Boolean = true
-    val inputFileName = "stylesheet.xsl"
-    val recursionLimit = Some(5)
+    val analyzeFeatures: Boolean = false
+    val inputFileName = "reduced.xsl"
+    val recursionLimit = Some(4)
     val disableBuiltinTemplates = false
+    val prettyPrintOutput = true
 
     // TODO: use configurable glob file pattern ./xslt-collection/*/stylesheet.xsl
     for (dir <- new File("./xslt-collection").listFiles.toIterator if dir.isDirectory) {
@@ -48,10 +49,12 @@ object Main {
               case e: UnsupportedFeatureException => println(f"Could not analyze features in $file: Unsupported feature: ${e.getMessage}")
             }
           } else {
+            println(f"Running abstract interpreter for $file:")
             val stylesheet = XSLTParser.parseStylesheet(xml, disableBuiltinTemplates)
             val analyzer = new XSLTAnalyzer(ZipperDomain)
             val (subtree, path) = analyzer.transform(stylesheet, ZipperDomain.xmlDom.top, recursionLimit)
-            println(subtree)
+            if (prettyPrintOutput) println(subtree.prettyPrint)
+            else println(subtree)
           }
         case _ => ()
       }
