@@ -1,5 +1,15 @@
-Subtree(Set(Root),[],[
-	Subtree(Set(Element(html)),[Set(AnyAttribute)*],[
-		Subtree(Set(AnyText, AnyElement, AnyComment),[Set(AnyAttribute)*],[TOP])*
-	])
-])
+NOTE: Built-in templates were disabled for this result!
+
+<html>
+	<{body,head} style="font-family: sans-serif;color: rgb(51, 51, 51);"?>
+		<{title,div} any-attributes>
+			<{li,head,p,strong,pre,kbd,a,th,tr,html,h2,samp,td,body,h1,thead,h4,tbody,ol,table,code,ul,h3,tfoot,hr,div,title,h5,br,span,![ANY-TEXT]} any-attributes>
+				<{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
+				...
+			</{li,head,p,strong,pre,kbd,a,th,tr,html,h2,samp,td,body,h1,thead,h4,tbody,ol,table,code,ul,h3,tfoot,hr,div,title,h5,br,span}>
+			...
+		</{title,div}>
+		...
+	</{body,head}>
+	...
+</html>

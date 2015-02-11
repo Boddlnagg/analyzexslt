@@ -1,112 +1,140 @@
 NOTE: Built-in templates were disabled for this result!
 
-Subtree(Set(Root),[],[
-	Subtree(Set(Element(li), Element(html), Element(h2)),[Set(Attribute(xmlns-svg,http://www.w3.org/2000/svg))*],[
-		NIL+Subtree(Set(Element(b), Element(head), Element(object), AnyText),[Set(Attribute(CLASSID,clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2), Attribute(id,AdobeSVG))*],[
-			NIL+Subtree(Set(Text(Color: ), Text(Weight: ), Element(title), Text(Length: )),[],[
-				NIL+Subtree(Set(Text(A simple HTML page)),[],[])
-			]),
-			NIL+Subtree(Set(Element(style)),[Set(Attribute(type,text/css))*],[
-				Subtree(Set(Text(\n		body { font-family: Verdana, Times, Serif; }\n	    )),[],[])
-			])
-		]),
-		NIL+Subtree(Set(AnyText, Element(body), Element(head)),[],[
-			NIL+Subtree(Set(Element(table), Element(title)),[Set(Attribute(style,border: solid thin black))*],[
-				Subtree(Set(Element(tr), Text(A simple HTML page)),[],[
-					NIL+Subtree(Set(Element(td)),[],[
-						Subtree(Set(Element(a)),[Set(Attribute(href,mammoth.html))*],[
-							Subtree(Set(Text(Visit the Mammoth zone!)),[],[])
-						]),
-						Subtree(Set(Text( - )),[],[])
-					]),
-					Subtree(Set(Element(td)),[],[
-						Subtree(Set(Element(a)),[Set(Attribute(href,play.html))*],[
-							Subtree(Set(Text(Play Pteranodon Poker)),[],[])
-						])
-					])
-				])
-			]),
-			Subtree(Set(Element(h1), Element(style)),[Set(Attribute(type,text/css))*],[
-				Subtree(Set(Text(My big list of dinosaurs), Text(\n		body { font-family: Verdana, Times, Serif; }\n	    )),[],[])
-			]),
-			Subtree(Set(Element(li), AnyText, Element(html), Element(h2), Element(ul), Element(hr)),[Set(Attribute(xmlns-svg,http://www.w3.org/2000/svg))*],[
-				Subtree(Set(Element(li), Element(head), AnyText, Element(object), Element(b), Element(html), Element(h2), Element(body), Element(ul)),[Set(Attribute(xmlns-svg,http://www.w3.org/2000/svg), Attribute(CLASSID,clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2), Attribute(id,AdobeSVG))*],[
-					Subtree(Set(Element(li), Element(head), AnyText, Element(object), Element(style), Element(b), Element(html), Element(h2), Element(body), Element(h1), Element(table), Element(ul), Element(svg-svg), Element(hr), Element(title)),[Set(Attribute(preserveAspectRatio,none), NamedAttribute(viewBox), Attribute(type,text/css), Attribute(xmlns-svg,http://www.w3.org/2000/svg), Attribute(id,AdobeSVG), Attribute(height,400px), Attribute(style,border: solid thin black), Attribute(CLASSID,clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2), Attribute(width,400px))*],[
-						Subtree(Set(AnyText, AnyElement, AnyComment),[Set(AnyAttribute)*],[TOP])*
-					])*
-				])*
-			])*
-		]),
-		NIL+Subtree(Set(Element(body)),[],[
-			Subtree(Set(Element(h1)),[],[
-				Subtree(Set(Text(Dinosaur graphs)),[],[])
-			]),
-			Subtree(Set(Element(h2)),[],[
-				Subtree(Set(Text(Dinosaur weights)),[],[])
-			]),
-			Subtree(Set(Element(svg-svg)),[Set(Attribute(preserveAspectRatio,none), NamedAttribute(viewBox), Attribute(height,400px), Attribute(width,400px))*],[
-				Subtree(Set(Element(svg-style)),[Set(Attribute(type,text/css))*],[
-					Subtree(Set(Text(\n	    text { fill:black; font-size:12; font-family:Arial }\n	    .gridline { stroke: red; stroke-opacity: 0.2; }\n	    .axis { stroke: blue; stroke-opacity: 1.0; }\n	    .bar { stroke:rgb(128,128,255); stroke-width:1; filter:url(#Drop_Shadow) }\n	    .barLabel { writing-mode: tb; font-size: 12; }\n	    .axisLabel { text-anchor: end; }\n	    .title { text-anchor: middle; font-size: 24; }\n	)),[],[])
-				]),
-				Subtree(Set(Element(svg-defs)),[],[
-					Subtree(Set(Element(svg-filter)),[Set(Attribute(x,-10%), Attribute(height,150%), Attribute(filterUnits,objectBoundingBox), Attribute(y,-10%), Attribute(id,Drop_Shadow), Attribute(width,150%))*],[
-						Subtree(Set(Element(svg-feGaussianBlur)),[Set(Attribute(result,blurredAlpha), Attribute(stdDeviation,3), Attribute(in,SourceAlpha))*],[]),
-						Subtree(Set(Element(svg-feOffset)),[Set(Attribute(result,offsetBlurredAlpha), Attribute(dy,3), Attribute(dx,3), Attribute(in,blurredAlpha))*],[]),
-						Subtree(Set(Element(svg-feFlood)),[Set(Attribute(style,flood-color:rgb(0,0,0);flood-opacity:0.65), Attribute(result,flooded))*],[]),
-						Subtree(Set(Element(svg-feComposite)),[Set(Attribute(result,coloredShadow), Attribute(in2,offsetBlurredAlpha), Attribute(operator,in), Attribute(in,flooded))*],[]),
-						Subtree(Set(Element(svg-feComposite)),[Set(Attribute(operator,over), Attribute(in2,coloredShadow), Attribute(in,SourceGraphic))*],[])
-					])
-				]),
-				Subtree(Set(Element(svg-line)),[Set(Attribute(class,gridline), Attribute(x2,100), Attribute(y2,280), Attribute(x1,100), Attribute(y1,0))*],[]),
-				Subtree(Set(Element(svg-line)),[Set(Attribute(class,gridline), Attribute(y2,280), Attribute(x1,120), NamedAttribute(x2), Attribute(x1,100), Attribute(y1,0), Attribute(y2,0))*],[]),
-				Subtree(Set(Element(svg-line)),[Set(Attribute(x1,140), Attribute(stroke,blue), Attribute(class,gridline), Attribute(class,axis), Attribute(y2,280), Attribute(y1,20), Attribute(y1,280), NamedAttribute(x2), Attribute(x1,100), Attribute(y2,20), Attribute(y1,0), Attribute(y2,0))*],[]),
-				Subtree(Set(Element(svg-text), Element(svg-line)),[Set(NamedAttribute(x), Attribute(stroke,blue), Attribute(class,gridline), Attribute(class,axis), Attribute(y2,280), Attribute(class,axisLabel), Attribute(y2,40), Attribute(y1,20), Attribute(y,340), Attribute(y1,280), NamedAttribute(x2), Attribute(x1,100), Attribute(y2,20), Attribute(y1,40), Attribute(y1,0), Attribute(y2,0), Attribute(x1,160))*],[]),
-				Subtree(Set(Element(svg-line), Element(svg-text)),[Set(NamedAttribute(x), Attribute(x1,180), Attribute(text-anchor,middle), Attribute(stroke,blue), Attribute(class,gridline), Attribute(class,axis), Attribute(y1,60), Attribute(y2,280), Attribute(class,axisLabel), Attribute(y2,40), Attribute(y1,20), Attribute(y,340), Attribute(y1,280), NamedAttribute(x2), Attribute(x1,100), Attribute(y2,20), Attribute(y,290), Attribute(y1,40), Attribute(y1,0), Attribute(y2,0), Attribute(y2,60))*],[
-					NIL+Subtree(Set(Text(0)),[],[])
-				]),
-				Subtree(Set(Element(svg-text), Element(svg-line)),[Set(NamedAttribute(x), Attribute(x1,200), Attribute(text-anchor,middle), Attribute(y,80), Attribute(y1,80), Attribute(stroke,blue), Attribute(class,gridline), Attribute(class,axis), Attribute(y1,60), Attribute(y2,280), Attribute(class,axisLabel), Attribute(y2,80), Attribute(y2,40), Attribute(y1,20), Attribute(y,340), Attribute(y1,280), NamedAttribute(x2), Attribute(x1,100), Attribute(y2,20), Attribute(y,290), Attribute(y1,40), Attribute(y1,0), Attribute(y2,0), Attribute(y2,60), Attribute(writing-mode,tb))*],[
-					NIL+Subtree(Set(Text(Weight / tons), Text(40), Text(0)),[],[])
-				]),
-				Subtree(Set(AnyText, AnyElement, AnyComment),[Set(AnyAttribute)*],[TOP])*
-			]),
-			Subtree(Set(Element(h2)),[],[
-				Subtree(Set(Text(Dinosaur heights)),[],[])
-			]),
-			Subtree(Set(Element(svg-svg)),[Set(Attribute(preserveAspectRatio,none), NamedAttribute(viewBox), Attribute(height,400px), Attribute(width,400px))*],[
-				Subtree(Set(Element(svg-style)),[Set(Attribute(type,text/css))*],[
-					Subtree(Set(Text(\n	    text { fill:black; font-size:12; font-family:Arial }\n	    .gridline { stroke: red; stroke-opacity: 0.2; }\n	    .axis { stroke: blue; stroke-opacity: 1.0; }\n	    .bar { stroke:rgb(128,128,255); stroke-width:1; filter:url(#Drop_Shadow) }\n	    .barLabel { writing-mode: tb; font-size: 12; }\n	    .axisLabel { text-anchor: end; }\n	    .title { text-anchor: middle; font-size: 24; }\n	)),[],[])
-				]),
-				Subtree(Set(Element(svg-defs)),[],[
-					Subtree(Set(Element(svg-filter)),[Set(Attribute(x,-10%), Attribute(height,150%), Attribute(filterUnits,objectBoundingBox), Attribute(y,-10%), Attribute(id,Drop_Shadow), Attribute(width,150%))*],[
-						Subtree(Set(Element(svg-feGaussianBlur)),[Set(Attribute(result,blurredAlpha), Attribute(stdDeviation,3), Attribute(in,SourceAlpha))*],[]),
-						Subtree(Set(Element(svg-feOffset)),[Set(Attribute(result,offsetBlurredAlpha), Attribute(dy,3), Attribute(dx,3), Attribute(in,blurredAlpha))*],[]),
-						Subtree(Set(Element(svg-feFlood)),[Set(Attribute(style,flood-color:rgb(0,0,0);flood-opacity:0.65), Attribute(result,flooded))*],[]),
-						Subtree(Set(Element(svg-feComposite)),[Set(Attribute(result,coloredShadow), Attribute(in2,offsetBlurredAlpha), Attribute(operator,in), Attribute(in,flooded))*],[]),
-						Subtree(Set(Element(svg-feComposite)),[Set(Attribute(operator,over), Attribute(in2,coloredShadow), Attribute(in,SourceGraphic))*],[])
-					])
-				]),
-				Subtree(Set(Element(svg-line)),[Set(Attribute(y2,180), Attribute(class,gridline), Attribute(x2,100), Attribute(x1,100), Attribute(y1,0))*],[]),
-				Subtree(Set(Element(svg-line)),[Set(Attribute(y2,180), Attribute(class,gridline), Attribute(x1,120), NamedAttribute(x2), Attribute(x1,100), Attribute(y1,0), Attribute(y2,0))*],[]),
-				Subtree(Set(Element(svg-line)),[Set(Attribute(x1,140), Attribute(stroke,blue), Attribute(y2,180), Attribute(class,gridline), Attribute(class,axis), Attribute(y1,20), NamedAttribute(x2), Attribute(x1,100), Attribute(y2,20), Attribute(y1,180), Attribute(y1,0), Attribute(y2,0))*],[]),
-				Subtree(Set(Element(svg-text), Element(svg-line)),[Set(NamedAttribute(x), Attribute(stroke,blue), Attribute(y2,180), Attribute(class,gridline), Attribute(class,axis), Attribute(class,axisLabel), Attribute(y2,40), Attribute(y1,20), NamedAttribute(x2), Attribute(x1,100), Attribute(y2,20), Attribute(y1,180), Attribute(y1,40), Attribute(y,240), Attribute(y1,0), Attribute(y2,0), Attribute(x1,160))*],[]),
-				Subtree(Set(Element(svg-line), Element(svg-text)),[Set(NamedAttribute(x), Attribute(x1,180), Attribute(text-anchor,middle), Attribute(stroke,blue), Attribute(y2,180), Attribute(y,190), Attribute(class,gridline), Attribute(class,axis), Attribute(y1,60), Attribute(class,axisLabel), Attribute(y2,40), Attribute(y1,20), NamedAttribute(x2), Attribute(x1,100), Attribute(y2,20), Attribute(y1,180), Attribute(y1,40), Attribute(y,240), Attribute(y1,0), Attribute(y2,0), Attribute(y2,60))*],[
-					NIL+Subtree(Set(Text(0)),[],[])
-				]),
-				Subtree(Set(Element(svg-text), Element(svg-line)),[Set(NamedAttribute(x), Attribute(x1,200), Attribute(text-anchor,middle), Attribute(y1,80), Attribute(stroke,blue), Attribute(y2,180), Attribute(y,190), Attribute(class,gridline), Attribute(class,axis), Attribute(y1,60), Attribute(class,axisLabel), Attribute(y2,80), Attribute(y2,40), Attribute(y1,20), NamedAttribute(x2), Attribute(x1,100), Attribute(y2,20), Attribute(y1,180), Attribute(y1,40), Attribute(y,240), Attribute(y1,0), Attribute(y2,0), Attribute(y2,60), Attribute(y,30), Attribute(writing-mode,tb))*],[
-					NIL+Subtree(Set(Text(Length / m), Text(40), Text(0)),[],[])
-				]),
-				Subtree(Set(AnyText, AnyElement, AnyComment),[Set(AnyAttribute)*],[TOP])*
-			]),
-			Subtree(Set(Element(h1)),[],[
-				Subtree(Set(Text(Dinosaur details)),[],[])
-			]),
-			Subtree(Set(Element(li), AnyText, Element(html), Element(h2), Element(ul)),[Set(Attribute(xmlns-svg,http://www.w3.org/2000/svg))*],[
-				Subtree(Set(Element(li), Element(head), AnyText, Element(object), Element(b), Element(html), Element(h2), Element(body), Element(ul)),[Set(Attribute(xmlns-svg,http://www.w3.org/2000/svg), Attribute(CLASSID,clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2), Attribute(id,AdobeSVG))*],[
-					Subtree(Set(Element(li), Element(head), AnyText, Element(object), Element(style), Element(b), Element(html), Element(h2), Element(body), Element(h1), Element(table), Element(ul), Element(svg-svg), Element(hr), Element(title)),[Set(Attribute(preserveAspectRatio,none), NamedAttribute(viewBox), Attribute(type,text/css), Attribute(xmlns-svg,http://www.w3.org/2000/svg), Attribute(id,AdobeSVG), Attribute(height,400px), Attribute(style,border: solid thin black), Attribute(CLASSID,clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2), Attribute(width,400px))*],[
-						Subtree(Set(AnyText, AnyElement, AnyComment),[Set(AnyAttribute)*],[TOP])*
-					])*
-				])*
-			])*
-		])
-	])
-])
+<{li,html,h2} xmlns-svg="http://www.w3.org/2000/svg"?>
+	NIL + <{head,b,object,![ANY-TEXT]} CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? id="AdobeSVG"?>
+		NIL + <{title,![TEXT[Weight: ]],![TEXT[Length: ]],![TEXT[Color: ]]}>
+			NIL + <![TEXT[A simple HTML page]]>
+		</title>
+		NIL + <style type="text/css"?>
+			<![TEXT[
+		body { font-family: Verdana, Times, Serif; }
+	    ]]>
+		</style>
+	</{head,b,object}>
+	NIL + <{body,head,![ANY-TEXT]}>
+		NIL + <{table,title} style="border: solid thin black"?>
+			<{tr,![TEXT[A simple HTML page]]}>
+				NIL + <td>
+					<a href="mammoth.html"?>
+						<![TEXT[Visit the Mammoth zone!]]>
+					</a>
+					<![TEXT[ - ]]>
+				</td>
+				<td>
+					<a href="play.html"?>
+						<![TEXT[Play Pteranodon Poker]]>
+					</a>
+				</td>
+			</tr>
+		</{table,title}>
+		<{h1,style} type="text/css"?>
+			<{![TEXT[My big list of dinosaurs]],![TEXT[
+		body { font-family: Verdana, Times, Serif; }
+	    ]]}>
+		</{h1,style}>
+		<{li,html,h2,ul,hr,![ANY-TEXT]} xmlns-svg="http://www.w3.org/2000/svg"?>
+			<{li,head,object,b,html,h2,body,ul,![ANY-TEXT]} xmlns-svg="http://www.w3.org/2000/svg"? CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? id="AdobeSVG"?>
+				<{li,head,object,style,b,html,h2,body,h1,table,ul,svg-svg,hr,title,![ANY-TEXT]} type="text/css"? style="border: solid thin black"? id="AdobeSVG"? xmlns-svg="http://www.w3.org/2000/svg"? viewBox=*? width="400px"? height="400px"? preserveAspectRatio="none"? CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"?>
+					<{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
+					...
+				</{li,head,object,style,b,html,h2,body,h1,table,ul,svg-svg,hr,title}>
+				...
+			</{li,head,object,b,html,h2,body,ul}>
+			...
+		</{li,html,h2,ul,hr}>
+		...
+	</{body,head}>
+	NIL + <body>
+		<h1>
+			<![TEXT[Dinosaur graphs]]>
+		</h1>
+		<h2>
+			<![TEXT[Dinosaur weights]]>
+		</h2>
+		<svg-svg preserveAspectRatio="none"? viewBox=*? height="400px"? width="400px"?>
+			<svg-style type="text/css"?>
+				<![TEXT[
+	    text { fill:black; font-size:12; font-family:Arial }
+	    .gridline { stroke: red; stroke-opacity: 0.2; }
+	    .axis { stroke: blue; stroke-opacity: 1.0; }
+	    .bar { stroke:rgb(128,128,255); stroke-width:1; filter:url(#Drop_Shadow) }
+	    .barLabel { writing-mode: tb; font-size: 12; }
+	    .axisLabel { text-anchor: end; }
+	    .title { text-anchor: middle; font-size: 24; }
+	]]>
+			</svg-style>
+			<svg-defs>
+				<svg-filter width="150%"? y="-10%"? height="150%"? x="-10%"? filterUnits="objectBoundingBox"? id="Drop_Shadow"?>
+					<svg-feGaussianBlur result="blurredAlpha"? stdDeviation="3"? in="SourceAlpha"? />
+					<svg-feOffset result="offsetBlurredAlpha"? dy="3"? dx="3"? in="blurredAlpha"? />
+					<svg-feFlood style="flood-color:rgb(0,0,0);flood-opacity:0.65"? result="flooded"? />
+					<svg-feComposite result="coloredShadow"? in2="offsetBlurredAlpha"? operator="in"? in="flooded"? />
+					<svg-feComposite operator="over"? in2="coloredShadow"? in="SourceGraphic"? />
+				</svg-filter>
+			</svg-defs>
+			<svg-line class="gridline"? x1="100"? y2="280"? x2="100"? y1="0"? />
+			<svg-line x2=*? y2="0"? class="gridline"? x1="100"? y2="280"? y1="0"? x1="120"? />
+			<svg-line y1="280"? class="axis"? x1="140"? x2=*? y2="0"? class="gridline"? x1="100"? y1="20"? y2="280"? stroke="blue"? y2="20"? y1="0"? />
+			<{svg-text,svg-line} y1="40"? y1="280"? class="axis"? x2=*? class="axisLabel"? x1="160"? y2="0"? class="gridline"? x1="100"? y="340"? y1="20"? y2="280"? stroke="blue"? y2="20"? y1="0"? y2="40"? x=*? />
+			<{svg-line,svg-text} y2="60"? y="290"? y1="40"? y1="280"? text-anchor="middle"? class="axis"? y1="60"? x2=*? class="axisLabel"? y2="0"? class="gridline"? x1="100"? x1="180"? y="340"? y1="20"? y2="280"? stroke="blue"? y2="20"? y1="0"? y2="40"? x=*?>
+				NIL + <![TEXT[0]]>
+			</{svg-line,svg-text}>
+			<{svg-text,svg-line} y2="60"? y="290"? y1="40"? y1="280"? text-anchor="middle"? class="axis"? y1="80"? y1="60"? x2=*? x1="200"? class="axisLabel"? y2="0"? class="gridline"? x1="100"? writing-mode="tb"? y="340"? y="80"? y1="20"? y2="280"? stroke="blue"? y2="20"? y1="0"? y2="80"? y2="40"? x=*?>
+				NIL + <{![TEXT[Weight / tons]],![TEXT[40]],![TEXT[0]]}>
+			</{svg-text,svg-line}>
+			<{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
+			...
+		</svg-svg>
+		<h2>
+			<![TEXT[Dinosaur heights]]>
+		</h2>
+		<svg-svg preserveAspectRatio="none"? viewBox=*? height="400px"? width="400px"?>
+			<svg-style type="text/css"?>
+				<![TEXT[
+	    text { fill:black; font-size:12; font-family:Arial }
+	    .gridline { stroke: red; stroke-opacity: 0.2; }
+	    .axis { stroke: blue; stroke-opacity: 1.0; }
+	    .bar { stroke:rgb(128,128,255); stroke-width:1; filter:url(#Drop_Shadow) }
+	    .barLabel { writing-mode: tb; font-size: 12; }
+	    .axisLabel { text-anchor: end; }
+	    .title { text-anchor: middle; font-size: 24; }
+	]]>
+			</svg-style>
+			<svg-defs>
+				<svg-filter width="150%"? y="-10%"? height="150%"? x="-10%"? filterUnits="objectBoundingBox"? id="Drop_Shadow"?>
+					<svg-feGaussianBlur result="blurredAlpha"? stdDeviation="3"? in="SourceAlpha"? />
+					<svg-feOffset result="offsetBlurredAlpha"? dy="3"? dx="3"? in="blurredAlpha"? />
+					<svg-feFlood style="flood-color:rgb(0,0,0);flood-opacity:0.65"? result="flooded"? />
+					<svg-feComposite result="coloredShadow"? in2="offsetBlurredAlpha"? operator="in"? in="flooded"? />
+					<svg-feComposite operator="over"? in2="coloredShadow"? in="SourceGraphic"? />
+				</svg-filter>
+			</svg-defs>
+			<svg-line y2="180"? class="gridline"? x1="100"? x2="100"? y1="0"? />
+			<svg-line x2=*? y2="0"? y2="180"? class="gridline"? x1="100"? y1="0"? x1="120"? />
+			<svg-line class="axis"? x1="140"? x2=*? y1="180"? y2="0"? y2="180"? class="gridline"? x1="100"? y1="20"? stroke="blue"? y2="20"? y1="0"? />
+			<{svg-text,svg-line} y1="40"? class="axis"? x2=*? y1="180"? class="axisLabel"? x1="160"? y2="0"? y2="180"? class="gridline"? x1="100"? y="240"? y1="20"? stroke="blue"? y2="20"? y1="0"? y2="40"? x=*? />
+			<{svg-line,svg-text} y2="60"? y1="40"? text-anchor="middle"? class="axis"? y1="60"? x2=*? y1="180"? class="axisLabel"? y2="0"? y2="180"? class="gridline"? x1="100"? x1="180"? y="190"? y="240"? y1="20"? stroke="blue"? y2="20"? y1="0"? y2="40"? x=*?>
+				NIL + <![TEXT[0]]>
+			</{svg-line,svg-text}>
+			<{svg-text,svg-line} y2="60"? y1="40"? text-anchor="middle"? class="axis"? y1="80"? y1="60"? x2=*? x1="200"? y1="180"? class="axisLabel"? y2="0"? y2="180"? class="gridline"? y="30"? x1="100"? writing-mode="tb"? y="190"? y="240"? y1="20"? stroke="blue"? y2="20"? y1="0"? y2="80"? y2="40"? x=*?>
+				NIL + <{![TEXT[Length / m]],![TEXT[40]],![TEXT[0]]}>
+			</{svg-text,svg-line}>
+			<{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
+			...
+		</svg-svg>
+		<h1>
+			<![TEXT[Dinosaur details]]>
+		</h1>
+		<{li,html,h2,ul,![ANY-TEXT]} xmlns-svg="http://www.w3.org/2000/svg"?>
+			<{li,head,object,b,html,h2,body,ul,![ANY-TEXT]} xmlns-svg="http://www.w3.org/2000/svg"? CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? id="AdobeSVG"?>
+				<{li,head,object,style,b,html,h2,body,h1,table,ul,svg-svg,hr,title,![ANY-TEXT]} type="text/css"? style="border: solid thin black"? id="AdobeSVG"? xmlns-svg="http://www.w3.org/2000/svg"? viewBox=*? width="400px"? height="400px"? preserveAspectRatio="none"? CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"?>
+					<{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
+					...
+				</{li,head,object,style,b,html,h2,body,h1,table,ul,svg-svg,hr,title}>
+				...
+			</{li,head,object,b,html,h2,body,ul}>
+			...
+		</{li,html,h2,ul}>
+		...
+	</body>
+</{li,html,h2}>

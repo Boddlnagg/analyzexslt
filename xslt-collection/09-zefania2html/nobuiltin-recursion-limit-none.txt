@@ -1,72 +1,75 @@
-Subtree(Set(Root),[],[
-	Subtree(Set(Element(html)),[Set(Attribute(DIR,LTR))*],[
-		Subtree(Set(Element(head)),[],[
-			Subtree(Set(Element(title)),[],[
-				NIL+Subtree(Set(AnyText),[],[])
-			]),
-			Subtree(Set(Element(link)),[Set(Attribute(href,../images/cs_icon.ico), Attribute(rel,SHORTCUT ICON))*],[]),
-			Subtree(Set(Element(script)),[Set(Attribute(src,../js/zefania.js), Attribute(type,text/javascript))*],[]),
-			Subtree(Set(Element(link)),[Set(Attribute(href,../css/zefania-ltr.css), Attribute(type,text/css), Attribute(rel,stylesheet))*],[])
-		]),
-		Subtree(Set(Element(body)),[Set(Attribute(onLoad,javascript:toggledivchap()))*],[
-			Subtree(Set(Element(div)),[Set(Attribute(class,floattop1), Attribute(id,menudiv))*],[
-				Subtree(Set(Element(form)),[Set(Attribute(name,bookform1))*],[
-					Subtree(Set(Element(select)),[Set(Attribute(onChange,javascript:toggledivchap1()), Attribute(name,book1), Attribute(id,book1))*],[
-						Subtree(Set(Element(option)),[Set(NamedAttribute(value))*],[
-							NIL+Subtree(Set(AnyText),[],[])
-						])*
-					])
-				])
-			]),
-			Subtree(Set(Element(div)),[Set(Attribute(class,floattop2), Attribute(id,menudiv))*],[
-				Subtree(Set(Element(form)),[Set(Attribute(name,bookform2))*],[
-					Subtree(Set(Element(select)),[Set(Attribute(onChange,javascript:toggledivchap2()), Attribute(name,book2), Attribute(id,book2))*],[
-						Subtree(Set(Element(option)),[Set(NamedAttribute(value))*],[
-							NIL+Subtree(Set(AnyText),[],[])
-						])*
-					])
-				])
-			]),
-			Subtree(Set(Element(div)),[Set(Attribute(class,floatfont), Attribute(id,menufont))*],[
-				Subtree(Set(Element(a)),[Set(Attribute(href,javascript:;))*],[
-					Subtree(Set(Element(img)),[Set(Attribute(onClick,increaseSize()), Attribute(src,../images/size_big.gif), Attribute(border,0))*],[])
-				]),
-				Subtree(Set(Element(a)),[Set(Attribute(href,javascript:;))*],[
-					Subtree(Set(Element(img)),[Set(Attribute(onClick,defaultSize()), Attribute(src,../images/size_medium.gif), Attribute(border,0))*],[])
-				]),
-				Subtree(Set(Element(a)),[Set(Attribute(href,javascript:;))*],[
-					Subtree(Set(Element(img)),[Set(Attribute(onClick,decreaseSize()), Attribute(src,../images/size_small.gif), Attribute(border,0))*],[])
-				]),
-				Subtree(Set(Element(a)),[Set(Attribute(href,javascript:;))*],[
-					Subtree(Set(Element(img)),[Set(Attribute(id,cmpimg), Attribute(onClick,compareInit()), Attribute(src,../images/compare_off.gif), Attribute(border,0), Attribute(width,32px))*],[])
-				])
-			]),
-			Subtree(Set(Element(div)),[Set(Attribute(class,floatsearch), Attribute(id,divsearch))*],[
-				Subtree(Set(Element(form)),[Set(Attribute(name,search_frm))*],[
-					Subtree(Set(Element(input)),[Set(Attribute(size,15), Attribute(name,search), Attribute(type,text))*],[]),
-					Subtree(Set(Element(a)),[Set(Attribute(href,javascript:;))*],[
-						Subtree(Set(Element(img)),[Set(Attribute(onClick,doSearch(search_frm.search.value)), Attribute(border,0), Attribute(src,../images/search.gif))*],[])
-					])
-				])
-			]),
-			Subtree(Set(Element(div)),[Set(Attribute(class,chapterbody1), Attribute(class,searchresults), NamedAttribute(id), Attribute(class,chapterbody2), Attribute(class,floatright), Attribute(class,floatleft))*],[
-				Subtree(Set(Element(ul), Element(h1), Element(p)),[Set(Attribute(class,treeview), Attribute(id,menus_book1), Attribute(id,menus_book2))*],[
-					Subtree(Set(Element(li), AnyText),[],[
-						NIL+Subtree(Set(Element(a)),[Set(NamedAttribute(onclick), Attribute(href,javascript:;))*],[
-							NIL+Subtree(Set(AnyText),[],[])
-						])
-					])*
-				]),
-				NIL+Subtree(Set(Element(script), Element(p)),[Set(Attribute(type,text/javascript))*],[
-					Subtree(Set(AnyText, Element(sup)),[],[
-						NIL+Subtree(Set(Text( )),[],[]),
-						Subtree(Set(Element(font)),[Set(Attribute(color,#cccccc))*],[
-							NIL+Subtree(Set(AnyText),[],[])
-						]),
-						Subtree(Set(Text( )),[],[])
-					])*
-				])
-			])*
-		])
-	])
-])
+<html DIR="LTR"?>
+	<head>
+		<title>
+			NIL + <![ANY-TEXT]>
+		</title>
+		<link href="../images/cs_icon.ico"? rel="SHORTCUT ICON"? />
+		<script src="../js/zefania.js"? type="text/javascript"? />
+		<link href="../css/zefania-ltr.css"? type="text/css"? rel="stylesheet"? />
+	</head>
+	<body onLoad="javascript:toggledivchap()"?>
+		<div class="floattop1"? id="menudiv"?>
+			<form name="bookform1"?>
+				<select onChange="javascript:toggledivchap1()"? name="book1"? id="book1"?>
+					<option value=*?>
+						NIL + <![ANY-TEXT]>
+					</option>
+					...
+				</select>
+			</form>
+		</div>
+		<div class="floattop2"? id="menudiv"?>
+			<form name="bookform2"?>
+				<select onChange="javascript:toggledivchap2()"? name="book2"? id="book2"?>
+					<option value=*?>
+						NIL + <![ANY-TEXT]>
+					</option>
+					...
+				</select>
+			</form>
+		</div>
+		<div class="floatfont"? id="menufont"?>
+			<a href="javascript:;"?>
+				<img onClick="increaseSize()"? src="../images/size_big.gif"? border="0"? />
+			</a>
+			<a href="javascript:;"?>
+				<img onClick="defaultSize()"? src="../images/size_medium.gif"? border="0"? />
+			</a>
+			<a href="javascript:;"?>
+				<img onClick="decreaseSize()"? src="../images/size_small.gif"? border="0"? />
+			</a>
+			<a href="javascript:;"?>
+				<img src="../images/compare_off.gif"? width="32px"? border="0"? id="cmpimg"? onClick="compareInit()"? />
+			</a>
+		</div>
+		<div class="floatsearch"? id="divsearch"?>
+			<form name="search_frm"?>
+				<input size="15"? name="search"? type="text"? />
+				<a href="javascript:;"?>
+					<img onClick="doSearch(search_frm.search.value)"? border="0"? src="../images/search.gif"? />
+				</a>
+			</form>
+		</div>
+		<div id=*? class="floatleft"? class="floatright"? class="chapterbody1"? class="searchresults"? class="chapterbody2"?>
+			<{ul,h1,p} class="treeview"? id="menus_book1"? id="menus_book2"?>
+				<{li,![ANY-TEXT]}>
+					NIL + <a onclick=*? href="javascript:;"?>
+						NIL + <![ANY-TEXT]>
+					</a>
+				</li>
+				...
+			</{ul,h1,p}>
+			NIL + <{script,p} type="text/javascript"?>
+				<{sup,![ANY-TEXT]}>
+					NIL + <![TEXT[ ]]>
+					<font color="#cccccc"?>
+						NIL + <![ANY-TEXT]>
+					</font>
+					<![TEXT[ ]]>
+				</sup>
+				...
+			</{script,p}>
+		</div>
+		...
+	</body>
+</html>

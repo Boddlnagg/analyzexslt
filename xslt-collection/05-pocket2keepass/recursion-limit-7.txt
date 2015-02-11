@@ -1,3 +1,0 @@
-Subtree(Set(Root),[],[
-	Subtree(Set(AnyElement),[TOP],[TOP])
-])

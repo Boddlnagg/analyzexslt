@@ -1,115 +1,116 @@
-Subtree(Set(Root),[],[
-	Subtree(Set(Element(rdf--RDF)),[Set(Attribute(xmlns--dc,http://purl.org/dc/elements/1.1/), Attribute(xmlns--rdf,http://www.w3.org/1999/02/22-rdf-syntax-ns#))*],[
-		Subtree(Set(Element(rdf--Description)),[Set(NamedAttribute(rdf--about))*],[
-			Subtree(Set(Element(dc--title)),[],[
-				NIL+Subtree(Set(AnyText),[],[])
-			]),
-			Subtree(Set(Element(iati--defaultCurrency)),[Set(NamedAttribute(rdf--resource))*],[]),
-			Subtree(Set(Element(iati--hierarchicalPosition)),[],[
-				NIL+Subtree(Set(AnyText),[],[])
-			]),
-			Subtree(Set(Element(iati--lastUpdatedDatetime)),[],[
-				NIL+Subtree(Set(AnyText),[],[])
-			]),
-			Subtree(Set(Element(dc--description)),[],[
-				NIL+Subtree(Set(AnyText),[],[])
-			]),
-			Subtree(Set(Element(iati--activityStatusCode)),[Set(NamedAttribute(rdf--resource))*],[]),
-			Subtree(Set(Element(iati--activityDateIsoDate)),[],[
-				NIL+Subtree(Set(AnyText),[],[])
-			]),
-			Subtree(Set(Element(iati--activityDateTextDate)),[],[
-				NIL+Subtree(Set(AnyText),[],[])
-			]),
-			Subtree(Set(Element(iati--reportingOrgIdentifier)),[],[
-				Subtree(Set(Element(rdf--Description)),[Set(NamedAttribute(rdf--about))*],[
-					Subtree(Set(Element(iati--reportingOrgName)),[],[
-						NIL+Subtree(Set(AnyText),[],[])
-					]),
-					Subtree(Set(Element(iati--reportingOrgType)),[Set(NamedAttribute(rdf--resource))*],[])
-				])
-			]),
-			Subtree(Set(Element(iati--activityWebsiteUrl), Element(iati--defaultFinanceType), Element(iati--participatingOrg), Element(iati--defaultAidType), Element(iati--relatedActivity), Element(iati--defaultTiedStatusName), Element(iati--collaborationType), Element(iati--recipientCountry), Element(iati--contactInfoOrganisation), Element(iati--policyMarker), Element(iati--sector), Element(iati--recipientRegion), Element(iati--budget), Element(iati--document-links), Element(iati--location), Element(iati--transaction), Element(iati--defaultFlowType)),[Set(NamedAttribute(rdf--resource))*],[
-				NIL+Subtree(Set(Element(rdf--Description), AnyText),[Set(NamedAttribute(rdf--about))*],[
-					NIL+Subtree(Set(Element(iati--transactionTransactionReference), Element(iati--region), Element(iati--locationPercentage), Element(iati--documentFormat), Element(iati--budgetType), Element(iati--policyMarkerVocabulary), Element(rdfs--seeAlso), Element(iati--sectorVocabulary), Element(iati--country), Element(dc--title), Element(iati--relatedActivityType)),[Set(NamedAttribute(rdf--resource))*],[
-						NIL+Subtree(Set(AnyText, Element(rdf--Description)),[Set(NamedAttribute(rdf--about))*],[
-							NIL+Subtree(Set(Element(dc--title)),[],[
-								NIL+Subtree(Set(AnyText),[],[])
-							]),
-							NIL+Subtree(Set(Element(iati--orgType)),[Set(NamedAttribute(rdf--resource))*],[])
-						])
-					]),
-					Subtree(Set(Element(iati--relatedActivityIdentifier), Element(iati--transactionType), Element(iati--documentLanguage), Element(iati--participatingOrgRole), Element(iati--locationType), Element(iati--contactInfoPerson), Element(iati--sectorCode), Element(iati--budgetPeriodStart), Element(iati--policyMarkerCode), Element(iati--recipientCountryPercentage), Element(iati--recipientRegionPercentage)),[Set(NamedAttribute(rdf--resource))*],[
-						NIL+Subtree(Set(AnyText, Element(rdf--Description)),[Set(NamedAttribute(rdf--about))*],[
-							NIL+Subtree(Set(Element(dc--title)),[],[
-								NIL+Subtree(Set(AnyText),[],[])
-							])
-						])
-					]),
-					NIL+Subtree(Set(Element(iati--budgetPeriodStartDate), Element(iati--receiverOrgReceiverActivityId), Element(iati--policyMarkerScore), Element(iati--providerOrg), Element(iati--documentCategory), Element(iati--sectorPercentage), Element(iati--receiverOrg), Element(iati--value), Element(owl--sameAs), Element(iati--locationTypeCode), Element(iati--contactInfoPhone)),[Set(NamedAttribute(rdf--resource))*],[
-						NIL+Subtree(Set(AnyText, Element(rdf--Description)),[Set(NamedAttribute(rdf--about))*],[
-							NIL+Subtree(Set(Element(dc--title)),[],[
-								NIL+Subtree(Set(AnyText),[],[])
-							]),
-							NIL+Subtree(Set(Element(iati--orgType)),[Set(NamedAttribute(rdf--resource))*],[])
-						])
-					]),
-					NIL+Subtree(Set(Element(iati--receiverOrgReceiverActivityId), Element(iati--contactInfoEmail), Element(iati--relatedActivityTitle), Element(iati--documentCategoryCode), Element(iati--budgetPeriodEnd), Element(iati--receiverOrg), Element(iati--value), Element(iati--locationName), Element(iati--valueDate), Element(iati--valueCurrency)),[Set(NamedAttribute(rdf--resource))*],[
-						NIL+Subtree(Set(AnyText, Element(rdf--Description)),[Set(NamedAttribute(rdf--about))*],[
-							NIL+Subtree(Set(Element(dc--title)),[],[
-								NIL+Subtree(Set(AnyText),[],[])
-							]),
-							NIL+Subtree(Set(Element(iati--orgType)),[Set(NamedAttribute(rdf--resource))*],[])
-						])
-					]),
-					NIL+Subtree(Set(Element(iati--receiverOrgReceiverActivityId), Element(iati--aidType), Element(iati--flowType), Element(dc--description), Element(iati--transactionIsoDate), Element(iati--tiedStatus), Element(iati--contactInfoAddress), Element(iati--disbursementChannelCode), Element(iati--financeType), Element(iati--transactionDate), Element(iati--value), Element(iati--locationDescription), Element(iati--budgetPeriodEndDate), Element(dc--title), Element(iati--valueDate), Element(iati--valueCurrency)),[Set(NamedAttribute(rdf--resource))*],[
-						NIL+Subtree(Set(AnyText),[],[])
-					]),
-					NIL+Subtree(Set(Element(iati--aidType), Element(iati--budgetValue), Element(iati--flowType), Element(dc--description), Element(iati--transactionIsoDate), Element(iati--tiedStatus), Element(iati--disbursementChannelCode), Element(iati--financeType), Element(iati--transactionDate), Element(iati--value), Element(iati--locationDescription), Element(iati--valueDate), Element(iati--valueCurrency)),[Set(NamedAttribute(rdf--resource))*],[
-						NIL+Subtree(Set(AnyText),[],[])
-					]),
-					NIL+Subtree(Set(Element(iati--aidType), Element(iati--flowType), Element(dc--description), Element(iati--transactionIsoDate), Element(iati--tiedStatus), Element(iati--budgetValueDate), Element(iati--locationLanguage), Element(iati--disbursementChannelCode), Element(iati--financeType), Element(iati--transactionDate), Element(iati--valueDate), Element(iati--valueCurrency)),[Set(NamedAttribute(rdf--resource))*],[
-						NIL+Subtree(Set(AnyText),[],[])
-					]),
-					NIL+Subtree(Set(Element(iati--aidType), Element(iati--locationAdministrative), Element(iati--flowType), Element(dc--description), Element(iati--transactionIsoDate), Element(iati--budgetCurrency), Element(iati--tiedStatus), Element(iati--disbursementChannelCode), Element(iati--financeType), Element(iati--transactionDate), Element(iati--valueDate)),[Set(NamedAttribute(rdf--resource))*],[
-						NIL+Subtree(Set(AnyText),[],[])
-					]),
-					NIL+Subtree(Set(Element(iati--aidType), Element(iati--flowType), Element(dc--description), Element(iati--transactionIsoDate), Element(iati--locationCountry), Element(iati--tiedStatus), Element(iati--disbursementChannelCode), Element(iati--financeType), Element(iati--transactionDate)),[Set(NamedAttribute(rdf--resource))*],[
-						NIL+Subtree(Set(AnyText),[],[])
-					]),
-					NIL+Subtree(Set(Element(iati--aidType), Element(iati--flowType), Element(iati--transactionIsoDate), Element(iati--tiedStatus), Element(iati--disbursementChannelCode), Element(iati--financeType), Element(iati--transactionDate), Element(iati--locationAdm1)),[Set(NamedAttribute(rdf--resource))*],[
-						NIL+Subtree(Set(AnyText),[],[])
-					]),
-					NIL+Subtree(Set(Element(iati--aidType), Element(iati--flowType), Element(iati--transactionIsoDate), Element(iati--tiedStatus), Element(iati--disbursementChannelCode), Element(iati--financeType), Element(iati--locationAdm2)),[Set(NamedAttribute(rdf--resource))*],[
-						NIL+Subtree(Set(AnyText),[],[])
-					]),
-					NIL+Subtree(Set(Element(iati--locationAdministrativeDescription), Element(iati--aidType), Element(iati--flowType), Element(iati--tiedStatus), Element(iati--disbursementChannelCode), Element(iati--financeType)),[Set(NamedAttribute(rdf--resource))*],[
-						NIL+Subtree(Set(AnyText),[],[])
-					]),
-					NIL+Subtree(Set(Element(iati--locationCoordinates), Element(iati--aidType), Element(iati--tiedStatus), Element(iati--disbursementChannelCode), Element(iati--financeType)),[Set(NamedAttribute(rdf--resource))*],[
-						NIL+Subtree(Set(AnyText),[],[])
-					]),
-					NIL+Subtree(Set(Element(iati--locationLatitude), Element(iati--aidType), Element(iati--tiedStatus), Element(iati--disbursementChannelCode)),[Set(NamedAttribute(rdf--resource))*],[
-						NIL+Subtree(Set(AnyText),[],[])
-					]),
-					NIL+Subtree(Set(Element(iati--locationLongitude), Element(iati--tiedStatus), Element(iati--disbursementChannelCode)),[Set(NamedAttribute(rdf--resource))*],[
-						NIL+Subtree(Set(AnyText),[],[])
-					]),
-					NIL+Subtree(Set(Element(iati--locationPrecision), Element(iati--tiedStatus)),[Set(NamedAttribute(rdf--resource))*],[
-						NIL+Subtree(Set(AnyText),[],[])
-					]),
-					Subtree(Set(Element(iati--locationGazetteerEntry)),[],[
-						Subtree(Set(Element(rdf--Description)),[Set(NamedAttribute(about))*],[
-							Subtree(Set(Element(iati--locationGazetteerAgency)),[],[
-								NIL+Subtree(Set(AnyText),[],[])
-							]),
-							Subtree(Set(Element(iati--locationGazetteerIdentifier)),[],[
-								NIL+Subtree(Set(AnyText),[],[])
-							])
-						])
-					])*
-				])
-			])*
-		])*
-	])
-])
+<rdf--RDF xmlns--dc="http://purl.org/dc/elements/1.1/"? xmlns--rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"?>
+	<rdf--Description rdf--about=*?>
+		<dc--title>
+			NIL + <![ANY-TEXT]>
+		</dc--title>
+		<iati--defaultCurrency rdf--resource=*? />
+		<iati--hierarchicalPosition>
+			NIL + <![ANY-TEXT]>
+		</iati--hierarchicalPosition>
+		<iati--lastUpdatedDatetime>
+			NIL + <![ANY-TEXT]>
+		</iati--lastUpdatedDatetime>
+		<dc--description>
+			NIL + <![ANY-TEXT]>
+		</dc--description>
+		<iati--activityStatusCode rdf--resource=*? />
+		<iati--activityDateIsoDate>
+			NIL + <![ANY-TEXT]>
+		</iati--activityDateIsoDate>
+		<iati--activityDateTextDate>
+			NIL + <![ANY-TEXT]>
+		</iati--activityDateTextDate>
+		<iati--reportingOrgIdentifier>
+			<rdf--Description rdf--about=*?>
+				<iati--reportingOrgName>
+					NIL + <![ANY-TEXT]>
+				</iati--reportingOrgName>
+				<iati--reportingOrgType rdf--resource=*? />
+			</rdf--Description>
+		</iati--reportingOrgIdentifier>
+		<{iati--activityWebsiteUrl,iati--defaultFinanceType,iati--participatingOrg,iati--defaultAidType,iati--relatedActivity,iati--defaultTiedStatusName,iati--collaborationType,iati--recipientCountry,iati--contactInfoOrganisation,iati--policyMarker,iati--sector,iati--recipientRegion,iati--budget,iati--document-links,iati--location,iati--transaction,iati--defaultFlowType} rdf--resource=*?>
+			NIL + <{rdf--Description,![ANY-TEXT]} rdf--about=*?>
+				NIL + <{iati--transactionTransactionReference,iati--region,iati--locationPercentage,iati--documentFormat,iati--budgetType,iati--policyMarkerVocabulary,rdfs--seeAlso,iati--sectorVocabulary,iati--country,dc--title,iati--relatedActivityType} rdf--resource=*?>
+					NIL + <{rdf--Description,![ANY-TEXT]} rdf--about=*?>
+						NIL + <dc--title>
+							NIL + <![ANY-TEXT]>
+						</dc--title>
+						NIL + <iati--orgType rdf--resource=*? />
+					</rdf--Description>
+				</{iati--transactionTransactionReference,iati--region,iati--locationPercentage,iati--documentFormat,iati--budgetType,iati--policyMarkerVocabulary,rdfs--seeAlso,iati--sectorVocabulary,iati--country,dc--title,iati--relatedActivityType}>
+				<{iati--relatedActivityIdentifier,iati--transactionType,iati--documentLanguage,iati--participatingOrgRole,iati--locationType,iati--contactInfoPerson,iati--sectorCode,iati--budgetPeriodStart,iati--policyMarkerCode,iati--recipientCountryPercentage,iati--recipientRegionPercentage} rdf--resource=*?>
+					NIL + <{rdf--Description,![ANY-TEXT]} rdf--about=*?>
+						NIL + <dc--title>
+							NIL + <![ANY-TEXT]>
+						</dc--title>
+					</rdf--Description>
+				</{iati--relatedActivityIdentifier,iati--transactionType,iati--documentLanguage,iati--participatingOrgRole,iati--locationType,iati--contactInfoPerson,iati--sectorCode,iati--budgetPeriodStart,iati--policyMarkerCode,iati--recipientCountryPercentage,iati--recipientRegionPercentage}>
+				NIL + <{iati--budgetPeriodStartDate,iati--receiverOrgReceiverActivityId,iati--policyMarkerScore,iati--providerOrg,iati--documentCategory,iati--sectorPercentage,iati--receiverOrg,iati--value,owl--sameAs,iati--locationTypeCode,iati--contactInfoPhone} rdf--resource=*?>
+					NIL + <{rdf--Description,![ANY-TEXT]} rdf--about=*?>
+						NIL + <dc--title>
+							NIL + <![ANY-TEXT]>
+						</dc--title>
+						NIL + <iati--orgType rdf--resource=*? />
+					</rdf--Description>
+				</{iati--budgetPeriodStartDate,iati--receiverOrgReceiverActivityId,iati--policyMarkerScore,iati--providerOrg,iati--documentCategory,iati--sectorPercentage,iati--receiverOrg,iati--value,owl--sameAs,iati--locationTypeCode,iati--contactInfoPhone}>
+				NIL + <{iati--receiverOrgReceiverActivityId,iati--contactInfoEmail,iati--relatedActivityTitle,iati--documentCategoryCode,iati--budgetPeriodEnd,iati--receiverOrg,iati--value,iati--locationName,iati--valueDate,iati--valueCurrency} rdf--resource=*?>
+					NIL + <{rdf--Description,![ANY-TEXT]} rdf--about=*?>
+						NIL + <dc--title>
+							NIL + <![ANY-TEXT]>
+						</dc--title>
+						NIL + <iati--orgType rdf--resource=*? />
+					</rdf--Description>
+				</{iati--receiverOrgReceiverActivityId,iati--contactInfoEmail,iati--relatedActivityTitle,iati--documentCategoryCode,iati--budgetPeriodEnd,iati--receiverOrg,iati--value,iati--locationName,iati--valueDate,iati--valueCurrency}>
+				NIL + <{iati--receiverOrgReceiverActivityId,iati--aidType,iati--flowType,dc--description,iati--transactionIsoDate,iati--tiedStatus,iati--contactInfoAddress,iati--disbursementChannelCode,iati--financeType,iati--transactionDate,iati--value,iati--locationDescription,iati--budgetPeriodEndDate,dc--title,iati--valueDate,iati--valueCurrency} rdf--resource=*?>
+					NIL + <![ANY-TEXT]>
+				</{iati--receiverOrgReceiverActivityId,iati--aidType,iati--flowType,dc--description,iati--transactionIsoDate,iati--tiedStatus,iati--contactInfoAddress,iati--disbursementChannelCode,iati--financeType,iati--transactionDate,iati--value,iati--locationDescription,iati--budgetPeriodEndDate,dc--title,iati--valueDate,iati--valueCurrency}>
+				NIL + <{iati--aidType,iati--budgetValue,iati--flowType,dc--description,iati--transactionIsoDate,iati--tiedStatus,iati--disbursementChannelCode,iati--financeType,iati--transactionDate,iati--value,iati--locationDescription,iati--valueDate,iati--valueCurrency} rdf--resource=*?>
+					NIL + <![ANY-TEXT]>
+				</{iati--aidType,iati--budgetValue,iati--flowType,dc--description,iati--transactionIsoDate,iati--tiedStatus,iati--disbursementChannelCode,iati--financeType,iati--transactionDate,iati--value,iati--locationDescription,iati--valueDate,iati--valueCurrency}>
+				NIL + <{iati--aidType,iati--flowType,dc--description,iati--transactionIsoDate,iati--tiedStatus,iati--budgetValueDate,iati--locationLanguage,iati--disbursementChannelCode,iati--financeType,iati--transactionDate,iati--valueDate,iati--valueCurrency} rdf--resource=*?>
+					NIL + <![ANY-TEXT]>
+				</{iati--aidType,iati--flowType,dc--description,iati--transactionIsoDate,iati--tiedStatus,iati--budgetValueDate,iati--locationLanguage,iati--disbursementChannelCode,iati--financeType,iati--transactionDate,iati--valueDate,iati--valueCurrency}>
+				NIL + <{iati--aidType,iati--locationAdministrative,iati--flowType,dc--description,iati--transactionIsoDate,iati--budgetCurrency,iati--tiedStatus,iati--disbursementChannelCode,iati--financeType,iati--transactionDate,iati--valueDate} rdf--resource=*?>
+					NIL + <![ANY-TEXT]>
+				</{iati--aidType,iati--locationAdministrative,iati--flowType,dc--description,iati--transactionIsoDate,iati--budgetCurrency,iati--tiedStatus,iati--disbursementChannelCode,iati--financeType,iati--transactionDate,iati--valueDate}>
+				NIL + <{iati--aidType,iati--flowType,dc--description,iati--transactionIsoDate,iati--locationCountry,iati--tiedStatus,iati--disbursementChannelCode,iati--financeType,iati--transactionDate} rdf--resource=*?>
+					NIL + <![ANY-TEXT]>
+				</{iati--aidType,iati--flowType,dc--description,iati--transactionIsoDate,iati--locationCountry,iati--tiedStatus,iati--disbursementChannelCode,iati--financeType,iati--transactionDate}>
+				NIL + <{iati--aidType,iati--flowType,iati--transactionIsoDate,iati--tiedStatus,iati--disbursementChannelCode,iati--financeType,iati--transactionDate,iati--locationAdm1} rdf--resource=*?>
+					NIL + <![ANY-TEXT]>
+				</{iati--aidType,iati--flowType,iati--transactionIsoDate,iati--tiedStatus,iati--disbursementChannelCode,iati--financeType,iati--transactionDate,iati--locationAdm1}>
+				NIL + <{iati--aidType,iati--flowType,iati--transactionIsoDate,iati--tiedStatus,iati--disbursementChannelCode,iati--financeType,iati--locationAdm2} rdf--resource=*?>
+					NIL + <![ANY-TEXT]>
+				</{iati--aidType,iati--flowType,iati--transactionIsoDate,iati--tiedStatus,iati--disbursementChannelCode,iati--financeType,iati--locationAdm2}>
+				NIL + <{iati--locationAdministrativeDescription,iati--aidType,iati--flowType,iati--tiedStatus,iati--disbursementChannelCode,iati--financeType} rdf--resource=*?>
+					NIL + <![ANY-TEXT]>
+				</{iati--locationAdministrativeDescription,iati--aidType,iati--flowType,iati--tiedStatus,iati--disbursementChannelCode,iati--financeType}>
+				NIL + <{iati--locationCoordinates,iati--aidType,iati--tiedStatus,iati--disbursementChannelCode,iati--financeType} rdf--resource=*?>
+					NIL + <![ANY-TEXT]>
+				</{iati--locationCoordinates,iati--aidType,iati--tiedStatus,iati--disbursementChannelCode,iati--financeType}>
+				NIL + <{iati--locationLatitude,iati--aidType,iati--tiedStatus,iati--disbursementChannelCode} rdf--resource=*?>
+					NIL + <![ANY-TEXT]>
+				</{iati--locationLatitude,iati--aidType,iati--tiedStatus,iati--disbursementChannelCode}>
+				NIL + <{iati--locationLongitude,iati--tiedStatus,iati--disbursementChannelCode} rdf--resource=*?>
+					NIL + <![ANY-TEXT]>
+				</{iati--locationLongitude,iati--tiedStatus,iati--disbursementChannelCode}>
+				NIL + <{iati--locationPrecision,iati--tiedStatus} rdf--resource=*?>
+					NIL + <![ANY-TEXT]>
+				</{iati--locationPrecision,iati--tiedStatus}>
+				<iati--locationGazetteerEntry>
+					<rdf--Description about=*?>
+						<iati--locationGazetteerAgency>
+							NIL + <![ANY-TEXT]>
+						</iati--locationGazetteerAgency>
+						<iati--locationGazetteerIdentifier>
+							NIL + <![ANY-TEXT]>
+						</iati--locationGazetteerIdentifier>
+					</rdf--Description>
+				</iati--locationGazetteerEntry>
+				...
+			</rdf--Description>
+		</{iati--activityWebsiteUrl,iati--defaultFinanceType,iati--participatingOrg,iati--defaultAidType,iati--relatedActivity,iati--defaultTiedStatusName,iati--collaborationType,iati--recipientCountry,iati--contactInfoOrganisation,iati--policyMarker,iati--sector,iati--recipientRegion,iati--budget,iati--document-links,iati--location,iati--transaction,iati--defaultFlowType}>
+		...
+	</rdf--Description>
+	...
+</rdf--RDF>

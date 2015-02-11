@@ -1,0 +1,167 @@
+<w--wordDocument w--macrosPresent="no"? xmlns--sl="http://schemas.microsoft.com/schemaLibrary/2003/core"? xmlns--w="http://schemas.microsoft.com/office/word/2003/wordml"? xmlns--o="urn:schemas-microsoft-com:office:office"? xmlns--v="urn:schemas-microsoft-com:vml"? xmlns--wx="http://schemas.microsoft.com/office/word/2003/auxHint"? xmlns--dt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882"? xml--space="preserve"? xmlns--aml="http://schemas.microsoft.com/aml/2001/core"? xmlns--w10="urn:schemas-microsoft-com:office:word"? w--ocxPresent="no"? w--embeddedObjPresent="no"?>
+	<w--fonts>
+		<w--defaultFonts w--cs="Times New Roman"? w--h-ansi="Times New Roman"? w--fareast="Times New Roman"? w--ascii="Times New Roman"? />
+	</w--fonts>
+	<w--styles>
+		<w--versionOfBuiltInStylenames w--val="4"? />
+		<w--latentStyles w--latentStyleCount="156"? w--defLockedState="off"? />
+		<w--style w--styleId="Normal"? w--default="on"? w--type="paragraph"?>
+			<w--name w--val="Normal"? />
+			<w--rPr>
+				<wx--font wx--val="Times New Roman"? />
+				<w--sz w--val="24"? />
+				<w--sz-cs w--val="24"? />
+				<w--lang w--bidi="AR-SA"? w--fareast="EN-US"? w--val="EN-US"? />
+			</w--rPr>
+		</w--style>
+		<w--style w--styleId="TitlePage"? w--default="off"? w--type="paragraph"?>
+			<w--name w--val="Title Page"? />
+			<w--pPr>
+				<w--spacing w--line-rule="auto"? w--line="480"? />
+				<w--keepNext />
+			</w--pPr>
+			<w--rPr>
+				<w--rFonts w--ascii="Arial"? />
+				<w--b />
+				<w--sz w--val="28"? />
+				<w--sz-cs w--val="28"? />
+				<w--lang w--bidi="AR-SA"? w--fareast="EN-US"? w--val="EN-US"? />
+			</w--rPr>
+		</w--style>
+		<w--style w--styleId="BigHead"? w--default="off"? w--type="paragraph"?>
+			<w--name w--val="Large Heading"? />
+			<w--pPr>
+				<w--spacing w--line-rule="auto"? w--line="480"? />
+				<w--keepNext />
+			</w--pPr>
+			<w--rPr>
+				<w--rFonts w--ascii="Arial"? />
+				<w--b />
+				<w--sz w--val="28"? />
+				<w--sz-cs w--val="28"? />
+				<w--lang w--bidi="AR-SA"? w--fareast="EN-US"? w--val="EN-US"? />
+			</w--rPr>
+		</w--style>
+		<w--style w--styleId="MediumHead"? w--default="off"? w--type="paragraph"?>
+			<w--name w--val="Medium Heading"? />
+			<w--pPr>
+				<w--ind w--left="720"? />
+				<w--spacing w--line-rule="auto"? w--line="360"? />
+				<w--keepNext />
+			</w--pPr>
+			<w--rPr>
+				<w--rFonts w--ascii="Arial"? />
+				<w--b />
+				<w--sz w--val="24"? />
+				<w--sz-cs w--val="24"? />
+				<w--lang w--bidi="AR-SA"? w--fareast="EN-US"? w--val="EN-US"? />
+			</w--rPr>
+		</w--style>
+		<w--style w--styleId="BasePara"? w--default="off"? w--type="paragraph"?>
+			<w--name w--val="Base Paragraph"? />
+			<w--pPr>
+				<w--keepNext />
+				<wx--font wx--val="Times New Roman"? />
+				<w--ind w--left="720"? />
+			</w--pPr>
+			<w--rPr>
+				<w--sz w--val="24"? />
+				<w--sz-cs w--val="24"? />
+				<w--lang w--bidi="AR-SA"? w--fareast="EN-US"? w--val="EN-US"? />
+			</w--rPr>
+		</w--style>
+		<w--style w--styleId="IndentPara"? w--default="off"? w--type="paragraph"?>
+			<w--name w--val="Indented Paragraph"? />
+			<w--pPr>
+				<w--keepNext />
+				<w--ind w--left="1440"? />
+			</w--pPr>
+			<w--rPr>
+				<w--rFonts ascii="Times New Roman"? />
+				<w--sz w--val="24"? />
+				<w--sz-cs w--val="24"? />
+				<w--lang w--bidi="AR-SA"? w--fareast="EN-US"? w--val="EN-US"? />
+			</w--rPr>
+		</w--style>
+		<w--style w--styleId="c01Did"? w--default="off"? w--type="paragraph"?>
+			<w--name w--val="c01 Did"? />
+			<w--pPr>
+				<w--keepNext />
+				<wx--font wx--val="Times New Roman"? />
+				<w--ind w--left="720"? />
+			</w--pPr>
+			<w--rPr>
+				<w--sz w--val="24"? />
+				<w--sz-cs w--val="24"? />
+				<w--lang w--bidi="AR-SA"? w--fareast="EN-US"? w--val="EN-US"? />
+			</w--rPr>
+		</w--style>
+		<w--style w--styleId="DefaultParagraphFont"? w--default="on"? w--type="character"?>
+			<w--name w--val="Default Paragraph Font"? />
+			<w--semiHidden />
+		</w--style>
+		<w--style w--styleId="Bold"? w--default="off"? w--type="character"?>
+			<w--basedOn w--val="DefaultParagraphFont"? />
+			<w--name w--val="Bold"? />
+			<w--semiHidden />
+			<w--rPr>
+				<w--b />
+			</w--rPr>
+		</w--style>
+		<w--style w--styleId="Italic"? w--default="off"? w--type="character"?>
+			<w--basedOn w--val="Default Paragraph Font"? />
+			<w--name w--val="Italic"? />
+			<w--semiHidden />
+			<w--rPr>
+				<w--i />
+			</w--rPr>
+		</w--style>
+		<w--style w--styleId="Underscore"? w--default="off"? w--type="character"?>
+			<w--basedOn w--val="Default Paragraph Font"? />
+			<w--name w--val="Underscore"? />
+			<w--semiHidden />
+			<w--rPr>
+				<w--u w--val="single"? />
+			</w--rPr>
+		</w--style>
+		<w--style w--styleId="TableNormal"? w--default="on"? w--type="table"?>
+			<w--name w--val="Normal Table"? />
+			<wx--uiName wx--val="Table Normal"? />
+			<w--semiHidden />
+			<w--rPr>
+				<wx--font wx--val="Times New Roman"? />
+			</w--rPr>
+			<w--tblPr>
+				<w--tblInd w--type="dxa"? w--w="0"? />
+				<w--tblCellMar>
+					<w--top w--type="dxa"? w--w="0"? />
+					<w--left w--type="dxa"? w--w="108"? />
+					<w--bottom w--type="dxa"? w--w="0"? />
+					<w--right w--type="dxa"? w--w="108"? />
+				</w--tblCellMar>
+			</w--tblPr>
+		</w--style>
+		<w--style w--styleId="NoList"? w--default="on"? w--type="list"?>
+			<w--name w--val="No List"? />
+			<w--semiHidden />
+		</w--style>
+	</w--styles>
+	<w--docPr>
+		<w--view w--val="web"? />
+		<w--zoom w--percent="100"? />
+		<w--proofState w--grammar="clean"? />
+		<w--attachedTemplate w--val=""? />
+		<w--defaultTabStop w--val="720"? />
+		<w--characterSpacingControl w--val="DontCompress"? />
+		<w--validateAgainstSchema />
+		<w--saveInvalidXML w--val="off"? />
+		<w--ignoreMixedContent w--val="off"? />
+		<w--alwaysShowPlaceholderText w--val="off"? />
+		<w--alwaysMergeEmptyNamespace />
+		<w--compat />
+	</w--docPr>
+	<w--body any-attributes>
+		<{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
+		...
+	</w--body>
+</w--wordDocument>

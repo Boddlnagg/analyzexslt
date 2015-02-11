@@ -1,0 +1,11 @@
+<html>
+	<head>
+		<link type="text/css"? rel="stylesheet"? href="xml.css"? />
+	</head>
+	<body>
+		<{p,h1,hr} class="third"? class="fourth"? class="second"? class="first"? class="third title-type-missing"?>
+			NIL + <![ANY-TEXT]>
+		</{p,h1,hr}>
+		...
+	</body>
+</html>
