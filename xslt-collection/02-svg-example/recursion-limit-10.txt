@@ -1,3 +1,5 @@
+NOTE: Built-in templates were disabled for this result!
+
 Subtree(Set(Root),[],[
 	Subtree(Set(Element(li), Element(html), Element(h2)),[Set(Attribute(xmlns-svg,http://www.w3.org/2000/svg))*],[
 		NIL+Subtree(Set(Element(b), Element(head), Element(object), AnyText),[Set(Attribute(CLASSID,clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2), Attribute(id,AdobeSVG))*],[
@@ -30,7 +32,7 @@ Subtree(Set(Root),[],[
 			Subtree(Set(Element(li), AnyText, Element(html), Element(h2), Element(ul), Element(hr)),[Set(Attribute(xmlns-svg,http://www.w3.org/2000/svg))*],[
 				Subtree(Set(Element(li), Element(head), AnyText, Element(object), Element(b), Element(html), Element(h2), Element(body), Element(ul)),[Set(Attribute(xmlns-svg,http://www.w3.org/2000/svg), Attribute(CLASSID,clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2), Attribute(id,AdobeSVG))*],[
 					Subtree(Set(Element(li), Element(head), AnyText, Element(object), Element(style), Element(b), Element(html), Element(h2), Element(body), Element(h1), Element(table), Element(ul), Element(svg-svg), Element(hr), Element(title)),[Set(Attribute(preserveAspectRatio,none), NamedAttribute(viewBox), Attribute(type,text/css), Attribute(xmlns-svg,http://www.w3.org/2000/svg), Attribute(id,AdobeSVG), Attribute(height,400px), Attribute(style,border: solid thin black), Attribute(CLASSID,clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2), Attribute(width,400px))*],[
-						Subtree(Set(AnyText, Root, AnyElement, AnyComment),[Set(AnyAttribute)*],[TOP])*
+						Subtree(Set(AnyText, AnyElement, AnyComment),[Set(AnyAttribute)*],[TOP])*
 					])*
 				])*
 			])*
@@ -65,7 +67,7 @@ Subtree(Set(Root),[],[
 				Subtree(Set(Element(svg-text), Element(svg-line)),[Set(NamedAttribute(x), Attribute(x1,200), Attribute(text-anchor,middle), Attribute(y,80), Attribute(y1,80), Attribute(stroke,blue), Attribute(class,gridline), Attribute(class,axis), Attribute(y1,60), Attribute(y2,280), Attribute(class,axisLabel), Attribute(y2,80), Attribute(y2,40), Attribute(y1,20), Attribute(y,340), Attribute(y1,280), NamedAttribute(x2), Attribute(x1,100), Attribute(y2,20), Attribute(y,290), Attribute(y1,40), Attribute(y1,0), Attribute(y2,0), Attribute(y2,60), Attribute(writing-mode,tb))*],[
 					NIL+Subtree(Set(Text(Weight / tons), Text(40), Text(0)),[],[])
 				]),
-				Subtree(Set(AnyText, Root, AnyElement, AnyComment),[Set(AnyAttribute)*],[TOP])*
+				Subtree(Set(AnyText, AnyElement, AnyComment),[Set(AnyAttribute)*],[TOP])*
 			]),
 			Subtree(Set(Element(h2)),[],[
 				Subtree(Set(Text(Dinosaur heights)),[],[])
@@ -93,7 +95,7 @@ Subtree(Set(Root),[],[
 				Subtree(Set(Element(svg-text), Element(svg-line)),[Set(NamedAttribute(x), Attribute(x1,200), Attribute(text-anchor,middle), Attribute(y1,80), Attribute(stroke,blue), Attribute(y2,180), Attribute(y,190), Attribute(class,gridline), Attribute(class,axis), Attribute(y1,60), Attribute(class,axisLabel), Attribute(y2,80), Attribute(y2,40), Attribute(y1,20), NamedAttribute(x2), Attribute(x1,100), Attribute(y2,20), Attribute(y1,180), Attribute(y1,40), Attribute(y,240), Attribute(y1,0), Attribute(y2,0), Attribute(y2,60), Attribute(y,30), Attribute(writing-mode,tb))*],[
 					NIL+Subtree(Set(Text(Length / m), Text(40), Text(0)),[],[])
 				]),
-				Subtree(Set(AnyText, Root, AnyElement, AnyComment),[Set(AnyAttribute)*],[TOP])*
+				Subtree(Set(AnyText, AnyElement, AnyComment),[Set(AnyAttribute)*],[TOP])*
 			]),
 			Subtree(Set(Element(h1)),[],[
 				Subtree(Set(Text(Dinosaur details)),[],[])
@@ -101,7 +103,7 @@ Subtree(Set(Root),[],[
 			Subtree(Set(Element(li), AnyText, Element(html), Element(h2), Element(ul)),[Set(Attribute(xmlns-svg,http://www.w3.org/2000/svg))*],[
 				Subtree(Set(Element(li), Element(head), AnyText, Element(object), Element(b), Element(html), Element(h2), Element(body), Element(ul)),[Set(Attribute(xmlns-svg,http://www.w3.org/2000/svg), Attribute(CLASSID,clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2), Attribute(id,AdobeSVG))*],[
 					Subtree(Set(Element(li), Element(head), AnyText, Element(object), Element(style), Element(b), Element(html), Element(h2), Element(body), Element(h1), Element(table), Element(ul), Element(svg-svg), Element(hr), Element(title)),[Set(Attribute(preserveAspectRatio,none), NamedAttribute(viewBox), Attribute(type,text/css), Attribute(xmlns-svg,http://www.w3.org/2000/svg), Attribute(id,AdobeSVG), Attribute(height,400px), Attribute(style,border: solid thin black), Attribute(CLASSID,clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2), Attribute(width,400px))*],[
-						Subtree(Set(AnyText, Root, AnyElement, AnyComment),[Set(AnyAttribute)*],[TOP])*
+						Subtree(Set(AnyText, AnyElement, AnyComment),[Set(AnyAttribute)*],[TOP])*
 					])*
 				])*
 			])*

@@ -91,9 +91,13 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
             ZUnknownLength(allPossibleAttributes)
       }
 
-      val newChildren: L = children match {
+      val newChildren: ZList[Subtree] = children match {
         case ZBottom() => ZBottom()
-        case res => mergeConsecutiveTextNodes(res.asInstanceOf[ZListElement[N]])._1
+        case res => mergeConsecutiveTextNodes(res.asInstanceOf[ZListElement[N]])._1.map {
+          case (subtree, _) =>
+            // filter out root nodes, because those can't be children
+            Subtree(subtree.desc.diff(Set(Root)), subtree.attributes, subtree.children)
+        }
       }
 
       val desc: Set[NodeDescriptor] = name._3 match {
@@ -101,7 +105,7 @@ object ZipperDomain extends Domain[N, L, OuterXPATH.V] {
         case Some(s) => s.map { n => Element(n) }
       }
 
-      val tree = Subtree(desc, attrSet, newChildren.map(_._1))
+      val tree = Subtree(desc, attrSet, newChildren)
       val path = Set[Path](DescendantStep(AnyElementStep, RootPath(isFragment = false)), DescendantStep(AnyElementStep, RootPath(isFragment = true)))
       normalize(tree, path)
     }
