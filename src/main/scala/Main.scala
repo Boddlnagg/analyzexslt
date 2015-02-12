@@ -1,4 +1,4 @@
-import java.io.File
+import java.io.{IOException, File}
 
 import analysis.XSLTAnalyzer
 import analysis.domain.zipper.ZipperDomain
@@ -7,73 +7,94 @@ import xslt.{XSLTParser, UnsupportedFeatureException, XSLTFeatureAnalyzer}
 import scala.collection.mutable.{Map => MutMap, MutableList => MutList, Set => MutSet}
 import scala.xml.XML
 
+case class Config(out: File = new File("."), analyzeFeatures: Boolean = false, limitRecursion: Option[Int] = None,
+                  disableBuiltinTemplates: Boolean = false, prettyPrint: Boolean = false,
+                  featuresCSVOutput: Boolean = false, files: Seq[File] = Seq())
+
 object Main {
   def main(args: Array[String]) {
-    // TODO: implement command line interface for analyzing XSLT files (with parameters/options)
+    val parser = new scopt.OptionParser[Config]("xsltanalyze") {
+      opt[Int]('r', "limit-recursion") optional() action { (x, c) =>
+        c.copy(limitRecursion = Some(x)) } validate { x =>
+          if (x >= 0) success else failure ("Recursion limit must not be negative.")
+        } text("limit depth of recursive template application")
+      opt[Unit]('b', "no-builtin") action { (_, c) =>
+        c.copy(disableBuiltinTemplates = true) } text("disable built-in template rules")
+      opt[Unit]('p', "pretty") action { (_, c) =>
+        c.copy(prettyPrint = true) } text("pretty-print output of analysis in XML-like syntax")
+      opt[Unit]('f', "features") action { (_, c) =>
+        c.copy(analyzeFeatures = true) } text("analyze features instead of running abstract interpreter")
+      opt[Unit]('c',"csv") action { (_, c) =>
+        c.copy(featuresCSVOutput = true) } text("print result of feature analysis as CSV table (only with -f)")
+      help("help") text("prints this usage text")
+      arg[File]("<file>...") unbounded() required() action { (x, c) =>
+        c.copy(files = c.files :+ x) } text("XSLT stylesheets to analyze")
+      checkConfig { c =>
+        if (c.featuresCSVOutput && ! c.analyzeFeatures)
+          failure("CSV output is only allowed when feature analysis is enabled")
+        else if (c.analyzeFeatures && (c.limitRecursion != None || c.disableBuiltinTemplates || c.prettyPrint))
+          failure("Options -r, -b and -p are not allowed when feature analysis is enabled")
+        else success
+      }
+    }
+
+    parser.parse(args, Config()) match {
+      case Some(config) => run(config)
+      case None => ()
+    }
+  }
+
+  private def run(config: Config) = {
     val map: MutMap[File, Map[String, String]] = MutMap()
     val keys: MutSet[String] = MutSet()
     val files: MutList[File] = MutList()
 
-    // TODO: these must be configurable
-    val analyzeFeatures: Boolean = false
-    val inputFileName = "reduced.xsl"
-    val recursionLimit = Some(4)
-    val disableBuiltinTemplates = false
-    val prettyPrintOutput = true
-
-    // TODO: use configurable glob file pattern ./xslt-collection/*/stylesheet.xsl
-    for (dir <- new File("./xslt-collection").listFiles.toIterator if dir.isDirectory) {
-      val xslFiles = dir.listFiles.filter(f => f.getName == inputFileName)
-      val xslFile = xslFiles.length match {
-        case 0 =>
-          println(f"Skipping directory $dir (no XSL files found).")
-          None
-        case 1 =>
-          Some(xslFiles(0))
-        case _ =>
-          println(f"Skipping directory $dir (multiple XSL files found).")
-          None
-      }
-
-
-      xslFile match {
-        case Some(file) =>
-          val xml = XML.loadFile(file)
-          if (analyzeFeatures) {
-            try {
-              val result = XSLTFeatureAnalyzer.collectFeatures(xml)
-              keys ++= result.keys
-              map += file -> result
-              files += file
-            } catch {
-              case e: UnsupportedFeatureException => println(f"Could not analyze features in $file: Unsupported feature: ${e.getMessage}")
-            }
-          } else {
-            println(f"Running abstract interpreter for $file:")
-            val stylesheet = XSLTParser.parseStylesheet(xml, disableBuiltinTemplates)
-            val analyzer = new XSLTAnalyzer(ZipperDomain)
-            val (subtree, path) = analyzer.transform(stylesheet, ZipperDomain.xmlDom.top, recursionLimit)
-            if (prettyPrintOutput) println(subtree.prettyPrint)
-            else println(subtree)
+    for (file <- config.files) {
+      try {
+        val xml = XML.loadFile(file)
+        if (config.analyzeFeatures) {
+          try {
+            val result = XSLTFeatureAnalyzer.collectFeatures(xml)
+            keys ++= result.keys
+            map += file -> result
+            files += file
+          } catch {
+            case e: UnsupportedFeatureException => System.err.println(f"Could not analyze features in $file: Unsupported feature: ${e.getMessage}")
           }
-        case _ => ()
+        } else {
+          if (config.files.length > 1) println(f"Running abstract interpreter for $file:")
+          val stylesheet = XSLTParser.parseStylesheet(xml, config.disableBuiltinTemplates)
+          val analyzer = new XSLTAnalyzer(ZipperDomain)
+          try {
+            val (subtree, _) = analyzer.transform(stylesheet, ZipperDomain.xmlDom.top, config.limitRecursion)
+            if (config.prettyPrint) println(subtree.prettyPrint)
+            else println(subtree)
+          } catch {
+            case e: StackOverflowError => System.err.println("Running analysis overflowed the Scala stack. Try --limit-recursion.")
+          }
+        }
+      } catch {
+        case e: IOException => System.err.println(f"Could not analyze $file: ${e.getMessage}")
       }
     }
 
-    if (analyzeFeatures) {
-      // Output as list of features
-      for (file <- files) {
-        println(f"XSLT features used in $file")
-        for ((key, value) <- map(file)) {
-          println(f"- $key: $value")
+    if (config.analyzeFeatures) {
+      if (!config.featuresCSVOutput) {
+        // Output as list of features
+        for (file <- files) {
+          println(f"XSLT features used in $file")
+          for ((key, value) <- map(file)) {
+            println(f"- $key: $value")
+          }
         }
-      }
-
-      // Output as CSV ('files' contains the columns of the output table; 'map(file)' contains the rows)
-      println(f"'',${files.map("'" + _.getParentFile.getName + "'").mkString(",")}") // print header
-      for (feature <- keys) {
-        println(f"'$feature',${files.map(f => "'" + map(f).getOrElse(feature, "-") + "'").mkString(",")}")
+      } else {
+        // Output as CSV ('files' contains the columns of the output table; 'map(file)' contains the rows)
+        println(f"'',${files.map("'" + _.getParentFile.getName + "'").mkString(",")}") // print header
+        for (feature <- keys) {
+          println(f"'$feature',${files.map(f => "'" + map(f).getOrElse(feature, "-") + "'").mkString(",")}")
+        }
       }
     }
   }
+
 }
