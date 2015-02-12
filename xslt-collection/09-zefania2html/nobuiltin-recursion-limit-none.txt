@@ -3,14 +3,14 @@
 		<title>
 			NIL + <![ANY-TEXT]>
 		</title>
-		<link href="../images/cs_icon.ico"? rel="SHORTCUT ICON"? />
+		<link rel="SHORTCUT ICON"? href="../images/cs_icon.ico"? />
 		<script src="../js/zefania.js"? type="text/javascript"? />
-		<link href="../css/zefania-ltr.css"? type="text/css"? rel="stylesheet"? />
+		<link rel="stylesheet"? type="text/css"? href="../css/zefania-ltr.css"? />
 	</head>
 	<body onLoad="javascript:toggledivchap()"?>
 		<div class="floattop1"? id="menudiv"?>
 			<form name="bookform1"?>
-				<select onChange="javascript:toggledivchap1()"? name="book1"? id="book1"?>
+				<select name="book1"? onChange="javascript:toggledivchap1()"? id="book1"?>
 					<option value=*?>
 						NIL + <![ANY-TEXT]>
 					</option>
@@ -20,7 +20,7 @@
 		</div>
 		<div class="floattop2"? id="menudiv"?>
 			<form name="bookform2"?>
-				<select onChange="javascript:toggledivchap2()"? name="book2"? id="book2"?>
+				<select name="book2"? onChange="javascript:toggledivchap2()"? id="book2"?>
 					<option value=*?>
 						NIL + <![ANY-TEXT]>
 					</option>
@@ -30,30 +30,30 @@
 		</div>
 		<div class="floatfont"? id="menufont"?>
 			<a href="javascript:;"?>
-				<img onClick="increaseSize()"? src="../images/size_big.gif"? border="0"? />
+				<img src="../images/size_big.gif"? onClick="increaseSize()"? border="0"? />
 			</a>
 			<a href="javascript:;"?>
-				<img onClick="defaultSize()"? src="../images/size_medium.gif"? border="0"? />
+				<img src="../images/size_medium.gif"? onClick="defaultSize()"? border="0"? />
 			</a>
 			<a href="javascript:;"?>
-				<img onClick="decreaseSize()"? src="../images/size_small.gif"? border="0"? />
+				<img src="../images/size_small.gif"? onClick="decreaseSize()"? border="0"? />
 			</a>
 			<a href="javascript:;"?>
-				<img src="../images/compare_off.gif"? width="32px"? border="0"? id="cmpimg"? onClick="compareInit()"? />
+				<img onClick="compareInit()"? border="0"? id="cmpimg"? src="../images/compare_off.gif"? width="32px"? />
 			</a>
 		</div>
 		<div class="floatsearch"? id="divsearch"?>
 			<form name="search_frm"?>
-				<input size="15"? name="search"? type="text"? />
+				<input type="text"? size="15"? name="search"? />
 				<a href="javascript:;"?>
-					<img onClick="doSearch(search_frm.search.value)"? border="0"? src="../images/search.gif"? />
+					<img src="../images/search.gif"? onClick="doSearch(search_frm.search.value)"? border="0"? />
 				</a>
 			</form>
 		</div>
-		<div id=*? class="floatleft"? class="floatright"? class="chapterbody1"? class="searchresults"? class="chapterbody2"?>
-			<{ul,h1,p} class="treeview"? id="menus_book1"? id="menus_book2"?>
+		<div class={"chapterbody1","searchresults","chapterbody2","floatright","floatleft"}? id=*?>
+			<{ul,h1,p} class="treeview"? id={"menus_book1","menus_book2"}?>
 				<{li,![ANY-TEXT]}>
-					NIL + <a onclick=*? href="javascript:;"?>
+					NIL + <a href="javascript:;"? onclick=*?>
 						NIL + <![ANY-TEXT]>
 					</a>
 				</li>

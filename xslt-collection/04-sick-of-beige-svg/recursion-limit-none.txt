@@ -1,54 +1,54 @@
 <svg viewBox="-50 -40 100 80"? height="80mm"? width="100mm"? version="1.1"?>
 	<metadata>
-		<rdf-RDF>
-			<cc-Work rdf-about=""?>
-				<dc-format>
+		<rdf--RDF>
+			<cc--Work rdf--about=""?>
+				<dc--format>
 					<![TEXT[image/svg+xml]]>
-				</dc-format>
-				<dc-type rdf-resource="http://purl.org/dc/dcmitype/StillImage"? />
-				<dc-title />
-			</cc-Work>
-		</rdf-RDF>
+				</dc--format>
+				<dc--type rdf--resource="http://purl.org/dc/dcmitype/StillImage"? />
+				<dc--title />
+			</cc--Work>
+		</rdf--RDF>
 	</metadata>
 	<defs>
 		<g id="center-mark"?>
-			<path style="stroke:white;stroke-width:0.25"? d="m 0,-1 v 2 z"? />
-			<path style="stroke:white;stroke-width:0.25"? d="m -1,0 h 2 z"? />
+			<path d="m 0,-1 v 2 z"? style="stroke:white;stroke-width:0.25"? />
+			<path d="m -1,0 h 2 z"? style="stroke:white;stroke-width:0.25"? />
 		</g>
 		<g id="corner-keepout-once"?>
 			<path id="corner-keepout-pad"? />
 		</g>
 		<g id="hole-once"?>
-			<circle style="fill:black;stroke:none"? r="1.6"? cy="0"? cx="0"? />
+			<circle cy="0"? cx="0"? r="1.6"? style="fill:black;stroke:none"? />
 		</g>
 	</defs>
-	<g style="display:inline"? inkscape-groupmode="layer"? id="layer-board"? inkscape-label="Board"?>
+	<g inkscape--label="Board"? inkscape--groupmode="layer"? id="layer-board"? style="display:inline"?>
 		<path id="board"? />
 	</g>
-	<g style="display:inline"? inkscape-groupmode="layer"? id="layer-keepout"? inkscape-label="Keepout"?>
+	<g inkscape--label="Keepout"? inkscape--groupmode="layer"? id="layer-keepout"? style="display:inline"?>
 		<path id="edge-keepout"? />
-		<use xlink-href="#corner-keepout-once"? id="lower-left-corner-keepout"? y="0"? transform="translate(-46,36)"? x="0"? />
-		<use xlink-href="#corner-keepout-once"? y="0"? transform="matrix(-1,0,0,1,46,36)"? id="lower-right-corner-keepout"? x="0"? />
-		<use xlink-href="#corner-keepout-once"? id="upper-right-corner-keepout"? y="0"? transform="matrix(-1,0,0,-1,46,-36)"? x="0"? />
-		<use id="upper-left-corner-keepout"? xlink-href="#corner-keepout-once"? y="0"? transform="matrix(1,0,0,-1,-46,-36)"? x="0"? />
+		<use xlink--href="#corner-keepout-once"? x="0"? y="0"? id="lower-left-corner-keepout"? transform="translate(-46,36)"? />
+		<use xlink--href="#corner-keepout-once"? x="0"? y="0"? id="lower-right-corner-keepout"? transform="matrix(-1,0,0,1,46,36)"? />
+		<use xlink--href="#corner-keepout-once"? x="0"? y="0"? id="upper-right-corner-keepout"? transform="matrix(-1,0,0,-1,46,-36)"? />
+		<use xlink--href="#corner-keepout-once"? x="0"? y="0"? id="upper-left-corner-keepout"? transform="matrix(1,0,0,-1,-46,-36)"? />
 	</g>
-	<g style="display:inline"? inkscape-groupmode="layer"? id="layer-drill"? inkscape-label="Drill"?>
-		<use y="0"? transform="translate(-46,36)"? id="lower-left-hole"? x="0"? xlink-href="#hole-once"? />
-		<use id="lower-right-hole"? y="0"? transform="matrix(-1,0,0,1,46,36)"? x="0"? xlink-href="#hole-once"? />
-		<use y="0"? transform="matrix(-1,0,0,-1,46,-36)"? x="0"? id="upper-right-hole"? xlink-href="#hole-once"? />
-		<use y="0"? transform="matrix(1,0,0,-1,-46,-36)"? id="upper-left-hole"? x="0"? xlink-href="#hole-once"? />
+	<g inkscape--label="Drill"? inkscape--groupmode="layer"? id="layer-drill"? style="display:inline"?>
+		<use xlink--href="#hole-once"? x="0"? y="0"? id="lower-left-hole"? transform="translate(-46,36)"? />
+		<use xlink--href="#hole-once"? x="0"? y="0"? id="lower-right-hole"? transform="matrix(-1,0,0,1,46,36)"? />
+		<use xlink--href="#hole-once"? x="0"? y="0"? id="upper-right-hole"? transform="matrix(-1,0,0,-1,46,-36)"? />
+		<use xlink--href="#hole-once"? x="0"? y="0"? id="upper-left-hole"? transform="matrix(1,0,0,-1,-46,-36)"? />
 	</g>
-	<g style="display:inline"? id="layer-centers"? inkscape-groupmode="layer"? inkscape-label="Centers"?>
-		<use xlink-href="#center-mark"? y="0"? x="0"? id="center-center-mark"? />
-		<use xlink-href="#center-mark"? transform="translate(-44.75,0)"? y="0"? id="left-usb-center-mark"? x="0"? />
-		<use xlink-href="#center-mark"? y="0"? transform="translate(44.75,0)"? id="right-usb-center-mark"? x="0"? />
+	<g inkscape--label="Centers"? inkscape--groupmode="layer"? id="layer-centers"? style="display:inline"?>
+		<use y="0"? xlink--href="#center-mark"? x="0"? id="center-center-mark"? />
+		<use xlink--href="#center-mark"? x="0"? y="0"? id="left-usb-center-mark"? transform="translate(-44.75,0)"? />
+		<use xlink--href="#center-mark"? x="0"? y="0"? id="right-usb-center-mark"? transform="translate(44.75,0)"? />
 	</g>
-	<g style="display:inline"? id="layer-description"? inkscape-groupmode="layer"? inkscape-label="Description"?>
+	<g inkscape--label="Description"? inkscape--groupmode="layer"? id="layer-description"? style="display:inline"?>
 		<g transform="translate(0,-6)"? id="descriptive-text"?>
-			<text style="font-size:4;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;fill:white;fill-opacity:1;font-family:monospace"? y="-2"? xml:space="preserve"?>
+			<text xml:space="preserve"? y="-2"? style="font-size:4;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;fill:white;fill-opacity:1;font-family:monospace"?>
 				<tspan />
 			</text>
-			<text style="font-size:4;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;fill:white;fill-opacity:1;font-family:monospace"? y="2"? xml:space="preserve"?>
+			<text xml:space="preserve"? y="2"? style="font-size:4;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;fill:white;fill-opacity:1;font-family:monospace"?>
 				<tspan />
 			</text>
 		</g>
