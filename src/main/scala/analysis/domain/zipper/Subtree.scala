@@ -102,12 +102,24 @@ case class Subtree(desc: Set[NodeDescriptor], attributes: ZList[Set[NodeDescript
       case ZTop() => b.append(" any-attributes")
       case ZUnknownLength(elem) =>
         if (elem.contains(AnyAttribute)) b.append(" any-attributes")
-        else b.append(" ").append(elem.map(formatAttribute).mkString(" "))
+        else {
+          b.append(" ")
+          val grouped = elem.groupBy {
+            case NamedAttribute(name) => name
+            case Attribute(name, _) => name
+          }
+          b.append(grouped.map { case (n, v) =>
+            n + "=" + formatAttributeValues(v.toList) + "?"
+          }.mkString(" "))
+        }
     }
 
-    def formatAttribute(desc: NodeDescriptor): String = desc match {
-      case Attribute(name, value) => name + "=\"" + value + "\"?"
-      case NamedAttribute(name) => name + "=*?"
+    def formatAttributeValues(desc: List[NodeDescriptor]): String = desc match {
+      case List(NamedAttribute(_)) => "*" // no known value -> *
+      case List(Attribute(_, value)) => "\"" + value + "\"" // single known value
+      case _ => "{" + desc.map { // multiple possible values -> set notation {...}
+        case Attribute(_, value) => "\"" + value + "\""
+      }.mkString(",") + "}"
     }
 
     def appendChildrenIndented(children: ZList[Subtree], indentLevel: Int): Unit = children match {
