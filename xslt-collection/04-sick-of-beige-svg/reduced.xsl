@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"> <!-- xmlns="http://www.w3.org/2000/svg" was removed -->
 	<xsl:output method="xml" omit-xml-declaration="yes"/>
 
 	<xsl:param name="width" select="100"/>
@@ -115,13 +115,13 @@
 	<xsl:template match="/">
 		<svg version="1.1" width="{$width}mm" height="{$height}mm" viewBox="{$bxl} {$byt} {$width} {$height}">
 			<metadata>
-				<rdf-RDF>
-					<cc-Work rdf-about="">
-						<dc-format>image/svg+xml</dc-format>
-						<dc-type rdf-resource="http://purl.org/dc/dcmitype/StillImage"/>
-						<dc-title/>
-					</cc-Work>
-				</rdf-RDF>
+				<rdf--RDF>
+					<cc--Work rdf--about="">
+						<dc--format>image/svg+xml</dc--format>
+						<dc--type rdf--resource="http://purl.org/dc/dcmitype/StillImage"/>
+						<dc--title/>
+					</cc--Work>
+				</rdf--RDF>
 			</metadata>
 			<defs>
 				<g id="center-mark">
@@ -147,7 +147,7 @@
 					<circle cx="0" cy="0" r="{$hole-radius}" style="fill:black;stroke:none"/>
 				</g>
 			</defs>
-			<g inkscape-label="Board" id="layer-board" inkscape-groupmode="layer" style="display:inline">
+			<g inkscape--label="Board" id="layer-board" inkscape--groupmode="layer" style="display:inline">
 				<xsl:call-template name="rounded-rectangle-path">
 					<xsl:with-param name="width" select="$width"/>
 					<xsl:with-param name="height" select="$height"/>
@@ -160,7 +160,7 @@
 					<xsl:with-param name="id" select="'board'"/>
 				</xsl:call-template>
 			</g>
-			<g inkscape-label="Keepout" id="layer-keepout" inkscape-groupmode="layer" style="display:inline">
+			<g inkscape--label="Keepout" id="layer-keepout" inkscape--groupmode="layer" style="display:inline">
 				<xsl:call-template name="rounded-rectangle-path">
 					<xsl:with-param name="width" select="$width"/>
 					<xsl:with-param name="height" select="$height"/>
@@ -172,23 +172,23 @@
 					<xsl:with-param name="style" select="'fill:none;stroke:white'"/>
 					<xsl:with-param name="id" select="'edge-keepout'"/>
 				</xsl:call-template>
-				<use transform="translate({$hole-xl},{$hole-yb})" id="lower-left-corner-keepout" x="0" y="0" xlink-href="#corner-keepout-once"/>
-				<use transform="matrix(-1,0,0,1,{$hole-xr},{$hole-yb})" id="lower-right-corner-keepout" x="0" y="0" xlink-href="#corner-keepout-once"/>
-				<use transform="matrix(-1,0,0,-1,{$hole-xr},{$hole-yt})" id="upper-right-corner-keepout" x="0" y="0" xlink-href="#corner-keepout-once"/>
-				<use transform="matrix(1,0,0,-1,{$hole-xl},{$hole-yt})" id="upper-left-corner-keepout" x="0" y="0" xlink-href="#corner-keepout-once"/>
+				<use transform="translate({$hole-xl},{$hole-yb})" id="lower-left-corner-keepout" x="0" y="0" xlink--href="#corner-keepout-once"/>
+				<use transform="matrix(-1,0,0,1,{$hole-xr},{$hole-yb})" id="lower-right-corner-keepout" x="0" y="0" xlink--href="#corner-keepout-once"/>
+				<use transform="matrix(-1,0,0,-1,{$hole-xr},{$hole-yt})" id="upper-right-corner-keepout" x="0" y="0" xlink--href="#corner-keepout-once"/>
+				<use transform="matrix(1,0,0,-1,{$hole-xl},{$hole-yt})" id="upper-left-corner-keepout" x="0" y="0" xlink--href="#corner-keepout-once"/>
 			</g>
-			<g inkscape-label="Drill" id="layer-drill" inkscape-groupmode="layer" style="display:inline">
-				<use transform="translate({$hole-xl},{$hole-yb})" id="lower-left-hole" x="0" y="0" xlink-href="#hole-once"/>
-				<use transform="matrix(-1,0,0,1,{$hole-xr},{$hole-yb})" id="lower-right-hole" x="0" y="0" xlink-href="#hole-once"/>
-				<use transform="matrix(-1,0,0,-1,{$hole-xr},{$hole-yt})" id="upper-right-hole" x="0" y="0" xlink-href="#hole-once"/>
-				<use transform="matrix(1,0,0,-1,{$hole-xl},{$hole-yt})" id="upper-left-hole" x="0" y="0" xlink-href="#hole-once"/>
+			<g inkscape--label="Drill" id="layer-drill" inkscape--groupmode="layer" style="display:inline">
+				<use transform="translate({$hole-xl},{$hole-yb})" id="lower-left-hole" x="0" y="0" xlink--href="#hole-once"/>
+				<use transform="matrix(-1,0,0,1,{$hole-xr},{$hole-yb})" id="lower-right-hole" x="0" y="0" xlink--href="#hole-once"/>
+				<use transform="matrix(-1,0,0,-1,{$hole-xr},{$hole-yt})" id="upper-right-hole" x="0" y="0" xlink--href="#hole-once"/>
+				<use transform="matrix(1,0,0,-1,{$hole-xl},{$hole-yt})" id="upper-left-hole" x="0" y="0" xlink--href="#hole-once"/>
 			</g>
-			<g inkscape-label="Centers" inkscape-groupmode="layer" id="layer-centers" style="display:inline">
-				<use id="center-center-mark" x="0" y="0" xlink-href="#center-mark"/>
-				<use transform="translate({$bxl + $usb-center-from-edge},0)" id="left-usb-center-mark" x="0" y="0" xlink-href="#center-mark"/>
-				<use transform="translate({$bxr - $usb-center-from-edge},0)" id="right-usb-center-mark" x="0" y="0" xlink-href="#center-mark"/>
+			<g inkscape--label="Centers" inkscape--groupmode="layer" id="layer-centers" style="display:inline">
+				<use id="center-center-mark" x="0" y="0" xlink--href="#center-mark"/>
+				<use transform="translate({$bxl + $usb-center-from-edge},0)" id="left-usb-center-mark" x="0" y="0" xlink--href="#center-mark"/>
+				<use transform="translate({$bxr - $usb-center-from-edge},0)" id="right-usb-center-mark" x="0" y="0" xlink--href="#center-mark"/>
 			</g>
-			<g inkscape-label="Description" inkscape-groupmode="layer" id="layer-description" style="display:inline">
+			<g inkscape--label="Description" inkscape--groupmode="layer" id="layer-description" style="display:inline">
 				<g id="descriptive-text" transform="translate(0,-6)">
 					<text xml:space="preserve" y="-2" style="font-size:4;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;fill:white;fill-opacity:1;font-family:monospace"><tspan><xsl:value-of select="$dp-model"/></tspan></text>
 					<text xml:space="preserve" y="2" style="font-size:4;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;fill:white;fill-opacity:1;font-family:monospace"><tspan><xsl:value-of select="concat($width, 'mm × ', $height, 'mm')"/></tspan></text>

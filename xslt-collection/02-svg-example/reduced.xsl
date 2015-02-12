@@ -143,7 +143,7 @@
 	<!-- Note - styles don't appear to work with the Adobe SVG plugin
 	    when the SVG is included inline as part of an XHTML document
 	-->
-	<svg-style type="text/css"><![CDATA[
+	<svg--style type="text/css"><![CDATA[
 	    text { fill:black; font-size:12; font-family:Arial }
 	    .gridline { stroke: red; stroke-opacity: 0.2; }
 	    .axis { stroke: blue; stroke-opacity: 1.0; }
@@ -151,19 +151,19 @@
 	    .barLabel { writing-mode: tb; font-size: 12; }
 	    .axisLabel { text-anchor: end; }
 	    .title { text-anchor: middle; font-size: 24; }
-	]]></svg-style>
+	]]></svg--style>
     </xsl:template>
 
     <xsl:template name="graphFilters">
-	<svg-filter id="Drop_Shadow" filterUnits="objectBoundingBox" x="-10%" y="-10%"
+	<svg--filter id="Drop_Shadow" filterUnits="objectBoundingBox" x="-10%" y="-10%"
 		width="150%" height="150%">
-		<svg-feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blurredAlpha"/>
-		<svg-feOffset in="blurredAlpha" dx="3" dy="3" result="offsetBlurredAlpha"/>
-		<svg-feFlood result="flooded" style="flood-color:rgb(0,0,0);flood-opacity:0.65"/>
-		<svg-feComposite in="flooded" operator="in" in2="offsetBlurredAlpha"
+		<svg--feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blurredAlpha"/>
+		<svg--feOffset in="blurredAlpha" dx="3" dy="3" result="offsetBlurredAlpha"/>
+		<svg--feFlood result="flooded" style="flood-color:rgb(0,0,0);flood-opacity:0.65"/>
+		<svg--feComposite in="flooded" operator="in" in2="offsetBlurredAlpha"
 			result="coloredShadow"/>
-		<svg-feComposite in="SourceGraphic" in2="coloredShadow" operator="over"/>
-	</svg-filter>
+		<svg--feComposite in="SourceGraphic" in2="coloredShadow" operator="over"/>
+	</svg--filter>
     </xsl:template>
 
     <xsl:template name="drawBar" >
@@ -173,7 +173,7 @@
 	    <xsl:param name="maxY" />
 	    <xsl:param name="yOffset" />
     
-	    <svg-rect x="{ (position() * ($bar_width + ($bar_separation * 2))) + ($bar_separation) }" y="{$maxY - $yOffset - $height_condition}" 
+	    <svg--rect x="{ (position() * ($bar_width + ($bar_separation * 2))) + ($bar_separation) }" y="{$maxY - $yOffset - $height_condition}" 
 		      width="{$bar_width}" height="{$height_condition}" 
 
 		      class="bar" fill="rgb(128,128,255)" filter="url(#Drop_Shadow)" />
@@ -184,11 +184,11 @@
 		onmouseout="evt.getTarget().setAttribute('width', 26)"
 -->
 
-	    <svg-text x="{ ($bar_width div 2) +(position() * ($bar_width + ($bar_separation * 2))) + ($bar_separation) }" 
+	    <svg--text x="{ ($bar_width div 2) +(position() * ($bar_width + ($bar_separation * 2))) + ($bar_separation) }" 
 		    y="{$maxY - $yOffset + 5}" writing-mode="tb" 
 		    class="barLabel">
 		<xsl:value-of select="@name"/>
-	    </svg-text>
+	    </svg--text>
     </xsl:template>
 
 
@@ -258,14 +258,14 @@
 	<xsl:param name="drawXLabels" />
 	<xsl:param name="xAxisTitle" />
 	
-	<svg-line class="axis" stroke="blue" x1="{$xOffset}" y1="{$maxY - $yOffset}" 
+	<svg--line class="axis" stroke="blue" x1="{$xOffset}" y1="{$maxY - $yOffset}" 
 		    x2="{$maxX + $xOffset}" y2="{$maxY - $yOffset}" />
 
-	<svg-text x="{$xOffset + ($maxX div 2)}"
+	<svg--text x="{$xOffset + ($maxX div 2)}"
 		y="{$maxY - ($yOffset div 2)}"
 		class="axisLabel">
 	    <xsl:value-of select="$xAxisTitle"/>
-	</svg-text>
+	</svg--text>
 
 	<xsl:if test="$drawXLabels = 'true'">
 	    <xsl:call-template name="xAxisLabels">
@@ -287,14 +287,14 @@
 	<xsl:param name="drawYLabels" />
 	<xsl:param name="yAxisTitle" />
 
-	<svg-line class="axis" stroke="blue" x1="{$xOffset}" y1="0" 
+	<svg--line class="axis" stroke="blue" x1="{$xOffset}" y1="0" 
 		    x2="{$xOffset}" y2="{$maxY - $yOffset}" />
 
-	<svg-text x="{$xOffset div 2}"
+	<svg--text x="{$xOffset div 2}"
 		y="{($maxY div 2) - $yOffset}" writing-mode="tb" 
 		class="axisLabel">
 	    <xsl:value-of select="$yAxisTitle"/>
-	</svg-text>
+	</svg--text>
 
 
 	<xsl:if test="$drawYLabels = 'true'">
@@ -316,9 +316,9 @@
 	<xsl:param name="yOffset" />
 	<xsl:param name="title" />
 
-	<svg-text class="title" x="{$xOffset + ($maxX div 2)}" y="{$yOffset div 2}" text-anchor="middle">
+	<svg--text class="title" x="{$xOffset + ($maxX div 2)}" y="{$yOffset div 2}" text-anchor="middle">
 	    <xsl:value-of select="$title"/>
-	</svg-text>
+	</svg--text>
     </xsl:template>
 
     <xsl:template name="yAxisLabels">
@@ -329,12 +329,12 @@
 	<xsl:param name="yOffset" />
 	<xsl:param name="currentY">0</xsl:param>
 
-	<svg-text x="{$xOffset}"
+	<svg--text x="{$xOffset}"
 		y="{$maxY - $currentY - $yOffset }"
 		text-anchor="end"
 		class="axisLabel">
 	    <xsl:value-of select="$currentY"/>
-	</svg-text>
+	</svg--text>
 
 	<xsl:if test="$currentY &lt; ($maxY - $yOffset)">
 	    <xsl:call-template name="yAxisLabels">
@@ -356,7 +356,7 @@
 	<xsl:param name="yOffset" />
 	<xsl:param name="currentX" select="$xOffset" />
 
-	<svg-line class="gridline" x1="{$currentX}" y1="0" x2="{$currentX}" y2="{$maxY - $yOffset}" />	
+	<svg--line class="gridline" x1="{$currentX}" y1="0" x2="{$currentX}" y2="{$maxY - $yOffset}" />	
 
 	<xsl:if test="($currentX  )&lt; ($maxX + $xOffset )">
 	    <xsl:call-template name="drawgridVertical">
@@ -379,7 +379,7 @@
 	<xsl:param name="yOffset" />
 	<xsl:param name="currentY" select="$yOffset + ($yOffset mod $interval)" />
 
-	<svg-line class="gridline" x1="{$xOffset}" y1="{$currentY - $yOffset}" x2="{$maxX + $xOffset}" y2="{$currentY - $yOffset}" />	
+	<svg--line class="gridline" x1="{$xOffset}" y1="{$currentY - $yOffset}" x2="{$maxX + $xOffset}" y2="{$currentY - $yOffset}" />	
 
 	<xsl:if test="( $currentY + $interval ) &lt; $maxY">
 	    <xsl:call-template name="drawgridHorizontal">
@@ -401,9 +401,9 @@
 	<xsl:param name="yOffset" />
 	<xsl:param name="currentX" select="$xOffset" />
 
-	<svg-text class="axisLabel" x="{$currentX}" y="{$maxY - $yOffset + 10}" text-anchor="middle" >
+	<svg--text class="axisLabel" x="{$currentX}" y="{$maxY - $yOffset + 10}" text-anchor="middle" >
 	    <xsl:value-of select="$currentX - $xOffset" />
-	</svg-text>
+	</svg--text>
 
 	<xsl:if test="$currentX &lt; ( $maxX + $xOffset )">
 	    <xsl:call-template name="xAxisLabels">
@@ -428,12 +428,12 @@
 	<h2>Dinosaur weights</h2>
 
 	<!-- The +1 for maxX allows the last line to be displayed -->
-	<svg-svg width="400px" height="400px" viewBox="0 0 {$maxX + $xOffset} {$maxY}" preserveAspectRatio="none">
+	<svg--svg width="400px" height="400px" viewBox="0 0 {$maxX + $xOffset} {$maxY}" preserveAspectRatio="none">
 	    <!-- Stylesheets, and styles in general, don't seem to work with inline SVG -->
 	    <xsl:call-template name="graphStyles" />
-	    <svg-defs>
+	    <svg--defs>
 		<xsl:call-template name="graphFilters" />
-	    </svg-defs>
+	    </svg--defs>
 	    <!-- Draw grid lines -->
 	    <xsl:call-template name="drawLines" >
 		<xsl:with-param name="yAxisTitle" select="'Weight / tons'" />
@@ -449,19 +449,19 @@
 			<xsl:with-param name="yOffset" select="$yOffset" />
 		    </xsl:call-template>
 	    </xsl:for-each>
-	</svg-svg>
+	</svg--svg>
     </xsl:template>
 
    <xsl:template match="dinosaurs" mode="svgforheights">
 	<xsl:param name="maxY">300</xsl:param>
 	<h2>Dinosaur heights</h2>
 	<!-- The +1 for maxX allows the last line to be displayed -->
-	<svg-svg width="400px" height="400px" viewBox="0 0 {$maxX + $xOffset} {$maxY}" preserveAspectRatio="none">
+	<svg--svg width="400px" height="400px" viewBox="0 0 {$maxX + $xOffset} {$maxY}" preserveAspectRatio="none">
 	    <!-- Stylesheets, and styles in general, don't seem to work with inline SVG -->
 	    <xsl:call-template name="graphStyles" />
-	    <svg-defs>
+	    <svg--defs>
 		<xsl:call-template name="graphFilters" />
-	    </svg-defs>
+	    </svg--defs>
 	    <!-- Draw grid lines -->
 	    <xsl:call-template name="drawLines" >
 		<xsl:with-param name="yAxisTitle" select="'Length / m'" />
@@ -477,11 +477,11 @@
 		    <xsl:with-param name="yOffset" select="$yOffset" />
 		</xsl:call-template>
 	    </xsl:for-each>
-	</svg-svg>
+	</svg--svg>
     </xsl:template>
 
     <xsl:template match="dinosaurs">
-	<html xmlns-svg="http://www.w3.org/2000/svg">
+	<html xmlns--svg="http://www.w3.org/2000/svg">
 
 	<xsl:call-template name="svgDisplayerInclude" />
 

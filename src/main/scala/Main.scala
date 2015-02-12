@@ -7,28 +7,28 @@ import xslt.{XSLTParser, UnsupportedFeatureException, XSLTFeatureAnalyzer}
 import scala.collection.mutable.{Map => MutMap, MutableList => MutList, Set => MutSet}
 import scala.xml.XML
 
-case class Config(out: File = new File("."), analyzeFeatures: Boolean = false, limitRecursion: Option[Int] = None,
+case class Config(files: Seq[File] = Seq(), limitRecursion: Option[Int] = None,
                   disableBuiltinTemplates: Boolean = false, prettyPrint: Boolean = false,
-                  featuresCSVOutput: Boolean = false, files: Seq[File] = Seq())
+                  analyzeFeatures: Boolean = false, featuresCSVOutput: Boolean = false)
 
 object Main {
   def main(args: Array[String]) {
     val parser = new scopt.OptionParser[Config]("xsltanalyze") {
       opt[Int]('r', "limit-recursion") optional() action { (x, c) =>
         c.copy(limitRecursion = Some(x)) } validate { x =>
-          if (x >= 0) success else failure ("Recursion limit must not be negative.")
-        } text("limit depth of recursive template application")
+          if (x >= 0) success else failure("Recursion limit must not be negative.")
+        } text "limit depth of recursive template application"
       opt[Unit]('b', "no-builtin") action { (_, c) =>
-        c.copy(disableBuiltinTemplates = true) } text("disable built-in template rules")
+        c.copy(disableBuiltinTemplates = true) } text "disable built-in template rules"
       opt[Unit]('p', "pretty") action { (_, c) =>
-        c.copy(prettyPrint = true) } text("pretty-print output of analysis in XML-like syntax")
+        c.copy(prettyPrint = true) } text "pretty-print output of analysis in XML-like syntax"
       opt[Unit]('f', "features") action { (_, c) =>
-        c.copy(analyzeFeatures = true) } text("analyze features instead of running abstract interpreter")
+        c.copy(analyzeFeatures = true) } text "analyze features instead of running abstract interpreter"
       opt[Unit]('c',"csv") action { (_, c) =>
-        c.copy(featuresCSVOutput = true) } text("print result of feature analysis as CSV table (only with -f)")
-      help("help") text("prints this usage text")
+        c.copy(featuresCSVOutput = true) } text "print result of feature analysis as CSV table (only with -f)"
+      help("help") text "prints this usage text"
       arg[File]("<file>...") unbounded() required() action { (x, c) =>
-        c.copy(files = c.files :+ x) } text("XSLT stylesheets to analyze")
+        c.copy(files = c.files :+ x) } text "XSLT stylesheets to analyze"
       checkConfig { c =>
         if (c.featuresCSVOutput && ! c.analyzeFeatures)
           failure("CSV output is only allowed when feature analysis is enabled")
