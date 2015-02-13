@@ -76,7 +76,8 @@ object Main {
             else println(subtree)
             if (config.timeAnalysis) {
               val timeSec = (timeEnd - timeStart: Double) / 1000
-              println(f"Analysis completed in ${timeSec}s.")
+              val limit = config.limitRecursion.map(n => f" with recursion limit $n").getOrElse("")
+              println(f"Analysis of $file$limit completed in ${timeSec}s.")
             }
           } catch {
             case e: StackOverflowError => System.err.println("Running analysis overflowed the Scala stack. Try --limit-recursion.")
@@ -105,5 +106,4 @@ object Main {
       }
     }
   }
-
 }
