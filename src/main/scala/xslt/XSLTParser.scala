@@ -47,8 +47,11 @@ object XSLTParser {
   def parseStylesheet(source: Elem, disableBuiltinTemplates: Boolean = false): XSLTStylesheet = {
     val cleaned = clean(source).asInstanceOf[Elem]
 
-    if (!isElem(cleaned, "stylesheet") && !isElem(cleaned, "transform")) throw new NotImplementedError(f"Root element must be 'stylesheet' or 'transform' with namespace $Namespace (a literal result element is not supported as root node)") // TODO?
-    if (cleaned.attribute("version").get.text != "1.0") throw new NotImplementedError("Stylesheet versions other than 1.0 are not supported")
+    if (!isElem(cleaned, "stylesheet") && !isElem(cleaned, "transform"))
+      throw new NotImplementedError(f"Root element must be 'stylesheet' or 'transform' with namespace $Namespace (a literal result element is not supported as root node)")
+    if (cleaned.attribute("version").get.text != "1.0")
+      throw new NotImplementedError("Stylesheet versions other than 1.0 are not supported")
+
     cleaned.child.foreach {
       n =>
         require(n.namespace == Namespace, f"Top-level elements must be from XSL namespace, got $n")

@@ -152,7 +152,7 @@ class ZipperTransformSuite extends FunSuite {
       ))) { transform(xslt)._1 }
   }
 
-  // TODO: ignored because of non-termination
+  // NOTE: ignored because of non-termination
   ignore("Replicate n times") {
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -365,7 +365,7 @@ class ZipperTransformSuite extends FunSuite {
   }
 
   test("Descendant selector (//) and parent axis") {
-    // TODO: could use //b/a as selector for the second template, but currently this does not terminate
+    // NOTE: could use //b/a as selector for the second template, but currently this does not terminate
     val xslt =
       <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <xsl:template match="/">

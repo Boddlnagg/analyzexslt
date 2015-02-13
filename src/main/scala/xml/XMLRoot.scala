@@ -11,8 +11,6 @@ case class XMLRoot(children: List[XMLNode]) extends XMLNode {
 
   override def toString = f"[${children.map(_.toString).mkString}]" // wrap content in "[]" so we can distinguish the content from the root-node
 
-  //TODO override def hashCode = inner.hashCode * 41 * 41
-
   /** Returns a list of all nodes (self and descendants) in document order */
   def nodesInOrder: List[XMLNode] = {
     XMLNode.nodesInOrder(this)

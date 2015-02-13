@@ -164,6 +164,7 @@ class ZListSuite extends FunSuite {
 
     assertResult(ZCons(lift(11),ZCons(lift(12),ZMaybeNil(lift(13),ZNil())))) { l12.map(_.map(_.map(_ + 10))) }
     assertResult(ZCons(lift(11),ZCons(lift(12),ZTop()))) { l3.map(_.map(_.map(_ + 10))) }
+    assertResult(ZBottom()) { l1.map[L](n => n.map { x => if (x.contains(1)) Set()/*BOTTOM*/ else x }) }
   }
 
   test("Contains") {
