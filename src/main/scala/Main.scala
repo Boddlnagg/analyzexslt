@@ -9,7 +9,8 @@ import scala.xml.XML
 
 case class Config(files: Seq[File] = Seq(), limitRecursion: Option[Int] = None,
                   disableBuiltinTemplates: Boolean = false, prettyPrint: Boolean = false,
-                  analyzeFeatures: Boolean = false, featuresCSVOutput: Boolean = false)
+                  analyzeFeatures: Boolean = false, featuresCSVOutput: Boolean = false,
+                  timeAnalysis: Boolean = false)
 
 object Main {
   def main(args: Array[String]) {
@@ -22,6 +23,8 @@ object Main {
         c.copy(disableBuiltinTemplates = true) } text "disable built-in template rules"
       opt[Unit]('p', "pretty") action { (_, c) =>
         c.copy(prettyPrint = true) } text "pretty-print output of analysis in XML-like syntax"
+      opt[Unit]('t', "time") action { (_, c) =>
+        c.copy(timeAnalysis = true) } text "measure time used for analysis (without parsing)"
       opt[Unit]('f', "features") action { (_, c) =>
         c.copy(analyzeFeatures = true) } text "analyze features instead of running abstract interpreter"
       opt[Unit]('c',"csv") action { (_, c) =>
@@ -32,8 +35,8 @@ object Main {
       checkConfig { c =>
         if (c.featuresCSVOutput && ! c.analyzeFeatures)
           failure("CSV output is only allowed when feature analysis is enabled")
-        else if (c.analyzeFeatures && (c.limitRecursion != None || c.disableBuiltinTemplates || c.prettyPrint))
-          failure("Options -r, -b and -p are not allowed when feature analysis is enabled")
+        else if (c.analyzeFeatures && (c.limitRecursion != None || c.disableBuiltinTemplates || c.prettyPrint || c.timeAnalysis))
+          failure("Options -r, -b, -p and -t are not allowed when feature analysis is enabled")
         else success
       }
     }
@@ -66,9 +69,15 @@ object Main {
           val stylesheet = XSLTParser.parseStylesheet(xml, config.disableBuiltinTemplates)
           val analyzer = new XSLTAnalyzer(ZipperDomain)
           try {
+            val timeStart = System.currentTimeMillis()
             val (subtree, _) = analyzer.transform(stylesheet, ZipperDomain.xmlDom.top, config.limitRecursion)
+            val timeEnd = System.currentTimeMillis()
             if (config.prettyPrint) println(subtree.prettyPrint)
             else println(subtree)
+            if (config.timeAnalysis) {
+              val timeSec = (timeEnd - timeStart: Double) / 1000
+              println(f"Analysis completed in ${timeSec}s.")
+            }
           } catch {
             case e: StackOverflowError => System.err.println("Running analysis overflowed the Scala stack. Try --limit-recursion.")
           }
