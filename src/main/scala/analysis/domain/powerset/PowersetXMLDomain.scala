@@ -57,44 +57,32 @@ object PowersetXMLDomain {
     override def createSingletonList(node: N): L = node.map(s => s.map(n => List(n)))
 
     /** Get the root node of a given node */
-    override def getRoot(node: N): N = node match {
-      case None => None // infinite set of all possible roots (in this domain we can't express that it must be a root node)
-      case Some(s) => Some(s.map(n => n.root))
-    }
+    override def getRoot(node: N): N = node.map(_.map(n => n.root))
 
     /** Get the list of attributes of a given node.
       * Nodes that are not an element (and therefore don't have attributes) return an empty list, not BOTTOM!
       */
-    override def getAttributes(node: N): L = node match {
-      case None => None
-      case Some(s) => Some(s.map {
-        case XMLElement(_, attr, _, _) => attr.toList
-        case _ => Nil // NOTE: other node types have no attributes, but this must NOT evaluate to BOTTOM
-      })
-    }
+    override def getAttributes(node: N): L = node.map(_.map {
+      case XMLElement(_, attr, _, _) => attr.toList
+      case _ => Nil // NOTE: other node types have no attributes, but this must NOT evaluate to BOTTOM
+    })
 
     /** Get the list of children of a given node.
       * Root nodes have a single child, element nodes have an arbitrary number of children.
       * Nodes that don't have children return an empty list, not BOTTOM!
       */
-    override def getChildren(node: PowersetXMLDomain.N): L = node match {
-      case None => None
-      case Some(s) => Some(s.map {
-        case XMLRoot(children) => children
-        case XMLElement(_, _, children, _) => children.toList
-        case _ => Nil // NOTE: other node types have no children, but this must NOT evaluate to BOTTOM
-      })
-    }
+    override def getChildren(node: N): L = node.map(_.map{
+      case XMLRoot(children) => children
+      case XMLElement(_, _, children, _) => children.toList
+      case _ => Nil // NOTE: other node types have no children, but this must NOT evaluate to BOTTOM
+    })
 
     /** Get the parent of given node. If the node has no parent (root node), BOTTOM is returned. */
-    override def getParent(node: N): N = node match {
-      case None => None
-      case Some(s) => Some(s.collect {
-        case e if !e.isInstanceOf[XMLRoot] =>
-          assert(e.parent != null)
-          e.parent
-      })
-    }
+    override def getParent(node: N): N = node.map(_.collect {
+      case e if !e.isInstanceOf[XMLRoot] =>
+        assert(e.parent != null)
+        e.parent
+    })
 
     /** Concatenates two lists. */
     override def concatLists(list1: L, list2: L): L = (list1, list2) match {
@@ -109,25 +97,19 @@ object PowersetXMLDomain {
     /** Creates a root node with the given children. The second parameter specifies whether the root represents a
       * (result tree) fragment or a complete document (the latter can only have a single element child).
       */
-    override def createRoot(children: L, isResultTreeFragment: Boolean): N = children match {
-      case None => None
-      case Some(s) => Some(s.collect {
-        case ch if isResultTreeFragment => XMLRoot(ch)
-        case ch@List(single: XMLElement) => XMLRoot(ch)
-        // NOTE: when isFragment == false, lists with more than a single element node are implicitly ignored
-      })
-    }
+    override def createRoot(children: L, isResultTreeFragment: Boolean): N = children.map(_.collect {
+      case ch if isResultTreeFragment => XMLRoot(ch)
+      case ch@List(single: XMLElement) => XMLRoot(ch)
+      // NOTE: when isResultTreeFragment == false, lists with more than a single element node are implicitly ignored
+    })
 
     /** Copies a list of nodes, so that they can be used in the output.
       * A root node is copied by copying its child (not wrapped in a root node).
       */
-    override def copyToOutput(list: L): L = list match {
-      case None => None
-      case Some(s) => Some(s.map(_.flatMap {
-        case XMLRoot(children) => children.map(_.copy) // "a root node is copied by copying its children" according to spec
-        case node => List(node.copy)
-      }))
-    }
+    override def copyToOutput(list: L): L = list.map(_.map(_.flatMap {
+      case XMLRoot(children) => children.map(_.copy) // "a root node is copied by copying its children" according to spec
+      case node => List(node.copy)
+    }))
 
     /** Gets the size of a node list */
     override def getNodeListSize(list: L): V = list match {
@@ -271,40 +253,34 @@ object PowersetXMLDomain {
     /** Filters a list using a given predicate function. The predicate function should never return a node
       * (as its first result) that is less precise than the input node.
       */
-    override def filter(list: L, predicate: N => (N, N)): L = list match {
-      case None => None
-      case Some(s) => Some(s.map(_.filter { n =>
-        val node: N = Some(Set(n))
-        val (resultTrue, _) = predicate(node)
-        assert(lessThanOrEqual(resultTrue, node))
-        resultTrue.get.toList match {
-          case Nil => false // list without elements -> element was filtered out
-          case first :: Nil => true // list with one element -> element was not filtered out
-          case _ =>
-            // list with more than one element -> this should not happen in this domain
-            throw new AssertionError("Filter predicate returned node with more than one possibility.")
-        }
-      }))
-    }
+    override def filter(list: L, predicate: N => (N, N)): L = list.map(_.map(_.filter { n =>
+      val node: N = Some(Set(n))
+      val (resultTrue, _) = predicate(node)
+      assert(lessThanOrEqual(resultTrue, node))
+      resultTrue.get.toList match {
+        case Nil => false // list without elements -> element was filtered out
+        case first :: Nil => true // list with one element -> element was not filtered out
+        case _ =>
+          // list with more than one element -> this should not happen in this domain
+          throw new AssertionError("Filter predicate returned node with more than one possibility.")
+      }
+    }))
 
     /** Takes the longest prefix of a list where all elements fulfill a given predicate function.
       * The predicate function should never return a node (as its first result) that is less precise than the input node.
       */
-    override def takeWhile(list: L, predicate: N => (N, N)): L = list match {
-      case None => None
-      case Some(s) => Some(s.map(_.takeWhile { n =>
-        val node: N = Some(Set(n))
-        val (resultTrue, _) = predicate(node)
-        assert(lessThanOrEqual(resultTrue, node))
-        resultTrue.get.toList match {
-          case Nil => false // list without elements -> element was filtered out
-          case first :: Nil => true // list with one element -> element was not filtered out
-          case _ =>
-            // list with more than one element -> this should not happen in this domain
-            throw new AssertionError("Predicate for takeWhile returned node with more than one possibility.")
-        }
-      }))
-    }
+    override def takeWhile(list: L, predicate: N => (N, N)): L = list.map(_.map(_.takeWhile { n =>
+      val node: N = Some(Set(n))
+      val (resultTrue, _) = predicate(node)
+      assert(lessThanOrEqual(resultTrue, node))
+      resultTrue.get.toList match {
+        case Nil => false // list without elements -> element was filtered out
+        case first :: Nil => true // list with one element -> element was not filtered out
+        case _ =>
+          // list with more than one element -> this should not happen in this domain
+          throw new AssertionError("Predicate for takeWhile returned node with more than one possibility.")
+      }
+    }))
 
     /** Evaluates a function for every element in the given list, providing also the index of each element in the list.
       * The resulting lists are flattened into a single list by concatenation.
@@ -328,11 +304,8 @@ object PowersetXMLDomain {
     }
 
     /** Gets the first node out of a node list. BOTTOM is returned if the list is empty or BOTTOM. */
-    override def getFirst(list: L): N = list match {
-      case None => None
-      case Some(s) => Some(s.collect {
-        case head :: _ => head
-      })
-    }
+    override def getFirst(list: L): N = list.map(_.collect {
+      case head :: _ => head
+    })
   }
 }
