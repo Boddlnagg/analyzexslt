@@ -16,11 +16,23 @@ class AbstractPathMatchingSuite extends FunSuite {
   val latS = SubtreeLattice
   val TOP = latP.top(isFragment = false) // don't try to match on fragments
 
+  // some helper functions
+
   def matches(path: LocationPath, start: P): P = {
     val startNode: N = (latS.top, start)
     val matches = matcher.matches(startNode, path)._1
     matches._2 // extract path result
   }
+
+  def joinAll(seq: Traversable[P]) = seq.fold(latP.bottom)(latP.join)
+
+  def compare(left: P, right: P): LatticeOrdering =
+    (latP.lessThanOrEqual(left, right), latP.lessThanOrEqual(right, left)) match {
+      case (true, true) => Equal
+      case (true, false) => Less
+      case (false, true) => Greater
+      case (false, false) => Incomparable
+    }
 
   def parse(str: String*): P = str.map(s => Path.fromString(s)).toSet
 
@@ -188,37 +200,37 @@ class AbstractPathMatchingSuite extends FunSuite {
     val pat9 = parse("/b/a")
     val pat89 = parse("/a/a", "/b/a")
 
-    assertResult(Equal) { latP.compare(latP.top, latP.top) }
-    assertResult(Greater) { latP.compare(latP.top, pat1) }
-    assertResult(Greater) { latP.compare(pat1, pat2) }
-    assertResult(Less) { latP.compare(pat2, pat1) }
-    assertResult(Equal) { latP.compare(pat4, pat4) }
-    assertResult(Incomparable) { latP.compare(pat2, pat4) }
-    assertResult(Greater) { latP.compare(pat1, pat3) }
-    assertResult(Less) { latP.compare(pat5, pat2) }
-    assertResult(Greater) { latP.compare(pat3, pat4) }
-    assertResult(Greater) { latP.compare(pat1, pat4) }
-    assertResult(Greater) { latP.compare(pat1, pat5) }
-    assertResult(Greater) { latP.compare(pat6, pat7) }
-    assertResult(Greater) { latP.compare(pat7, pat8) }
-    assertResult(Greater) { latP.compare(pat6, pat8) }
-    assertResult(Greater) { latP.compare(pat6, pat9) }
-    assertResult(Greater) { latP.compare(pat7, pat9) }
-    assertResult(Incomparable) { latP.compare(pat8, pat9) }
-    assertResult(Less) { latP.compare(pat8, pat89) }
-    assertResult(Less) { latP.compare(pat9, pat89) }
-    assertResult(Greater) { latP.compare(pat7, pat89) }
-    assertResult(Greater) { latP.compare(pat6, pat89) }
-    assertResult(Greater) { latP.compare(pat1, pat89) }
-    assertResult(Incomparable) { latP.compare(pat2, pat89) }
-    assertResult(Greater) { latP.compare(pat3, pat89) } // {"a", "b"} > {"a"} > {"/a/a", "/b/a"}
-    assertResult(Greater) { latP.compare(parse("a//b"), parse("a/b")) }
-    assertResult(Greater) { latP.compare(parse("a//b"), parse("a/*/b")) }
-    assertResult(Greater) { latP.compare(parse("a//b"), parse("a//a/b")) }
-    assertResult(Greater) { latP.compare(parse("a//b"), parse("a//c/b")) }
-    assertResult(Less) { latP.compare(parse("*/a/*"), parse("*//a//*")) }
-    assertResult(Less) { latP.compare(parse("*//a/*//*"), parse("*//a//*")) }
-    assertResult(Incomparable) { latP.compare(parse("*//a/*//*"), parse("*//b//*")) }
+    assertResult(Equal) { compare(latP.top, latP.top) }
+    assertResult(Greater) { compare(latP.top, pat1) }
+    assertResult(Greater) { compare(pat1, pat2) }
+    assertResult(Less) { compare(pat2, pat1) }
+    assertResult(Equal) { compare(pat4, pat4) }
+    assertResult(Incomparable) { compare(pat2, pat4) }
+    assertResult(Greater) { compare(pat1, pat3) }
+    assertResult(Less) { compare(pat5, pat2) }
+    assertResult(Greater) { compare(pat3, pat4) }
+    assertResult(Greater) { compare(pat1, pat4) }
+    assertResult(Greater) { compare(pat1, pat5) }
+    assertResult(Greater) { compare(pat6, pat7) }
+    assertResult(Greater) { compare(pat7, pat8) }
+    assertResult(Greater) { compare(pat6, pat8) }
+    assertResult(Greater) { compare(pat6, pat9) }
+    assertResult(Greater) { compare(pat7, pat9) }
+    assertResult(Incomparable) { compare(pat8, pat9) }
+    assertResult(Less) { compare(pat8, pat89) }
+    assertResult(Less) { compare(pat9, pat89) }
+    assertResult(Greater) { compare(pat7, pat89) }
+    assertResult(Greater) { compare(pat6, pat89) }
+    assertResult(Greater) { compare(pat1, pat89) }
+    assertResult(Incomparable) { compare(pat2, pat89) }
+    assertResult(Greater) { compare(pat3, pat89) } // {"a", "b"} > {"a"} > {"/a/a", "/b/a"}
+    assertResult(Greater) { compare(parse("a//b"), parse("a/b")) }
+    assertResult(Greater) { compare(parse("a//b"), parse("a/*/b")) }
+    assertResult(Greater) { compare(parse("a//b"), parse("a//a/b")) }
+    assertResult(Greater) { compare(parse("a//b"), parse("a//c/b")) }
+    assertResult(Less) { compare(parse("*/a/*"), parse("*//a//*")) }
+    assertResult(Less) { compare(parse("*//a/*//*"), parse("*//a//*")) }
+    assertResult(Incomparable) { compare(parse("*//a/*//*"), parse("*//b//*")) }
   }
 
   test("Join") {
@@ -239,17 +251,17 @@ class AbstractPathMatchingSuite extends FunSuite {
     assertResult(latP.top) {latP.join(pat1, latP.top)}
     assertResult(pat1) {latP.join(pat1, latP.bottom)}
 
-    assertResult(pat1) { latP.joinAll(List(pat1, pat3, pat4)) }
+    assertResult(pat1) { joinAll(List(pat1, pat3, pat4)) }
     assertResult(pat2) { latP.join(pat1, pat2) }
     assertResult(Set("/*", "a", "b")) { latP.join(pat1, pat5).map(_.toString) }
     assertResult(pat2) { latP.join(pat2, pat5) }
     assertResult(Set("a", "b", "c")) { latP.join(pat5, pat6).map(_.toString) }
-    assertResult(pat2) { latP.joinAll(List(pat5, pat6, pat2)) }
+    assertResult(pat2) { joinAll(List(pat5, pat6, pat2)) }
     assertResult(Set("/*", "/*/a")) { latP.join(pat37, pat1).map(_.toString) }
     assertResult(pat2) { latP.join(pat37, pat2) }
     assertResult(Set("/a", "*/*")) { latP.join(pat38, pat9).map(_.toString) }
     assertResult(Set("a", "b")) { latP.join(pat7, pat5).map(_.toString) }
-    assertResult(Set("*")) { latP.joinAll(List(latP.bottom, pat2, pat1)).map(_.toString) }
+    assertResult(Set("*")) { joinAll(List(latP.bottom, pat2, pat1)).map(_.toString) }
   }
 
   test("Meet") {

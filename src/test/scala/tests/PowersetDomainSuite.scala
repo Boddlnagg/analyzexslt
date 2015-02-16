@@ -35,6 +35,13 @@ class PowersetDomainSuite extends FunSuite {
   /** Helper function to create an element with no children or attributes */
   def createElement(name: String): N = xmlDom.createElement(xpathDom.liftString(name), xmlDom.createEmptyList(), xmlDom.createEmptyList())
 
+  def compare(v1: V, v2: V): LatticeOrdering = (xpathDom.lessThanOrEqual(v1, v2), xpathDom.lessThanOrEqual(v2, v1)) match {
+    case (true, true) => Equal
+    case (true, false) => Less
+    case (false, true) => Greater
+    case (false, false) => Incomparable
+  }
+
   test("Get root") {
     assertResult(Some(Set(root))) { xmlDom.getRoot(Some(Set(a))) }
     assertResult(Some(Set(root))) { xmlDom.getRoot(Some(Set(a, b, c))) }
@@ -210,15 +217,15 @@ class PowersetDomainSuite extends FunSuite {
     val falseVal = xpathDom.liftBoolean(false)
     val anyVal = xpathDom.join(xpathDom.join(trueVal, falseVal), stringVal)
 
-    assertResult(Greater) { xpathDom.compare(trueVal, xpathDom.bottom) }
-    assertResult(Greater) { xpathDom.compare(falseVal, xpathDom.bottom) }
-    assertResult(Equal) { xpathDom.compare(falseVal, falseVal) }
-    assertResult(Incomparable) { xpathDom.compare(trueVal, falseVal) }
-    assertResult(Incomparable) { xpathDom.compare(falseVal, trueVal) }
-    assertResult(Less) { xpathDom.compare(trueVal, anyVal) }
-    assertResult(Less) { xpathDom.compare(falseVal, anyVal) }
-    assertResult(Incomparable) { xpathDom.compare(trueVal, stringVal) }
-    assertResult(Incomparable) { xpathDom.compare(falseVal, stringVal) }
+    assertResult(Greater) { compare(trueVal, xpathDom.bottom) }
+    assertResult(Greater) { compare(falseVal, xpathDom.bottom) }
+    assertResult(Equal) { compare(falseVal, falseVal) }
+    assertResult(Incomparable) { compare(trueVal, falseVal) }
+    assertResult(Incomparable) { compare(falseVal, trueVal) }
+    assertResult(Less) { compare(trueVal, anyVal) }
+    assertResult(Less) { compare(falseVal, anyVal) }
+    assertResult(Incomparable) { compare(trueVal, stringVal) }
+    assertResult(Incomparable) { compare(falseVal, stringVal) }
   }
 
   test("Transform multiple inputs") {
