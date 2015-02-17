@@ -31,11 +31,16 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       // - reverse list, so most general template comes first
       // - and when this evaluates to TOP, the remaining templates are not even looked at
       //   because joinAllLists returns early
-      xmlDom.joinAllLists(templates.reverse.view.map { case (tmpl, specificNode) =>
+      joinAllLists(templates.reverse.view.map { case (tmpl, specificNode) =>
         val context = AbstractXSLTContext[N, L, V](specificNode, sources, xpathDom.add(index, xpathDom.liftNumber(1)), globalVariables, localVariables)
         instantiateTemplate(sheet, tmpl, context, params, recursionLimit)
       })
     })
+  }
+
+  private def joinAllLists(lists: Iterable[L]): L = lists.fold(xmlDom.bottomList) { (l1, l2) =>
+    if (xmlDom.lessThanOrEqualLists(xmlDom.topList, l1)) return xmlDom.topList
+    else xmlDom.joinLists(l1, l2) // continue only if l1 < TOP
   }
 
   private def chooseTemplates(sheet: XSLTStylesheet, node: N, mode: Option[String]): List[(XSLTTemplate, N)] = {
@@ -194,7 +199,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
       case ChooseInstruction(branches, otherwise) =>
         val possibleBranches = chooseBranches(branches, otherwise, xsltToXPathContext(context))
         // evaluate all possible branches and join the result lists
-        Left(xmlDom.joinAllLists(possibleBranches.map(br => processAll(sheet, br, context, recursionLimit))))
+        Left(possibleBranches.map(br => processAll(sheet, br, context, recursionLimit)).fold(xmlDom.bottomList)(xmlDom.joinLists))
       case ForEachInstruction(select, content) =>
         val result = xpathAnalyzer.evaluate(select, xsltToXPathContext(context))
         val (extracted, _) = xpathDom.matchNodeSet(result)

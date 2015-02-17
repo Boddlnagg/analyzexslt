@@ -296,11 +296,11 @@ object PowersetXMLDomain {
           }
           case None => None // don't result elements -> don't know output
         }
-      case Some(s) => joinAllLists(s.map { l =>
+      case Some(s) => s.map { l =>
         val mapped = l.zipWithIndex.map { case (n, i) => f(Some(Set(n)), xpathDom.liftNumber(i)) }
         val flattened = mapped.foldLeft(createEmptyList())((acc, next) => concatLists(acc, next))
         flattened
-      })
+      }.fold(bottomList)(joinLists)
     }
 
     /** Gets the first node out of a node list. BOTTOM is returned if the list is empty or BOTTOM. */
