@@ -38,6 +38,26 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     })
   }
 
+  private def chooseTemplates(sheet: XSLTStylesheet, node: N, mode: Option[String]): List[(XSLTTemplate, N)] = {
+    val result = MutList[(XSLTTemplate, N)]()
+    val matchable = sheet.matchableTemplates.getOrElse(mode, Map())
+    var currentNode = node
+    breakable {
+      // iterate through matchable templates (they are ordered s.t. the first one always has highest priority/precedence)
+      matchable.foreach { case (path, tpl) =>
+        val (matches, notMatches) = patternMatcher.matches(currentNode, path)
+        if (!xmlDom.lessThanOrEqual(matches, xmlDom.bottom))
+          result += ((tpl, matches)) // template might match, so add it to possible results
+        if (xmlDom.lessThanOrEqual(notMatches, xmlDom.bottom) || xmlDom.lessThanOrEqual(currentNode, matches))
+          break() // the node matched completely, so we can stop the process
+
+        currentNode = notMatches // continue with that "part" of the node that did not match
+        // (we already found the correct template for everything that did match so far)
+      }
+    }
+    result.toList
+  }
+
   /** Instantiates an XSLT template in a given abstract XSLT context with parameters and returns a list of resulting nodes.
     *
     * @param sheet the stylesheet that is currently processed
@@ -57,28 +77,6 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
     // the context for the newly instantiated template contains only global variables and parameters,
     // no other local variables (static scoping and no nested template definitions)
     processAll(sheet, tmpl.content, context.replaceLocalVariables(evaluatedParams), recursionLimit.map(_ - 1))
-  }
-
-  private def chooseTemplates(sheet: XSLTStylesheet, node: N, mode: Option[String]): List[(XSLTTemplate, N)] = {
-    val result = MutList[(XSLTTemplate, N)]()
-    val matchable = sheet.matchableTemplates.getOrElse(mode, Map())
-    var currentNode = node
-    breakable {
-      // iterate through matchable templates (they are ordered s.t. the first one always has highest priority/precedence)
-      matchable.foreach { case (path, tpl) =>
-        val (matches, notMatches) = patternMatcher.matches(currentNode, path)
-        if (!xmlDom.lessThanOrEqual(matches, xmlDom.bottom))
-          result += ((tpl, matches)) // template might match, so add it to possible results
-        if (xmlDom.lessThanOrEqual(notMatches, xmlDom.bottom))
-          break() // there is nothing left did not match, so we can stop the process
-        if (xmlDom.lessThanOrEqual(currentNode, matches))
-          break() // the node matched completely, so we can also stop
-
-        currentNode = notMatches // continue with that "part" of the node that did not match
-        // (we already found the correct template for everything that did match so far)
-      }
-    }
-    result.toList
   }
 
   /** Processes a sequence of XSLT instructions using a new scope (variable definitions are collected
