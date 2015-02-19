@@ -21,9 +21,6 @@ class AbstractPatternMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
   private def matches(node: N, reversedPathSteps: List[XPathStep], pathIsAbsolute: Boolean): (N, N) = {
     // match recursively from right to left (path steps are reversed!)
     reversedPathSteps match {
-      case Nil =>
-        // an empty path is always a match, except when the path is absolute and the current node is not a root node
-        if (pathIsAbsolute) xmlDom.isRoot(node) else (node, xmlDom.bottom)
       case nextStep :: restPath =>
         val (nextStepMatches, notNextStepMatches) = matchesSingleStep(node, nextStep)
         if (!xmlDom.lessThanOrEqual(nextStepMatches, xmlDom.bottom)) restPath match {
@@ -33,7 +30,7 @@ class AbstractPatternMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
             assert(pathIsAbsolute)
             (nextStepMatches, notNextStepMatches)
           case XPathStep(DescendantOrSelfAxis, AllNodeTest, Nil) :: restTail =>
-            // the next step is '//' and must be handled separately (does any ancestor match the rest of the path?)
+            // the next step is '//' and must be handled separately (find nodes where some ancestor matches the rest of the path)
             var current = nextStepMatches
             var ancestorMatches = xmlDom.bottom
             var notAncestorMatches = node
@@ -66,12 +63,15 @@ class AbstractPatternMatcher[N, L, V](xmlDom: XMLDomain[N, L, V]) {
             }
             (ancestorMatches, xmlDom.join(notAncestorMatches, notNextStepMatches))
           case _ =>
-            // does the parent match the rest of the path?
+            // find nodes where the parent matches the rest of the path
             val parent = xmlDom.getParent(nextStepMatches)
             val (parentMatchesRest, _) = matches(parent, restPath, pathIsAbsolute)
             val (parentMatches, notParentMatches) = hasParent(nextStepMatches, parentMatchesRest)
             (parentMatches, xmlDom.join(notParentMatches, notNextStepMatches))
         } else (xmlDom.bottom, notNextStepMatches)
+      case Nil =>
+        // an empty path is always a match, except when the path is absolute and the current node is not a root node
+        if (pathIsAbsolute) xmlDom.isRoot(node) else (node, xmlDom.bottom)
     }
   }
 
