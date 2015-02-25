@@ -117,7 +117,7 @@ object ZipperXMLDomain {
 
     /** Get the root node of a given node. */
     override def getRoot(node: N): N = {
-      val (Subtree(desc, attributes, children), path) = node
+      val (_, path) = node
       val (selfRoot, selfNotRoot) = isRoot(node) // find out if the node itself is a root node
       if (lessThanOrEqual(selfNotRoot, bottom)) { // if the input node is definitely a root node ...
         node // ... return it, because it is its own root
@@ -139,7 +139,7 @@ object ZipperXMLDomain {
       * Nodes that are not an element (and therefore don't have attributes) return an empty list, not BOTTOM!
       */
     override def getAttributes(node: N): L = {
-      val (Subtree(desc, attributes, children), path) = node
+      val (Subtree(_, attributes, _), path) = node
       val attributePath: Set[Path] = latP.getAttributes(path).joinInner
       attributes.map(a => normalize(Subtree(a, ZNil(), ZNil()), attributePath))
     }
@@ -149,7 +149,7 @@ object ZipperXMLDomain {
       * Nodes that don't have children return an empty list, not BOTTOM!
       */
     override def getChildren(node: N): L = {
-      val (Subtree(desc, attributes, children), path) = node
+      val (Subtree(_, _, children), path) = node
       val childrenPath: Set[Path] = latP.getChildren(path).joinInner
       children.map(tree => normalize(tree, childrenPath))
     }
@@ -172,9 +172,9 @@ object ZipperXMLDomain {
 
     /** Get the parent of given node. If the node has no parent (root node), BOTTOM is returned. */
     override def getParent(node: N): N = {
-      val (Subtree(desc, attributes, children), path) = node
+      val (_, path) = node
       val parent = latP.getParent(path)
-      if (parent == Set(RootPath)) { // parent must be root node
+      if (parent == Set(RootPath(isFragment = false))) { // parent must be (non-fragment) root node
         // root has exactly one child, which must be the node itself
         val newChildren: ZList[Subtree] = ZCons(node._1, ZNil())
         val newAttributes: ZList[Set[NodeDescriptor]] = ZNil() // root has no attributes
@@ -215,7 +215,7 @@ object ZipperXMLDomain {
     override def copyToOutput(list: L): L = flatMapWithIndex(list, (n, _) => {
       val (root, notRoot) = isRoot(n)
       if (!lessThanOrEqual(root, bottom)) { // root is not BOTTOM -> node might be a root node -> copy children
-        val (Subtree(desc, attributes, children), path) = n
+        val (_, path) = n
         val isFragmentRoot = !latP.lessThanOrEqual(latP.meet(path, Set(RootPath(isFragment = true))), latP.bottom)
         if (!isFragmentRoot) {
           // it's not a fragment, so we can restrict the result to a single element child
@@ -424,7 +424,7 @@ object ZipperXMLDomain {
       * are evaluated to the empty string, not BOTTOM!
       */
     override def getNodeName(node: N): V = {
-      val (Subtree(desc, attributes, children), path) = node
+      val (Subtree(desc, _, _), _) = node
       xpathDom.joinAll(desc.map {
         case Element(name) => xpathDom.liftString(name)
         case AnyElement => xpathDom.topString
