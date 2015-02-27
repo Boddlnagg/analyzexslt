@@ -47,6 +47,7 @@ case class XPathFunction(name: String) extends CollectableXSLTFeature // usage o
 case object AbsolutePathSelectors extends XSLTFeature // selectors where path starts with '/'
 case class AxisUsedInSelectors(axis: XPathAxis) extends CollectableXSLTFeature
 case object CustomTemplatePriorities extends XSLTFeature // <xsl:template priority="...">
+case class PatternStepCount(num: Int) extends CollectableXSLTFeature // number of steps in patterns
 
 object XSLTFeatureAnalyzer {
   // borrow some functionality from XSLTParser
@@ -71,6 +72,7 @@ object XSLTFeatureAnalyzer {
     result += "OtherInstructions" -> collectable.collect { case OtherInstruction(name) => name }.mkString(", ")
     result += "OtherTopLevelElements" -> collectable.collect { case OtherTopLevelElement(name) => name }.mkString(", ")
     result += "XPathFunctions" -> collectable.collect { case XPathFunction(name) => name }.mkString(", ")
+    result += "MaxPatternStepCount" -> collectable.collect { case PatternStepCount(num) => num }.max.toString
 
     result.toMap
   }
@@ -321,6 +323,7 @@ object XSLTFeatureAnalyzer {
     def analyzeSinglePattern(path: LocationPath) = {
       path.steps.take(1).foreach(analyzeSingleStep(_, true))
       path.steps.drop(1).foreach(analyzeSingleStep(_, false))
+      f += PatternStepCount(path.steps.length)
     }
 
     def analyzeSingleStep(step: XPathStep, isFirst: Boolean) = {
