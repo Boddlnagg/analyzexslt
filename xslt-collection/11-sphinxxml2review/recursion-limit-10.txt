@@ -1,4 +1,4 @@
 <plain-text-result any-attributes>
-	<{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
+	NIL + <{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
 	...
 </plain-text-result>

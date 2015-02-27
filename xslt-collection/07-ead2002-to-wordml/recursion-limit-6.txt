@@ -161,7 +161,7 @@
 		<w--compat />
 	</w--docPr>
 	<w--body any-attributes>
-		<{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
+		NIL + <{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
 		...
 	</w--body>
 </w--wordDocument>

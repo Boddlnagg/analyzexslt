@@ -241,7 +241,7 @@ abstract class ZList[T] {
     val b = new StringBuilder("[")
     def appendElement(elem: ZListElement[T]): Unit = elem match {
       case ZTop() => b.append("TOP]")
-      case ZUnknownLength(elems) => b.append(elems.toString).append("*]")
+      case ZUnknownLength(elems) => b.append("NIL+").append(elems.toString).append("...]")
       case ZCons(first, ZNil()) => b.append(first.toString).append("]")
       case ZCons(first, rest) =>
         b.append(first.toString).append(",")

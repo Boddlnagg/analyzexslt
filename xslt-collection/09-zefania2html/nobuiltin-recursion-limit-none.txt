@@ -11,7 +11,7 @@
 		<div class="floattop1"? id="menudiv"?>
 			<form name="bookform1"?>
 				<select name="book1"? onChange="javascript:toggledivchap1()"? id="book1"?>
-					<option value=*?>
+					NIL + <option value=*?>
 						NIL + <![ANY-TEXT]>
 					</option>
 					...
@@ -21,7 +21,7 @@
 		<div class="floattop2"? id="menudiv"?>
 			<form name="bookform2"?>
 				<select name="book2"? onChange="javascript:toggledivchap2()"? id="book2"?>
-					<option value=*?>
+					NIL + <option value=*?>
 						NIL + <![ANY-TEXT]>
 					</option>
 					...
@@ -50,9 +50,9 @@
 				</a>
 			</form>
 		</div>
-		<div class={"chapterbody1","searchresults","chapterbody2","floatright","floatleft"}? id=*?>
+		NIL + <div class={"chapterbody1","searchresults","chapterbody2","floatright","floatleft"}? id=*?>
 			<{ul,h1,p} class="treeview"? id={"menus_book1","menus_book2"}?>
-				<{li,![ANY-TEXT]}>
+				NIL + <{li,![ANY-TEXT]}>
 					NIL + <a href="javascript:;"? onclick=*?>
 						NIL + <![ANY-TEXT]>
 					</a>
@@ -60,7 +60,7 @@
 				...
 			</{ul,h1,p}>
 			NIL + <{script,p} type="text/javascript"?>
-				<{sup,![ANY-TEXT]}>
+				NIL + <{sup,![ANY-TEXT]}>
 					NIL + <![TEXT[ ]]>
 					<font color="#cccccc"?>
 						NIL + <![ANY-TEXT]>

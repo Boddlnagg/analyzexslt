@@ -32,8 +32,9 @@ case class Subtree(desc: Set[NodeDescriptor], attributes: ZList[Set[NodeDescript
     def appendElementIndented(elem: ZListElement[Subtree], indentLevel: Int): Unit = elem match {
       case ZTop() => b.append("TOP")
       case ZUnknownLength(elems) =>
+        b.append("NIL+")
         appendSubtreeIndented(elems, indentLevel)
-        b.append("*")
+        b.append("...")
       case ZCons(first, ZNil()) => appendSubtreeIndented(first, indentLevel)
       case ZCons(first, rest) =>
         appendSubtreeIndented(first, indentLevel)
@@ -136,6 +137,7 @@ case class Subtree(desc: Set[NodeDescriptor], attributes: ZList[Set[NodeDescript
     def appendElementIndented(elem: ZListElement[Subtree], indentLevel: Int): Unit = elem match {
       case ZTop() => b.append("TOP")
       case ZUnknownLength(elems) =>
+        b.append("NIL + ")
         appendSubtreeIndented(elems, indentLevel)
         b.append("\n")
         b.append("\t" * indentLevel)

@@ -1,5 +1,5 @@
 <rdf--RDF xmlns--rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"? xmlns--dc="http://purl.org/dc/elements/1.1/"?>
-	<rdf--Description rdf--about=*?>
+	NIL + <rdf--Description rdf--about=*?>
 		<dc--title>
 			NIL + <![ANY-TEXT]>
 		</dc--title>
@@ -28,7 +28,7 @@
 				<iati--reportingOrgType rdf--resource=*? />
 			</rdf--Description>
 		</iati--reportingOrgIdentifier>
-		<{iati--activityWebsiteUrl,iati--defaultFinanceType,iati--participatingOrg,iati--defaultAidType,iati--relatedActivity,iati--defaultTiedStatusName,iati--collaborationType,iati--recipientCountry,iati--contactInfoOrganisation,iati--policyMarker,iati--sector,iati--recipientRegion,iati--budget,iati--document-links,iati--location,iati--transaction,iati--defaultFlowType} rdf--resource=*?>
+		NIL + <{iati--activityWebsiteUrl,iati--defaultFinanceType,iati--participatingOrg,iati--defaultAidType,iati--relatedActivity,iati--defaultTiedStatusName,iati--collaborationType,iati--recipientCountry,iati--contactInfoOrganisation,iati--policyMarker,iati--sector,iati--recipientRegion,iati--budget,iati--document-links,iati--location,iati--transaction,iati--defaultFlowType} rdf--resource=*?>
 			NIL + <{rdf--Description,![ANY-TEXT]} rdf--about=*?>
 				NIL + <{iati--transactionTransactionReference,iati--region,iati--locationPercentage,iati--documentFormat,iati--budgetType,iati--policyMarkerVocabulary,rdfs--seeAlso,iati--sectorVocabulary,iati--country,dc--title,iati--relatedActivityType} rdf--resource=*?>
 					NIL + <{rdf--Description,![ANY-TEXT]} rdf--about=*?>
@@ -97,7 +97,7 @@
 				NIL + <{iati--locationPrecision,iati--tiedStatus} rdf--resource=*?>
 					NIL + <![ANY-TEXT]>
 				</{iati--locationPrecision,iati--tiedStatus}>
-				<iati--locationGazetteerEntry>
+				NIL + <iati--locationGazetteerEntry>
 					<rdf--Description about=*?>
 						<iati--locationGazetteerAgency>
 							NIL + <![ANY-TEXT]>

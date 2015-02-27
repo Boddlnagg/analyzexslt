@@ -32,10 +32,10 @@ NOTE: Built-in templates were disabled for this result!
 		body { font-family: Verdana, Times, Serif; }
 	    ]]}>
 		</{h1,style}>
-		<{li,html,h2,ul,hr,![ANY-TEXT]} xmlns--svg="http://www.w3.org/2000/svg"?>
-			<{li,head,object,b,html,h2,body,ul,![ANY-TEXT]} xmlns--svg="http://www.w3.org/2000/svg"? CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? id="AdobeSVG"?>
-				<{li,head,svg--svg,object,style,b,html,h2,body,h1,table,ul,hr,title,![ANY-TEXT]} CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? style="border: solid thin black"? viewBox=*? height="400px"? id="AdobeSVG"? preserveAspectRatio="none"? xmlns--svg="http://www.w3.org/2000/svg"? type="text/css"? width="400px"?>
-					<{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
+		NIL + <{li,html,h2,ul,hr,![ANY-TEXT]} xmlns--svg="http://www.w3.org/2000/svg"?>
+			NIL + <{li,head,object,b,html,h2,body,ul,![ANY-TEXT]} xmlns--svg="http://www.w3.org/2000/svg"? CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? id="AdobeSVG"?>
+				NIL + <{li,head,svg--svg,object,style,b,html,h2,body,h1,table,ul,hr,title,![ANY-TEXT]} CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? style="border: solid thin black"? viewBox=*? height="400px"? id="AdobeSVG"? preserveAspectRatio="none"? xmlns--svg="http://www.w3.org/2000/svg"? type="text/css"? width="400px"?>
+					NIL + <{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
 					...
 				</{li,head,svg--svg,object,style,b,html,h2,body,h1,table,ul,hr,title}>
 				...
@@ -76,7 +76,7 @@ NOTE: Built-in templates were disabled for this result!
 			<svg--line x2=*? y1="0"? y2={"280","0"}? x1={"120","100"}? class="gridline"? />
 			<svg--line stroke="blue"? x2=*? y1={"20","280","0"}? y2={"280","20","0"}? x1={"140","100"}? class={"gridline","axis"}? />
 			<{svg--text,svg--line} x=*? y="340"? stroke="blue"? x2=*? y1={"20","280","40","0"}? y2={"280","40","20","0"}? x1={"100","160"}? class={"gridline","axis","axisLabel"}? />
-			<{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
+			NIL + <{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
 			...
 		</svg--svg>
 		<h2>
@@ -107,16 +107,16 @@ NOTE: Built-in templates were disabled for this result!
 			<svg--line x2=*? y1="0"? y2={"180","0"}? x1={"120","100"}? class="gridline"? />
 			<svg--line stroke="blue"? x2=*? y1={"20","180","0"}? y2={"180","20","0"}? x1={"140","100"}? class={"gridline","axis"}? />
 			<{svg--text,svg--line} x=*? y="240"? stroke="blue"? x2=*? y1={"20","180","40","0"}? y2={"180","40","20","0"}? x1={"100","160"}? class={"gridline","axis","axisLabel"}? />
-			<{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
+			NIL + <{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
 			...
 		</svg--svg>
 		<h1>
 			<![TEXT[Dinosaur details]]>
 		</h1>
-		<{li,html,h2,ul,![ANY-TEXT]} xmlns--svg="http://www.w3.org/2000/svg"?>
-			<{li,head,object,b,html,h2,body,ul,![ANY-TEXT]} xmlns--svg="http://www.w3.org/2000/svg"? CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? id="AdobeSVG"?>
-				<{li,head,svg--svg,object,style,b,html,h2,body,h1,table,ul,hr,title,![ANY-TEXT]} CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? style="border: solid thin black"? viewBox=*? height="400px"? id="AdobeSVG"? preserveAspectRatio="none"? xmlns--svg="http://www.w3.org/2000/svg"? type="text/css"? width="400px"?>
-					<{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
+		NIL + <{li,html,h2,ul,![ANY-TEXT]} xmlns--svg="http://www.w3.org/2000/svg"?>
+			NIL + <{li,head,object,b,html,h2,body,ul,![ANY-TEXT]} xmlns--svg="http://www.w3.org/2000/svg"? CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? id="AdobeSVG"?>
+				NIL + <{li,head,svg--svg,object,style,b,html,h2,body,h1,table,ul,hr,title,![ANY-TEXT]} CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? style="border: solid thin black"? viewBox=*? height="400px"? id="AdobeSVG"? preserveAspectRatio="none"? xmlns--svg="http://www.w3.org/2000/svg"? type="text/css"? width="400px"?>
+					NIL + <{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
 					...
 				</{li,head,svg--svg,object,style,b,html,h2,body,h1,table,ul,hr,title}>
 				...

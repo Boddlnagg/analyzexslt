@@ -32,10 +32,10 @@ NOTE: Built-in templates were disabled for this result!
 		body { font-family: Verdana, Times, Serif; }
 	    ]]}>
 		</{h1,style}>
-		<{li,html,h2,ul,hr,![ANY-TEXT]} xmlns--svg="http://www.w3.org/2000/svg"?>
-			<{li,head,object,b,html,h2,body,ul,![ANY-TEXT]} xmlns--svg="http://www.w3.org/2000/svg"? CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? id="AdobeSVG"?>
-				<{li,head,svg--svg,object,style,b,html,h2,body,h1,table,ul,hr,title,![ANY-TEXT]} CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? style="border: solid thin black"? viewBox=*? height="400px"? id="AdobeSVG"? preserveAspectRatio="none"? xmlns--svg="http://www.w3.org/2000/svg"? type="text/css"? width="400px"?>
-					<{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
+		NIL + <{li,html,h2,ul,hr,![ANY-TEXT]} xmlns--svg="http://www.w3.org/2000/svg"?>
+			NIL + <{li,head,object,b,html,h2,body,ul,![ANY-TEXT]} xmlns--svg="http://www.w3.org/2000/svg"? CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? id="AdobeSVG"?>
+				NIL + <{li,head,svg--svg,object,style,b,html,h2,body,h1,table,ul,hr,title,![ANY-TEXT]} CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? style="border: solid thin black"? viewBox=*? height="400px"? id="AdobeSVG"? preserveAspectRatio="none"? xmlns--svg="http://www.w3.org/2000/svg"? type="text/css"? width="400px"?>
+					NIL + <{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
 					...
 				</{li,head,svg--svg,object,style,b,html,h2,body,h1,table,ul,hr,title}>
 				...
@@ -82,7 +82,7 @@ NOTE: Built-in templates were disabled for this result!
 			<{svg--text,svg--line} x=*? y={"80","340","290"}? stroke="blue"? x2=*? text-anchor="middle"? y1={"80","60","20","280","40","0"}? y2={"280","80","40","20","0","60"}? x1={"200","100"}? class={"gridline","axis","axisLabel"}? writing-mode="tb"?>
 				NIL + <{![TEXT[Weight / tons]],![TEXT[40]],![TEXT[0]]}>
 			</{svg--text,svg--line}>
-			<{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
+			NIL + <{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
 			...
 		</svg--svg>
 		<h2>
@@ -119,16 +119,16 @@ NOTE: Built-in templates were disabled for this result!
 			<{svg--text,svg--line} x=*? y={"190","240","30"}? stroke="blue"? x2=*? text-anchor="middle"? y1={"80","60","20","180","40","0"}? y2={"180","80","40","20","0","60"}? x1={"200","100"}? class={"gridline","axis","axisLabel"}? writing-mode="tb"?>
 				NIL + <{![TEXT[Length / m]],![TEXT[40]],![TEXT[0]]}>
 			</{svg--text,svg--line}>
-			<{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
+			NIL + <{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
 			...
 		</svg--svg>
 		<h1>
 			<![TEXT[Dinosaur details]]>
 		</h1>
-		<{li,html,h2,ul,![ANY-TEXT]} xmlns--svg="http://www.w3.org/2000/svg"?>
-			<{li,head,object,b,html,h2,body,ul,![ANY-TEXT]} xmlns--svg="http://www.w3.org/2000/svg"? CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? id="AdobeSVG"?>
-				<{li,head,svg--svg,object,style,b,html,h2,body,h1,table,ul,hr,title,![ANY-TEXT]} CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? style="border: solid thin black"? viewBox=*? height="400px"? id="AdobeSVG"? preserveAspectRatio="none"? xmlns--svg="http://www.w3.org/2000/svg"? type="text/css"? width="400px"?>
-					<{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
+		NIL + <{li,html,h2,ul,![ANY-TEXT]} xmlns--svg="http://www.w3.org/2000/svg"?>
+			NIL + <{li,head,object,b,html,h2,body,ul,![ANY-TEXT]} xmlns--svg="http://www.w3.org/2000/svg"? CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? id="AdobeSVG"?>
+				NIL + <{li,head,svg--svg,object,style,b,html,h2,body,h1,table,ul,hr,title,![ANY-TEXT]} CLASSID="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"? style="border: solid thin black"? viewBox=*? height="400px"? id="AdobeSVG"? preserveAspectRatio="none"? xmlns--svg="http://www.w3.org/2000/svg"? type="text/css"? width="400px"?>
+					NIL + <{*,![ANY-TEXT],![ANY-COMMENT]} any-attributes>TOP</*>
 					...
 				</{li,head,svg--svg,object,style,b,html,h2,body,h1,table,ul,hr,title}>
 				...
