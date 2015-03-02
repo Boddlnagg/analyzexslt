@@ -33,6 +33,6 @@ class XSLTZipperReferenceSuite extends XSLTReferenceSuiteBase[N] {
     // this checks only that the actual result is a superset of the expected reference result, not an exact match
     // because our domain is too coarse to guarantee that
     assert(ZipperDomain.xmlDom.lessThanOrEqual(parsedReference, transformedResult), f"Result: ${transformedResult._1}; Expected: ${parsedReference._1}")
-    println(transformedResult._1)
+    println(transformedResult._1.prettyPrint)
   }
 }
