@@ -27,11 +27,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   private def applyTemplates(sheet: XSLTStylesheet, sources: L, mode: Option[String], globalVariables: Map[String, V], localVariables: Map[String, V], params: Map[String, V], recursionLimit: Option[Int]): L = {
     xmlDom.flatMapWithIndex(sources, (node, index) => {
       val templates = chooseTemplates(sheet, node, mode)
-      // use templates.reverse.view as performance optimization:
-      // - reverse list, so most general template comes first
-      // - and when this evaluates to TOP, the remaining templates are not even looked at
-      //   because joinAllLists returns early
-      joinAllLists(templates.reverse.view.map { case (tmpl, specificNode) =>
+      joinAllLists(templates.map { case (tmpl, specificNode) =>
         val context = AbstractXSLTContext[N, L, V](specificNode, sources, xpathDom.add(index, xpathDom.liftNumber(1)), globalVariables, localVariables)
         instantiateTemplate(sheet, tmpl, context, params, recursionLimit)
       })
@@ -39,8 +35,7 @@ class XSLTAnalyzer[N, L, V](dom: Domain[N, L, V]) {
   }
 
   private def joinAllLists(lists: Iterable[L]): L = lists.fold(xmlDom.bottomList) { (l1, l2) =>
-    if (xmlDom.lessThanOrEqualLists(xmlDom.topList, l1)) return xmlDom.topList
-    else xmlDom.joinLists(l1, l2) // continue only if l1 < TOP
+    xmlDom.joinLists(l1, l2)
   }
 
   private def chooseTemplates(sheet: XSLTStylesheet, node: N, mode: Option[String]): List[(XSLTTemplate, N)] = {

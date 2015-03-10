@@ -125,12 +125,12 @@ object Bench {
         results += (("02-svg-example", i, outer, Main.run(config02.copy(limitRecursion = Some(i)))))
       }
 
-      for (i <- 1 to 10) {
+      for (i <- 1 to 8) {
         /* up to 10 (only up to 8 without opt) */
         results += (("05-pocket2keepass", i, outer, Main.run(config05.copy(limitRecursion = Some(i)))))
       }
 
-      for (i <- 1 to 10) {
+      for (i <- 1 to 4) {
         /* up to 10 (only up to 4 without opt) */
         results += (("07-ead2002-to-wordml", i, outer, Main.run(config07.copy(limitRecursion = Some(i)))))
       }
