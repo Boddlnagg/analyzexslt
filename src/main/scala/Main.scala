@@ -47,7 +47,7 @@ object Main {
     }
   }
 
-  private def run(config: Config) = {
+  def run(config: Config): Double = {
     val map: MutMap[File, Map[String, String]] = MutMap()
     val keys: MutSet[String] = MutSet()
     val files: MutList[File] = MutList()
@@ -78,6 +78,7 @@ object Main {
               val timeSec = (timeEnd - timeStart: Double) / 1000
               val limit = config.limitRecursion.map(n => f" with recursion limit $n").getOrElse("")
               println(f"Analysis of $file$limit completed in ${timeSec}s.")
+              return timeSec
             }
           } catch {
             case e: StackOverflowError => System.err.println("Running analysis overflowed the Scala stack. Try --limit-recursion.")
@@ -105,5 +106,42 @@ object Main {
         }
       }
     }
+
+    return -1
+  }
+}
+
+object Bench {
+  def main(args: Array[String]) = {
+    val config02 = Config(prettyPrint = true, timeAnalysis = true, files = Seq(new File("xslt-collection/02-svg-example/reduced.xsl")), disableBuiltinTemplates = true)
+    val config05 = Config(prettyPrint = true, timeAnalysis = true, files = Seq(new File("xslt-collection/05-pocket2keepass/stylesheet.xsl")))
+    val config07 = Config(prettyPrint = true, timeAnalysis = true, files = Seq(new File("xslt-collection/07-ead2002-to-wordml/reduced.xsl")))
+    val config09 = Config(prettyPrint = true, timeAnalysis = true, files = Seq(new File("xslt-collection/09-zefania2html/nobuiltin.xsl")))
+    val results = MutList[(String, Int, Int, Double)]()
+
+    for (outer <- 1 to 7) {
+      for (i <- 1 to 9) {
+        /* up to 9 */
+        results += (("02-svg-example", i, outer, Main.run(config02.copy(limitRecursion = Some(i)))))
+      }
+
+      for (i <- 1 to 10) {
+        /* up to 10 (only up to 8 without opt) */
+        results += (("05-pocket2keepass", i, outer, Main.run(config05.copy(limitRecursion = Some(i)))))
+      }
+
+      for (i <- 1 to 10) {
+        /* up to 10 (only up to 4 without opt) */
+        results += (("07-ead2002-to-wordml", i, outer, Main.run(config07.copy(limitRecursion = Some(i)))))
+      }
+
+      results += (("09-zefania2html", -1, outer, Main.run(config09)))
+
+      println(f"RESULTS (Iteration $outer)")
+      results.foreach{case (file, limit, _, time) => println(f"$file,$limit,$time") }
+    }
+
+    println("\nFINAL RESULTS")
+    results.foreach{case (file, limit, iteration, time) => println(f"$iteration,$file,$limit,$time") }
   }
 }
